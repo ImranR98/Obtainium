@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:android_package_manager/android_package_manager.dart'
@@ -16,20 +17,19 @@ import 'package:obtainium/components/app_bottom_sheet.dart';
 import 'package:obtainium/components/app_dropdown_field.dart';
 import 'package:obtainium/components/custom_app_bar.dart';
 import 'package:obtainium/components/themes_settings_section.dart';
-import 'package:obtainium/components/generated_form.dart';
-import 'package:obtainium/components/generated_form_modal.dart';
+import 'package:obtainium/components/generated_form_renderer.dart';
 import 'package:obtainium/components/tv_slider_wrapper.dart';
 import 'package:obtainium/custom_errors.dart';
 import 'package:obtainium/main.dart';
 import 'package:obtainium/app_sources/github.dart';
 import 'package:obtainium/app_sources/gitlab.dart';
 import 'package:obtainium/providers/apps_provider.dart';
-import 'package:obtainium/providers/installer_provider.dart' as installer;
+import 'package:obtainium/providers/external_install_bridge.dart';
 import 'package:obtainium/providers/logs_provider.dart';
-import 'package:obtainium/providers/native_provider.dart';
 import 'package:obtainium/providers/settings_provider.dart';
 import 'package:obtainium/providers/source_provider.dart';
 import 'package:obtainium/providers/virustotal_provider.dart';
+import 'package:obtainium/theme.dart';
 import 'package:obtainium/theme/app_dialog_theme.dart';
 import 'package:obtainium/theme/app_form_field_styles.dart';
 import 'package:obtainium/theme/app_theme_accent.dart';
@@ -104,6 +104,7 @@ class SettingsPageState extends State<SettingsPage> {
     sp.useGradientBackground,
     sp.progressiveBlurEnabled,
     sp.cardCornerScale,
+    sp.alwaysUsePhoneLayout,
   );
 
   static const List<String> _settingsSectionKeys = [
@@ -202,7 +203,7 @@ class SettingsPageState extends State<SettingsPage> {
     context.select<SettingsProvider, int>(_scaffoldSettingsHash);
     final SettingsProvider sp = context.read<SettingsProvider>();
     final ColorScheme cs = Theme.of(context).colorScheme;
-    SourceProvider sourceProvider = SourceProvider();
+    final SourceProvider sourceProvider = SourceProvider();
 
     // One-time initialization guard.
     if (sp.prefs == null) sp.initializeSettings();
@@ -249,10 +250,7 @@ class SettingsPageState extends State<SettingsPage> {
     // every frame). Cached layers just translate rigidly instead.
     Widget settingsCard(List<Widget> children) {
       return RepaintBoundary(
-        child: M3eExpressiveSettingsCard(
-          colorScheme: cs,
-          items: children,
-        ),
+        child: M3eExpressiveSettingsCard(colorScheme: cs, items: children),
       );
     }
 
@@ -304,10 +302,13 @@ class SettingsPageState extends State<SettingsPage> {
                 ? BorderSide.none
                 : m3ePureBlackOutlineSide(cs, alpha: 0.16);
 
-            final double collapsedRadius = SettingsProvider.cardCornerRadiusForScale(
-              SettingsProvider.baseCollapsedHeaderRadius,
-              context.select<SettingsProvider, double>((s) => s.cardCornerScale),
-            );
+            final double collapsedRadius =
+                SettingsProvider.cardCornerRadiusForScale(
+                  SettingsProvider.baseCollapsedHeaderRadius,
+                  context.select<SettingsProvider, double>(
+                    (s) => s.cardCornerScale,
+                  ),
+                );
 
             return AnimatedPadding(
               duration: headerTransitionDuration,
@@ -318,7 +319,9 @@ class SettingsPageState extends State<SettingsPage> {
                 curve: headerTransitionCurve,
                 decoration: BoxDecoration(
                   color: expanded ? Colors.transparent : collapsedHeaderColor,
-                  borderRadius: BorderRadius.circular(expanded ? 8 : collapsedRadius),
+                  borderRadius: BorderRadius.circular(
+                    expanded ? 8 : collapsedRadius,
+                  ),
                   border: outlineSide == BorderSide.none
                       ? null
                       : Border.fromBorderSide(outlineSide),
@@ -327,13 +330,17 @@ class SettingsPageState extends State<SettingsPage> {
                   type: MaterialType.transparency,
                   child: InkWell(
                     onTap: () => setSectionExpanded(key, !expanded),
-                    borderRadius: BorderRadius.circular(expanded ? 8 : collapsedRadius),
+                    borderRadius: BorderRadius.circular(
+                      expanded ? 8 : collapsedRadius,
+                    ),
                     splashFactory: NoSplash.splashFactory,
                     splashColor: Colors.transparent,
                     highlightColor: Colors.transparent,
                     hoverColor: Colors.transparent,
                     child: SizedBox(
-                      height: expanded ? null : SettingsProvider.collapsedHeaderHeight,
+                      height: expanded
+                          ? null
+                          : SettingsProvider.collapsedHeaderHeight,
                       child: AnimatedPadding(
                         duration: headerTransitionDuration,
                         curve: headerTransitionCurve,
@@ -465,7 +472,8 @@ class SettingsPageState extends State<SettingsPage> {
     }
 
     final double screenWidth = MediaQuery.sizeOf(context).width;
-    final bool isLargeScreen = screenWidth >= kLargeScreenWidthBreakpoint;
+    final bool isLargeScreen =
+        screenWidth >= kLargeScreenWidthBreakpoint && !sp.alwaysUsePhoneLayout;
 
     final List<_SettingsCategory> categoriesList = [
       _SettingsCategory(
@@ -548,8 +556,9 @@ class SettingsPageState extends State<SettingsPage> {
 
       final Color chevronColor = cs.onSurfaceVariant;
 
-      final double categoryTileRadius =
-          sp.cardCornerRadiusFor(SettingsProvider.baseCollapsedHeaderRadius);
+      final double categoryTileRadius = sp.cardCornerRadiusFor(
+        SettingsProvider.baseCollapsedHeaderRadius,
+      );
 
       return Padding(
         padding: const EdgeInsets.only(bottom: 8.0),
@@ -1017,8 +1026,6 @@ class _UpdatesSection extends StatelessWidget {
     sp.onlyCheckInstalledOrTrackOnlyApps,
     sp.removeOnExternalUninstall,
     sp.parallelDownloads,
-    sp.installerMode,
-    sp.shizukuPretendToBeGooglePlay,
     sp.includePrereleasesByDefault,
   );
 
@@ -1137,92 +1144,8 @@ class _UpdatesSection extends StatelessWidget {
         value: sp.parallelDownloads,
         onChanged: (bool value) => sp.parallelDownloads = value,
       ),
-      Padding(
-        padding: const EdgeInsets.fromLTRB(16, 8, 16, 4),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(tr('installerMode')),
-            const SizedBox(height: 4),
-            SizedBox(
-              width: double.infinity,
-              child: AppSegmentedButton<String>(
-                segments: [
-                  ButtonSegment<String>(
-                    value: 'stock',
-                    label: AppSegmentedButtonLabel(tr('installerModeStock')),
-                  ),
-                  ButtonSegment<String>(
-                    value: 'shizuku',
-                    label: AppSegmentedButtonLabel(tr('installerModeShizuku')),
-                  ),
-                  ButtonSegment<String>(
-                    value: 'legacy',
-                    label: AppSegmentedButtonLabel(
-                      tr('installerModeThirdParty'),
-                    ),
-                  ),
-                ],
-                selected: {sp.installerMode},
-                onSelectionChanged: (Set<String> selected) {
-                  final String mode = selected.first;
-                  if (mode == 'shizuku') {
-                    ShizukuApkInstaller().checkPermission().then((
-                      String? resCode,
-                    ) {
-                      if (!context.mounted) return;
-                      if (resCode!.startsWith('granted')) {
-                        sp.installerMode = 'shizuku';
-                      } else {
-                        switch (resCode) {
-                          case 'services_not_found':
-                            showError(
-                              ObtainiumError(tr('shizukuBinderNotFound')),
-                              context,
-                            );
-                          case 'old_shizuku':
-                            showError(
-                              ObtainiumError(tr('shizukuOld')),
-                              context,
-                            );
-                          case 'old_android_with_adb':
-                            showError(
-                              ObtainiumError(tr('shizukuOldAndroidWithADB')),
-                              context,
-                            );
-                          case 'denied':
-                            showError(ObtainiumError(tr('cancelled')), context);
-                        }
-                      }
-                    });
-                  } else {
-                    sp.installerMode = mode;
-                  }
-                },
-              ),
-            ),
-            if (sp.installerMode == 'shizuku')
-              SwitchListTile(
-                contentPadding: EdgeInsets.zero,
-                title: Text(tr('shizukuPretendToBeGooglePlay')),
-                value: sp.shizukuPretendToBeGooglePlay,
-                onChanged: (bool value) =>
-                    sp.shizukuPretendToBeGooglePlay = value,
-              ),
-            if (sp.installerMode == 'legacy')
-              Padding(
-                padding: const EdgeInsets.only(top: 8),
-                child: _ThirdPartyInstallerSelector(settingsProvider: sp),
-              ),
-          ],
-        ),
-      ),
     ]);
-    return M3eExpressiveSettingsCard(
-      colorScheme: cs,
-      items: rows,
-    );
+    return M3eExpressiveSettingsCard(colorScheme: cs, items: rows);
   }
 }
 
@@ -1520,7 +1443,15 @@ class _SourceSpecificSectionState extends State<_SourceSpecificSection> {
                                     ),
                                   ),
                                 )
-                              : (GitHub.hasValidatedPAT(enteredText, sp)
+                              // Show the validated shield only when the PAT is
+                              // BOTH validated AND actually saved (!isDirty).
+                              // Keying the shield on the stored fingerprint
+                              // alone hid the save button when a matching
+                              // fingerprint existed without saved creds (e.g.
+                              // validated via the add-app form), stranding the
+                              // field dirty with no way to persist it.
+                              : (GitHub.hasValidatedPAT(enteredText, sp) &&
+                                        !isDirty
                                     ? Tooltip(
                                         message: tr('githubPATValidated'),
                                         child: Icon(
@@ -1633,9 +1564,7 @@ class _SourceSpecificSectionState extends State<_SourceSpecificSection> {
         ),
         SwitchListTile(
           title: Text(tr('GHReqPrefixUseToken')),
-          value:
-              sp.getSettingBool(GitHub.githubReqPrefixUseTokenKey) ??
-              false,
+          value: sp.getSettingBool(GitHub.githubReqPrefixUseTokenKey) ?? false,
           onChanged: (val) {
             sp.setSettingBool(GitHub.githubReqPrefixUseTokenKey, val);
           },
@@ -1678,8 +1607,7 @@ class _SourceSpecificSectionState extends State<_SourceSpecificSection> {
               const SizedBox(width: 8),
               Builder(
                 builder: (context) {
-                  final String enteredText = _gitlabPatController.text
-                      .trim();
+                  final String enteredText = _gitlabPatController.text.trim();
                   final String savedText =
                       sp.getSettingString('gitlab-creds') ?? '';
                   final bool isDirty = enteredText != savedText;
@@ -1706,7 +1634,9 @@ class _SourceSpecificSectionState extends State<_SourceSpecificSection> {
                                 ),
                               ),
                             )
-                          : (GitLab.hasValidatedPAT(enteredText, sp)
+                          // Shield only when validated AND saved (see the GitHub
+                          // field above for why fingerprint-alone is wrong).
+                          : (GitLab.hasValidatedPAT(enteredText, sp) && !isDirty
                                 ? Tooltip(
                                     message: tr('gitlabPATValidated'),
                                     child: Icon(
@@ -1718,9 +1648,7 @@ class _SourceSpecificSectionState extends State<_SourceSpecificSection> {
                                     icon: const Icon(Icons.save_rounded),
                                     onPressed: buttonIsEnabled
                                         ? () async {
-                                            FocusManager
-                                                .instance
-                                                .primaryFocus
+                                            FocusManager.instance.primaryFocus
                                                 ?.unfocus();
                                             if (enteredText.isEmpty) {
                                               sp.setSettingString(
@@ -1732,9 +1660,7 @@ class _SourceSpecificSectionState extends State<_SourceSpecificSection> {
                                                 context,
                                               ).showSnackBar(
                                                 SnackBar(
-                                                  content: Text(
-                                                    tr('dismiss'),
-                                                  ),
+                                                  content: Text(tr('dismiss')),
                                                 ),
                                               );
                                               setState(() {});
@@ -1765,9 +1691,7 @@ class _SourceSpecificSectionState extends State<_SourceSpecificSection> {
                                               ).showSnackBar(
                                                 SnackBar(
                                                   content: Text(
-                                                    tr(
-                                                      'gitlabPATValidated',
-                                                    ),
+                                                    tr('gitlabPATValidated'),
                                                   ),
                                                 ),
                                               );
@@ -1775,9 +1699,7 @@ class _SourceSpecificSectionState extends State<_SourceSpecificSection> {
                                               ScaffoldMessenger.of(
                                                 context,
                                               ).showSnackBar(
-                                                SnackBar(
-                                                  content: Text(error),
-                                                ),
+                                                SnackBar(content: Text(error)),
                                               );
                                             }
                                           }
@@ -1827,6 +1749,7 @@ class _AppearanceSection extends StatelessWidget {
     sp.disablePageTransitions,
     sp.reversePageTransitions,
     sp.highlightTouchTargets,
+    sp.alwaysUsePhoneLayout,
   );
 
   @override
@@ -1864,6 +1787,11 @@ class _AppearanceSection extends StatelessWidget {
         ),
         const _UiScaleSlider(),
         const _CardCornerScaleSlider(),
+        SwitchListTile(
+          title: Text(tr('alwaysUsePhoneLayout')),
+          value: sp.alwaysUsePhoneLayout,
+          onChanged: (value) => sp.alwaysUsePhoneLayout = value,
+        ),
         SwitchListTile(
           title: Text(tr('showWebInAppView')),
           value: sp.showAppWebpage,
@@ -2383,6 +2311,8 @@ class _IntegrationsSectionState extends State<_IntegrationsSection>
     sp.beforeNewInstallsShareToAppVerifier,
     sp.enableVirusTotalScanning,
     sp.enableLetMeDowngrade,
+    sp.installerMode,
+    sp.shizukuPretendToBeGooglePlay,
   );
 
   @override
@@ -2608,7 +2538,8 @@ class _IntegrationsSectionState extends State<_IntegrationsSection>
                                 ),
                               ),
                             )
-                          : (isValidated
+                          // Shield only when validated AND saved (see GitHub PAT).
+                          : (isValidated && !isDirty
                                 ? Tooltip(
                                     message: tr('virusTotalKeyValidated'),
                                     child: Icon(
@@ -2684,6 +2615,92 @@ class _IntegrationsSectionState extends State<_IntegrationsSection>
             ],
           ),
         ),
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 8, 16, 4),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(tr('installerMode')),
+              const SizedBox(height: 4),
+              SizedBox(
+                width: double.infinity,
+                child: AppSegmentedButton<String>(
+                  segments: [
+                    ButtonSegment<String>(
+                      value: 'stock',
+                      label: AppSegmentedButtonLabel(tr('installerModeStock')),
+                    ),
+                    ButtonSegment<String>(
+                      value: 'shizuku',
+                      label: AppSegmentedButtonLabel(
+                        tr('installerModeShizuku'),
+                      ),
+                    ),
+                    ButtonSegment<String>(
+                      value: 'legacy',
+                      label: AppSegmentedButtonLabel(
+                        tr('installerModeThirdParty'),
+                      ),
+                    ),
+                  ],
+                  selected: {sp.installerMode},
+                  onSelectionChanged: (Set<String> selected) {
+                    final String mode = selected.first;
+                    if (mode == 'shizuku') {
+                      ShizukuApkInstaller().checkPermission().then((
+                        String? resCode,
+                      ) {
+                        if (!context.mounted) return;
+                        if (resCode!.startsWith('granted')) {
+                          sp.installerMode = 'shizuku';
+                        } else {
+                          switch (resCode) {
+                            case 'services_not_found':
+                              showError(
+                                ObtainiumError(tr('shizukuBinderNotFound')),
+                                context,
+                              );
+                            case 'old_shizuku':
+                              showError(
+                                ObtainiumError(tr('shizukuOld')),
+                                context,
+                              );
+                            case 'old_android_with_adb':
+                              showError(
+                                ObtainiumError(tr('shizukuOldAndroidWithADB')),
+                                context,
+                              );
+                            case 'denied':
+                              showError(
+                                ObtainiumError(tr('cancelled')),
+                                context,
+                              );
+                          }
+                        }
+                      });
+                    } else {
+                      sp.installerMode = mode;
+                    }
+                  },
+                ),
+              ),
+              if (sp.installerMode == 'shizuku')
+                SwitchListTile(
+                  contentPadding: EdgeInsets.zero,
+                  title: Text(tr('shizukuPretendToBeGooglePlay')),
+                  value: sp.shizukuPretendToBeGooglePlay,
+                  onChanged: (bool value) =>
+                      sp.shizukuPretendToBeGooglePlay = value,
+                ),
+              if (sp.installerMode == 'legacy')
+                const Padding(
+                  padding: EdgeInsets.only(top: 8),
+                  child: _ExternalInstallerTile(),
+                ),
+            ],
+          ),
+        ),
       ],
     );
   }
@@ -2722,7 +2739,8 @@ class AboutSectionContent extends StatelessWidget {
     final SettingsProvider sp = context.read<SettingsProvider>();
     final TextTheme textTheme = Theme.of(context).textTheme;
     final double screenWidth = MediaQuery.sizeOf(context).width;
-    final bool isLargeScreen = screenWidth >= kLargeScreenWidthBreakpoint;
+    final bool isLargeScreen =
+        screenWidth >= kLargeScreenWidthBreakpoint && !sp.alwaysUsePhoneLayout;
 
     return Stack(
       children: [
@@ -3269,7 +3287,7 @@ class _LogsDialogState extends State<LogsDialog> {
           if (!mounted) return;
           setState(() {
             final chronologicalLogs = logsList.reversed.toList();
-            String joinedLogs = chronologicalLogs
+            final String joinedLogs = chronologicalLogs
                 .map((logEntry) => logEntry.toString())
                 .join('\n\n');
             logString = joinedLogs.isNotEmpty ? joinedLogs : tr('noLogs');
@@ -3287,7 +3305,7 @@ class _LogsDialogState extends State<LogsDialog> {
 
   @override
   Widget build(BuildContext context) {
-    var logsProvider = context.read<LogsProvider>();
+    final logsProvider = context.read<LogsProvider>();
 
     Future<String> getDiagnosticsText() async {
       final buffer = StringBuffer();
@@ -3459,7 +3477,7 @@ class _LogsDialogState extends State<LogsDialog> {
                 children: [
                   TextButton(
                     onPressed: () async {
-                      var cont =
+                      final cont =
                           (await showDialog<Map<String, dynamic>?>(
                             context: context,
                             builder: (BuildContext modalContext) {
@@ -3476,7 +3494,7 @@ class _LogsDialogState extends State<LogsDialog> {
                           )) !=
                           null;
                       if (cont) {
-                        logsProvider.clear();
+                        unawaited(logsProvider.clear());
                         if (!context.mounted) return;
                         Navigator.of(context).pop();
                       }
@@ -3495,10 +3513,12 @@ class _LogsDialogState extends State<LogsDialog> {
                   TextButton(
                     onPressed: () async {
                       final diagnostics = await getDiagnosticsText();
-                      SharePlus.instance.share(
-                        ShareParams(
-                          text: '$diagnostics${logString ?? ''}',
-                          subject: tr('appLogs'),
+                      unawaited(
+                        SharePlus.instance.share(
+                          ShareParams(
+                            text: '$diagnostics${logString ?? ''}',
+                            subject: tr('appLogs'),
+                          ),
                         ),
                       );
                       if (!context.mounted) return;
@@ -3635,7 +3655,7 @@ class _CategoryEditorSelectorState extends State<CategoryEditorSelector> {
             'categories',
             label: tr('categories'),
             emptyMessage: tr('noCategories'),
-            defaultValue: merged,
+            value: merged,
             alignment: widget.alignment,
             deleteConfirmationMessage: MapEntry(
               tr('deleteCategoriesQuestion'),
@@ -3671,216 +3691,320 @@ class _CategoryEditorSelectorState extends State<CategoryEditorSelector> {
   }
 }
 
-class _ThirdPartyInstallerSelector extends StatefulWidget {
-  final SettingsProvider settingsProvider;
-  const _ThirdPartyInstallerSelector({required this.settingsProvider});
+class _ExternalInstallerTile extends StatefulWidget {
+  const _ExternalInstallerTile();
 
   @override
-  State<_ThirdPartyInstallerSelector> createState() =>
-      _ThirdPartyInstallerSelectorState();
+  State<_ExternalInstallerTile> createState() => _ExternalInstallerTileState();
 }
 
-class _ThirdPartyInstallerSelectorState
-    extends State<_ThirdPartyInstallerSelector> {
-  List<installer.InstallerAppInfo>? _installerApps;
-  bool _loading = true;
+class _ExternalInstallerTileState extends State<_ExternalInstallerTile> {
+  Future<List<InstallerTarget>>? _targetsFuture;
 
   @override
   void initState() {
     super.initState();
-    _loadInstallers();
+    _targetsFuture = ExternalInstallerBridge.instance.listTargets();
   }
 
-  Future<List<installer.InstallerAppInfo>?> _loadInstallers({
-    bool showLoading = false,
-  }) async {
-    if (showLoading && mounted) {
-      setState(() => _loading = true);
-    }
-    final apps = await installer.getApkInstallerApps();
-    if (!mounted) return null;
-    _repairSelectedInstaller(apps);
-    setState(() {
-      _installerApps = apps;
-      _loading = false;
-    });
-    return apps;
-  }
-
-  void _repairSelectedInstaller(List<installer.InstallerAppInfo> apps) {
-    final selectedPackage = widget.settingsProvider.legacyInstallerPackage;
-    final selectedActivity = widget.settingsProvider.legacyInstallerActivity;
-    final selectedActivityStillAvailable =
-        selectedPackage == null ||
-        selectedActivity == null ||
-        apps.any(
-          (app) =>
-              app.packageName == selectedPackage &&
-              app.activityName == selectedActivity,
-        );
-    if (!selectedActivityStillAvailable) {
-      final replacement = apps
-          .where((app) => app.packageName == selectedPackage)
-          .firstOrNull;
-      if (replacement != null) {
-        widget.settingsProvider.legacyInstallerActivity =
-            replacement.activityName;
+  InstallerTarget? _current(
+    List<InstallerTarget> targets,
+    SettingsProvider settingsProvider,
+  ) {
+    final String? package = settingsProvider.externalInstallerPackage;
+    final String? activity = settingsProvider.externalInstallerComponent;
+    if (package == null || activity == null) return null;
+    for (final InstallerTarget target in targets) {
+      if (target.package == package && target.activity == activity) {
+        return target;
       }
     }
+    return null;
   }
 
-  Future<void> _showInstallerPicker() async {
-    if (_loading) return;
-    final installerApps =
-        await _loadInstallers(showLoading: _installerApps == null);
-    if (!mounted || installerApps == null || installerApps.isEmpty) {
-      return;
+  Widget _targetIcon(InstallerTarget? target, {double size = 40}) {
+    final Uint8List? icon = target?.icon;
+    if (icon == null || icon.isEmpty) {
+      return Icon(Icons.extension_outlined, size: size);
     }
+    final int cacheSize = (size * MediaQuery.devicePixelRatioOf(context))
+        .round();
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(8),
+      child: Image.memory(
+        icon,
+        width: size,
+        height: size,
+        fit: BoxFit.contain,
+        cacheWidth: cacheSize,
+        cacheHeight: cacheSize,
+        errorBuilder: (_, _, _) => Icon(Icons.extension_outlined, size: size),
+      ),
+    );
+  }
 
-    void updateSelectedInstaller(String? value) {
-      if (value != null) {
-        final selected = installerApps.firstWhere(
-          (a) => '${a.packageName}|${a.activityName}' == value,
+  Future<void> _choose(
+    List<InstallerTarget> targets,
+    SettingsProvider settingsProvider,
+  ) async {
+    if (targets.isEmpty) return;
+    final Map<String, List<InstallerTarget>> grouped = {};
+    for (final InstallerTarget target in targets) {
+      grouped.putIfAbsent(target.package, () => []).add(target);
+    }
+    for (final MapEntry<String, List<InstallerTarget>> entry
+        in grouped.entries) {
+      final Set<String> seenActivities = {};
+      entry.value.removeWhere(
+        (InstallerTarget target) => !seenActivities.add(target.activity),
+      );
+      entry.value.sort((InstallerTarget first, InstallerTarget second) {
+        final String firstLabel =
+            (first.activityLabel ?? first.activity.split('.').last)
+                .toLowerCase();
+        final String secondLabel =
+            (second.activityLabel ?? second.activity.split('.').last)
+                .toLowerCase();
+        final bool firstIsInstaller = firstLabel.contains('install');
+        final bool secondIsInstaller = secondLabel.contains('install');
+        if (firstIsInstaller != secondIsInstaller) {
+          return firstIsInstaller ? -1 : 1;
+        }
+        final int labelComparison = firstLabel.compareTo(secondLabel);
+        if (labelComparison != 0) return labelComparison;
+        return first.activity.toLowerCase().compareTo(
+          second.activity.toLowerCase(),
         );
-        widget.settingsProvider.legacyInstallerPackage = selected.packageName;
-        widget.settingsProvider.legacyInstallerActivity = selected.activityName;
-      }
-      setState(() {
-        _installerApps = installerApps;
       });
     }
-
-    final currentPkg = widget.settingsProvider.legacyInstallerPackage;
-    final currentAct = widget.settingsProvider.legacyInstallerActivity;
-    final currentValue = (currentPkg != null && currentAct != null)
-        ? '$currentPkg|$currentAct'
-        : null;
-
-    showAppModalSheet<void>(
+    grouped.removeWhere((_, List<InstallerTarget> targets) => targets.isEmpty);
+    final List<MapEntry<String, List<InstallerTarget>>> entries = grouped
+        .entries
+        .toList();
+    int expandedIndex = -1;
+    final InstallerTarget? picked = await showAppModalSheet<InstallerTarget>(
       context: context,
-      builder: (sheetContext) {
-        String? selectedValue = currentValue;
-        return StatefulBuilder(
-          builder: (builderContext, setSheetState) {
-            return RadioGroup<String>(
-              groupValue: selectedValue,
-              onChanged: (String? value) {
-                setSheetState(() => selectedValue = value);
-                updateSelectedInstaller(value);
-                Navigator.pop(sheetContext);
-              },
-              child: AppSheetContent(
-                padding: const EdgeInsets.fromLTRB(20, 4, 20, 8),
-                children: [
-                  Padding(
-                    padding: const EdgeInsets.only(bottom: 16),
-                    child: Center(
-                      child: Text(
-                        tr('thirdPartyInstallerSelect'),
-                        style: Theme.of(builderContext).textTheme.titleMedium
-                            ?.copyWith(fontWeight: FontWeight.w600),
+      builder: (BuildContext sheetContext) => StatefulBuilder(
+        builder: (BuildContext builderContext, StateSetter setSheetState) =>
+            AppSheetContent(
+              children: [
+                Text(
+                  tr('chooseExternalInstaller'),
+                  style: Theme.of(builderContext).textTheme.titleLarge,
+                ),
+                const SizedBox(height: 12),
+                M3eExpressiveSettingsCard(
+                  items: [
+                    for (int index = 0; index < entries.length; index++)
+                      Column(
+                        mainAxisSize: MainAxisSize.min,
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          ListTile(
+                            onTap: () {
+                              final entry = entries[index];
+                              if (entry.value.length == 1) {
+                                Navigator.of(
+                                  sheetContext,
+                                ).pop(entry.value.first);
+                              } else {
+                                setSheetState(() {
+                                  expandedIndex = expandedIndex == index
+                                      ? -1
+                                      : index;
+                                });
+                              }
+                            },
+                            leading: _targetIcon(
+                              entries[index].value.first,
+                              size: 36,
+                            ),
+                            title: Text(
+                              entries[index].value.first.label,
+                              style: Theme.of(
+                                builderContext,
+                              ).textTheme.titleSmall,
+                            ),
+                            subtitle: Text(
+                              entries[index].key,
+                              style: Theme.of(
+                                builderContext,
+                              ).textTheme.bodySmall,
+                            ),
+                            trailing: entries[index].value.length > 1
+                                ? AnimatedRotation(
+                                    turns: expandedIndex == index ? 0.5 : 0,
+                                    duration: ExpressiveMotion.short,
+                                    curve: ExpressiveMotion.emphasized,
+                                    child: const Icon(Icons.expand_more),
+                                  )
+                                : null,
+                          ),
+                          AnimatedSize(
+                            duration: ExpressiveMotion.medium,
+                            curve: ExpressiveMotion.emphasized,
+                            child: expandedIndex == index
+                                ? Column(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: entries[index].value
+                                        .map(
+                                          (InstallerTarget target) =>
+                                              _activityChoiceRow(
+                                                context: builderContext,
+                                                target: target,
+                                                siblings: entries[index].value,
+                                                onTap: () => Navigator.of(
+                                                  sheetContext,
+                                                ).pop(target),
+                                              ),
+                                        )
+                                        .toList(),
+                                  )
+                                : const SizedBox.shrink(),
+                          ),
+                        ],
                       ),
-                    ),
-                  ),
-                  ...installerApps.map((app) {
-                    final radioValue = '${app.packageName}|${app.activityName}';
-                    return RadioListTile<String>(
-                      contentPadding: const EdgeInsetsDirectional.only(
-                        end: 16,
-                      ),
-                      secondary: app.icon != null && app.icon!.isNotEmpty
-                          ? ClipRRect(
-                              borderRadius: BorderRadius.circular(8),
-                              child: Image.memory(
-                                app.icon!,
-                                width: 40,
-                                height: 40,
-                                fit: BoxFit.contain,
-                                // Decode at the rendered size × DPR so a
-                                // 512×512 launcher icon doesn't sit at full
-                                // resolution in the raster cache for a 40-px row.
-                                cacheWidth:
-                                    (40 *
-                                            MediaQuery.devicePixelRatioOf(
-                                              context,
-                                            ))
-                                        .round(),
-                                cacheHeight:
-                                    (40 *
-                                            MediaQuery.devicePixelRatioOf(
-                                              context,
-                                            ))
-                                        .round(),
-                                errorBuilder: (_, _, _) =>
-                                    const Icon(Icons.android, size: 40),
-                              ),
-                            )
-                          : const Icon(Icons.android, size: 40),
-                      title: Text(app.label),
-                      subtitle: Text(
-                        app.packageName,
-                        style: const TextStyle(fontSize: 12),
-                      ),
-                      value: radioValue,
-                    );
-                  }),
-                ],
-              ),
-            );
-          },
-        );
-      },
+                  ],
+                ),
+              ],
+            ),
+      ),
+    );
+    if (picked == null) return;
+    settingsProvider.externalInstallerPackage = picked.package;
+    settingsProvider.externalInstallerComponent = picked.activity;
+    if (mounted) setState(() {});
+  }
+
+  String _shortActivityName(
+    InstallerTarget target,
+    List<InstallerTarget> siblings,
+  ) {
+    final String shortName = target.activity.split('.').last;
+    final bool hasDuplicate = siblings.any(
+      (InstallerTarget sibling) =>
+          sibling != target && sibling.activity.split('.').last == shortName,
+    );
+    return hasDuplicate ? target.activity : shortName;
+  }
+
+  String _activityDisplayLabel(
+    InstallerTarget target,
+    List<InstallerTarget> siblings,
+  ) {
+    return target.activityLabel ?? _shortActivityName(target, siblings);
+  }
+
+  String? _activityDisambiguator(
+    InstallerTarget target,
+    List<InstallerTarget> siblings,
+  ) {
+    final String? activityLabel = target.activityLabel;
+    if (activityLabel == null) return null;
+    final String normalizedLabel = activityLabel.toLowerCase();
+    final int matchingLabelCount = siblings
+        .where(
+          (InstallerTarget sibling) =>
+              sibling.activityLabel?.toLowerCase() == normalizedLabel,
+        )
+        .length;
+    return matchingLabelCount > 1 ? _shortActivityName(target, siblings) : null;
+  }
+
+  Widget _activityChoiceRow({
+    required BuildContext context,
+    required InstallerTarget target,
+    required List<InstallerTarget> siblings,
+    required VoidCallback onTap,
+  }) {
+    final ColorScheme colorScheme = Theme.of(context).colorScheme;
+    final String? disambiguator = _activityDisambiguator(target, siblings);
+    final double cornerRadius = SettingsProvider.cardCornerRadiusForScale(
+      14,
+      context.read<SettingsProvider>().cardCornerScale,
+    );
+    return Padding(
+      padding: const EdgeInsetsDirectional.fromSTEB(52, 3, 12, 3),
+      child: Material(
+        color: colorScheme.surfaceContainerHighest,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(cornerRadius),
+          side: BorderSide(
+            color: colorScheme.outlineVariant.withValues(alpha: 0.55),
+          ),
+        ),
+        clipBehavior: Clip.antiAlias,
+        child: ListTile(
+          onTap: onTap,
+          contentPadding: const EdgeInsetsDirectional.fromSTEB(14, 2, 8, 2),
+          minTileHeight: 48,
+          title: Text(
+            _activityDisplayLabel(target, siblings),
+            style: Theme.of(context).textTheme.bodyMedium,
+          ),
+          subtitle: disambiguator == null
+              ? null
+              : Text(
+                  disambiguator,
+                  style: Theme.of(context).textTheme.bodySmall,
+                ),
+          trailing: const Icon(Icons.chevron_right_rounded, size: 20),
+        ),
+      ),
     );
   }
 
   @override
   Widget build(BuildContext context) {
-    final selectedPkg = widget.settingsProvider.legacyInstallerPackage;
-    final selectedAct = widget.settingsProvider.legacyInstallerActivity;
-    final selectedApp = (_installerApps ?? [])
-        .where(
-          (app) =>
-              app.packageName == selectedPkg &&
-              app.activityName == selectedAct,
-        )
-        .firstOrNull;
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        if (_loading)
-          const Center(child: ExpressiveLoadingIndicator())
-        else
-          ListTile(
-            contentPadding: EdgeInsets.zero,
-            visualDensity: VisualDensity.compact,
-            leading: selectedApp?.icon != null && selectedApp!.icon!.isNotEmpty
-                ? ClipRRect(
-                    borderRadius: BorderRadius.circular(8),
-                    child: Image.memory(
-                      selectedApp.icon!,
-                      width: 36,
-                      height: 36,
-                      fit: BoxFit.contain,
-                      cacheWidth: (36 * MediaQuery.devicePixelRatioOf(context))
-                          .round(),
-                      cacheHeight: (36 * MediaQuery.devicePixelRatioOf(context))
-                          .round(),
-                      errorBuilder: (_, _, _) =>
-                          const Icon(Icons.android, size: 36),
-                    ),
-                  )
-                : null,
-            title: Text(tr('thirdPartyInstallerSelect')),
-            subtitle: Text(
-              selectedApp?.label ??
-                  selectedPkg ??
-                  tr('thirdPartyInstallerNoneSelected'),
-            ),
-            trailing: const Icon(Icons.arrow_drop_down),
-            onTap: _showInstallerPicker,
-          ),
-      ],
+    final SettingsProvider settingsProvider = context.watch<SettingsProvider>();
+    return FutureBuilder<List<InstallerTarget>>(
+      future: _targetsFuture,
+      builder:
+          (
+            BuildContext context,
+            AsyncSnapshot<List<InstallerTarget>> snapshot,
+          ) {
+            if (snapshot.connectionState != ConnectionState.done) {
+              return const ListTile(
+                contentPadding: EdgeInsets.symmetric(horizontal: 8),
+                leading: SizedBox.square(
+                  dimension: 24,
+                  child: ExpressiveLoadingIndicator(),
+                ),
+              );
+            }
+            final List<InstallerTarget> targets =
+                snapshot.data ?? const <InstallerTarget>[];
+            final InstallerTarget? current = _current(
+              targets,
+              settingsProvider,
+            );
+            final List<InstallerTarget> currentPackageTargets = targets
+                .where(
+                  (InstallerTarget target) =>
+                      target.package == current?.package,
+                )
+                .toList();
+            final int intentCount = currentPackageTargets
+                .map((InstallerTarget target) => target.activity)
+                .toSet()
+                .length;
+            final String subtitle = current != null
+                ? intentCount > 1
+                      ? '${current.label} · '
+                            '${_activityDisplayLabel(current, currentPackageTargets)}'
+                      : current.label
+                : settingsProvider.externalInstallerPackage ??
+                      tr('externalInstallerUnset');
+            return ListTile(
+              contentPadding: const EdgeInsets.symmetric(horizontal: 8),
+              leading: _targetIcon(current),
+              title: Text(tr('chooseExternalInstaller')),
+              subtitle: Text(subtitle),
+              trailing: const Icon(Icons.arrow_drop_down),
+              onTap: () => _choose(targets, settingsProvider),
+            );
+          },
     );
   }
 }

@@ -5,6 +5,7 @@ import 'dart:typed_data';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:expressive_loading_indicator/expressive_loading_indicator.dart';
 import 'package:flutter/material.dart';
+import 'package:obtainium/components/generated_form_renderer.dart';
 import 'package:flutter/rendering.dart' show ScrollCacheExtent;
 import 'package:obtainium/app_sources/apkmirror.dart';
 import 'package:obtainium/app_sources/apkpure.dart';
@@ -702,7 +703,7 @@ class BulkAddWidgetState extends State<BulkAddWidget> {
           _iconCache.putIfAbsent(packageName, () => false);
         }
       } finally {
-        _iconLoadFutures.remove(packageName);
+        unawaited(_iconLoadFutures.remove(packageName));
       }
     });
   }
@@ -1032,7 +1033,7 @@ class BulkAddWidgetState extends State<BulkAddWidget> {
       await BulkScanCache.clearStores(_selectedStores);
       if (mounted) setState(() => _clearCacheBeforeScan = false);
     }
-    Map<String, Map<String, String>> persistedScanCache =
+    final Map<String, Map<String, String>> persistedScanCache =
         await BulkScanCache.load();
 
     _scanCancelRequested = false;
@@ -2265,9 +2266,11 @@ class BulkAddWidgetState extends State<BulkAddWidget> {
         final String errMsg = e is ObtainiumError
             ? e.toString()
             : tr('unexpectedError');
-        logsProvider.add(
-          'Bulk add failed for ${app.info.name} (${app.info.packageName}): $errMsg',
-          level: LogLevels.error,
+        unawaited(
+          logsProvider.add(
+            'Bulk add failed for ${app.info.name} (${app.info.packageName}): $errMsg',
+            level: LogLevel.error,
+          ),
         );
         if (mounted) {
           setState(() {

@@ -343,7 +343,7 @@ ColorScheme colorSchemeForAccentSettings({
     return dynamicScheme;
   }
 
-  final Color fallbackSeed = const Color(0xFF1B5EA8);
+  const Color fallbackSeed = Color(0xFF1B5EA8);
   Color seed =
       accentSource.seedOrNull ??
       colorFromNormalizedHex(

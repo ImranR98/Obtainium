@@ -23,8 +23,7 @@ import 'package:obtainium/components/bulk_category_editor.dart';
 import 'package:obtainium/components/category_action_chip.dart';
 import 'package:obtainium/layout_breakpoints.dart';
 import 'package:obtainium/components/custom_app_bar.dart';
-import 'package:obtainium/components/generated_form.dart';
-import 'package:obtainium/components/generated_form_modal.dart';
+import 'package:obtainium/components/generated_form_renderer.dart';
 import 'package:obtainium/components/rippling_wavy_progress/circular.dart';
 import 'package:obtainium/components/rippling_wavy_progress/linear.dart';
 import 'package:obtainium/custom_errors.dart';
@@ -146,11 +145,7 @@ String visibilityFilterChipLabel(String label, CategoryFilterIntent intent) {
 /// header still reads as its own band.
 Color _appsListGroupHeaderColor(ColorScheme scheme) {
   if (scheme.usesPureBlackBackgrounds) return Colors.black;
-  return Color.lerp(
-    scheme.secondaryContainer,
-    scheme.primaryContainer,
-    0.30,
-  )!;
+  return Color.lerp(scheme.secondaryContainer, scheme.primaryContainer, 0.30)!;
 }
 
 const Duration _appsGroupHeaderTransitionDuration = Duration(milliseconds: 300);
@@ -275,17 +270,21 @@ class _AppsGroupHeaderDelegate extends SliverPersistentHeaderDelegate {
 }
 
 class _ZOrderSliverMainAxisGroup extends SliverMainAxisGroup {
-  final double cardRadius;
+  /// Top-corner radius used to clip the scrolling content that tucks under the
+  /// pinned group header. MUST equal the header's own top-corner radius
+  /// ([_AppsGroupHeaderDelegate.collapsedRadius]); otherwise the content leaks
+  /// through the crescent between the two mismatched corner arcs.
+  final double headerTopRadius;
 
   const _ZOrderSliverMainAxisGroup({
     super.key,
     required super.slivers,
-    required this.cardRadius,
+    required this.headerTopRadius,
   });
 
   @override
   RenderSliverMainAxisGroup createRenderObject(BuildContext context) {
-    return _RenderZOrderSliverMainAxisGroup(cardRadius: cardRadius);
+    return _RenderZOrderSliverMainAxisGroup(headerTopRadius: headerTopRadius);
   }
 
   @override
@@ -293,14 +292,14 @@ class _ZOrderSliverMainAxisGroup extends SliverMainAxisGroup {
     BuildContext context,
     covariant _RenderZOrderSliverMainAxisGroup renderObject,
   ) {
-    renderObject.cardRadius = cardRadius;
+    renderObject.headerTopRadius = headerTopRadius;
   }
 }
 
 class _RenderZOrderSliverMainAxisGroup extends RenderSliverMainAxisGroup {
-  double cardRadius;
+  double headerTopRadius;
 
-  _RenderZOrderSliverMainAxisGroup({required this.cardRadius});
+  _RenderZOrderSliverMainAxisGroup({required this.headerTopRadius});
 
   @override
   void paint(PaintingContext context, Offset offset) {
@@ -339,8 +338,8 @@ class _RenderZOrderSliverMainAxisGroup extends RenderSliverMainAxisGroup {
 
         final RRect clipRRect = RRect.fromRectAndCorners(
           bounds,
-          topLeft: Radius.circular(cardRadius),
-          topRight: Radius.circular(cardRadius),
+          topLeft: Radius.circular(headerTopRadius),
+          topRight: Radius.circular(headerTopRadius),
         );
 
         context.pushClipRRect(needsCompositing, offset, bounds, clipRRect, (
@@ -406,107 +405,48 @@ AppTypeGroup classifyAppType(AppInMemory app) {
 /// Fingerprint so [AppsPage] rebuilds only when app-list data changes,
 /// not on every [AppsProvider.notifyListeners] (e.g. download-progress ticks
 /// or icon-load completions — icons are watched per-row by [_AppIconWidget]).
+/// [AppsProvider.appsListRevision] avoids hashing every app for each of those
+/// notifications, which is important while new rows lazily load their icons.
 int _appsPageAppsRebuildToken(AppsProvider provider) {
-  return Object.hashAll([
+  return Object.hash(
     provider.loadingApps,
     provider.areDownloadsRunning(),
-    ...provider.apps.values.map(
-      (a) => Object.hashAll([
-        a.app.id,
-        a.app.name,
-        a.app.author,
-        a.app.latestVersion,
-        a.app.installedVersion,
-        a.app.pinned,
-        a.app.categories.length,
-        Object.hashAll(a.app.categories),
-        a.app.additionalSettings['onDemandOnly'] == true,
-        a.app.additionalSettings['skippedLatestVersion'],
-        // Folder membership - needed so the main-page filter (hide foldered
-        // apps) and folder-view filter both re-run when membership changes.
-        Object.hashAll((a.app.additionalSettings['folderIds'] as List? ?? [])),
-        // Icon fields deliberately excluded: each row watches its own icon
-        // via _AppIconWidget.context.select, so icon loads only rebuild that
-        // one row widget instead of the entire apps list.
-        // [App.lastUpdateCheck] is also deliberately excluded. It changes for
-        // every app on every pull-to-refresh and would otherwise force the
-        // entire AppsPage (filter / sort / group / sliver list) to rebuild
-        // on every notifyListeners() tick (~4 Hz) during checkUpdates, which
-        // is the dominant cause of refresh-time scroll stutter on large lists.
-        // The list will still re-sort once at the end of refresh because the
-        // final notifyListeners() flips other fields (e.g. latestVersion) on
-        // any apps that actually got an update. Users sorting by
-        // [SortColumnSettings.lastUpdateCheck] see their order update once
-        // the refresh finishes rather than continuously during it - this is
-        // intentional, since reordering rows under the user's finger while
-        // they try to scroll is itself a usability problem.
-      ]),
-    ),
-  ]);
+    provider.appsListRevision,
+  );
 }
 
 /// Progress bar shown during pull-to-refresh and initial app-load.
 ///
 /// Subscribes to [AppsProvider] via a narrow [context.select] that returns
-/// only `(loadingApps, checkedCount)`. As [AppsProvider.checkUpdates] saves
-/// each app and calls [AppsProvider.notifyListeners] (~ every 250 ms),
-/// `checkedCount` ticks up and only THIS widget rebuilds - the surrounding
-/// [AppsPage] (filter / sort / sliver list) does not.
+/// only `(loadingApps, refreshProgressNotifier)`. The notifier updates this
+/// widget without notifying the provider, so the surrounding [AppsPage]
+/// (filter / sort / sliver list) does not rescan the whole app collection.
 ///
-/// Counterpart to the deliberate exclusion of [App.lastUpdateCheck] from
-/// [_appsPageAppsRebuildToken]. That exclusion is what fixed the scroll
-/// stutter; this widget restores the live progress feedback that the
-/// exclusion would otherwise have stripped out.
+/// App metadata changes advance [AppsProvider.appsListRevision] once after the
+/// batched save, while intermediate progress stays isolated here.
 class _RefreshProgressBar extends StatelessWidget {
-  const _RefreshProgressBar({
-    required this.refreshingSince,
-    required this.progressDenominator,
-    required this.onDemandOnlyList,
-    required this.folderId,
-  });
+  const _RefreshProgressBar({required this.refreshingSince});
 
   final DateTime? refreshingSince;
-  final int progressDenominator;
-  final bool onDemandOnlyList;
-  final String? folderId;
 
   @override
   Widget build(BuildContext context) {
-    final (bool loadingApps, int checkedCount) = context
-        .select<AppsProvider, (bool, int)>((p) {
-          if (p.loadingApps) {
-            return (true, 0);
-          }
-          final DateTime? since = refreshingSince;
-          if (since == null) {
-            return (false, 0);
-          }
-          int count = 0;
-          for (final a in p.apps.values) {
-            final last = a.app.lastUpdateCheck;
-            if (last == null || last.isBefore(since)) continue;
-            if (onDemandOnlyList &&
-                a.app.additionalSettings['onDemandOnly'] != true) {
-              continue;
-            }
-            final String? folder = folderId;
-            if (folder != null && !folderIdsForApp(a.app).contains(folder)) {
-              continue;
-            }
-            count++;
-          }
-          return (false, count);
-        });
+    final (bool loadingApps, ValueNotifier<double?> progressNotifier) = context
+        .select<AppsProvider, (bool, ValueNotifier<double?>)>(
+          (p) => (p.loadingApps, p.refreshProgressNotifier),
+        );
     // M3 Expressive linear progress indicator. Wavy active track with a
     // stop-dot at the end (per the M3E spec). The widget draws two
     // separate lanes (active above, track below) with a fixed gap so the
     // active and inactive segments never overlap.
-    return LinearRipplingWavyProgressIndicator(
-      value: loadingApps
-          ? null
-          : (progressDenominator > 0
-                ? checkedCount / progressDenominator
-                : 0.0),
+    return ValueListenableBuilder<double?>(
+      valueListenable: progressNotifier,
+      builder: (context, refreshProgress, _) =>
+          LinearRipplingWavyProgressIndicator(
+            value: loadingApps
+                ? null
+                : (refreshProgress ?? (refreshingSince != null ? 1.0 : 0.0)),
+          ),
     );
   }
 }
@@ -628,7 +568,8 @@ class _AppListItem extends StatelessWidget {
     final double screenWidth = MediaQuery.sizeOf(context).width;
     final bool isLargeScreen =
         screenWidth >= kLargeScreenWidthBreakpoint &&
-        !context.read<SettingsProvider>().isTV;
+        !context.read<SettingsProvider>().isTV &&
+        !context.read<SettingsProvider>().alwaysUsePhoneLayout;
     final bool hideVersionAndChangelog =
         isLargeScreen &&
         MediaQuery.orientationOf(context) == Orientation.portrait;
@@ -640,7 +581,7 @@ class _AppListItem extends StatelessWidget {
     final hasUncertainUpdate =
         installed != null && versionOrderUncertainUpdate(app.app);
     final settingsProvider = context.read<SettingsProvider>();
-    final source = SourceProvider().getSource(
+    final source = SourceProvider().getSourceTemplate(
       app.app.url,
       overrideSource: app.app.overrideSource,
     );
@@ -743,59 +684,54 @@ class _AppListItem extends StatelessWidget {
 
     final Widget? trailingRow = (hideVersionAndChangelog && !hasTrailingWidgets)
         ? null
-        : Row(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              if (!hideVersionAndChangelog)
-                GestureDetector(
-                  onTap: showChangesFn,
-                  child: Container(
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(12),
-                      color: highlightTouchTargets && showChangesFn != null
-                          ? (theme.brightness == Brightness.light
-                                    ? theme.primaryColor
-                                    : theme.primaryColorLight)
-                                .withAlpha(
-                                  theme.brightness == Brightness.light
-                                      ? 20
-                                      : 40,
-                                )
-                          : null,
-                    ),
-                    padding: highlightTouchTargets
-                        ? const EdgeInsetsDirectional.fromSTEB(12, 0, 12, 0)
-                        : const EdgeInsetsDirectional.fromSTEB(24, 0, 0, 0),
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      crossAxisAlignment: CrossAxisAlignment.end,
-                      children: [
-                        Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Container(
-                              constraints: BoxConstraints(
-                                maxWidth: MediaQuery.sizeOf(context).width / 4,
-                              ),
-                              child: Text(
-                                versionText,
-                                overflow: TextOverflow.ellipsis,
-                                textAlign: TextAlign.end,
-                                style: isVersionPseudo(app.app)
-                                    ? const TextStyle(
-                                        fontStyle: FontStyle.italic,
-                                      )
-                                    : null,
-                              ),
-                            ),
-                          ],
+        : ConstrainedBox(
+            // ListTile measures trailing before title/subtitle. Bound the
+            // secondary version/date column so app and developer names keep
+            // the larger share of the row and truncate last.
+            constraints: BoxConstraints(maxWidth: screenWidth * 0.32),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                if (!hideVersionAndChangelog)
+                  Flexible(
+                    child: GestureDetector(
+                      onTap: showChangesFn,
+                      child: Container(
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(12),
+                          color: highlightTouchTargets && showChangesFn != null
+                              ? (theme.brightness == Brightness.light
+                                        ? theme.primaryColor
+                                        : theme.primaryColorLight)
+                                    .withAlpha(
+                                      theme.brightness == Brightness.light
+                                          ? 20
+                                          : 40,
+                                    )
+                              : null,
                         ),
-                        Row(
-                          mainAxisSize: MainAxisSize.min,
+                        padding: highlightTouchTargets
+                            ? const EdgeInsetsDirectional.fromSTEB(12, 0, 12, 0)
+                            : EdgeInsets.zero,
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          crossAxisAlignment: CrossAxisAlignment.end,
                           children: [
                             Text(
+                              versionText,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              textAlign: TextAlign.end,
+                              style: isVersionPseudo(app.app)
+                                  ? const TextStyle(fontStyle: FontStyle.italic)
+                                  : null,
+                            ),
+                            Text(
                               changesButtonString,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              textAlign: TextAlign.end,
                               style: TextStyle(
                                 fontStyle: FontStyle.italic,
                                 decoration: showChangesFn != null
@@ -805,17 +741,17 @@ class _AppListItem extends StatelessWidget {
                             ),
                           ],
                         ),
-                      ],
+                      ),
                     ),
                   ),
-                ),
-              if (!hideVersionAndChangelog && hasTrailingWidgets)
-                const SizedBox(width: 5),
-              if (skipActive) buildSkippedVersionIcon(),
-              if (!skipActive && hasUpdate) buildUpdateButton(),
-              if (!skipActive && !hasUpdate && hasUncertainUpdate)
-                buildUncertainUpdateButton(),
-            ],
+                if (!hideVersionAndChangelog && hasTrailingWidgets)
+                  const SizedBox(width: 5),
+                if (skipActive) buildSkippedVersionIcon(),
+                if (!skipActive && hasUpdate) buildUpdateButton(),
+                if (!skipActive && !hasUpdate && hasUncertainUpdate)
+                  buildUncertainUpdateButton(),
+              ],
+            ),
           );
 
     Widget buildDownloadProgressControl() {
@@ -1045,6 +981,7 @@ class _AppListItem extends StatelessWidget {
                     start: isLargeScreen ? 12 : 16,
                     end: hasTrailingWidgets ? 4 : (isLargeScreen ? 12 : 16),
                   ),
+                  horizontalTitleGap: 8,
                   leading: leadingWidget,
                   title: Row(
                     children: [
@@ -1133,7 +1070,8 @@ Future<void> _openAdditionalOptionsModal(
   final double screenWidth = MediaQuery.sizeOf(context).width;
   final bool isLargeScreen =
       screenWidth >= kLargeScreenWidthBreakpoint &&
-      !context.read<SettingsProvider>().isTV;
+      !context.read<SettingsProvider>().isTV &&
+      !context.read<SettingsProvider>().alwaysUsePhoneLayout;
 
   if (isLargeScreen) {
     final appsPageState = context.findAncestorStateOfType<AppsPageState>();
@@ -1244,36 +1182,42 @@ class _SwipeableListItemState extends State<_SwipeableListItem>
       case SwipeAction.update:
         final isTrackOnly = app?.additionalSettings['trackOnly'] == true;
         if (isTrackOnly && app != null) {
-          launchUrlString(
-            trackOnlyDownloadPageUrl(app),
-            mode: LaunchMode.externalApplication,
+          unawaited(
+            launchUrlString(
+              trackOnlyDownloadPageUrl(app),
+              mode: LaunchMode.externalApplication,
+            ),
           );
         } else {
-          provider
-              .downloadAndInstallLatestApps([
-                widget.appId,
-              ], globalNavigatorKey.currentContext)
-              .catchError((Object e, StackTrace stackTrace) {
-                unawaited(
-                  provider.logs.add(
-                    'Swipe update failed for ${widget.appId}: $e\n$stackTrace',
-                    level: LogLevels.error,
-                  ),
-                );
-                final errorContext = context.mounted
-                    ? context
-                    : globalNavigatorKey.currentContext;
-                if (errorContext != null && errorContext.mounted) {
-                  showError(e, errorContext);
-                }
-                return <String>[];
-              });
+          unawaited(
+            provider
+                .downloadAndInstallLatestApps([
+                  widget.appId,
+                ], globalNavigatorKey.currentContext)
+                .catchError((Object e, StackTrace stackTrace) {
+                  unawaited(
+                    provider.logs.add(
+                      'Swipe update failed for ${widget.appId}: $e\n$stackTrace',
+                      level: LogLevel.error,
+                    ),
+                  );
+                  final errorContext = context.mounted
+                      ? context
+                      : globalNavigatorKey.currentContext;
+                  if (errorContext != null && errorContext.mounted) {
+                    showError(e, errorContext);
+                  }
+                  return <String>[];
+                }),
+          );
         }
       case SwipeAction.pin:
         if (app != null) {
-          provider.saveApps([
-            app..pinned = !widget.isPinned,
-          ], updateInstalledInfo: false);
+          unawaited(
+            provider.saveApps([
+              app.copyWith(pinned: !widget.isPinned),
+            ], updateInstalledInfo: false),
+          );
         }
       case SwipeAction.appOptions:
         await _openAdditionalOptionsModal(widget.appId, context);
@@ -1282,7 +1226,8 @@ class _SwipeableListItemState extends State<_SwipeableListItem>
           final double screenWidth = MediaQuery.sizeOf(context).width;
           final bool isLargeScreen =
               screenWidth >= kLargeScreenWidthBreakpoint &&
-              !context.read<SettingsProvider>().isTV;
+              !context.read<SettingsProvider>().isTV &&
+              !context.read<SettingsProvider>().alwaysUsePhoneLayout;
 
           if (isLargeScreen) {
             final appsPageState = context
@@ -1331,9 +1276,9 @@ class _SwipeableListItemState extends State<_SwipeableListItem>
           }
         }
       case SwipeAction.open:
-        pm.openApp(widget.appId);
+        unawaited(packageManager.openApp(widget.appId));
       case SwipeAction.appInfo:
-        provider.openAppSettings(widget.appId);
+        unawaited(provider.openAppSettings(widget.appId));
       case SwipeAction.none:
         break;
     }
@@ -1731,7 +1676,7 @@ final RegExp _changeLogUrlRegExp = RegExp(
 );
 
 Null Function()? getChangeLogFn(BuildContext context, App app) {
-  AppSource appSource = SourceProvider().getSource(
+  final AppSource appSource = SourceProvider().getSourceTemplate(
     app.url,
     overrideSource: app.overrideSource,
   );
@@ -2241,7 +2186,6 @@ class AppsPageState extends State<AppsPage> {
   );
   Set<String> selectedAppIds = {};
   DateTime? refreshingSince;
-  bool initialAppLoadCompleted = false;
 
   bool clearSelected() {
     if (selectedAppIds.isNotEmpty) {
@@ -2608,11 +2552,11 @@ class AppsPageState extends State<AppsPage> {
     );
   }
 
-  /// Returns the human-readable display name for a source given its
-  /// runtimeType string (the value stored in [AppsFilter.sourceFilter]).
+  /// Returns the human-readable display name for a source identifier (the
+  /// stable value stored in [AppsFilter.sourceFilter]).
   String _getSourceName(String sourceKey) {
     for (final s in sourceProvider.sourceTemplates) {
-      if (s.runtimeType.toString() == sourceKey) return s.name;
+      if (s.sourceIdentifier == sourceKey) return s.name;
     }
     return sourceKey;
   }
@@ -2736,7 +2680,7 @@ class AppsPageState extends State<AppsPage> {
     final int appsToken = context.select<AppsProvider, int>(
       _appsPageAppsRebuildToken,
     );
-    var appsProvider = context.read<AppsProvider>();
+    final appsProvider = context.read<AppsProvider>();
     // Narrow the SettingsProvider dependency to a hash of just the settings
     // that actually affect this page's build. The previous
     // `context.watch<SettingsProvider>()` subscribed to EVERY notification
@@ -2753,7 +2697,7 @@ class AppsPageState extends State<AppsPage> {
     // We still call [context.read] below for non-reactive access to
     // every other setting the page references (folder rule lookups,
     // setter calls, etc.).
-    final String? watchedFolderId = widget.folderId;
+    final String? watchedViewSettingsId = _viewSettingsId;
     context.select<SettingsProvider, int>(
       (s) => Object.hashAll([
         s.showFolderedAppsOnMainPage,
@@ -2777,20 +2721,21 @@ class AppsPageState extends State<AppsPage> {
         s.cardCornerScale,
         s.leftSwipeAction,
         s.rightSwipeAction,
+        s.alwaysUsePhoneLayout,
         s.appFolders.length,
-        // Folder-scoped overrides: only relevant when this page is a
-        // folder view; a hash-as-zero collapse for the main-page case.
-        watchedFolderId == null
+        // Per-view overrides: relevant for real folders and the synthetic
+        // On-Demand Only view; a hash-as-zero collapse for the main page.
+        watchedViewSettingsId == null
             ? 0
             : Object.hash(
-                s.folderPinUpdates(watchedFolderId),
-                s.folderBuryNonInstalled(watchedFolderId),
-                s.folderSortColumn(watchedFolderId).index,
-                s.folderSortOrder(watchedFolderId).index,
-                s.folderGroupBy(watchedFolderId).index,
-                s.folderGroupNonInstalledSeparately(watchedFolderId),
-                s.folderGroupTrackOnlySeparately(watchedFolderId),
-                s.folderGroupUpdatesSeparately(watchedFolderId),
+                s.folderPinUpdates(watchedViewSettingsId),
+                s.folderBuryNonInstalled(watchedViewSettingsId),
+                s.folderSortColumn(watchedViewSettingsId).index,
+                s.folderSortOrder(watchedViewSettingsId).index,
+                s.folderGroupBy(watchedViewSettingsId).index,
+                s.folderGroupNonInstalledSeparately(watchedViewSettingsId),
+                s.folderGroupTrackOnlySeparately(watchedViewSettingsId),
+                s.folderGroupUpdatesSeparately(watchedViewSettingsId),
               ),
       ]),
     );
@@ -2801,19 +2746,14 @@ class AppsPageState extends State<AppsPage> {
     final double appsListGroupCardRadius = settingsProvider.cardCornerRadiusFor(
       kM3eGroupCardRadius,
     );
-    final double appsListCollapsedHeaderRadius = settingsProvider.cardCornerRadiusFor(
-      SettingsProvider.baseCollapsedHeaderRadius,
-    );
+    final double appsListCollapsedHeaderRadius = settingsProvider
+        .cardCornerRadiusFor(SettingsProvider.baseCollapsedHeaderRadius);
     final double appsListItemOuterRadius = settingsProvider.cardCornerRadiusFor(
       kM3eOuterRadius,
     );
     final double appsListItemInnerRadius = settingsProvider.cardCornerRadiusFor(
       kM3eInnerRadius,
     );
-    if (!initialAppLoadCompleted && !appsProvider.loadingApps) {
-      initialAppLoadCompleted = true;
-    }
-
     Future<void> backgroundScanStoreAvailability() async {
       late final List<String> idsForStoreHintScan;
       if (widget.onDemandOnlyList) {
@@ -2854,7 +2794,7 @@ class AppsPageState extends State<AppsPage> {
       ]);
     }
 
-    refresh() {
+    Future<List<App>> refresh() {
       hapticLightImpact();
       setState(() {
         refreshingSince = DateTime.now();
@@ -2869,53 +2809,19 @@ class AppsPageState extends State<AppsPage> {
         // [AppsProvider.updateAppIcon] with `ignoreCache: true` from the
         // app-detail page, which bypasses this map.
       });
-      final Future<List<App>> refreshFuture;
-      if (widget.onDemandOnlyList) {
-        refreshFuture = appsProvider.checkUpdates(
-          specificIds: appsProvider.apps.values
-              .where((a) => a.app.additionalSettings['onDemandOnly'] == true)
-              .map((a) => a.app.id)
-              .toList(),
-        );
-      } else if (widget.folderId != null) {
-        final String folderId = widget.folderId!;
-        refreshFuture = appsProvider.checkUpdates(
-          specificIds: appsProvider.apps.values
-              .where((a) => folderIdsForApp(a.app).contains(folderId))
-              .map((a) => a.app.id)
-              .toList(),
-        );
-      } else {
-        // Main list: refresh scope matches what's visible on this tab.
-        //
-        // The pull-to-refresh contract is "refresh what I see". When
-        // [SettingsProvider.showFolderedAppsOnMainPage] is on, foldered
-        // apps are visible on the main tab and are included in the
-        // refresh, just like before. When it's off, foldered apps are
-        // hidden from the main tab - users have organized them into
-        // folders specifically to declutter the main view - so we exclude
-        // them from the refresh too. Each folder still has its own
-        // pull-to-refresh that scans only that folder's apps.
-        // Foldered apps are still picked up by background update checks
-        // (when enabled), so they don't go indefinitely stale.
-        //
-        // [getAppsSortedByUpdateCheckTime] already skips on-demand-only
-        // apps; we don't have to filter those out here.
-        if (settingsProvider.showFolderedAppsOnMainPage) {
-          refreshFuture = appsProvider.checkUpdates();
-        } else {
-          refreshFuture = appsProvider.checkUpdates(
-            specificIds: appsProvider.apps.values
-                .where(
-                  (a) => folderIdsForApp(
-                    a.app,
-                  ).where((id) => existingFolderIds.contains(id)).isEmpty,
-                )
-                .map((a) => a.app.id)
-                .toList(),
-          );
-        }
-      }
+      // Manual refresh always checks every app visible on this surface. An
+      // explicit ID list bypasses the background freshness interval while
+      // [checkUpdates] still applies the installed/track-only preference.
+      final Future<List<App>> refreshFuture = appsProvider.checkUpdates(
+        specificIds: appIdsForManualRefresh(
+          apps: appsProvider.apps.values.map((a) => a.app),
+          onDemandOnlyList: widget.onDemandOnlyList,
+          folderId: widget.folderId,
+          showFolderedAppsOnMainPage:
+              settingsProvider.showFolderedAppsOnMainPage,
+          existingFolderIds: existingFolderIds,
+        ),
+      );
       return refreshFuture
           .catchError((e) {
             if (!context.mounted) return <App>[];
@@ -2959,7 +2865,7 @@ class AppsPageState extends State<AppsPage> {
         .where((element) => appsProvider.apps.containsKey(element))
         .toSet();
 
-    toggleAppSelected(App app) {
+    void toggleAppSelected(App app) {
       setState(() {
         if (selectedAppIds.contains(app.id)) {
           selectedAppIds.removeWhere((a) => a == app.id);
@@ -3083,12 +2989,11 @@ class AppsPageState extends State<AppsPage> {
         }
         if (filter.sourceFilter.isNotEmpty &&
             sourceProvider
-                    .getSource(
+                    .getSourceTemplate(
                       app.app.url,
                       overrideSource: app.app.overrideSource,
                     )
-                    .runtimeType
-                    .toString() !=
+                    .sourceIdentifier !=
                 filter.sourceFilter) {
           return false;
         }
@@ -3201,7 +3106,8 @@ class AppsPageState extends State<AppsPage> {
     final double screenWidth = MediaQuery.sizeOf(context).width;
     final bool isLargeScreen =
         screenWidth >= kLargeScreenWidthBreakpoint &&
-        !context.read<SettingsProvider>().isTV;
+        !context.read<SettingsProvider>().isTV &&
+        !settingsProvider.alwaysUsePhoneLayout;
 
     // The two-panel layout needs an effective selection, but mutating
     // [selectedAppId] during build is a Flutter anti-pattern. Derive it locally
@@ -3297,7 +3203,7 @@ class AppsPageState extends State<AppsPage> {
       if (app == null) {
         return false;
       }
-      final AppSource source = SourceProvider().getSource(
+      final AppSource source = SourceProvider().getSourceTemplate(
         app.url,
         overrideSource: app.overrideSource,
       );
@@ -3315,7 +3221,7 @@ class AppsPageState extends State<AppsPage> {
         .where((id) => !buildVerificationBlockedForBatch(id))
         .toList();
 
-    List<String> trackOnlyUpdateIdsAllOrSelected = [];
+    final List<String> trackOnlyUpdateIdsAllOrSelected = [];
     existingUpdateIdsAllOrSelected = existingUpdateIdsAllOrSelected.where((id) {
       if (appsProvider.apps[id]!.app.additionalSettings['trackOnly'] == true) {
         trackOnlyUpdateIdsAllOrSelected.add(id);
@@ -3350,9 +3256,9 @@ class AppsPageState extends State<AppsPage> {
         _existingUpdatesCache.contains(e.app.id) &&
         e.app.additionalSettings['onDemandOnly'] != true;
 
-    var tempRenamed = <AppInMemory>[];
-    var tempPinned = <AppInMemory>[];
-    var tempNotPinned = <AppInMemory>[];
+    final tempRenamed = <AppInMemory>[];
+    final tempPinned = <AppInMemory>[];
+    final tempNotPinned = <AppInMemory>[];
     for (final AppInMemory listedApp in listedApps) {
       if (listedApp.app.hasPendingRepoRename) {
         tempRenamed.add(listedApp);
@@ -3386,7 +3292,7 @@ class AppsPageState extends State<AppsPage> {
       // 1. Categories
       if (effectiveGroupBy == AppsListGroupBy.category) {
         List<String?> getListedCategories(List<AppInMemory> appsSource) {
-          var temp = appsSource.map(
+          final temp = appsSource.map(
             (e) => e.app.categories.isNotEmpty ? e.app.categories : [null],
           );
           return temp.isNotEmpty
@@ -3450,9 +3356,11 @@ class AppsPageState extends State<AppsPage> {
           final keys = appsSource
               .map(
                 (e) => sourceProvider
-                    .getSource(e.app.url, overrideSource: e.app.overrideSource)
-                    .runtimeType
-                    .toString(),
+                    .getSourceTemplate(
+                      e.app.url,
+                      overrideSource: e.app.overrideSource,
+                    )
+                    .sourceIdentifier,
               )
               .toSet()
               .toList();
@@ -3485,12 +3393,11 @@ class AppsPageState extends State<AppsPage> {
             }
             if (isInUpdatesGroup(row)) continue;
             if (sourceProvider
-                    .getSource(
+                    .getSourceTemplate(
                       row.app.url,
                       overrideSource: row.app.overrideSource,
                     )
-                    .runtimeType
-                    .toString() ==
+                    .sourceIdentifier ==
                 sourceKey) {
               indices.add(listingIndex);
             }
@@ -3625,62 +3532,32 @@ class AppsPageState extends State<AppsPage> {
         activeGroupKeys.isNotEmpty &&
         activeGroupKeys.every((key) => !_collapsedGroups.contains(key));
 
-    Set<App> selectedApps = listedApps
+    final Set<App> selectedApps = listedApps
         .map((e) => e.app)
         .where((a) => selectedAppIds.contains(a.id))
         .toSet();
 
-    getLoadingWidgets() {
-      final String? progressFolderId = widget.folderId;
-      final bool onlyCheckInstalledOrTrackOnly =
-          settingsProvider.onlyCheckInstalledOrTrackOnlyApps;
-      final bool showFolderedAppsOnMainPage =
-          settingsProvider.showFolderedAppsOnMainPage;
-      final Set<String> existingFolderIdsSet = settingsProvider.appFolders
-          .map((f) => f.id)
-          .toSet();
-
-      int progressCount = 0;
-      for (final a in appsProvider.apps.values) {
-        // 1. On-demand-only check
-        final bool isOnDemand =
-            a.app.additionalSettings['onDemandOnly'] == true;
-        if (widget.onDemandOnlyList) {
-          if (!isOnDemand) continue;
-        } else {
-          if (isOnDemand) continue;
-        }
-
-        // 2. Folder check
-        final String? folder = progressFolderId;
-        if (folder != null) {
-          if (!folderIdsForApp(a.app).contains(folder)) continue;
-        } else if (!widget.onDemandOnlyList && !showFolderedAppsOnMainPage) {
-          final hasFolder = folderIdsForApp(
-            a.app,
-          ).where((id) => existingFolderIdsSet.contains(id)).isNotEmpty;
-          if (hasFolder) continue;
-        }
-
-        // 3. Installed / Track-only check
-        if (onlyCheckInstalledOrTrackOnly) {
-          final isInstalled = a.app.installedVersion != null;
-          final isTrackOnly = a.app.additionalSettings['trackOnly'] == true;
-          if (!isInstalled && !isTrackOnly) continue;
-        }
-
-        progressCount++;
+    List<Widget> getLoadingWidgets() {
+      if (appsProvider.loadingApps && appsProvider.apps.isEmpty) {
+        return [
+          SliverFillRemaining(
+            hasScrollBody: false,
+            child: Center(
+              child: Semantics(
+                label: tr('pleaseWait'),
+                child: const CircularRipplingWavyProgressIndicator(),
+              ),
+            ),
+          ),
+        ];
       }
-      final int progressDenominator = progressCount > 0 ? progressCount : 1;
       return [
         if (listedApps.isEmpty)
           SliverFillRemaining(
             child: Center(
               child: Text(
                 appsProvider.apps.isEmpty
-                    ? appsProvider.loadingApps
-                          ? tr('pleaseWait')
-                          : tr('noApps')
+                    ? tr('noApps')
                     : widget.onDemandOnlyList && onDemandOnlyAppCount == 0
                     ? tr('onDemandOnlyEmpty')
                     : tr('noAppsForFilter'),
@@ -3689,34 +3566,22 @@ class AppsPageState extends State<AppsPage> {
               ),
             ),
           ),
-        // Show the bar only for explicit user-initiated refreshes
-        // ([refreshingSince] != null) OR for the first app-load before this
-        // page has seen loading complete. Silent foreground reloads also set
-        // [loadingApps], and the app list can legitimately be empty then; the
-        // one-shot guard prevents that empty-library edge case from flashing
-        // the progress bar.
-        if (refreshingSince != null ||
-            (!initialAppLoadCompleted &&
-                appsProvider.loadingApps &&
-                appsProvider.apps.isEmpty))
+        // Initial empty-library loading uses the centered M3E indicator above.
+        // Keep this compact bar for explicit user-initiated refreshes only.
+        if (refreshingSince != null)
           SliverToBoxAdapter(
             // Top padding pushes the bar clear of the [CustomAppBar] blur
             // overlay's bottom edge - sitting flush against it produced a
             // visible half-blurred line through the indicator.
             child: Padding(
               padding: const EdgeInsets.only(top: 12),
-              child: _RefreshProgressBar(
-                refreshingSince: refreshingSince,
-                progressDenominator: progressDenominator,
-                onDemandOnlyList: widget.onDemandOnlyList,
-                folderId: progressFolderId,
-              ),
+              child: _RefreshProgressBar(refreshingSince: refreshingSince),
             ),
           ),
       ];
     }
 
-    getAppIcon(int appIndex) {
+    GestureDetector getAppIcon(int appIndex) {
       final String rowAppId = listedApps[appIndex].app.id;
       // Kick off icon loading once; putIfAbsent prevents duplicate loads.
       // _AppIconWidget independently watches the icon bytes via context.select,
@@ -3737,7 +3602,7 @@ class AppsPageState extends State<AppsPage> {
               _AppIconWidget(appId: rowAppId),
           child: _AppIconWidget(appId: rowAppId),
         ),
-        onDoubleTap: () => pm.openApp(rowAppId),
+        onDoubleTap: () => packageManager.openApp(rowAppId),
         onLongPress: () {
           Navigator.push(
             context,
@@ -3753,7 +3618,7 @@ class AppsPageState extends State<AppsPage> {
       );
     }
 
-    getSingleAppHorizTile(
+    Widget getSingleAppHorizTile(
       int index, {
       M3eListGroupPosition? groupPosition,
       bool flatListBody = false,
@@ -3766,7 +3631,10 @@ class AppsPageState extends State<AppsPage> {
           installed != null && versionOrderUncertainUpdate(app.app);
       final downloadsRunning = appsProvider.areDownloadsRunning();
       final sourceHost = sourceProvider
-          .getSource(app.app.url, overrideSource: app.app.overrideSource)
+          .getSourceTemplate(
+            app.app.url,
+            overrideSource: app.app.overrideSource,
+          )
           .hosts
           .firstOrNull;
       // M3 Container Transform: tapping the row morphs the row's container
@@ -3795,7 +3663,8 @@ class AppsPageState extends State<AppsPage> {
       final double screenWidth = MediaQuery.sizeOf(context).width;
       final bool isLargeScreen =
           screenWidth >= kLargeScreenWidthBreakpoint &&
-          !context.read<SettingsProvider>().isTV;
+          !context.read<SettingsProvider>().isTV &&
+          !settingsProvider.alwaysUsePhoneLayout;
 
       // Builds the row visual given the callback that should fire when the
       // user taps a non-selected row. Used by both the OpenContainer path
@@ -3948,110 +3817,97 @@ class AppsPageState extends State<AppsPage> {
       required String title,
       required List<int> matchingIndices,
     }) {
-      bool isExpanded = !_collapsedGroups.contains(groupKey);
-      bool showExpandedBody = isExpanded;
+      final bool isExpanded = !_collapsedGroups.contains(groupKey);
       final theme = Theme.of(context);
-      return StatefulBuilder(
+      return _ZOrderSliverMainAxisGroup(
         key: ValueKey(groupKey),
-        builder: (context, setGroupState) {
-          return _ZOrderSliverMainAxisGroup(
-            cardRadius: appsListGroupCardRadius,
-            slivers: [
-              SliverPersistentHeader(
-                key: ValueKey('${groupKey}_header'),
-                pinned: true,
-                delegate: _AppsGroupHeaderDelegate(
-                  title: title,
-                  count: matchingIndices.length,
-                  isExpanded: isExpanded,
-                  cardRadius: appsListGroupCardRadius,
-                  collapsedRadius: appsListCollapsedHeaderRadius,
-                  colorScheme: theme.colorScheme,
-                  onTap: () {
-                    final bool wasExpanded = isExpanded;
-                    setGroupState(() {
-                      isExpanded = !isExpanded;
-                      if (wasExpanded) {
-                        showExpandedBody = false;
-                        _collapsedGroups.add(groupKey);
-                      } else {
-                        showExpandedBody = false;
-                        _collapsedGroups.remove(groupKey);
-                      }
-                    });
-                    WidgetsBinding.instance.addPostFrameCallback((_) {
-                      if (!mounted) return;
-                      if (!wasExpanded && isExpanded) {
-                        setGroupState(() {
-                          showExpandedBody = true;
-                        });
-                      }
-                      _saveCollapsedGroups([groupKey], add: wasExpanded);
-                    });
-                  },
-                ),
-              ),
-              if (showExpandedBody && matchingIndices.isNotEmpty)
-                SliverPadding(
-                  padding: const EdgeInsets.fromLTRB(12, 0, 12, 6),
-                  sliver: DecoratedSliver(
-                    decoration: BoxDecoration(
-                      color: settingsProvider.useGradientBackground
-                          ? Colors.transparent
-                          : m3eGroupedListBackdropFill(theme.colorScheme),
-                      borderRadius: BorderRadius.vertical(
-                        bottom: Radius.circular(appsListGroupCardRadius),
-                      ),
-                      border: Border(
-                        left: m3ePureBlackOutlineSide(
-                          theme.colorScheme,
-                          alpha: 0.22,
-                        ),
-                        right: m3ePureBlackOutlineSide(
-                          theme.colorScheme,
-                          alpha: 0.22,
-                        ),
-                        bottom: m3ePureBlackOutlineSide(
-                          theme.colorScheme,
-                          alpha: 0.22,
-                        ),
-                      ),
+        // Clip the scrolling content to the pinned header's top radius, not
+        // the group card radius — the header sits on top, so its corners are
+        // what the content must tuck under (see field doc).
+        headerTopRadius: appsListCollapsedHeaderRadius,
+        slivers: [
+          SliverPersistentHeader(
+            key: ValueKey('${groupKey}_header'),
+            pinned: true,
+            delegate: _AppsGroupHeaderDelegate(
+              title: title,
+              count: matchingIndices.length,
+              isExpanded: isExpanded,
+              cardRadius: appsListGroupCardRadius,
+              collapsedRadius: appsListCollapsedHeaderRadius,
+              colorScheme: theme.colorScheme,
+              onTap: () {
+                // Expansion state lives solely in [_collapsedGroups] and is read
+                // fresh on every build; toggle it via the page's own setState.
+                // A per-group StatefulBuilder used to hold local isExpanded/
+                // showExpandedBody state that desynced when the whole list
+                // rebuilt (e.g. after a search), leaving headers stuck.
+                final bool wasExpanded = !_collapsedGroups.contains(groupKey);
+                setState(() {
+                  if (wasExpanded) {
+                    _collapsedGroups.add(groupKey);
+                  } else {
+                    _collapsedGroups.remove(groupKey);
+                  }
+                });
+                _saveCollapsedGroups([groupKey], add: wasExpanded);
+              },
+            ),
+          ),
+          if (isExpanded && matchingIndices.isNotEmpty)
+            SliverPadding(
+              padding: const EdgeInsets.fromLTRB(12, 0, 12, 6),
+              sliver: DecoratedSliver(
+                decoration: BoxDecoration(
+                  color: settingsProvider.useGradientBackground
+                      ? Colors.transparent
+                      : m3eGroupedListBackdropFill(theme.colorScheme),
+                  borderRadius: BorderRadius.vertical(
+                    bottom: Radius.circular(appsListGroupCardRadius),
+                  ),
+                  border: Border(
+                    left: m3ePureBlackOutlineSide(
+                      theme.colorScheme,
+                      alpha: 0.22,
                     ),
-                    sliver: SliverPadding(
-                      padding: const EdgeInsets.only(
-                        top: kM3eHeaderToFirstCardGap,
-                      ),
-                      sliver: SliverList(
-                        delegate: SliverChildBuilderDelegate(
-                          (context, index) {
-                            final int tileIndex = index ~/ 2;
-                            if (index.isOdd) {
-                              return const SizedBox(height: kM3eItemGap);
-                            }
-                            return getSingleAppHorizTile(
-                              matchingIndices[tileIndex],
-                              groupPosition: matchingIndices.length == 1
-                                  ? M3eListGroupPosition.only
-                                  : tileIndex == 0
-                                  ? M3eListGroupPosition.first
-                                  : tileIndex == matchingIndices.length - 1
-                                  ? M3eListGroupPosition.last
-                                  : M3eListGroupPosition.middle,
-                            );
-                          },
-                          childCount: matchingIndices.length * 2 - 1,
-                        ),
-                      ),
+                    right: m3ePureBlackOutlineSide(
+                      theme.colorScheme,
+                      alpha: 0.22,
+                    ),
+                    bottom: m3ePureBlackOutlineSide(
+                      theme.colorScheme,
+                      alpha: 0.22,
                     ),
                   ),
                 ),
-            ],
-          );
-        },
+                sliver: SliverPadding(
+                  padding: const EdgeInsets.only(top: kM3eHeaderToFirstCardGap),
+                  sliver: SliverList(
+                    delegate: SliverChildBuilderDelegate((context, index) {
+                      final int tileIndex = index ~/ 2;
+                      if (index.isOdd) {
+                        return const SizedBox(height: kM3eItemGap);
+                      }
+                      return getSingleAppHorizTile(
+                        matchingIndices[tileIndex],
+                        groupPosition: matchingIndices.length == 1
+                            ? M3eListGroupPosition.only
+                            : tileIndex == 0
+                            ? M3eListGroupPosition.first
+                            : tileIndex == matchingIndices.length - 1
+                            ? M3eListGroupPosition.last
+                            : M3eListGroupPosition.middle,
+                      );
+                    }, childCount: matchingIndices.length * 2 - 1),
+                  ),
+                ),
+              ),
+            ),
+        ],
       );
     }
 
-    getCategoryCollapsibleTile(int index) {
+    Widget getCategoryCollapsibleTile(int index) {
       final folderPrefix = widget.folderId != null
           ? 'folder_${widget.folderId}_'
           : '';
@@ -4060,7 +3916,8 @@ class AppsPageState extends State<AppsPage> {
       final String categoryMapKey = listedCategories[index] ?? '__null__';
       final matchingIndices =
           _categoryGroupListedIndices[categoryMapKey] ?? const <int>[];
-      capFirstChar(String str) => str[0].toUpperCase() + str.substring(1);
+      String capFirstChar(String str) =>
+          str[0].toUpperCase() + str.substring(1);
       final title = capFirstChar(listedCategories[index] ?? tr('noCategory'));
       return buildCollapsibleTile(
         groupKey: catKey,
@@ -4069,7 +3926,7 @@ class AppsPageState extends State<AppsPage> {
       );
     }
 
-    getNonInstalledCollapsibleTile() {
+    Widget getNonInstalledCollapsibleTile() {
       final folderPrefix = widget.folderId != null
           ? 'folder_${widget.folderId}_'
           : '';
@@ -4080,7 +3937,7 @@ class AppsPageState extends State<AppsPage> {
       );
     }
 
-    getTrackOnlyCollapsibleTile() {
+    Widget getTrackOnlyCollapsibleTile() {
       final folderPrefix = widget.folderId != null
           ? 'folder_${widget.folderId}_'
           : '';
@@ -4091,7 +3948,7 @@ class AppsPageState extends State<AppsPage> {
       );
     }
 
-    getSourceCollapsibleTile(int index) {
+    Widget getSourceCollapsibleTile(int index) {
       final sourceKey = listedSources[index];
       final folderPrefix = widget.folderId != null
           ? 'folder_${widget.folderId}_'
@@ -4104,17 +3961,16 @@ class AppsPageState extends State<AppsPage> {
           ? listedApps.firstWhere(
               (appInMem) =>
                   sourceProvider
-                      .getSource(
+                      .getSourceTemplate(
                         appInMem.app.url,
                         overrideSource: appInMem.app.overrideSource,
                       )
-                      .runtimeType
-                      .toString() ==
+                      .sourceIdentifier ==
                   sourceKey,
             )
           : listedApps[matchingIndices.first];
       final sourceTitle = sourceProvider
-          .getSource(
+          .getSourceTemplate(
             firstForTitle.app.url,
             overrideSource: firstForTitle.app.overrideSource,
           )
@@ -4127,7 +3983,7 @@ class AppsPageState extends State<AppsPage> {
       );
     }
 
-    getAppTypeCollapsibleTile(AppTypeGroup type) {
+    Widget getAppTypeCollapsibleTile(AppTypeGroup type) {
       final folderPrefix = widget.folderId != null
           ? 'folder_${widget.folderId}_'
           : '';
@@ -4145,7 +4001,7 @@ class AppsPageState extends State<AppsPage> {
       );
     }
 
-    getUpdatesCollapsibleTile() {
+    Widget getUpdatesCollapsibleTile() {
       final folderPrefix = widget.folderId != null
           ? 'folder_${widget.folderId}_'
           : '';
@@ -4156,7 +4012,7 @@ class AppsPageState extends State<AppsPage> {
       );
     }
 
-    getMassObtainFunction() {
+    Null Function()? getMassObtainFunction() {
       return appsProvider.areDownloadsRunning() ||
               (existingUpdateIdsAllOrSelected.isEmpty &&
                   newInstallIdsAllOrSelected.isEmpty &&
@@ -4164,7 +4020,7 @@ class AppsPageState extends State<AppsPage> {
           ? null
           : () {
               hapticHeavyImpact();
-              List<GeneratedFormItem> formItems = [];
+              final List<GeneratedFormItem> formItems = [];
               if (existingUpdateIdsAllOrSelected.isNotEmpty) {
                 formItems.add(
                   GeneratedFormSwitch(
@@ -4178,7 +4034,7 @@ class AppsPageState extends State<AppsPage> {
                         ).toLowerCase(),
                       ],
                     ),
-                    defaultValue: true,
+                    value: true,
                   ),
                 );
               }
@@ -4195,7 +4051,7 @@ class AppsPageState extends State<AppsPage> {
                         ).toLowerCase(),
                       ],
                     ),
-                    defaultValue: existingUpdateIdsAllOrSelected.isEmpty,
+                    value: existingUpdateIdsAllOrSelected.isEmpty,
                   ),
                 );
               }
@@ -4209,7 +4065,7 @@ class AppsPageState extends State<AppsPage> {
                         plural('apps', trackOnlyUpdateIdsAllOrSelected.length),
                       ],
                     ),
-                    defaultValue:
+                    value:
                         existingUpdateIdsAllOrSelected.isEmpty &&
                         newInstallIdsAllOrSelected.isEmpty,
                   ),
@@ -4218,7 +4074,7 @@ class AppsPageState extends State<AppsPage> {
               showDialog<Map<String, dynamic>?>(
                 context: context,
                 builder: (BuildContext ctx) {
-                  var totalApps =
+                  final totalApps =
                       existingUpdateIdsAllOrSelected.length +
                       newInstallIdsAllOrSelected.length +
                       trackOnlyUpdateIdsAllOrSelected.length;
@@ -4236,10 +4092,11 @@ class AppsPageState extends State<AppsPage> {
                   if (values.isEmpty) {
                     values = getDefaultValuesFromFormItems([formItems]);
                   }
-                  bool shouldInstallUpdates = values['updates'] == true;
-                  bool shouldInstallNew = values['installs'] == true;
-                  bool shouldMarkTrackOnlies = values['trackonlies'] == true;
-                  List<String> toInstall = [];
+                  final bool shouldInstallUpdates = values['updates'] == true;
+                  final bool shouldInstallNew = values['installs'] == true;
+                  final bool shouldMarkTrackOnlies =
+                      values['trackonlies'] == true;
+                  final List<String> toInstall = [];
                   if (shouldInstallUpdates) {
                     toInstall.addAll(existingUpdateIdsAllOrSelected);
                   }
@@ -4249,28 +4106,30 @@ class AppsPageState extends State<AppsPage> {
                   if (shouldMarkTrackOnlies) {
                     toInstall.addAll(trackOnlyUpdateIdsAllOrSelected);
                   }
-                  appsProvider
-                      .downloadAndInstallLatestApps(
-                        toInstall,
-                        globalNavigatorKey.currentContext,
-                      )
-                      .catchError((e) {
-                        if (!context.mounted) return <String>[];
-                        showError(e, context);
-                        return <String>[];
-                      })
-                      .then((value) {
-                        if (value.isNotEmpty && shouldInstallUpdates) {
-                          if (!context.mounted) return;
-                          showMessage(tr('appsUpdated'), context);
-                        }
-                      });
+                  unawaited(
+                    appsProvider
+                        .downloadAndInstallLatestApps(
+                          toInstall,
+                          globalNavigatorKey.currentContext,
+                        )
+                        .catchError((e) {
+                          if (!context.mounted) return <String>[];
+                          showError(e, context);
+                          return <String>[];
+                        })
+                        .then((value) {
+                          if (value.isNotEmpty && shouldInstallUpdates) {
+                            if (!context.mounted) return;
+                            showMessage(tr('appsUpdated'), context);
+                          }
+                        }),
+                  );
                 }
               });
             };
     }
 
-    launchCategorizeDialog() {
+    Future<Null> Function() launchCategorizeDialog() {
       return () async {
         try {
           final appsToCategorize = selectedApps.toList();
@@ -4296,10 +4155,13 @@ class AppsPageState extends State<AppsPage> {
                       );
                   var index = 0;
                   appsProvider.saveApps(
-                    appsToCategorize.map((app) {
-                      app.categories = updatedCategoryLists[index++];
-                      return app;
-                    }).toList(),
+                    appsToCategorize
+                        .map(
+                          (app) => app.copyWith(
+                            categories: updatedCategoryLists[index++],
+                          ),
+                        )
+                        .toList(),
                     updateInstalledInfo: false,
                   );
                 },
@@ -4313,7 +4175,7 @@ class AppsPageState extends State<AppsPage> {
       };
     }
 
-    showMassMarkDialog() {
+    Future<dynamic> showMassMarkDialog() {
       return showDialog(
         context: context,
         builder: (BuildContext ctx) {
@@ -4348,7 +4210,7 @@ class AppsPageState extends State<AppsPage> {
                           !appsProvider.isVersionDetectionPossible(
                             appsProvider.apps[a.id],
                           )) {
-                        a.installedVersion = a.latestVersion;
+                        return a.copyWith(installedVersion: a.latestVersion);
                       }
                       return a;
                     }).toList(),
@@ -4369,13 +4231,10 @@ class AppsPageState extends State<AppsPage> {
       });
     }
 
-    pinSelectedApps() {
-      var pinStatus = selectedApps.where((element) => element.pinned).isEmpty;
+    void pinSelectedApps() {
+      final pinStatus = selectedApps.where((element) => element.pinned).isEmpty;
       appsProvider.saveApps(
-        selectedApps.map((e) {
-          e.pinned = pinStatus;
-          return e;
-        }).toList(),
+        selectedApps.map((e) => e.copyWith(pinned: pinStatus)).toList(),
         updateInstalledInfo: false,
       );
       Navigator.of(context).pop();
@@ -4384,7 +4243,7 @@ class AppsPageState extends State<AppsPage> {
     // Shared bulk-action bodies, used by both the phone "more options" dialog
     // and the large-screen action pane. They intentionally do not dismiss any
     // surface — the phone dialog pops at its own call sites; the pane stays.
-    downloadSelectedAppAssets() {
+    void downloadSelectedAppAssets() {
       appsProvider
           .downloadAppAssets(
             selectedApps.map((e) => e.id).toList(),
@@ -4396,7 +4255,7 @@ class AppsPageState extends State<AppsPage> {
           });
     }
 
-    shareSelectedAppUrls() {
+    void shareSelectedAppUrls() {
       String urls = '';
       for (var a in selectedApps) {
         urls += '${a.url}\n';
@@ -4407,7 +4266,7 @@ class AppsPageState extends State<AppsPage> {
       );
     }
 
-    shareSelectedAppConfigLinks() {
+    void shareSelectedAppConfigLinks() {
       String urls = '';
       for (var a in selectedApps) {
         urls +=
@@ -4418,17 +4277,17 @@ class AppsPageState extends State<AppsPage> {
       );
     }
 
-    exportSelectedApps() {
-      var encoder = const JsonEncoder.withIndent("    ");
-      var exportJSON = encoder.convert(
+    void exportSelectedApps() {
+      const encoder = JsonEncoder.withIndent('    ');
+      final exportJSON = encoder.convert(
         appsProvider.generateExportJSON(
           appIds: selectedApps.map((e) => e.id).toList(),
           overrideExportSettings: 0,
         ),
       );
-      String fn =
+      final String fn =
           '${tr('obtainiumExportHyphenatedLowercase')}-${DateTime.now().toIso8601String().replaceAll(':', '-')}-count-${selectedApps.length}';
-      XFile f = XFile.fromData(
+      final XFile f = XFile.fromData(
         Uint8List.fromList(utf8.encode(exportJSON)),
         mimeType: 'application/json',
         name: fn,
@@ -4438,7 +4297,7 @@ class AppsPageState extends State<AppsPage> {
       );
     }
 
-    showMoreOptionsDialog() {
+    Future<dynamic> showMoreOptionsDialog() {
       return showDialog(
         context: context,
         builder: (BuildContext ctx) {
@@ -4534,7 +4393,7 @@ class AppsPageState extends State<AppsPage> {
     // Shows all filter/search options in a modal bottom sheet.
     // Changes to toggles and dropdown are applied live; the sheet is dismissed
     // by dragging down or tapping outside.
-    showFilterSheet() {
+    void showFilterSheet() {
       showAppModalSheet<void>(
         context: context,
         builder: (sheetCtx) {
@@ -4566,7 +4425,7 @@ class AppsPageState extends State<AppsPage> {
               final sourceItems = [
                 MapEntry('', tr('none')),
                 ...sourceProvider.sourceTemplates.map(
-                  (e) => MapEntry(e.runtimeType.toString(), e.name),
+                  (e) => MapEntry(e.sourceIdentifier, e.name),
                 ),
               ];
 
@@ -4779,7 +4638,7 @@ class AppsPageState extends State<AppsPage> {
       );
     }
 
-    getFilterButtonsRow() {
+    Row getFilterButtonsRow() {
       final colorScheme = Theme.of(context).colorScheme;
       final selectAllFooterStyle = TextButton.styleFrom(
         foregroundColor: colorScheme.primary,
@@ -5182,7 +5041,7 @@ class AppsPageState extends State<AppsPage> {
                                     )
                                   : null,
                               title: _searchExpanded
-                                  ? ""
+                                  ? ''
                                   : (widget.onDemandOnlyList
                                         ? tr('onDemandOnlyAppsTitle')
                                         : currentFolderName ??
@@ -5308,20 +5167,31 @@ class AppsPageState extends State<AppsPage> {
                                                         .id] ??
                                                     0;
                                                 if (upd > 0) {
-                                                  return Row(
-                                                    mainAxisSize:
-                                                        MainAxisSize.min,
+                                                  return Stack(
+                                                    clipBehavior: Clip.none,
+                                                    alignment:
+                                                        AlignmentDirectional.centerStart,
                                                     children: [
+                                                      const Row(
+                                                        mainAxisSize:
+                                                            MainAxisSize.min,
+                                                        children: [
+                                                          SizedBox(
+                                                            width: 4,
+                                                            height: 16,
+                                                          ),
+                                                          SizedBox(width: 6),
+                                                          Icon(
+                                                            Icons.folder_outlined,
+                                                          ),
+                                                        ],
+                                                      ),
                                                       Badge(
                                                         label: Text('$upd'),
                                                         child: const SizedBox(
                                                           width: 4,
                                                           height: 16,
                                                         ),
-                                                      ),
-                                                      const SizedBox(width: 6),
-                                                      const Icon(
-                                                        Icons.folder_outlined,
                                                       ),
                                                     ],
                                                   );
@@ -5887,7 +5757,6 @@ class AppsPageState extends State<AppsPage> {
                                         child: SingleChildScrollView(
                                           padding: const EdgeInsets.all(24),
                                           child: M3eExpressiveSettingsCard(
-
                                             colorScheme: Theme.of(
                                               context,
                                             ).colorScheme,
@@ -5935,9 +5804,9 @@ class AppsPageState extends State<AppsPage> {
   }
 
   void openAppById(String appId, {bool autoScroll = true}) {
-    AppsProvider appsProvider = context.read<AppsProvider>();
+    final AppsProvider appsProvider = context.read<AppsProvider>();
 
-    AppInMemory? app = appsProvider.apps[appId];
+    final AppInMemory? app = appsProvider.apps[appId];
 
     // Should exist, since we just looked it up, but just in case...
     if (app == null) {
@@ -5947,7 +5816,8 @@ class AppsPageState extends State<AppsPage> {
     final double screenWidth = MediaQuery.sizeOf(context).width;
     final bool isLargeScreen =
         screenWidth >= kLargeScreenWidthBreakpoint &&
-        !context.read<SettingsProvider>().isTV;
+        !context.read<SettingsProvider>().isTV &&
+        !context.read<SettingsProvider>().alwaysUsePhoneLayout;
 
     if (isLargeScreen) {
       setState(() {
@@ -5975,7 +5845,7 @@ class AppsPageState extends State<AppsPage> {
     final sp = context.read<SettingsProvider>();
     final groupBy = _effectiveGroupBy(sp);
 
-    int index = _listedAppsCache.indexWhere((sa) => sa.app.id == appId);
+    final int index = _listedAppsCache.indexWhere((sa) => sa.app.id == appId);
     if (index == -1) return;
 
     double offset = 120.0; // Base header height approximation
@@ -6097,7 +5967,7 @@ class AppsPageState extends State<AppsPage> {
       final app = appInMem.app;
       if (excludedFolderIdsForApp(app).contains(folder.id)) continue;
       final resolvedSource = sourceProvider
-          .getSource(app.url, overrideSource: app.overrideSource)
+          .getSourceTemplate(app.url, overrideSource: app.overrideSource)
           .runtimeType
           .toString();
       if (folder.rule!.matches(app, resolvedSource: resolvedSource)) {
@@ -6154,7 +6024,10 @@ class AppsPageState extends State<AppsPage> {
           .where((a) => a.app.additionalSettings['onDemandOnly'] != true)
           .where((a) {
             final resolvedSource = sourceProvider
-                .getSource(a.app.url, overrideSource: a.app.overrideSource)
+                .getSourceTemplate(
+                  a.app.url,
+                  overrideSource: a.app.overrideSource,
+                )
                 .runtimeType
                 .toString();
             return rule.matches(a.app, resolvedSource: resolvedSource);
@@ -6234,18 +6107,19 @@ class AppsPageState extends State<AppsPage> {
                           )
                           .toList(),
                       child: InputDecorator(
-                        decoration: appPageOutlinedInputDecoration(
-                          dCtx,
-                          labelText: tr('folderRuleField'),
-                        ).copyWith(
-                          suffixIcon: const Icon(Icons.arrow_drop_down),
-                          contentPadding: const EdgeInsets.fromLTRB(
-                            12,
-                            16,
-                            4,
-                            16,
-                          ),
-                        ),
+                        decoration:
+                            appPageOutlinedInputDecoration(
+                              dCtx,
+                              labelText: tr('folderRuleField'),
+                            ).copyWith(
+                              suffixIcon: const Icon(Icons.arrow_drop_down),
+                              contentPadding: const EdgeInsets.fromLTRB(
+                                12,
+                                16,
+                                4,
+                                16,
+                              ),
+                            ),
                         child: Text(_folderRuleFieldLabel(ruleField)),
                       ),
                     ),
@@ -6262,35 +6136,37 @@ class AppsPageState extends State<AppsPage> {
                           )
                           .toList(),
                       child: InputDecorator(
-                        decoration: appPageOutlinedInputDecoration(
-                          dCtx,
-                          labelText: tr('folderRuleMatch'),
-                        ).copyWith(
-                          suffixIcon: const Icon(Icons.arrow_drop_down),
-                          contentPadding: const EdgeInsets.fromLTRB(
-                            12,
-                            16,
-                            4,
-                            16,
-                          ),
-                        ),
+                        decoration:
+                            appPageOutlinedInputDecoration(
+                              dCtx,
+                              labelText: tr('folderRuleMatch'),
+                            ).copyWith(
+                              suffixIcon: const Icon(Icons.arrow_drop_down),
+                              contentPadding: const EdgeInsets.fromLTRB(
+                                12,
+                                16,
+                                4,
+                                16,
+                              ),
+                            ),
                         child: Text(_folderRuleMatchLabel(ruleMatch)),
                       ),
                     ),
                     const SizedBox(height: 8),
                     TextField(
                       controller: ruleValueCtrl,
-                      decoration: appPageOutlinedInputDecoration(
-                        dCtx,
-                        labelText: tr('folderRuleValue'),
-                      ).copyWith(
-                        helperText: matchCount != null
-                            ? tr(
-                                'ruleMatchesXApps',
-                                namedArgs: {'count': '$matchCount'},
-                              )
-                            : null,
-                      ),
+                      decoration:
+                          appPageOutlinedInputDecoration(
+                            dCtx,
+                            labelText: tr('folderRuleValue'),
+                          ).copyWith(
+                            helperText: matchCount != null
+                                ? tr(
+                                    'ruleMatchesXApps',
+                                    namedArgs: {'count': '$matchCount'},
+                                  )
+                                : null,
+                          ),
                       onChanged: (_) => setDState(() {}),
                     ),
                   ],

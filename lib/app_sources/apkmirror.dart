@@ -3,7 +3,7 @@ import 'dart:io';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:html/dom.dart' as html_dom;
 import 'package:http/http.dart';
-import 'package:obtainium/components/generated_form.dart';
+import 'package:obtainium/components/generated_form_model.dart';
 import 'package:obtainium/custom_errors.dart';
 import 'package:obtainium/providers/apps_provider.dart';
 import 'package:obtainium/providers/logs_provider.dart';
@@ -43,7 +43,7 @@ Future<void> _logApkMirrorSizeDebug(String message) async {
   try {
     await LogsProvider(runDefaultClear: false).add(
       '$_apkMirrorSizeDebugPrefix APKMirror: $message',
-      level: LogLevels.debug,
+      level: LogLevel.debug,
     );
   } catch (_) {
     // Debug logging must never affect callers.
@@ -159,7 +159,7 @@ Future<String?> iconUrlFromApkMirrorAppPageHtml(
   String pageUrl,
 ) async {
   final doc = await parseHtmlOffIsolate(html);
-  String? raw =
+  final String? raw =
       doc.querySelector('meta[property="og:image"]')?.attributes['content'] ??
       doc.querySelector('meta[name="twitter:image"]')?.attributes['content'] ??
       doc
@@ -501,33 +501,30 @@ DateTime? releaseDateFromApkMirrorRssItemInner(String itemInnerXml) {
 
 class APKMirror extends AppSource {
   APKMirror() {
+    name = 'APKMirror';
     hosts = ['apkmirror.com'];
     enforceTrackOnly = true;
     showReleaseDateAsVersionToggle = true;
     appIdInferIsOptional = true;
-
-    additionalSourceAppSpecificSettingFormItems = [
-      [
-        GeneratedFormSwitch(
-          'fallbackToOlderReleases',
-          label: tr('fallbackToOlderReleases'),
-          defaultValue: true,
-        ),
-      ],
-      [
-        GeneratedFormTextField(
-          'filterReleaseTitlesByRegEx',
-          label: tr('filterReleaseTitlesByRegEx'),
-          required: false,
-          additionalValidators: [
-            (value) {
-              return regExValidator(value);
-            },
-          ],
-        ),
-      ],
-    ];
   }
+
+  @override
+  List<List<GeneratedFormItem>>
+  get additionalSourceAppSpecificSettingFormItems => [
+    AppSource.fallbackToOlderReleasesFormItem,
+    [
+      GeneratedFormTextField(
+        'filterReleaseTitlesByRegEx',
+        label: tr('filterReleaseTitlesByRegEx'),
+        required: false,
+        additionalValidators: [
+          (value) {
+            return regExValidator(value);
+          },
+        ],
+      ),
+    ],
+  ];
 
   @override
   Future<Map<String, String>?> getRequestHeaders(
@@ -550,15 +547,14 @@ class APKMirror extends AppSource {
 
   @override
   String sourceSpecificStandardizeURL(String url, {bool forSelection = false}) {
-    RegExp standardUrlRegEx = RegExp(
-      '^https?://(www\\.)?${getSourceRegex(hosts)}/apk/[^/]+/[^/]+',
-      caseSensitive: false,
+    // Adopt upstream's base helper for the core standardization, then apply
+    // the fork-only canonical-slug alias remapping on top (e.g. the
+    // youtube-music automotive/wear-os slugs both collapse to youtube-music).
+    final standardizedUrl = standardizeUrlWithRegex(
+      url,
+      subdomainPrefix: r'(www\.)?',
+      pathPattern: r'/apk/[^/]+/[^/]+',
     );
-    RegExpMatch? match = standardUrlRegEx.firstMatch(url);
-    if (match == null) {
-      throw InvalidURLError(name);
-    }
-    final standardizedUrl = match.group(0)!;
     final lowerStandardizedUrl = standardizedUrl.toLowerCase();
     for (final aliasEntry in _apkMirrorCanonicalAppSlugByAlias.entries) {
       final aliasSuffix = '/${aliasEntry.key}';
@@ -578,7 +574,7 @@ class APKMirror extends AppSource {
     String standardUrl, {
     Map<String, dynamic> additionalSettings = const {},
   }) async {
-    Response res = await sourceRequest(standardUrl, additionalSettings);
+    final Response res = await sourceRequest(standardUrl, additionalSettings);
     if (res.statusCode != 200) return null;
     const packagePattern = r'com(?:\.[a-zA-Z0-9_]+){2,}';
     final packageFullMatch = RegExp('^$packagePattern\$');
@@ -601,15 +597,15 @@ class APKMirror extends AppSource {
     String standardUrl,
     Map<String, dynamic> additionalSettings,
   ) async {
-    bool fallbackToOlderReleases =
+    final bool fallbackToOlderReleases =
         additionalSettings['fallbackToOlderReleases'] == true;
-    String? regexFilter =
+    final String? regexFilter =
         (additionalSettings['filterReleaseTitlesByRegEx'] as String?)
                 ?.isNotEmpty ==
             true
         ? additionalSettings['filterReleaseTitlesByRegEx']
         : null;
-    Response res = await sourceRequest(
+    final Response res = await sourceRequest(
       '$standardUrl/feed/',
       additionalSettings,
     );
@@ -762,8 +758,8 @@ class APKMirror extends AppSource {
   }
 
   AppNames getAppNames(String standardUrl) {
-    String temp = standardUrl.substring(standardUrl.indexOf('://') + 3);
-    List<String> names = temp.substring(temp.indexOf('/') + 1).split('/');
+    final String temp = standardUrl.substring(standardUrl.indexOf('://') + 3);
+    final List<String> names = temp.substring(temp.indexOf('/') + 1).split('/');
     return AppNames(names[1], names[2]);
   }
 
@@ -804,9 +800,10 @@ class APKMirror extends AppSource {
       }
       // Best-effort: a release page often lists the picked APK's size
       // directly without us having to walk the per-variant download pages.
-      int? releasePageSize = await apkSizeBytesFromApkMirrorReleasePageHtml(
-        releasePageResponse.body,
-      );
+      final int? releasePageSize =
+          await apkSizeBytesFromApkMirrorReleasePageHtml(
+            releasePageResponse.body,
+          );
       final downloadPageEntries =
           await _apkMirrorDownloadPageUrlEntriesFromReleasePageHtml(
             releasePageResponse.body,

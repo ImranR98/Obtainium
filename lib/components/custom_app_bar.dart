@@ -29,7 +29,8 @@ class CustomAppBar extends StatefulWidget {
   final PreferredSizeWidget? bottom;
 
   /// When provided, replaces the expanding-title layout with a compact inline
-  /// row: [Title text]  [Expanded(searchWidget)]  [actions].
+  /// row. The title and search field use the same bounded slot, with the caller
+  /// showing one at a time, while [actions] remain fixed at the end.
   final Widget? searchWidget;
 
   /// Optional style override for the compact layout title.
@@ -152,36 +153,22 @@ class _CustomAppBarState extends State<CustomAppBar> {
           ),
           child: Row(
             children: [
-              // Wrapping the title in [AnimatedSize] gives the Row layout
-              // a smoothly-tweened width when the title's intrinsic width
-              // changes (e.g. when [titleStyle] flips between titleLarge
-              // and titleSmall as the search bar expands/collapses).
-              // Without it, every animation frame of the implicit
-              // text-style transition re-runs the Text widget's intrinsic
-              // width measurement, and the Row reflows discretely - that's
-              // what produced the stutter as the search bar reached the
-              // title and the title had to give up space.
-              //
-              // [AnimatedDefaultTextStyle]'s default curve is
-              // [Curves.linear], which makes the size shift feel
-              // mechanical. Switching to [Curves.fastEaseInToSlowEaseOut]
-              // matches the M3-emphasized motion curve we use elsewhere
-              // for page transitions.
               if (widget.title.isNotEmpty) ...[
-                AnimatedSize(
-                  duration: const Duration(milliseconds: 200),
-                  curve: Curves.fastEaseInToSlowEaseOut,
-                  alignment: AlignmentDirectional.centerStart,
+                Expanded(
                   child: AnimatedDefaultTextStyle(
                     duration: const Duration(milliseconds: 200),
                     curve: Curves.fastEaseInToSlowEaseOut,
                     style: resolvedCompactTitle,
-                    child: Text(widget.title),
+                    child: Text(
+                      widget.title,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
                   ),
                 ),
                 const SizedBox(width: 10),
-              ],
-              Expanded(child: widget.searchWidget!),
+              ] else
+                Expanded(child: widget.searchWidget!),
             ],
           ),
         ),

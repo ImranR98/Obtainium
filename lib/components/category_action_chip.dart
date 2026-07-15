@@ -217,7 +217,7 @@ class _PartialRadioPainter extends CustomPainter {
 
     canvas.drawCircle(center, 7, outlinePaint);
 
-    final innerRadius = 4.75;
+    const innerRadius = 4.75;
     final innerBounds = Rect.fromCircle(center: center, radius: innerRadius);
     final halfDot = Path()
       ..moveTo(center.dx, center.dy - innerRadius)

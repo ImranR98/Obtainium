@@ -1,6 +1,51 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:obtainium/providers/apps_provider.dart';
 
+// `reconciledInstalledVersionFromLatest` and
+// `reconciledInstalledVersionForDisabledVersionDetection` used to be top-level
+// helpers in apps_provider.dart. They were inlined into
+// AppsProvider.getCorrectedInstallStatusAppIfPossible (which drives App objects
+// and is covered by version_order_test.dart) and removed from the public
+// surface. They are reconstructed here verbatim from their original
+// implementation so these focused unit tests keep exercising the still-public
+// production reconciliation primitives (`reconcileVersionDifferences` and
+// `versionsEffectivelyEqual`) that do the actual work.
+String? reconciledInstalledVersionFromLatest(
+  String installedVersion,
+  String latestVersion,
+) {
+  if (installedVersion == latestVersion ||
+      versionsEffectivelyEqual(installedVersion, latestVersion)) {
+    return latestVersion;
+  }
+  final reconciled = reconcileVersionDifferences(
+    installedVersion,
+    latestVersion,
+  );
+  if (reconciled == null) {
+    return null;
+  }
+  return reconciled.key ? reconciled.value : installedVersion;
+}
+
+String? reconciledInstalledVersionForDisabledVersionDetection(
+  String realInstalledVersion,
+  String reportedInstalledVersion,
+  String latestVersion,
+) {
+  return reconciledInstalledVersionFromLatest(
+        realInstalledVersion,
+        latestVersion,
+      ) ??
+      (reconcileVersionDifferences(
+                realInstalledVersion,
+                reportedInstalledVersion,
+              )?.key ==
+              false
+          ? realInstalledVersion
+          : null);
+}
+
 void main() {
   test('installed version reconciliation keeps source latest when equal', () {
     expect(reconciledInstalledVersionFromLatest('1.1.0', '1.1.0'), '1.1.0');

@@ -12,10 +12,7 @@ import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
 import android.content.pm.PackageManager
-import android.content.pm.ResolveInfo
-import android.graphics.Bitmap
-import android.graphics.Canvas
-import android.graphics.drawable.BitmapDrawable
+import android.content.res.Configuration
 import android.net.Uri
 import android.net.wifi.WifiManager
 import android.os.Build
@@ -26,17 +23,20 @@ import android.os.PowerManager
 import android.os.SystemClock
 import android.provider.DocumentsContract
 import android.system.Os
+import android.util.DisplayMetrics
+import androidx.core.content.FileProvider
 import io.flutter.embedding.android.FlutterActivity
 import io.flutter.embedding.engine.FlutterEngine
 import io.flutter.plugin.common.MethodChannel
-import java.io.ByteArrayOutputStream
 import java.io.File
 import java.io.PrintWriter
 import java.io.StringWriter
 import java.util.UUID
+import kotlin.math.roundToInt
 import kotlin.system.exitProcess
 
 private const val CHANNEL = "dev.imranr.obtainium/installer"
+private const val EXTERNAL_INSTALL_CHANNEL = "dev.imranr.obtainium/external_install"
 private const val DEVICE_APPS_CHANNEL = "dev.imranr.obtainium/device_apps"
 private const val POWER_CHANNEL = "dev.imranr.obtainium/power"
 private const val STORAGE_CHANNEL = "dev.imranr.obtainium/storage"
@@ -54,17 +54,8 @@ private const val APK_MIME = "application/vnd.android.package-archive"
 private const val RELEASE_DIR = "releases"
 private const val INSTALL_TIMEOUT_MS = 120_000L
 private const val INSTALL_BROADCAST_BATCH_CONTINUE_DELAY_MS = 200L
+private const val MAX_SYSTEM_DISPLAY_SCALE = 1.2f
 private const val OPEN_PERSISTED_DOCUMENT_TREE_REQUEST_CODE = 5107
-/// Third-party installers that implement the standard Intent.EXTRA_RETURN_RESULT convention
-/// (e.g. the stock PackageInstaller, InstallerX-Revived 26.07 preview+) call
-/// setResult(RESULT_OK/RESULT_FIRST_USER) before finishing, delivered here as an authoritative
-/// fast-path signal. Unknown installers stay on the broadcast/focus/timeout watcher because
-/// some installers, such as App Manager, return RESULT_CANCELED even when they may have
-/// installed successfully.
-/// Requires omitting FLAG_ACTIVITY_NEW_TASK on the launch intent (see [launchInstallIntent])
-/// because that flag makes Android return a synthetic immediate RESULT_CANCELED instead of ever
-/// delivering the installer's real result.
-private const val THIRD_PARTY_INSTALL_REQUEST_CODE = 5108
 /// Ignore focus regain if it arrived within this window of the FIRST focus loss (transition bounce).
 /// Only the first loss is recorded; subsequent oscillations during TPI teardown are ignored.
 private const val FOCUS_REGAIN_CANCEL_MIN_MS = 200L
@@ -85,7 +76,24 @@ private const val FOCUS_REGAIN_SETTLE_MS = 500L
 /// complete the session after this fallback rather than waiting the full 120s timeout.
 private const val BROADCAST_CONFIRMED_INTERACTIVE_FALLBACK_MS = 5_000L
 
+private fun Context.withCappedDisplayScale(): Context {
+    val currentDensityDpi = resources.configuration.densityDpi
+    val maximumDensityDpi =
+        (DisplayMetrics.DENSITY_DEVICE_STABLE * MAX_SYSTEM_DISPLAY_SCALE).roundToInt()
+    if (currentDensityDpi <= maximumDensityDpi) return this
+
+    return createConfigurationContext(
+        Configuration().apply {
+            densityDpi = maximumDensityDpi
+        },
+    )
+}
+
 class MainActivity : FlutterActivity() {
+    override fun attachBaseContext(newBase: Context) {
+        super.attachBaseContext(newBase.withCappedDisplayScale())
+    }
+
     companion object {
         private var notificationsMethodChannel: MethodChannel? = null
         private val downloadCancelLock = Any()
@@ -188,7 +196,6 @@ class MainActivity : FlutterActivity() {
         val handler: Handler,
         val receiver: BroadcastReceiver,
         val releaseCacheFiles: List<File>,
-        val installerSupportsReturnResult: Boolean,
         var responded: Boolean = false,
         var focusLost: Boolean = false,
         var focusLostAtUptimeMs: Long = 0L,
@@ -221,55 +228,6 @@ class MainActivity : FlutterActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         installNativeCrashHandler(this)
         super.onCreate(savedInstanceState)
-    }
-
-    private fun handleThirdPartyInstallActivityResult(resultCode: Int) {
-        val watcher = installWatcher ?: return
-        when (resultCode) {
-            Activity.RESULT_OK -> completeThirdPartyInstallSession(watcher, InstallSessionOutcome.Success(true))
-            Activity.RESULT_FIRST_USER -> completeThirdPartyInstallSession(watcher, InstallSessionOutcome.Success(false))
-            Activity.RESULT_CANCELED -> {
-                if (watcher.installerSupportsReturnResult) {
-                    completeThirdPartyInstallSession(
-                        watcher,
-                        InstallSessionOutcome.Success(watcher.packageInstallBroadcastReceived),
-                    )
-                }
-            }
-            else -> completeThirdPartyInstallSession(watcher, InstallSessionOutcome.Success(false))
-        }
-    }
-
-    private fun installerSupportsReturnResult(
-        installerPackageName: String?,
-        installerActivityName: String?,
-    ): Boolean {
-        val packageName = installerPackageName?.lowercase().orEmpty()
-        val activityName = installerActivityName?.lowercase().orEmpty()
-        if (
-            packageName == "com.android.packageinstaller" ||
-            packageName == "com.google.android.packageinstaller"
-        ) {
-            return true
-        }
-        if (packageName.contains("installerx") || activityName.contains("installerx")) {
-            return true
-        }
-        if (!installerPackageName.isNullOrEmpty() && !installerActivityName.isNullOrEmpty()) {
-            val label = try {
-                val activityInfo = packageManager.getActivityInfo(
-                    ComponentName(installerPackageName, installerActivityName),
-                    0,
-                )
-                activityInfo.loadLabel(packageManager).toString().lowercase()
-            } catch (_: Exception) {
-                ""
-            }
-            if (label.contains("installerx")) {
-                return true
-            }
-        }
-        return false
     }
 
     private fun completeThirdPartyInstallSession(watcher: InstallWatcher, outcome: InstallSessionOutcome) {
@@ -341,7 +299,12 @@ class MainActivity : FlutterActivity() {
             val duplicateInstallerReply =
                 intent.action == SESSION_API_PACKAGE_INSTALLED_ACTION &&
                     ex.message == "Reply already submitted"
-            if (!duplicateInstallerReply) {
+            // #3018/#3015: super.onNewIntent can throw if the Flutter engine
+            // isn't attached yet. A shared-text intent is replayed via
+            // deliverPendingSharedText() once configureFlutterEngine runs, so
+            // swallow that case rather than crashing.
+            val shareIntentBeforeEngineReady = intent.action == Intent.ACTION_SEND
+            if (!duplicateInstallerReply && !shareIntentBeforeEngineReady) {
                 throw ex
             }
         }
@@ -355,13 +318,6 @@ class MainActivity : FlutterActivity() {
         installerChannel = MethodChannel(flutterEngine.dartExecutor.binaryMessenger, CHANNEL)
         installerChannel?.setMethodCallHandler { call, result ->
             when (call.method) {
-                "queryApkInstallerActivities" -> {
-                    try {
-                        result.success(queryApkInstallerActivities())
-                    } catch (ex: Exception) {
-                        result.error("QUERY_ERROR", ex.message, null)
-                    }
-                }
                 "launchInstallIntent" -> {
                     try {
                         val pathArg = call.argument<String>("path")!!
@@ -374,6 +330,27 @@ class MainActivity : FlutterActivity() {
                         launchInstallIntent(apkSourcePaths, targetPackage, targetActivity, expectedPkgName, result)
                     } catch (ex: Exception) {
                         result.error("INSTALL_ERROR", ex.message, null)
+                    }
+                }
+                else -> result.notImplemented()
+            }
+        }
+        MethodChannel(
+            flutterEngine.dartExecutor.binaryMessenger,
+            EXTERNAL_INSTALL_CHANNEL,
+        ).setMethodCallHandler { call, result ->
+            when (call.method) {
+                "listInstallTargets" -> result.success(listInstallTargets())
+                "contentUriForFile" -> {
+                    val path = call.argument<String>("path")
+                    if (path.isNullOrEmpty()) {
+                        result.error("BAD_ARGS", "Missing file path", null)
+                    } else {
+                        try {
+                            result.success(contentUriForFile(path))
+                        } catch (ex: Exception) {
+                            result.error("URI_FAILED", ex.message, null)
+                        }
                     }
                 }
                 else -> result.notImplemented()
@@ -534,7 +511,11 @@ class MainActivity : FlutterActivity() {
     }
 
     private fun getSharedTextFromIntent(intent: Intent?): String? {
-        if (intent?.action != Intent.ACTION_SEND || intent?.type != "text/plain") {
+        // Accept any text/* share (matches the manifest's text/* SEND filter and
+        // upstream's broadened handling), not just text/plain.
+        if (intent?.action != Intent.ACTION_SEND ||
+            intent.type?.startsWith("text/") != true
+        ) {
             return null
         }
         return intent.getCharSequenceExtra(Intent.EXTRA_TEXT)
@@ -581,11 +562,6 @@ class MainActivity : FlutterActivity() {
     }
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
-        if (requestCode == THIRD_PARTY_INSTALL_REQUEST_CODE) {
-            handleThirdPartyInstallActivityResult(resultCode)
-            return
-        }
-
         if (requestCode != OPEN_PERSISTED_DOCUMENT_TREE_REQUEST_CODE) {
             super.onActivityResult(requestCode, resultCode, data)
             return
@@ -849,85 +825,50 @@ class MainActivity : FlutterActivity() {
         return labelsByPackageName
     }
 
-    private fun queryApkInstallerActivities(): List<Map<String, Any>> {
-        val results = mutableMapOf<String, Map<String, Any>>()
-
-        val installIntent = Intent(Intent.ACTION_INSTALL_PACKAGE).apply {
-            setDataAndType(Uri.parse("content://dummy/test.apk"), APK_MIME)
-            addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-        }
-        for (resolveInfo in packageManager.queryIntentActivities(installIntent, 0)) {
-            if (!shouldShowInstallerActivity(resolveInfo)) continue
-            val key = "${resolveInfo.activityInfo.packageName}|${resolveInfo.activityInfo.name}"
-            if (!results.containsKey(key)) {
-                results[key] = resolveInfoToMap(resolveInfo)
-            }
-        }
-
-        val viewIntent = Intent(Intent.ACTION_VIEW).apply {
-            setDataAndType(Uri.parse("content://dummy/test.apk"), APK_MIME)
-            addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-        }
-        for (resolveInfo in packageManager.queryIntentActivities(viewIntent, 0)) {
-            if (!shouldShowInstallerActivity(resolveInfo)) continue
-            val key = "${resolveInfo.activityInfo.packageName}|${resolveInfo.activityInfo.name}"
-            if (!results.containsKey(key)) {
-                results[key] = resolveInfoToMap(resolveInfo)
-            }
-        }
-
-        return results.values.toList()
-    }
-
-    private fun shouldShowInstallerActivity(resolveInfo: ResolveInfo): Boolean {
-        val packageName = resolveInfo.activityInfo.packageName
-        if (!packageName.equals("io.github.muntashirakon.AppManager", ignoreCase = true)) {
-            return true
-        }
-        val activityName = resolveInfo.activityInfo.name.lowercase()
-        if (activityName.endsWith("packageinstalleractivity")) {
-            return true
-        }
-        return resolveInfo.loadLabel(packageManager)
-            .toString()
-            .trim()
-            .equals("install", ignoreCase = true)
-    }
-
-    private fun resolveInfoToMap(resolveInfo: ResolveInfo): Map<String, Any> {
-        val pkgName = resolveInfo.activityInfo.packageName
-        val activityName = resolveInfo.activityInfo.name
-        val label = resolveInfo.loadLabel(packageManager).toString()
-        val iconBytes = try {
-            val drawable = resolveInfo.loadIcon(packageManager)
-            val bitmap = if (drawable is BitmapDrawable && drawable.bitmap != null) {
-                drawable.bitmap
-            } else {
-                val bmp = Bitmap.createBitmap(
-                    drawable.intrinsicWidth.coerceAtLeast(1),
-                    drawable.intrinsicHeight.coerceAtLeast(1),
-                    Bitmap.Config.ARGB_8888
+    /**
+     * One entry per install-capable activity across all apps. Apps that expose
+     * several install-capable activities return all of them so the user can
+     * pick the specific intent they want.
+     */
+    private fun listInstallTargets(): List<Map<String, String>> {
+        val targets = ArrayList<Map<String, String>>()
+        val probe = Uri.parse("content://dev.imranr.obtainium.probe/sample.apk")
+        val actions = listOf(Intent.ACTION_VIEW, Intent.ACTION_INSTALL_PACKAGE)
+        for (action in actions) {
+            @Suppress("DEPRECATION")
+            val intent = Intent(action).setDataAndType(probe, APK_MIME)
+            for (resolved in packageManager.queryIntentActivities(intent, 0)) {
+                val info = resolved.activityInfo ?: continue
+                val pkg = info.packageName ?: continue
+                if (pkg == packageName) continue
+                val activity = info.name ?: continue
+                val activityLabel = runCatching {
+                    when {
+                        resolved.labelRes != 0 || resolved.nonLocalizedLabel != null ->
+                            resolved.loadLabel(packageManager)
+                        info.labelRes != 0 || info.nonLocalizedLabel != null ->
+                            info.loadLabel(packageManager)
+                        else -> null
+                    }?.toString()?.trim()?.ifEmpty { null }
+                }.getOrNull()
+                targets.add(
+                    buildMap {
+                        put("package", pkg)
+                        put("activity", activity)
+                        if (activityLabel != null) {
+                            put("activityLabel", activityLabel)
+                        }
+                    },
                 )
-                val canvas = Canvas(bmp)
-                drawable.setBounds(0, 0, canvas.width, canvas.height)
-                drawable.draw(canvas)
-                bmp
             }
-            val stream = ByteArrayOutputStream()
-            bitmap.compress(Bitmap.CompressFormat.PNG, 100, stream)
-            stream.toByteArray()
-        } catch (_: Exception) {
-            ByteArray(0)
         }
-        val result = mutableMapOf<String, Any>(
-            "packageName" to pkgName,
-            "activityName" to activityName,
-            "label" to label,
-        )
-        if (iconBytes.isNotEmpty()) {
-            result["icon"] = iconBytes
-        }
-        return result
+        return targets
+    }
+
+    /** Exposes a downloaded file through the app's FileProvider as a content:// URI. */
+    private fun contentUriForFile(path: String): String {
+        val uri = FileProvider.getUriForFile(this, packageName, File(path))
+        return uri.toString()
     }
 
     @Suppress("DEPRECATION")
@@ -982,16 +923,9 @@ class MainActivity : FlutterActivity() {
                 }
                 setDataAndType(contentUris[0], primaryMime)
             }
-            // FLAG_ACTIVITY_NEW_TASK is only safe for the fire-and-forget path below: Android
-            // returns a synthetic immediate RESULT_CANCELED for startActivityForResult() when
-            // the launch intent carries this flag, before the installer even runs. The tracked
-            // path relies on receiving the installer's real result, so it must omit the flag.
-            flags = installFlag or if (expectedPkgName.isNullOrEmpty()) Intent.FLAG_ACTIVITY_NEW_TASK else 0
+            flags = installFlag or Intent.FLAG_ACTIVITY_NEW_TASK
             if (!targetPackage.isNullOrEmpty() && !targetActivity.isNullOrEmpty()) {
                 component = ComponentName(targetPackage, targetActivity)
-            }
-            if (!expectedPkgName.isNullOrEmpty()) {
-                putExtra(Intent.EXTRA_RETURN_RESULT, true)
             }
         }
 
@@ -1068,7 +1002,6 @@ class MainActivity : FlutterActivity() {
             handler,
             receiver,
             releaseFiles,
-            installerSupportsReturnResult(targetPackage, targetActivity),
         )
         installWatcher = sessionWatcher
         registerReceiver(receiver, filter)
@@ -1083,7 +1016,7 @@ class MainActivity : FlutterActivity() {
 
         handler.post {
             try {
-                startActivityForResult(intent, THIRD_PARTY_INSTALL_REQUEST_CODE)
+                startActivity(intent)
             } catch (ex: Exception) {
                 if (installWatcher === sessionWatcher && !sessionWatcher.responded) {
                     completeThirdPartyInstallSession(

@@ -138,6 +138,22 @@ class _StubIzzyOnDroid extends IzzyOnDroid {
   }
 }
 
+class _StubFDroidRepo extends FDroidRepo {
+  _StubFDroidRepo(this.indexXml);
+
+  final String indexXml;
+
+  @override
+  Future<Response> sourceRequest(
+    String url,
+    Map<String, dynamic> additionalSettings, {
+    bool followRedirects = true,
+    Object? postBody,
+  }) async {
+    return Response(indexXml, 200, request: Request('GET', Uri.parse(url)));
+  }
+}
+
 class _StubGitHub extends GitHub {
   @override
   Future<Response> sourceRequest(
@@ -192,54 +208,54 @@ class _StubGitHub extends GitHub {
 
 App _buildCurrentApp({required String latestVersion, int? apkSizeBytes}) {
   return App(
-    'com.example.app',
-    'https://www.apkmirror.com/apk/example/example',
-    'Example',
-    'Example',
-    null, // installedVersion
-    latestVersion,
-    const <MapEntry<String, String>>[],
-    0,
-    {'trackOnly': true, 'appId': 'com.example.app'},
-    DateTime.now(),
-    false,
+    id: 'com.example.app',
+    url: 'https://www.apkmirror.com/apk/example/example',
+    author: 'Example',
+    name: 'Example',
+    installedVersion: null,
+    latestVersion: latestVersion,
+    apkUrls: const <MapEntry<String, String>>[],
+    preferredApkIndex: 0,
+    additionalSettings: {'trackOnly': true, 'appId': 'com.example.app'},
+    lastUpdateCheck: DateTime.now(),
+    pinned: false,
     apkSizeBytes: apkSizeBytes,
   );
 }
 
 App _buildCurrentNamedApp({required String name}) {
   return App(
-    'org.example.app',
-    'https://example.com/app',
-    'Example Author',
-    name,
-    null,
-    '1.0',
-    const <MapEntry<String, String>>[
+    id: 'org.example.app',
+    url: 'https://example.com/app',
+    author: 'Example Author',
+    name: name,
+    installedVersion: null,
+    latestVersion: '1.0',
+    apkUrls: const <MapEntry<String, String>>[
       MapEntry('example.apk', 'https://example.com/example.apk'),
     ],
-    0,
-    <String, dynamic>{},
-    DateTime.now(),
-    false,
+    preferredApkIndex: 0,
+    additionalSettings: <String, dynamic>{},
+    lastUpdateCheck: DateTime.now(),
+    pinned: false,
   );
 }
 
 App _buildCurrentTempIdNamedApp({required String name}) {
   return App(
-    '123456789',
-    'https://example.com/app',
-    'Example Author',
-    name,
-    null,
-    '1.0',
-    const <MapEntry<String, String>>[
+    id: '123456789',
+    url: 'https://example.com/app',
+    author: 'Example Author',
+    name: name,
+    installedVersion: null,
+    latestVersion: '1.0',
+    apkUrls: const <MapEntry<String, String>>[
       MapEntry('example.apk', 'https://example.com/example.apk'),
     ],
-    0,
-    <String, dynamic>{},
-    DateTime.now(),
-    false,
+    preferredApkIndex: 0,
+    additionalSettings: <String, dynamic>{},
+    lastUpdateCheck: DateTime.now(),
+    pinned: false,
   );
 }
 
@@ -301,6 +317,40 @@ void main() {
 
   setUp(() {
     SharedPreferences.setMockInitialValues({});
+  });
+
+  test(
+    'source resolution reuses templates but returns fresh mutable sources',
+    () {
+      final SourceProvider provider = SourceProvider();
+      const String url = 'https://github.com/example/app';
+
+      final AppSource firstSource = provider.getSource(url);
+      final AppSource secondSource = provider.getSource(url);
+      final AppSource firstTemplate = provider.getSourceTemplate(url);
+      final AppSource secondTemplate = provider.getSourceTemplate(url);
+
+      expect(firstSource, isA<GitHub>());
+      expect(secondSource, isA<GitHub>());
+      expect(identical(firstSource, secondSource), isFalse);
+      expect(identical(firstTemplate, secondTemplate), isTrue);
+    },
+  );
+
+  test('override resolution mutates only the fresh matched source', () {
+    final SourceProvider provider = SourceProvider();
+    final AppSource githubTemplate = provider.getSourceTemplate(
+      'https://github.com/example/app',
+    );
+    final AppSource overriddenSource = provider.getSource(
+      'https://git.example.com/example/app',
+      overrideSource: githubTemplate.sourceIdentifier,
+    );
+
+    expect(overriddenSource, isA<GitHub>());
+    expect(overriddenSource.hosts, <String>['git.example.com']);
+    expect(overriddenSource.hostChanged, isTrue);
+    expect(githubTemplate.hosts, contains('github.com'));
   });
 
   // ── Size cache key invalidation ─────────────────────────────────────
@@ -491,6 +541,46 @@ void main() {
     },
   );
 
+  test(
+    'F-Droid repo source uses shared parser for valid releases and metadata',
+    () async {
+      final details =
+          await _StubFDroidRepo('''
+<fdroid><repo name="Example Repo"/><application id="org.example.app">
+  <name>Example App</name>
+  <icon>example.png</icon>
+  <marketvercode>3</marketvercode>
+  <package>
+    <version>4.0</version>
+    <versioncode>4</versioncode>
+  </package>
+  <package>
+    <version>3.0</version>
+    <versioncode>3</versioncode>
+    <apkname>org.example.app_3.apk</apkname>
+    <size>12345</size>
+    <binaries>org.example.app_3.apk</binaries>
+  </package>
+</application></fdroid>
+''').getLatestAPKDetails('https://repo.example/fdroid/repo', <String, dynamic>{
+            'appIdOrName': 'org.example.app',
+          });
+
+      expect(details.version, '3.0');
+      expect(details.names.name, 'Example App');
+      expect(details.apkSizeBytes, 12345);
+      expect(
+        details.iconUrl,
+        'https://repo.example/fdroid/repo/icons/example.png',
+      );
+      expect(details.reproducibleStatus, reproducibleBuildStatusVerified);
+      expect(
+        details.apkUrls.single.value,
+        'https://repo.example/fdroid/repo/org.example.app_3.apk',
+      );
+    },
+  );
+
   test('IzzyOnDroid uses app page metadata as icon fallback', () async {
     final details = await _StubIzzyOnDroid().getLatestAPKDetails(
       'https://apt.izzysoft.de/fdroid/index/apk/org.example.app',
@@ -640,19 +730,19 @@ void main() {
 
   test('package-id name override is ignored when source name is readable', () {
     final app = App(
-      'org.example.app',
-      'https://example.com/app',
-      'Example Author',
-      'Readable Name',
-      null,
-      '1.0',
-      const <MapEntry<String, String>>[
+      id: 'org.example.app',
+      url: 'https://example.com/app',
+      author: 'Example Author',
+      name: 'Readable Name',
+      installedVersion: null,
+      latestVersion: '1.0',
+      apkUrls: const <MapEntry<String, String>>[
         MapEntry('example.apk', 'https://example.com/example.apk'),
       ],
-      0,
-      <String, dynamic>{'appName': 'org.example.app'},
-      DateTime.now(),
-      false,
+      preferredApkIndex: 0,
+      additionalSettings: <String, dynamic>{'appName': 'org.example.app'},
+      lastUpdateCheck: DateTime.now(),
+      pinned: false,
     );
 
     expect(app.finalName, 'Readable Name');

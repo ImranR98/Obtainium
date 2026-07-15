@@ -104,7 +104,7 @@ void _logApkMirrorSizeDebugFromAppPage(String message) {
     try {
       await LogsProvider(
         runDefaultClear: false,
-      ).add('OBTAINX-APK-SIZE-DEBUG AppPage: $message', level: LogLevels.debug);
+      ).add('OBTAINX-APK-SIZE-DEBUG AppPage: $message', level: LogLevel.debug);
     } catch (_) {}
   }());
 }
@@ -200,8 +200,9 @@ Future<String?> _checkPlayStoreAvailability(String packageId) async {
         HttpHeaders.userAgentHeader,
         'Mozilla/5.0 (Linux; Android 14) AppleWebKit/537.36',
       );
-      final response =
-          await request.close().timeout(const Duration(seconds: 10));
+      final response = await request.close().timeout(
+        const Duration(seconds: 10),
+      );
       await response.drain<void>();
       client.close();
       if (response.statusCode == 200) {
@@ -355,8 +356,8 @@ class _DownloadProgressAction extends StatelessWidget {
         ? '${tr('installing')}…'
         : isFlaggedState
         ? (scanStatus == malwareScanStatusFlagged
-            ? tr('flaggedByVirusTotal')
-            : tr('virusTotalScanFailed'))
+              ? tr('flaggedByVirusTotal')
+              : tr('virusTotalScanFailed'))
         : tr('downloadingX', args: ['${dp.round()}%$bytesLabel']);
     final Color barColor = isFlaggedState
         ? actionTheme.colorScheme.error
@@ -856,7 +857,7 @@ class _AppPageState extends State<AppPage> {
 
   Future<void> _saveEdit(AppInMemory appData, AppsProvider appsProvider) async {
     if (appData.downloadProgress != null || updating) return;
-    final updatedApp =
+    App updatedApp =
         appsProvider.apps[widget.appId]?.app.deepCopy() ??
         appData.app.deepCopy();
     final newName = _nameController.text.trim();
@@ -872,13 +873,12 @@ class _AppPageState extends State<AppPage> {
       updatedApp.additionalSettings['appAuthor'] = newAuthor;
     }
     final newUrl = _urlController.text.trim();
-    updatedApp.url = newUrl;
+    updatedApp = updatedApp.copyWith(url: newUrl);
     final newId = _packageController.text.trim();
     if (newId.isNotEmpty && newId != updatedApp.id) {
-      updatedApp.allowIdChange = true;
-      updatedApp.id = newId;
+      updatedApp = updatedApp.copyWith(allowIdChange: true, id: newId);
     }
-    updatedApp.categories = _editCategories;
+    updatedApp = updatedApp.copyWith(categories: _editCategories);
 
     final String notesText = _notesController.text.trim();
     if (notesText.isEmpty) {
@@ -1018,7 +1018,7 @@ class _AppPageState extends State<AppPage> {
     Provider.of<LogsProvider>(
       hostContext,
       listen: false,
-    ).add(error.toString(), level: LogLevels.error);
+    ).add(error.toString(), level: LogLevel.error);
     Provider.of<AppsProvider>(
       hostContext,
       listen: false,
@@ -1310,8 +1310,8 @@ class _AppPageState extends State<AppPage> {
     if (app?.app.hasPendingRepoRename != true) {
       return const SizedBox.shrink();
     }
-    var appValue = app!;
-    var pendingUrl = appValue.app.pendingRepoRenameUrl!;
+    final appValue = app!;
+    final pendingUrl = appValue.app.pendingRepoRenameUrl!;
     final colorScheme = ColorScheme.of(context);
     final textTheme = TextTheme.of(context);
     return Column(
@@ -1487,7 +1487,7 @@ class _AppPageState extends State<AppPage> {
                           pendingUrl,
                         );
                         if (mounted) {
-                          onUpdate(appValue.app.id);
+                          unawaited(onUpdate(appValue.app.id));
                         }
                       },
                       child: Text(tr('updateUrl')),
@@ -1703,10 +1703,10 @@ class _AppPageState extends State<AppPage> {
             }
           },
           onNavigationRequest: (NavigationRequest request) =>
-              !(request.url.startsWith("http://") ||
-                  request.url.startsWith("https://") ||
-                  request.url.startsWith("ftp://") ||
-                  request.url.startsWith("ftps://"))
+              !(request.url.startsWith('http://') ||
+                  request.url.startsWith('https://') ||
+                  request.url.startsWith('ftp://') ||
+                  request.url.startsWith('ftps://'))
               ? NavigationDecision.prevent
               : NavigationDecision.navigate,
         ),
@@ -1827,7 +1827,7 @@ class _AppPageState extends State<AppPage> {
       // in either case we want to skip the stale write.
       if (freshApp.latestVersion != currentApp.latestVersion) return;
       if (freshApp.apkSizeBytes == resolvedSize) return;
-      final App updated = freshApp.deepCopy()..apkSizeBytes = resolvedSize;
+      final App updated = freshApp.copyWith(apkSizeBytes: resolvedSize);
       await appsProvider.saveApps(
         [updated],
         // No need to re-export to disk just because we filled in a size.
@@ -1872,7 +1872,7 @@ class _AppPageState extends State<AppPage> {
       // Independently check Play Store in the background so other store
       // buttons (F-Droid, APKPure, APKMirror) appear immediately from cache
       // without waiting for the Play Store network round-trip.
-      _maybeCheckAndCacheAllStores(id);
+      unawaited(_maybeCheckAndCacheAllStores(id));
       // The version may have just bumped, in which case [SourceProvider.getApp]
       // cleared the cached size and we need to walk APKMirror again. The
       // resolver is a no-op when the size is still present.
@@ -1881,8 +1881,9 @@ class _AppPageState extends State<AppPage> {
       if (resetVersion) {
         final app = appsProvider.apps[id]?.app;
         if (app != null) {
-          app.installedVersion = null;
-          appsProvider.saveApps([app]);
+          unawaited(
+            appsProvider.saveApps([app.copyWith(installedVersion: null)]),
+          );
         }
       }
     } catch (err) {
@@ -1914,7 +1915,7 @@ class _AppPageState extends State<AppPage> {
     });
   }
 
-  static const double _storeSourceIconSize = 40;
+  static const double _storeSourceIconSize = 32;
 
   Widget _buildStoreSourceLaunchIcon({
     required BuildContext iconContext,
@@ -1943,7 +1944,7 @@ class _AppPageState extends State<AppPage> {
         },
         borderRadius: BorderRadius.circular(12),
         child: Padding(
-          padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 4),
+          padding: const EdgeInsets.all(8),
           child: picture,
         ),
       ),
@@ -2004,15 +2005,15 @@ class _AppPageState extends State<AppPage> {
     );
 
     final bool useIconPageColors = settingsProvider.matchAppPageToIconColors;
-    var showAppWebpageFinal =
+    final showAppWebpageFinal =
         (settingsProvider.showAppWebpage &&
             !widget.showOppositeOfPreferredView) ||
         (!settingsProvider.showAppWebpage &&
             widget.showOppositeOfPreferredView);
 
-    bool areDownloadsRunning = appsProvider.areDownloadsRunning();
+    final bool areDownloadsRunning = appsProvider.areDownloadsRunning();
 
-    AppInMemory? app = appsProvider.apps[widget.appId];
+    final AppInMemory? app = appsProvider.apps[widget.appId];
     if (!_requestedMissingIconLoad && app != null && app.icon == null) {
       _requestedMissingIconLoad = true;
       WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -2160,9 +2161,9 @@ class _AppPageState extends State<AppPage> {
         );
       });
     }
-    var trackOnly = app?.app.additionalSettings['trackOnly'] == true;
+    final trackOnly = app?.app.additionalSettings['trackOnly'] == true;
 
-    bool isVersionDetectionStandard =
+    final bool isVersionDetectionStandard =
         app?.app.additionalSettings['versionDetection'] == 'auto' ||
         app?.app.additionalSettings['versionDetection'] == 'standard' ||
         app?.app.additionalSettings['versionDetection'] == 'versionCode' ||
@@ -2464,14 +2465,14 @@ class _AppPageState extends State<AppPage> {
       );
     }
 
-    getInfoColumn(BuildContext pageThemeContext, {bool small = false}) {
+    Column getInfoColumn(BuildContext pageThemeContext, {bool small = false}) {
       final ThemeData pageTheme = Theme.of(pageThemeContext);
       final undeterminedTrackOnlyInstalled =
           trackOnly &&
           app?.app.additionalSettings['trackOnlyUndeterminedInstalledVersion'] ==
               true &&
           app?.app.installedVersion == null;
-      bool installed = app?.app.installedVersion != null;
+      final bool installed = app?.app.installedVersion != null;
       final String? installedVerStr = app?.app.installedVersion;
       final String latestVerStr = app?.app.latestVersion ?? '';
       final effectivelyEqual =
@@ -2500,7 +2501,7 @@ class _AppPageState extends State<AppPage> {
           !versionOrderUnclearState &&
           versionCmp != 1 &&
           installedVersionIsNewerOrEqual(installedVerStr, latestVerStr);
-      var changeLogFn = app != null ? getChangeLogFn(context, app.app) : null;
+      final changeLogFn = app != null ? getChangeLogFn(context, app.app) : null;
 
       final lastUpdateCheckLabel = tr(
         'lastUpdateCheckX',
@@ -2598,9 +2599,11 @@ class _AppPageState extends State<AppPage> {
           if (!context.mounted) return;
           await appsProvider.checkUpdate(submittedPackageId);
           if (!context.mounted) return;
-          Navigator.of(context).pushReplacement(
-            heroFriendlyAppPageRoute<void>(
-              (ctx) => AppPage(appId: submittedPackageId),
+          unawaited(
+            Navigator.of(context).pushReplacement(
+              heroFriendlyAppPageRoute<void>(
+                (ctx) => AppPage(appId: submittedPackageId),
+              ),
             ),
           );
         } catch (err) {
@@ -3065,10 +3068,9 @@ class _AppPageState extends State<AppPage> {
                           borderColor: githubAttestationCantCheck
                               ? Colors.orange.withValues(alpha: 0.55)
                               : githubAttestationUnsupported
-                              ? Theme.of(pageThemeContext)
-                                    .colorScheme
-                                    .outline
-                                    .withValues(alpha: 0.45)
+                              ? Theme.of(
+                                  pageThemeContext,
+                                ).colorScheme.outline.withValues(alpha: 0.45)
                               : null,
                           contentColor: githubAttestationCantCheck
                               ? Colors.orange.shade800
@@ -3095,10 +3097,9 @@ class _AppPageState extends State<AppPage> {
                               ? Colors.orange.withValues(alpha: 0.16)
                               : Colors.green.withValues(alpha: 0.15),
                           borderColor: malwareScanFlagged
-                              ? Theme.of(pageThemeContext)
-                                    .colorScheme
-                                    .error
-                                    .withValues(alpha: 0.55)
+                              ? Theme.of(
+                                  pageThemeContext,
+                                ).colorScheme.error.withValues(alpha: 0.55)
                               : malwareScanError
                               ? Colors.orange.withValues(alpha: 0.55)
                               : Colors.green.withValues(alpha: 0.5),
@@ -3445,7 +3446,7 @@ class _AppPageState extends State<AppPage> {
     Widget buildDetailHeroContent(BuildContext themeContext) {
       const double heroScale = 1.2;
       const heroIconSize = 58.0;
-      final scaledIconSize = heroIconSize * heroScale;
+      const scaledIconSize = heroIconSize * heroScale;
       final titleStyle = Theme.of(themeContext).textTheme.titleLarge;
       final bylineStyle = Theme.of(themeContext).textTheme.bodySmall;
       final String listHeroTag = widget.appsListHeroFolderId != null
@@ -3462,7 +3463,7 @@ class _AppPageState extends State<AppPage> {
         onTap: _editMode
             ? null
             : (app?.installedInfo != null
-                  ? () => pm.openApp(widget.appId)
+                  ? () => packageManager.openApp(widget.appId)
                   : null),
         emptyPlaceholder: Container(
           height: scaledIconSize,
@@ -3557,7 +3558,7 @@ class _AppPageState extends State<AppPage> {
       );
     }
 
-    getFullInfoColumn(BuildContext themeContext, {bool small = false}) {
+    Column getFullInfoColumn(BuildContext themeContext, {bool small = false}) {
       final ThemeData dialogColumnTheme = Theme.of(themeContext);
       const heroIconSize = 48.0;
       final double dialogIconSize = small ? 70 : heroIconSize;
@@ -3744,7 +3745,7 @@ class _AppPageState extends State<AppPage> {
       );
     }
 
-    showMarkUpdatedDialog() {
+    Future<dynamic> showMarkUpdatedDialog() {
       return _showPageDialog(
         hostContext: context,
         builder: (BuildContext ctx) {
@@ -3760,9 +3761,11 @@ class _AppPageState extends State<AppPage> {
               TextButton(
                 onPressed: () {
                   hapticSelection();
-                  final App? updatedApp = app?.app.deepCopy();
+                  App? updatedApp = app?.app.deepCopy();
                   if (updatedApp != null) {
-                    updatedApp.installedVersion = updatedApp.latestVersion;
+                    updatedApp = updatedApp.copyWith(
+                      installedVersion: updatedApp.latestVersion,
+                    );
                     updatedApp.additionalSettings.remove(
                       'skippedLatestVersion',
                     );
@@ -3782,7 +3785,7 @@ class _AppPageState extends State<AppPage> {
       );
     }
 
-    getBottomCenterActions(BuildContext themeContext) {
+    Widget getBottomCenterActions(BuildContext themeContext) {
       final ThemeData actionTheme = Theme.of(themeContext);
       const double expressiveRadius = 26;
       const EdgeInsets expressivePadding = EdgeInsets.symmetric(
@@ -4273,8 +4276,9 @@ class _AppPageState extends State<AppPage> {
                         onPressed: updating
                             ? null
                             : () {
-                                app.app.installedVersion = null;
-                                appsProvider.saveApps([app.app]);
+                                appsProvider.saveApps([
+                                  app.app.copyWith(installedVersion: null),
+                                ]);
                               },
                         icon: const Icon(Icons.restore_rounded),
                         tooltip: tr('resetInstallStatus'),

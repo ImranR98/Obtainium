@@ -1,5 +1,6 @@
 // Exposes functions used to save/load app settings
 
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:easy_localization/easy_localization.dart';
@@ -10,7 +11,6 @@ import 'package:obtainium/app_sources/github.dart';
 import 'package:obtainium/main.dart';
 import 'package:obtainium/providers/apps_provider.dart';
 import 'package:obtainium/folders/app_folder.dart';
-import 'package:obtainium/providers/native_provider.dart';
 import 'package:obtainium/providers/source_provider.dart';
 import 'package:obtainium/theme/app_theme_accent.dart';
 import 'package:permission_handler/permission_handler.dart';
@@ -65,6 +65,16 @@ enum AppsListGroupBy { none, category, source, appType }
 
 enum SwipeAction { update, pin, appOptions, delete, open, appInfo, edit, none }
 
+// Enums merged from Obtainium upstream. ObtainX's own grouping/theme models
+// ([AppsListGroupBy] above, plus the accent system in app_theme_accent.dart) are
+// kept; these upstream enums back the upstream-derived getters grafted near the
+// end of the class (see the "Settings merged from Obtainium upstream" block).
+enum InstallerMode { system, shizuku, external }
+
+enum GroupByMode { none, category, source }
+
+enum ColourSchemeMode { standard, vibrant, expressive, materialYou }
+
 /// Order for settings dropdowns: alphabetical by localized action label,
 /// with [SwipeAction.none] ("None") always last.
 List<SwipeAction> swipeActionsSortedByLocalizedLabel() {
@@ -113,18 +123,27 @@ class SettingsProvider with ChangeNotifier {
     _categoriesMemory = null;
     _appFoldersMemory = null;
     _folderViewCache.clear();
+    _removeUnusedUpstreamSettings();
     _migrateProgressiveBlurDefaultForExistingUsers();
     defaultAppDir = (await getAppStorageDir()).path;
     _migrateShizukuSetting();
+    _migrateExternalInstallerTarget();
     _migrateSwipeActionPrefs();
     _syncSwipeActionNameStringsIfMissing();
     _migrateThemeAccentPrefs();
+    _migrateGroupBySetting();
     final info = await DeviceInfoPlugin().androidInfo;
     isTV =
         info.systemFeatures.contains('android.hardware.type.television') ||
         info.systemFeatures.contains('android.software.leanback');
     _tactileFeedbackEnabled = prefs?.getBool('tactileFeedbackEnabled') ?? true;
     notifyListeners();
+  }
+
+  void _removeUnusedUpstreamSettings() {
+    if (prefs == null) return;
+    prefs!.remove('disableSwipeActions');
+    prefs!.remove('showActionBannerForUpdateOnly');
   }
 
   bool get tactileFeedbackEnabled =>
@@ -188,6 +207,20 @@ class SettingsProvider with ChangeNotifier {
       'appThemePaletteStyle',
       AppThemePaletteStyle.tonalSpot.name,
     );
+  }
+
+  /// Seeds upstream's [groupBy] string pref from ObtainX's existing grouping
+  /// choice ([appsListGroupBy]) so upstream-derived UI reads the user's current
+  /// selection. Runs once; ObtainX's own grouping prefs are left untouched.
+  void _migrateGroupBySetting() {
+    if (prefs == null) return;
+    if (prefs!.getString('groupBy') != null) return;
+    final String mode = switch (appsListGroupBy) {
+      AppsListGroupBy.category => GroupByMode.category.name,
+      AppsListGroupBy.source => GroupByMode.source.name,
+      _ => GroupByMode.none.name,
+    };
+    prefs!.setString('groupBy', mode);
   }
 
   static const String _rightSwipeNameKey = 'rightSwipeActionName';
@@ -255,6 +288,25 @@ class SettingsProvider with ChangeNotifier {
     prefs?.remove('useShizuku');
   }
 
+  void _migrateExternalInstallerTarget() {
+    if (prefs?.containsKey('externalInstallerPackage') != true) {
+      final String? legacyPackage = prefs?.getString('legacyInstallerPackage');
+      if (legacyPackage != null && legacyPackage.isNotEmpty) {
+        prefs?.setString('externalInstallerPackage', legacyPackage);
+      }
+    }
+    if (prefs?.containsKey('externalInstallerComponent') != true) {
+      final String? legacyActivity = prefs?.getString(
+        'legacyInstallerActivity',
+      );
+      if (legacyActivity != null && legacyActivity.isNotEmpty) {
+        prefs?.setString('externalInstallerComponent', legacyActivity);
+      }
+    }
+    prefs?.remove('legacyInstallerPackage');
+    prefs?.remove('legacyInstallerActivity');
+  }
+
   bool get useSystemFont {
     return prefs?.getBool('useSystemFont') ?? false;
   }
@@ -266,10 +318,8 @@ class SettingsProvider with ChangeNotifier {
 
   // ── App UI scale ────────────────────────────────────────────────────────
   // User-tunable multiplier applied to the effective text scale used by the
-  // top-level MediaQuery override in main.dart. Combined with the OS-level
-  // textScaler clamp at 1.2, this gives users a range from very compact
-  // (0.75x) to slightly enlarged (1.25x) regardless of their Android font
-  // size / system font choice. 1.0 is the no-op default.
+  // top-level MediaQuery override in main.dart. The system scaler is capped at
+  // 1.2 and the final custom scale stays inside this 0.75-1.25 range.
   static const double appUiScaleMin = 0.75;
   static const double appUiScaleMax = 1.25;
   static const double appUiScaleDefault = 1.0;
@@ -333,34 +383,6 @@ class SettingsProvider with ChangeNotifier {
 
   set useShizuku(bool useShizuku) {
     installerMode = useShizuku ? 'shizuku' : 'stock';
-  }
-
-  String? get legacyInstallerPackage {
-    final value = prefs?.getString('legacyInstallerPackage');
-    return (value != null && value.isNotEmpty) ? value : null;
-  }
-
-  set legacyInstallerPackage(String? pkg) {
-    if (pkg == null || pkg.isEmpty) {
-      prefs?.remove('legacyInstallerPackage');
-    } else {
-      prefs?.setString('legacyInstallerPackage', pkg);
-    }
-    notifyListeners();
-  }
-
-  String? get legacyInstallerActivity {
-    final value = prefs?.getString('legacyInstallerActivity');
-    return (value != null && value.isNotEmpty) ? value : null;
-  }
-
-  set legacyInstallerActivity(String? activity) {
-    if (activity == null || activity.isEmpty) {
-      prefs?.remove('legacyInstallerActivity');
-    } else {
-      prefs?.setString('legacyInstallerActivity', activity);
-    }
-    notifyListeners();
   }
 
   ThemeSettings get theme {
@@ -709,7 +731,7 @@ class SettingsProvider with ChangeNotifier {
   }
 
   bool checkAndFlipFirstRun() {
-    bool result = prefs?.getBool('firstRun') ?? true;
+    final bool result = prefs?.getBool('firstRun') ?? true;
     if (result) {
       prefs?.setBool('firstRun', false);
     }
@@ -727,9 +749,11 @@ class SettingsProvider with ChangeNotifier {
   Future<bool> getInstallPermission({bool enforce = false}) async {
     while (!(await Permission.requestInstallPackages.isGranted)) {
       // Explicit request as InstallPlugin request sometimes bugged
-      Fluttertoast.showToast(
-        msg: tr('pleaseAllowInstallPerm'),
-        toastLength: Toast.LENGTH_LONG,
+      unawaited(
+        Fluttertoast.showToast(
+          msg: tr('pleaseAllowInstallPerm'),
+          toastLength: Toast.LENGTH_LONG,
+        ),
       );
       if ((await Permission.requestInstallPackages.request()) ==
           PermissionStatus.granted) {
@@ -851,7 +875,7 @@ class SettingsProvider with ChangeNotifier {
   }
 
   String? getSettingString(String settingId) {
-    String? str = prefs?.getString(settingId);
+    final String? str = prefs?.getString(settingId);
     return str?.isNotEmpty == true ? str : null;
   }
 
@@ -918,7 +942,7 @@ class SettingsProvider with ChangeNotifier {
           ? added.first
           : null;
 
-      List<App> changedApps = appsProvider
+      final List<App> changedApps = appsProvider
           .getAppValues()
           .map((a) {
             bool changed = false;
@@ -1073,11 +1097,12 @@ class SettingsProvider with ChangeNotifier {
       _setFolderViewField(id, 'groupUpdatesSeparately', v);
 
   Locale? get forcedLocale {
-    var flSegs = prefs?.getString('forcedLocale')?.split('-');
-    var fl = flSegs != null && flSegs.isNotEmpty
+    final flSegs = prefs?.getString('forcedLocale')?.split('-');
+    final fl = flSegs != null && flSegs.isNotEmpty
         ? Locale(flSegs[0], flSegs.length > 1 ? flSegs[1] : null)
         : null;
-    var set = supportedLocales.where((element) => element.key == fl).isNotEmpty
+    final set =
+        supportedLocales.where((element) => element.key == fl).isNotEmpty
         ? fl
         : null;
     return set;
@@ -1188,7 +1213,7 @@ class SettingsProvider with ChangeNotifier {
   }
 
   DateTime get lastCompletedBGCheckTime {
-    int? temp = prefs?.getInt('lastCompletedBGCheckTime');
+    final int? temp = prefs?.getInt('lastCompletedBGCheckTime');
     return temp != null
         ? DateTime.fromMillisecondsSinceEpoch(temp)
         : DateTime.fromMillisecondsSinceEpoch(0);
@@ -1249,7 +1274,7 @@ class SettingsProvider with ChangeNotifier {
   Future<void> pickExportDir({bool remove = false}) async {
     if (remove) {
       final String? saved = prefs?.getString('exportDir');
-      prefs?.remove('exportDir');
+      unawaited(prefs?.remove('exportDir'));
       notifyListeners();
       if (saved != null && saved.isNotEmpty) {
         try {
@@ -1275,7 +1300,7 @@ class SettingsProvider with ChangeNotifier {
       return;
     }
 
-    prefs?.setString('exportDir', newUriString);
+    unawaited(prefs?.setString('exportDir', newUriString));
     notifyListeners();
 
     if (previousExportDirString != null && previousExportDirString.isNotEmpty) {
@@ -1317,7 +1342,7 @@ class SettingsProvider with ChangeNotifier {
   Future<void> pickApkSaveDir({bool remove = false}) async {
     if (remove) {
       final String? saved = prefs?.getString('apkSaveDir');
-      prefs?.remove('apkSaveDir');
+      unawaited(prefs?.remove('apkSaveDir'));
       notifyListeners();
       if (saved != null && saved.isNotEmpty) {
         try {
@@ -1343,7 +1368,7 @@ class SettingsProvider with ChangeNotifier {
       return;
     }
 
-    prefs?.setString('apkSaveDir', newUriString);
+    unawaited(prefs?.setString('apkSaveDir', newUriString));
     notifyListeners();
 
     if (previousApkSaveDirString != null &&
@@ -1435,7 +1460,7 @@ class SettingsProvider with ChangeNotifier {
       return prefs?.getInt('exportSettings') ??
           1; // 0 for no, 1 for yes but no secrets, 2 for everything
     } catch (e) {
-      var val = prefs?.getBool('exportSettings') == true ? 1 : 0;
+      final val = prefs?.getBool('exportSettings') == true ? 1 : 0;
       prefs?.setInt('exportSettings', val);
       return val;
     }
@@ -1457,7 +1482,7 @@ class SettingsProvider with ChangeNotifier {
 
   List<String> get searchDeselected {
     return prefs?.getStringList('searchDeselected') ??
-        SourceProvider().sources.map((s) => s.name).toList();
+        SourceProvider().sourceTemplates.map((s) => s.name).toList();
   }
 
   set searchDeselected(List<String> list) {
@@ -1526,6 +1551,122 @@ class SettingsProvider with ChangeNotifier {
   set leftSwipeAction(SwipeAction action) {
     prefs?.setInt('leftSwipeAction', action.index);
     prefs?.setString(_leftSwipeNameKey, action.name);
+    notifyListeners();
+  }
+
+  // ───────────────────────────────────────────────────────────────────────────
+  // Settings merged from Obtainium upstream.
+  //
+  // ObtainX's own settings (everything above) are kept intact; these adopt
+  // upstream additions that the merged codebase now references. Where upstream
+  // and ObtainX model the same concept differently — grouping via [groupBy]/
+  // [GroupByMode] here vs [appsListGroupBy]/[AppsListGroupBy] above, or theme
+  // accents via [colourSchemeMode]/[ColourSchemeMode] here vs the accent system
+  // ([appAccentColorSource], app_theme_accent.dart) above — BOTH are kept so
+  // neither side of the merge breaks; a future pass can converge them.
+  // ───────────────────────────────────────────────────────────────────────────
+
+  // Instance-method haptics (upstream API). ObtainX also exposes the top-level
+  // haptic* helpers for call sites that lack a SettingsProvider instance; both
+  // honor [tactileFeedbackEnabled].
+  void lightImpact() {
+    if (tactileFeedbackEnabled) HapticFeedback.lightImpact();
+  }
+
+  void heavyImpact() {
+    if (tactileFeedbackEnabled) HapticFeedback.heavyImpact();
+  }
+
+  void selectionClick() {
+    if (tactileFeedbackEnabled) HapticFeedback.selectionClick();
+  }
+
+  bool get alwaysUsePhoneLayout {
+    return prefs?.getBool('alwaysUsePhoneLayout') ?? false;
+  }
+
+  set alwaysUsePhoneLayout(bool val) {
+    prefs?.setBool('alwaysUsePhoneLayout', val);
+    notifyListeners();
+  }
+
+  bool get welcomeShown {
+    return prefs?.getBool('welcomeShown') ?? false;
+  }
+
+  set welcomeShown(bool val) {
+    prefs?.setBool('welcomeShown', val);
+    notifyListeners();
+  }
+
+  bool get googleVerificationWarningShown {
+    return prefs?.getBool('googleVerificationWarningShown') ?? false;
+  }
+
+  set googleVerificationWarningShown(bool val) {
+    prefs?.setBool('googleVerificationWarningShown', val);
+    notifyListeners();
+  }
+
+  String? get externalInstallerPackage {
+    final value = prefs?.getString('externalInstallerPackage');
+    return (value != null && value.isNotEmpty) ? value : null;
+  }
+
+  set externalInstallerPackage(String? val) {
+    if (val == null || val.isEmpty) {
+      prefs?.remove('externalInstallerPackage');
+    } else {
+      prefs?.setString('externalInstallerPackage', val);
+    }
+    notifyListeners();
+  }
+
+  String? get externalInstallerComponent {
+    final value = prefs?.getString('externalInstallerComponent');
+    return (value != null && value.isNotEmpty) ? value : null;
+  }
+
+  set externalInstallerComponent(String? val) {
+    if (val == null || val.isEmpty) {
+      prefs?.remove('externalInstallerComponent');
+    } else {
+      prefs?.setString('externalInstallerComponent', val);
+    }
+    notifyListeners();
+  }
+
+  ColourSchemeMode get colourSchemeMode {
+    final stored = prefs?.getInt('colourSchemeMode');
+    if (stored != null &&
+        stored >= 0 &&
+        stored < ColourSchemeMode.values.length) {
+      return ColourSchemeMode.values[stored];
+    }
+    return (prefs?.getBool('useMaterialYou') ?? false)
+        ? ColourSchemeMode.materialYou
+        : ColourSchemeMode.standard;
+  }
+
+  set colourSchemeMode(ColourSchemeMode mode) {
+    prefs?.setInt('colourSchemeMode', mode.index);
+    prefs?.setBool('useMaterialYou', mode == ColourSchemeMode.materialYou);
+    notifyListeners();
+  }
+
+  String get groupBy {
+    final stored = prefs?.getString('groupBy');
+    if (stored != null && GroupByMode.values.any((m) => m.name == stored)) {
+      return stored;
+    }
+    return GroupByMode.none.name;
+  }
+
+  set groupBy(String mode) {
+    final resolved = GroupByMode.values.any((m) => m.name == mode)
+        ? mode
+        : GroupByMode.none.name;
+    prefs?.setString('groupBy', resolved);
     notifyListeners();
   }
 }

@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:obtainium/components/bulk_add_widget.dart';
 import 'package:obtainium/layout_breakpoints.dart';
+import 'package:obtainium/providers/settings_provider.dart';
+import 'package:provider/provider.dart';
 
 /// Standalone page wrapper around [BulkAddWidget].
 ///
@@ -15,6 +17,9 @@ class BulkAddAppsPage extends StatelessWidget {
     final bool isLargeScreen = isLargeScreenLayout(
       screenWidth,
       MediaQuery.orientationOf(context),
+      alwaysUsePhoneLayout: context.select<SettingsProvider, bool>(
+        (settings) => settings.alwaysUsePhoneLayout,
+      ),
     );
     return BulkAddWidget(standalone: true, isLargeScreen: isLargeScreen);
   }

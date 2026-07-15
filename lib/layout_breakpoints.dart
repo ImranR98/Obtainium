@@ -14,7 +14,12 @@ const double kLargeScreenLandscapeWidthBreakpoint = 600;
 /// landscape breakpoint. Other pages use [kLargeScreenWidthBreakpoint] directly
 /// (portrait threshold only) — that difference is deliberate, so don't unify
 /// the two without checking each call site.
-bool isLargeScreenLayout(double width, Orientation orientation) {
+bool isLargeScreenLayout(
+  double width,
+  Orientation orientation, {
+  bool alwaysUsePhoneLayout = false,
+}) {
+  if (alwaysUsePhoneLayout) return false;
   return width >= kLargeScreenWidthBreakpoint ||
       (width >= kLargeScreenLandscapeWidthBreakpoint &&
           orientation == Orientation.landscape);

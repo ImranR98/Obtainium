@@ -1,5 +1,7 @@
 import 'dart:typed_data';
+
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:obtainium/favicon_cache.dart';
 
 /// Inversion filter: swaps black ↔ white while preserving alpha.
@@ -27,12 +29,12 @@ const ColorFilter invertColorFilter = ColorFilter.matrix([
 ]);
 
 /// Returns true if [assetPath]'s icon should be colour-inverted for the current
-/// brightness. GitHub ships a black mark (needs inversion in dark mode);
-/// APKMirror ships a white mark (needs inversion in light mode).
+/// brightness. GitHub and SourceHut ship black marks, so they need inversion
+/// in dark mode.
 bool iconNeedsInversion(String assetPath, bool isDark) {
-  if (assetPath == StoreSourceIconPaths.github && isDark) return true;
-  if (assetPath == StoreSourceIconPaths.apkmirror && !isDark) return true;
-  return false;
+  return isDark &&
+      (assetPath == StoreSourceIconPaths.github ||
+          assetPath == StoreSourceIconPaths.sourcehut);
 }
 
 /// Logo widget for store chips: bundled asset for known hosts, favicon for others.
@@ -75,17 +77,12 @@ class _StoreSourceChipAvatarState extends State<StoreSourceChipAvatar> {
       return SizedBox(width: widget.size, height: widget.size);
     }
 
-    final bool isDark = Theme.of(context).brightness == Brightness.dark;
     final String? localAsset = storeSourceAssetPathForHost(widget.host);
     if (localAsset != null) {
-      Widget img = StoreSourceIconImage(
+      return StoreSourceIconImage(
         assetPath: localAsset,
         size: widget.size,
       );
-      if (iconNeedsInversion(localAsset, isDark)) {
-        img = ColorFiltered(colorFilter: invertColorFilter, child: img);
-      }
-      return img;
     }
 
     return FutureBuilder<Uint8List?>(
@@ -111,39 +108,36 @@ class _StoreSourceChipAvatarState extends State<StoreSourceChipAvatar> {
   }
 }
 
-/// Local PNG paths for store branding (list badges, app page source rows).
+/// Local asset paths for store branding (list badges, app page source rows).
 class StoreSourceIconPaths {
   StoreSourceIconPaths._();
 
-  static const String playStore = 'assets/graphics/ic_playstore.png';
-  static const String fdroid = 'assets/graphics/ic_fdroid.png';
-  static const String apkmirror = 'assets/graphics/ic_apkmirror.png';
+  static const String playStore = 'assets/graphics/ic_playstore.svg';
+  static const String fdroid = 'assets/graphics/ic_fdroid.svg';
+  static const String apkmirror = 'assets/graphics/ic_apkmirror.svg';
   static const String apkpure = 'assets/graphics/ic_apkpure.png';
-  static const String github = 'assets/graphics/ic_github.png';
-  static const String gitlab = 'assets/graphics/ic_gitlab.png';
-  static const String codeberg = 'assets/graphics/ic_codeberg.png';
-  static const String sourcehut = 'assets/graphics/ic_sourcehut.png';
-  static const String sourceforge = 'assets/graphics/ic_sourceforge.png';
-  static const String itchio = 'assets/graphics/ic_itchio.png';
-  static const String apkcombo = 'assets/graphics/ic_apkcombo.png';
-  static const String aptoide = 'assets/graphics/ic_aptoide.png';
-  static const String uptodown = 'assets/graphics/ic_uptodown.png';
+  static const String github = 'assets/graphics/ic_github.svg';
+  static const String gitlab = 'assets/graphics/ic_gitlab.svg';
+  static const String codeberg = 'assets/graphics/ic_codeberg.svg';
+  static const String sourcehut = 'assets/graphics/ic_sourcehut.svg';
+  static const String sourceforge = 'assets/graphics/ic_sourceforge.svg';
+  static const String itchio = 'assets/graphics/ic_itchio.svg';
+  static const String apkcombo = 'assets/graphics/ic_apkcombo.svg';
+  static const String aptoide = 'assets/graphics/ic_aptoide.svg';
+  static const String uptodown = 'assets/graphics/ic_uptodown.svg';
   static const String huaweiAppGallery =
-      'assets/graphics/ic_huaweiappgallery.png';
-  static const String tencent = 'assets/graphics/ic_tencent.png';
+      'assets/graphics/ic_huaweiappgallery.svg';
+  static const String tencent = 'assets/graphics/ic_tencent.svg';
   static const String vivoAppStore = 'assets/graphics/ic_vivoappstore.png';
-  static const String rustore = 'assets/graphics/ic_rustore.png';
-  static const String apk4free = 'assets/graphics/ic_apk4free.png';
-  static const String farsroid = 'assets/graphics/ic_farsroid.png';
-  static const String coolapk = 'assets/graphics/ic_coolapk.png';
-  static const String rockmods = 'assets/graphics/ic_rockmods.png';
+  static const String rustore = 'assets/graphics/ic_rustore.svg';
+  static const String apk4free = 'assets/graphics/ic_apk4free.svg';
+  static const String farsroid = 'assets/graphics/ic_farsroid.svg';
+  static const String coolapk = 'assets/graphics/ic_coolapk.svg';
+  static const String rockmods = 'assets/graphics/ic_rockmods.svg';
   static const String liteapks = 'assets/graphics/ic_liteapks.png';
-  static const String telegram = 'assets/graphics/ic_telegram.png';
-  static const String neutroncode = 'assets/graphics/ic_neutroncode.png';
-  static const String mullvad = 'assets/graphics/ic_mullvad.png';
-
-  /// IzzyOnDroid logo from https://codeberg.org/IzzyOnDroid/assets (IzzyOnDroidLogo.png).
-  static const String izzydroid = 'assets/graphics/ic_izzydroid.png';
+  static const String telegram = 'assets/graphics/ic_telegram.svg';
+  static const String mullvad = 'assets/graphics/ic_mullvad.svg';
+  static const String izzydroid = 'assets/graphics/ic_izzydroid.svg';
 }
 
 /// Maps a source [host] (e.g. from [SourceProvider]) to a bundled icon, or null.
@@ -223,9 +217,6 @@ String? storeSourceAssetPathForHost(String host) {
   if (normalized.contains('telegram.org')) {
     return StoreSourceIconPaths.telegram;
   }
-  if (normalized.contains('neutroncode.com')) {
-    return StoreSourceIconPaths.neutroncode;
-  }
   if (normalized.contains('mullvad.net')) {
     return StoreSourceIconPaths.mullvad;
   }
@@ -289,8 +280,6 @@ String? storeSourceAssetPathForClassName(String className) {
       return StoreSourceIconPaths.liteapks;
     case 'TelegramApp':
       return StoreSourceIconPaths.telegram;
-    case 'NeutronCode':
-      return StoreSourceIconPaths.neutroncode;
     case 'Mullvad':
       return StoreSourceIconPaths.mullvad;
     default:
@@ -298,8 +287,7 @@ String? storeSourceAssetPathForClassName(String className) {
   }
 }
 
-/// Square clip; wide assets (Play wordmark) use [BoxFit.cover] with a leading
-/// alignment so the triangle reads instead of shrinking the whole bar.
+/// Square clip for bundled source icons.
 class StoreSourceIconImage extends StatelessWidget {
   const StoreSourceIconImage({
     super.key,
@@ -312,39 +300,57 @@ class StoreSourceIconImage extends StatelessWidget {
   final double size;
   final ImageErrorWidgetBuilder? errorBuilder;
 
-  static Alignment _cropAlignmentFor(String path) {
-    if (path == StoreSourceIconPaths.playStore) {
-      return Alignment.centerLeft;
-    }
-    return Alignment.center;
-  }
-
   @override
   Widget build(BuildContext context) {
+    final bool isDark = Theme.of(context).brightness == Brightness.dark;
+    final Widget image;
+    if (assetPath.endsWith('.svg')) {
+      image = SvgPicture.asset(
+        assetPath,
+        fit: BoxFit.contain,
+        colorFilter: iconNeedsInversion(assetPath, isDark)
+            ? invertColorFilter
+            : null,
+        errorBuilder: (BuildContext context, Object error, StackTrace stack) {
+          return errorBuilder?.call(context, error, stack) ??
+              _buildError(context);
+        },
+      );
+    } else {
+      final int cachePx =
+          (size * MediaQuery.devicePixelRatioOf(context)).round();
+      image = Image.asset(
+        assetPath,
+        fit: BoxFit.contain,
+        gaplessPlayback: true,
+        cacheWidth: cachePx,
+        cacheHeight: cachePx,
+        errorBuilder:
+            (BuildContext context, Object error, StackTrace? stackTrace) {
+              return errorBuilder?.call(context, error, stackTrace) ??
+                  _buildError(context);
+            },
+      );
+    }
+
     return ClipRRect(
       borderRadius: BorderRadius.circular(size * 0.22),
       child: SizedBox(
         width: size,
         height: size,
-        child: Image.asset(
-          assetPath,
-          fit: BoxFit.cover,
-          alignment: _cropAlignmentFor(assetPath),
-          gaplessPlayback: true,
-          errorBuilder:
-              errorBuilder ??
-              (BuildContext context, Object error, StackTrace? stackTrace) {
-                if (size <= 20) {
-                  return const SizedBox.shrink();
-                }
-                return Icon(
-                  Icons.link,
-                  size: size * 0.72,
-                  color: Theme.of(context).colorScheme.primary,
-                );
-              },
-        ),
+        child: image,
       ),
+    );
+  }
+
+  Widget _buildError(BuildContext context) {
+    if (size <= 20) {
+      return const SizedBox.shrink();
+    }
+    return Icon(
+      Icons.link,
+      size: size * 0.72,
+      color: Theme.of(context).colorScheme.primary,
     );
   }
 }
@@ -380,17 +386,12 @@ class _StoreSourceIconForUrlState extends State<StoreSourceIconForUrl> {
 
   @override
   Widget build(BuildContext context) {
-    final bool isDark = Theme.of(context).brightness == Brightness.dark;
     final String? localAsset = storeSourceAssetPathForHost(_host);
     if (localAsset != null) {
-      Widget img = StoreSourceIconImage(
+      return StoreSourceIconImage(
         assetPath: localAsset,
         size: widget.size,
       );
-      if (iconNeedsInversion(localAsset, isDark)) {
-        img = ColorFiltered(colorFilter: invertColorFilter, child: img);
-      }
-      return img;
     }
     return FutureBuilder<Uint8List?>(
       future: _iconFuture,
@@ -457,15 +458,11 @@ class _StoreSourceListBadgeState extends State<StoreSourceListBadge> {
   Widget build(BuildContext context) {
     if (widget.host.isEmpty) return const SizedBox.shrink();
 
-    final bool isDark = Theme.of(context).brightness == Brightness.dark;
     final String? localAsset = storeSourceAssetPathForHost(widget.host);
 
     Widget image;
     if (localAsset != null) {
       image = StoreSourceIconImage(assetPath: localAsset, size: 13);
-      if (iconNeedsInversion(localAsset, isDark)) {
-        image = ColorFiltered(colorFilter: invertColorFilter, child: image);
-      }
     } else {
       image = FutureBuilder<Uint8List?>(
         future: _iconFuture,

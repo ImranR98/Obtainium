@@ -5,7 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart' show ScrollCacheExtent;
 import 'package:obtainium/app_sources/github.dart';
 import 'package:obtainium/components/custom_app_bar.dart';
-import 'package:obtainium/components/generated_form.dart';
+import 'package:obtainium/components/generated_form_renderer.dart';
 import 'package:obtainium/components/version_regex_assist_dialog.dart';
 import 'package:obtainium/custom_errors.dart';
 import 'package:obtainium/providers/apps_provider.dart';
@@ -34,7 +34,9 @@ Future<bool> persistAdditionalOptionsForm({
 }) async {
   final AppInMemory? appInMem = appsProvider.apps[appId];
   if (appInMem == null) return false;
-  final App app = appInMem.app;
+  // App is immutable; work on a fresh copy and reassign via copyWith. The
+  // copied additionalSettings map is safe to mutate in place below.
+  App app = appInMem.app.copyWith();
   final AppSource source = SourceProvider().getSource(
     app.url,
     overrideSource: app.overrideSource,
@@ -52,7 +54,7 @@ Future<bool> persistAdditionalOptionsForm({
   } else {
     originalSettings['useVersionCodeAsOSVersion'] = false;
   }
-  app.additionalSettings = {...originalSettings, ...formValues};
+  app = app.copyWith(additionalSettings: {...originalSettings, ...formValues});
   syncVersionStringSourceSettings(app.additionalSettings);
   app.additionalSettings['useVersionCodeAsOSVersion'] =
       app.additionalSettings['versionDetection'] == 'versionCode';
@@ -104,11 +106,15 @@ Future<bool> persistAdditionalOptionsForm({
         app.installedVersion == app.latestVersion ||
         (app.installedVersion != null &&
             versionsEffectivelyEqual(app.installedVersion!, app.latestVersion));
-    app.latestVersion = app.releaseDate!.toUtc().toIso8601String();
-    if (isUpdated) app.installedVersion = app.latestVersion;
+    app = app.copyWith(
+      latestVersion: app.releaseDate!.toUtc().toIso8601String(),
+    );
+    if (isUpdated) app = app.copyWith(installedVersion: app.latestVersion);
   } else if (releaseDateVersionDisabled) {
-    app.installedVersion =
-        appInMem.installedInfo?.versionName ?? app.installedVersion;
+    app = app.copyWith(
+      installedVersion:
+          appInMem.installedInfo?.versionName ?? app.installedVersion,
+    );
   }
 
   if (versionDetectionEnabled) {
@@ -133,7 +139,7 @@ Future<bool> persistAdditionalOptionsForm({
             app.latestVersion,
           )?.key !=
           true) {
-        app.installedVersion = app.latestVersion;
+        app = app.copyWith(installedVersion: app.latestVersion);
       }
     }
   }
@@ -150,7 +156,7 @@ Future<bool> persistAdditionalOptionsForm({
     for (final String key in versionKeys) {
       if (originalSettings[key] != app.additionalSettings[key]) {
         versionSettingsChanged = true;
-        app.installedVersion = null;
+        app = app.copyWith(installedVersion: null);
         break;
       }
     }
@@ -203,6 +209,22 @@ class _AdditionalOptionsPageState extends State<AdditionalOptionsPage> {
     final Map<String, dynamic> appAdditionalSettings =
         Map<String, dynamic>.from(app.additionalSettings);
     syncVersionStringSourceSettings(appAdditionalSettings);
+    // Defensively normalize versionDetection to the string enum the dropdown
+    // expects. App.fromJson normally migrates legacy bool values, but it falls
+    // back to raw JSON if that migration throws — a bool here would crash the
+    // DropdownButton ("no item with value: false"). false→pseudo / true→auto
+    // preserves the app's actual behavior; anything unrecognized → auto.
+    final dynamic vd = appAdditionalSettings['versionDetection'];
+    if (vd == false) {
+      appAdditionalSettings['versionDetection'] = 'pseudo';
+    } else if (vd == true) {
+      appAdditionalSettings['versionDetection'] = 'auto';
+    } else if (vd != 'auto' &&
+        vd != 'standard' &&
+        vd != 'pseudo' &&
+        vd != 'versionCode') {
+      appAdditionalSettings['versionDetection'] = 'auto';
+    }
     if (appAdditionalSettings['versionDetection'] == 'versionCode' ||
         appAdditionalSettings['useVersionCodeAsOSVersion'] == true) {
       appAdditionalSettings['versionDetection'] = 'versionCode';
@@ -219,7 +241,18 @@ class _AdditionalOptionsPageState extends State<AdditionalOptionsPage> {
     for (final List<GeneratedFormItem> row in _items) {
       for (final GeneratedFormItem element in row) {
         if (appAdditionalSettings[element.key] != null) {
-          element.defaultValue = appAdditionalSettings[element.key];
+          final dynamic stored = appAdditionalSettings[element.key];
+          // For a dropdown, never assign a stored value that isn't one of the
+          // current options — DropdownButton asserts ("no item with value X")
+          // and crashes the page. This happens when the source's offered
+          // options change (e.g. versionStringSource after an overrideSource /
+          // URL edit, or a legacy value). Keep the item's default instead.
+          if (element is GeneratedFormDropdown &&
+              element.opts?.any((o) => o.key == stored.toString()) != true) {
+            // leave element.value at its constructor default
+          } else {
+            element.value = stored;
+          }
         }
         if (source is GitHub &&
             element is GeneratedFormDropdown &&
@@ -233,11 +266,11 @@ class _AdditionalOptionsPageState extends State<AdditionalOptionsPage> {
               GitHub.buildVerificationAudit,
               GitHub.buildVerificationEnforce,
             ];
-            element.defaultValue = GitHub.buildVerificationOff;
+            element.value = GitHub.buildVerificationOff;
           } else if (appAdditionalSettings[GitHub.buildVerificationModeKey] ==
                   null &&
               appAdditionalSettings[GitHub.enforceAttestationsKey] == true) {
-            element.defaultValue = GitHub.buildVerificationEnforce;
+            element.value = GitHub.buildVerificationEnforce;
           }
         }
       }

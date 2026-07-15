@@ -5,10 +5,9 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:obtainium/store_source_icons.dart';
 
 void main() {
-  const maxBundledSourceIconDimension = 40;
-
   test('fixed source hosts resolve to bundled icons', () {
     final expectedAssetByHost = <String, String>{
+      'play.google.com': StoreSourceIconPaths.playStore,
       'github.com': StoreSourceIconPaths.github,
       'gitlab.com': StoreSourceIconPaths.gitlab,
       'codeberg.org': StoreSourceIconPaths.codeberg,
@@ -37,7 +36,6 @@ void main() {
       'rockmods.net': StoreSourceIconPaths.rockmods,
       'liteapks.com': StoreSourceIconPaths.liteapks,
       'telegram.org': StoreSourceIconPaths.telegram,
-      'neutroncode.com': StoreSourceIconPaths.neutroncode,
       'mullvad.net': StoreSourceIconPaths.mullvad,
     };
 
@@ -45,17 +43,33 @@ void main() {
       final assetPath = storeSourceAssetPathForHost(entry.key);
       expect(assetPath, entry.value, reason: entry.key);
       expect(File(assetPath!).existsSync(), isTrue, reason: assetPath);
-      final dimensions = _pngDimensions(File(assetPath).readAsBytesSync());
-      expect(
-        dimensions.width <= maxBundledSourceIconDimension,
-        isTrue,
-        reason: assetPath,
-      );
-      expect(
-        dimensions.height <= maxBundledSourceIconDimension,
-        isTrue,
-        reason: assetPath,
-      );
+      if (assetPath.endsWith('.svg')) {
+        final svgContent = File(assetPath).readAsStringSync();
+        expect(svgContent.contains('<svg'), isTrue, reason: assetPath);
+        expect(
+          RegExp(r'viewBox\s*=').hasMatch(svgContent),
+          isTrue,
+          reason: assetPath,
+        );
+        expect(
+          RegExp(r'<image\b', caseSensitive: false).hasMatch(svgContent),
+          isFalse,
+          reason: assetPath,
+        );
+      } else {
+        expect(assetPath, endsWith('.png'), reason: assetPath);
+        final dimensions = _pngDimensions(File(assetPath));
+        expect(dimensions.$1, greaterThanOrEqualTo(160), reason: assetPath);
+        expect(dimensions.$2, greaterThanOrEqualTo(160), reason: assetPath);
+      }
+    }
+
+    for (final assetPath in <String>[
+      StoreSourceIconPaths.apkpure,
+      StoreSourceIconPaths.liteapks,
+      StoreSourceIconPaths.vivoAppStore,
+    ]) {
+      expect(assetPath, endsWith('.png'), reason: assetPath);
     }
 
     expect(
@@ -66,24 +80,26 @@ void main() {
 
   test('custom hosts do not resolve to bundled icons', () {
     expect(storeSourceAssetPathForHost('example.com'), isNull);
+    expect(storeSourceAssetPathForHost('neutroncode.com'), isNull);
+    expect(storeSourceAssetPathForClassName('NeutronCode'), isNull);
+  });
+
+  test('black source marks invert only in dark mode', () {
+    expect(iconNeedsInversion(StoreSourceIconPaths.github, true), isTrue);
+    expect(iconNeedsInversion(StoreSourceIconPaths.sourcehut, true), isTrue);
+    expect(iconNeedsInversion(StoreSourceIconPaths.github, false), isFalse);
+    expect(iconNeedsInversion(StoreSourceIconPaths.apkmirror, true), isFalse);
+    expect(iconNeedsInversion(StoreSourceIconPaths.apkmirror, false), isFalse);
   });
 }
 
-({int width, int height}) _pngDimensions(Uint8List bytes) {
-  expect(bytes.length, greaterThanOrEqualTo(24));
-  expect(bytes[0], 0x89);
-  expect(bytes[1], 0x50);
-  expect(bytes[2], 0x4E);
-  expect(bytes[3], 0x47);
-  return (
-    width: _readBigEndianInt32(bytes, 16),
-    height: _readBigEndianInt32(bytes, 20),
+(int, int) _pngDimensions(File file) {
+  final bytes = file.readAsBytesSync();
+  expect(
+    bytes.sublist(0, 8),
+    orderedEquals(<int>[137, 80, 78, 71, 13, 10, 26, 10]),
+    reason: file.path,
   );
-}
-
-int _readBigEndianInt32(Uint8List bytes, int offset) {
-  return bytes[offset] << 24 |
-      bytes[offset + 1] << 16 |
-      bytes[offset + 2] << 8 |
-      bytes[offset + 3];
+  final data = ByteData.sublistView(bytes);
+  return (data.getUint32(16), data.getUint32(20));
 }

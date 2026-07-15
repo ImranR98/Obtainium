@@ -1,35 +1,22 @@
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:easy_localization/easy_localization.dart';
+import 'package:html/parser.dart';
 import 'package:http/http.dart';
 import 'package:obtainium/app_sources/github.dart';
 import 'package:obtainium/app_sources/gitlab.dart';
-import 'package:obtainium/components/generated_form.dart';
+import 'package:obtainium/components/generated_form_model.dart';
 import 'package:obtainium/custom_errors.dart';
+import 'package:obtainium/providers/logs_provider.dart';
 import 'package:obtainium/providers/source_provider.dart';
 import 'package:obtainium/services/html_parse_isolate.dart';
 
-String? _yamlScalarValue(Iterable<String> lines, String key) {
-  final String prefix = '$key:';
-  for (final String line in lines) {
-    final String trimmed = line.trim();
-    if (!trimmed.startsWith(prefix)) {
-      continue;
-    }
-    return _stripYamlScalarQuotes(trimmed.substring(prefix.length).trim());
-  }
-  return null;
-}
-
-String _stripYamlScalarQuotes(String value) {
-  if (value.length >= 2 &&
-      ((value.startsWith('"') && value.endsWith('"')) ||
-          (value.startsWith("'") && value.endsWith("'")))) {
-    return value.substring(1, value.length - 1);
-  }
-  return value;
-}
-
+/// Returns a trimmed, non-empty display String from an F-Droid metadata value.
+///
+/// F-Droid's packages API may report a name either as a plain String or as a
+/// map of locale -> String (localized names). This drills into the map,
+/// preferring English locales, and recurses into nested maps.
 String? _fdroidDisplayString(Object? rawValue) {
   if (rawValue is String) {
     final String trimmed = rawValue.trim();
@@ -52,6 +39,9 @@ String? _fdroidDisplayString(Object? rawValue) {
   return null;
 }
 
+/// Extracts a human-friendly app display name from an F-Droid package page's
+/// HTML, preferring the `og:title` meta tag then the document `<title>`, and
+/// dropping any trailing " | F-Droid" suffix.
 String? _fdroidDisplayNameFromHtml(String html) {
   for (final RegExp pattern in <RegExp>[
     RegExp(
@@ -77,51 +67,61 @@ String? _fdroidDisplayNameFromHtml(String html) {
 }
 
 class FDroid extends AppSource {
+  static const _maxChangeLogCodeUnits = 2048;
+  @override
+  String get name => tr('fdroid');
+
   FDroid() {
     hosts = ['f-droid.org'];
-    name = tr('fdroid');
     naiveStandardVersionDetection = true;
     canSearch = true;
-    additionalSourceAppSpecificSettingFormItems = [
-      [
-        GeneratedFormTextField(
-          'filterVersionsByRegEx',
-          label: tr('filterVersionsByRegEx'),
-          required: false,
-          additionalValidators: [
-            (value) {
-              return regExValidator(value);
-            },
-          ],
-        ),
-      ],
-      [
-        GeneratedFormSwitch(
-          'trySelectingSuggestedVersionCode',
-          label: tr('trySelectingSuggestedVersionCode'),
-          defaultValue: true,
-        ),
-      ],
-      [
-        GeneratedFormSwitch(
-          'autoSelectHighestVersionCode',
-          label: tr('autoSelectHighestVersionCode'),
-        ),
-      ],
-      [
-        GeneratedFormSwitch(
-          'enforceReproducibleBuilds',
-          label: tr('enforceReproducibleBuilds'),
-          labelTooltip: tr('reproducibleBuildsTooltip'),
-          defaultValue: false,
-        ),
-      ],
-    ];
+    inferAppIdFromUrlPath = true;
   }
 
   @override
+  List<List<GeneratedFormItem>>
+  get additionalSourceAppSpecificSettingFormItems => [
+    [
+      GeneratedFormTextField(
+        'filterVersionsByRegEx',
+        label: tr('filterVersionsByRegEx'),
+        required: false,
+        additionalValidators: [
+          (value) {
+            return regExValidator(value);
+          },
+        ],
+      ),
+    ],
+    [
+      GeneratedFormSwitch(
+        'trySelectingSuggestedVersionCode',
+        label: tr('trySelectingSuggestedVersionCode'),
+        value: true,
+      ),
+    ],
+    [
+      GeneratedFormSwitch(
+        'autoSelectHighestVersionCode',
+        label: tr('autoSelectHighestVersionCode'),
+      ),
+    ],
+    // Fork addition: reproducible-build verification. When enabled, updates are
+    // blocked unless F-Droid confirms the published APK reproducibly matches the
+    // binary built from source.
+    [
+      GeneratedFormSwitch(
+        'enforceReproducibleBuilds',
+        label: tr('enforceReproducibleBuilds'),
+        labelTooltip: tr('reproducibleBuildsTooltip'),
+        value: false,
+      ),
+    ],
+  ];
+
+  @override
   String sourceSpecificStandardizeURL(String url, {bool forSelection = false}) {
-    RegExp standardUrlRegExB = RegExp(
+    final RegExp standardUrlRegExB = RegExp(
       '^https?://(www\\.)?${getSourceRegex(hosts)}/+[^/]+/+packages/+[^/]+',
       caseSensitive: false,
     );
@@ -130,7 +130,7 @@ class FDroid extends AppSource {
       url =
           'https://${Uri.parse(match.group(0)!).host}/packages/${Uri.parse(url).pathSegments.where((s) => s.trim().isNotEmpty).last}';
     }
-    RegExp standardUrlRegExA = RegExp(
+    final RegExp standardUrlRegExA = RegExp(
       '^https?://(www\\.)?${getSourceRegex(hosts)}/+packages/+[^/]+',
       caseSensitive: false,
     );
@@ -142,136 +142,180 @@ class FDroid extends AppSource {
   }
 
   @override
-  Future<String?> tryInferringAppId(
-    String standardUrl, {
-    Map<String, dynamic> additionalSettings = const {},
-  }) async {
-    return Uri.parse(standardUrl).pathSegments.last;
-  }
-
-  @override
   Future<APKDetails> getLatestAPKDetails(
     String standardUrl,
     Map<String, dynamic> additionalSettings,
   ) async {
-    String? appId = await tryInferringAppId(standardUrl);
-    String host = Uri.parse(standardUrl).host;
-    var details = await getAPKUrlsFromFDroidPackagesAPIResponse(
-      await sourceRequest(
+    try {
+      final String? appId = await tryInferringAppId(standardUrl);
+      if (appId == null) {
+        throw NoReleasesError();
+      }
+      final String host = Uri.parse(standardUrl).host;
+      // Fetch the packages API response and hand it to
+      // getAPKUrlsFromFDroidPackagesAPIResponse, which owns all parsing
+      // (version selection, name/icon/APK-size resolution).
+      final Response packagesResponse = await sourceRequest(
         'https://$host/api/v1/packages/$appId',
         additionalSettings,
-      ),
-      'https://$host/repo/$appId',
-      standardUrl,
-      name,
-      additionalSettings: additionalSettings,
-    );
-    final bool canUseOfficialMetadata =
-        !hostChanged ||
-        hostIdenticalDespiteAnyChange ||
-        host == 'f-droid.org' ||
-        host == 'www.f-droid.org';
-    // Skip the per-refresh fdroiddata metadata YAML fetch (gitlab.com) only when
-    // the upstream release is unchanged AND the cached verdict is the terminal
-    // 'verified' state. An F-Droid build's reproducible status can flip from
-    // no_data / not_reproducible to verified hours after a release WITHOUT a
-    // versionCode change (the reproducible-build verification completes after
-    // the initial publish). So every non-verified status must keep re-checking
-    // to catch that flip; only 'verified' (which does not revert) is reused.
-    // This is never worse than always fetching, and saves the call for the
-    // already-verified majority.
-    final App? prevApp = previouslyCheckedApp;
-    final bool canReuseCachedMetadata =
-        prevApp != null &&
-        prevApp.rawLatestVersionFromSource != null &&
-        prevApp.rawLatestVersionFromSource == details.version &&
-        prevApp.latestReproducibleStatus == reproducibleBuildStatusVerified;
-    if (canUseOfficialMetadata && canReuseCachedMetadata) {
-      details.reproducibleStatus = prevApp.latestReproducibleStatus;
-      details.isReproducible = reproducibleBuildBoolFromStatus(
-        prevApp.latestReproducibleStatus,
       );
-      if (prevApp.changeLog?.isNotEmpty == true) {
-        details.changeLog = prevApp.changeLog;
-      }
-      if (prevApp.author.trim().isNotEmpty) {
-        details.names.author = prevApp.author;
-      }
-    } else if (canUseOfficialMetadata) {
-      try {
-        var res = await sourceRequest(
-          'https://gitlab.com/fdroid/fdroiddata/-/raw/master/metadata/$appId.yml',
-          additionalSettings,
+      final details = await getAPKUrlsFromFDroidPackagesAPIResponse(
+        packagesResponse,
+        'https://$host/repo/$appId',
+        standardUrl,
+        name,
+        additionalSettings: additionalSettings,
+      );
+      // Fork addition (reproducible-build verification): skip the per-refresh
+      // fdroiddata metadata YAML fetch (gitlab.com) only when the upstream
+      // release is unchanged AND the cached verdict is the terminal 'verified'
+      // state. An F-Droid build's reproducible status can flip from
+      // no_data / not_reproducible to verified hours after a release WITHOUT a
+      // versionCode change (the reproducible-build verification completes after
+      // the initial publish). So every non-verified status must keep
+      // re-checking to catch that flip; only 'verified' (which does not revert)
+      // is reused. This is never worse than always fetching, and saves the call
+      // for the already-verified majority.
+      final App? prevApp = previouslyCheckedApp;
+      final bool canReuseCachedMetadata =
+          prevApp != null &&
+          prevApp.rawLatestVersionFromSource != null &&
+          prevApp.rawLatestVersionFromSource == details.version &&
+          prevApp.latestReproducibleStatus == reproducibleBuildStatusVerified;
+      // Fork addition (icon / APK size / display name): reuse the previous
+      // check's icon, APK size and name whenever the upstream version is
+      // unchanged. This is deliberately SEPARATE from canReuseCachedMetadata
+      // above — it keys off the version alone and does NOT also require the
+      // reproducible status to be 'verified', because icon/size/name never
+      // change without a version change, whereas the reproducible verdict can.
+      final bool versionUnchanged =
+          prevApp != null &&
+          prevApp.rawLatestVersionFromSource != null &&
+          prevApp.rawLatestVersionFromSource == details.version;
+      if (!hostChanged && canReuseCachedMetadata) {
+        details.reproducibleStatus = prevApp.latestReproducibleStatus;
+        details.isReproducible = reproducibleBuildBoolFromStatus(
+          prevApp.latestReproducibleStatus,
         );
-        if (res.statusCode != 200 &&
-            details.reproducibleStatus != reproducibleBuildStatusVerified) {
-          details.reproducibleStatus = reproducibleBuildStatusError;
-          details.isReproducible = null;
+        if (prevApp.changeLog?.isNotEmpty == true) {
+          details.changeLog = prevApp.changeLog;
         }
-        if (res.statusCode == 200) {
-          var lines = res.body.split('\n');
-          final String? authorName = _yamlScalarValue(lines, 'AuthorName');
-          if (authorName?.isNotEmpty == true) {
-            details.names.author = authorName!;
-          }
-
-          final String? displayName =
-              _yamlScalarValue(lines, 'Name') ??
-              _yamlScalarValue(lines, 'AutoName');
-          if (displayName?.isNotEmpty == true) {
-            details.names.name = displayName!;
-          }
-
-          final bool hasBinaries =
-              _yamlScalarValue(lines, 'Binaries')?.isNotEmpty == true;
-          details.reproducibleStatus = hasBinaries
-              ? reproducibleBuildStatusVerified
-              : reproducibleBuildStatusNoData;
-          details.isReproducible = reproducibleBuildBoolFromStatus(
-            details.reproducibleStatus,
+        if (prevApp.author.trim().isNotEmpty) {
+          details.names.author = prevApp.author;
+        }
+      } else if (!hostChanged) {
+        try {
+          final res = await sourceRequest(
+            'https://gitlab.com/fdroid/fdroiddata/-/raw/master/metadata/$appId.yml',
+            additionalSettings,
           );
-
-          final String? changelogUrl = _yamlScalarValue(lines, 'Changelog');
-          if (changelogUrl?.isNotEmpty == true) {
-            details.changeLog = changelogUrl!;
-            bool isGitHub = false;
-            bool isGitLab = false;
-            try {
-              GitHub(
-                hostChanged: true,
-              ).sourceSpecificStandardizeURL(details.changeLog!);
-              isGitHub = true;
-            } catch (e) {
-              //
+          if (res.statusCode != 200 &&
+              details.reproducibleStatus != reproducibleBuildStatusVerified) {
+            details.reproducibleStatus = reproducibleBuildStatusError;
+            details.isReproducible = null;
+          }
+          if (res.statusCode == 200) {
+            final lines = res.body.split('\n');
+            final authorLines = lines.where(
+              (l) => l.startsWith('AuthorName: '),
+            );
+            if (authorLines.isNotEmpty) {
+              details.names.author = authorLines.first
+                  .split(': ')
+                  .sublist(1)
+                  .join(': ');
             }
-            try {
-              GitLab(
-                hostChanged: true,
-              ).sourceSpecificStandardizeURL(details.changeLog!);
-              isGitLab = true;
-            } catch (e) {
-              //
-            }
-            if ((isGitHub || isGitLab) &&
-                (details.changeLog?.indexOf('/blob/') ?? -1) >= 0) {
-              details.changeLog = (await sourceRequest(
-                details.changeLog!.replaceFirst('/blob/', '/raw/'),
-                additionalSettings,
-              )).body;
+            // A non-empty top-level `Binaries:` field in the fdroiddata
+            // metadata means F-Droid publishes and verifies a reproducible
+            // build against the source for this app.
+            final bool hasBinaries = lines.any((l) {
+              final t = l.trim();
+              return t.startsWith('Binaries:') &&
+                  t.substring('Binaries:'.length).trim().isNotEmpty;
+            });
+            details.reproducibleStatus = hasBinaries
+                ? reproducibleBuildStatusVerified
+                : reproducibleBuildStatusNoData;
+            details.isReproducible = reproducibleBuildBoolFromStatus(
+              details.reproducibleStatus,
+            );
+            final changelogUrls = lines
+                .where((l) => l.startsWith('Changelog: '))
+                .map((e) => e.split(' ').sublist(1).join(' '));
+            if (changelogUrls.isNotEmpty) {
+              details.changeLog = changelogUrls.first;
+              bool isGitHub = false;
+              bool isGitLab = false;
+              try {
+                GitHub(
+                  hostChanged: true,
+                ).sourceSpecificStandardizeURL(details.changeLog!);
+                isGitHub = true;
+              } on InvalidURLError {
+                // URL does not match GitHub format, silently skipped
+              }
+              try {
+                GitLab(
+                  hostChanged: true,
+                ).sourceSpecificStandardizeURL(details.changeLog!);
+                isGitLab = true;
+              } on InvalidURLError {
+                // URL does not match GitLab format, silently skipped
+              }
+              if ((isGitHub || isGitLab) &&
+                  (details.changeLog?.indexOf('/blob/') ?? -1) >= 0) {
+                details.changeLog = (await sourceRequest(
+                  details.changeLog!.replaceFirst('/blob/', '/raw/'),
+                  additionalSettings,
+                )).body;
+              }
             }
           }
+        } catch (e) {
+          // Any metadata failure demotes an unverified status to 'error' so it
+          // keeps being re-checked; a prior 'verified' is preserved.
+          if (details.reproducibleStatus != reproducibleBuildStatusVerified) {
+            details.reproducibleStatus = reproducibleBuildStatusError;
+            details.isReproducible = null;
+          }
+          unawaited(
+            LogsProvider().add(
+              'Failed to process changelog for F-Droid app: ${e.toString()}',
+            ),
+          );
         }
-      } catch (e) {
-        if (details.reproducibleStatus != reproducibleBuildStatusVerified) {
-          details.reproducibleStatus = reproducibleBuildStatusError;
-          details.isReproducible = null;
+        if ((details.changeLog?.length ?? 0) > _maxChangeLogCodeUnits) {
+          final cl = details.changeLog!;
+          var end = _maxChangeLogCodeUnits;
+          if (end > 0 &&
+              cl.codeUnitAt(end - 1) >= 0xD800 &&
+              cl.codeUnitAt(end - 1) <= 0xDBFF) {
+            end--;
+          }
+          details.changeLog = '${cl.substring(0, end)}...';
         }
       }
-      if ((details.changeLog?.length ?? 0) > 2048) {
-        details.changeLog = '${details.changeLog!.substring(0, 2048)}...';
+      // Fork addition (icon / APK size / display name): on a fresh version
+      // these are resolved inside getAPKUrlsFromFDroidPackagesAPIResponse above;
+      // on a no-op refresh (version unchanged) that method skips the network, so
+      // reuse the previous check's values here instead of clobbering them with
+      // nulls. Gated on versionUnchanged alone (see above).
+      if (versionUnchanged) {
+        // Reuse — never clobber a good previous value with null.
+        if (prevApp.iconUrl != null) {
+          details.iconUrl = prevApp.iconUrl;
+        }
+        if (prevApp.apkSizeBytes != null) {
+          details.apkSizeBytes = prevApp.apkSizeBytes;
+        }
+        if (prevApp.name.trim().isNotEmpty) {
+          details.names.name = prevApp.name;
+        }
       }
+      return details;
+    } catch (e) {
+      rethrowOrWrapError(e);
     }
-    return details;
   }
 
   @override
@@ -279,15 +323,13 @@ class FDroid extends AppSource {
     String query, {
     Map<String, dynamic> querySettings = const {},
   }) async {
-    Response res = await sourceRequest(
+    final Response res = await sourceRequest(
       'https://search.${hosts[0]}/?q=${Uri.encodeQueryComponent(query)}',
       {},
     );
     if (res.statusCode == 200) {
-      Map<String, List<String>> urlsWithDescriptions = {};
-      (await parseHtmlOffIsolate(
-        res.body,
-      )).querySelectorAll('.package-header').forEach((e) {
+      final Map<String, List<String>> urlsWithDescriptions = {};
+      parse(res.body).querySelectorAll('.package-header').forEach((e) {
         String? url = e.attributes['href'];
         if (url != null) {
           try {
@@ -317,25 +359,25 @@ class FDroid extends AppSource {
     String sourceName, {
     Map<String, dynamic> additionalSettings = const {},
   }) async {
-    var autoSelectHighestVersionCode =
+    final autoSelectHighestVersionCode =
         additionalSettings['autoSelectHighestVersionCode'] == true;
-    var trySelectingSuggestedVersionCode =
+    final trySelectingSuggestedVersionCode =
         additionalSettings['trySelectingSuggestedVersionCode'] == true;
-    var filterVersionsByRegEx =
+    final filterVersionsByRegEx =
         (additionalSettings['filterVersionsByRegEx'] as String?)?.isNotEmpty ==
             true
         ? additionalSettings['filterVersionsByRegEx']
         : null;
-    var apkFilterRegEx =
+    final apkFilterRegEx =
         (additionalSettings['apkFilterRegEx'] as String?)?.isNotEmpty == true
         ? additionalSettings['apkFilterRegEx']
         : null;
     if (res.statusCode == 200) {
-      var response = jsonDecode(res.body);
+      final response = jsonDecode(res.body);
       List<dynamic> releases = response['packages'] ?? [];
       if (apkFilterRegEx != null) {
         releases = releases.where((rel) {
-          String apk = '${apkUrlPrefix}_${rel['versionCode']}.apk';
+          final String apk = '${apkUrlPrefix}_${rel['versionCode']}.apk';
           return filterApks(
             [MapEntry(apk, apk)],
             apkFilterRegEx,
@@ -346,6 +388,9 @@ class FDroid extends AppSource {
       if (releases.isEmpty) {
         throw NoReleasesError();
       }
+      // Deduped release version-name candidates for the RegEx-assist feature
+      // (rawReleaseTitlesFromSource). Coerced to String — the F-Droid API
+      // normally returns versionName as a string, but guard against numbers.
       final List<String> rawVersionNameCandidates = <String>[];
       for (final release in releases) {
         final String? versionName = release['versionName']?.toString().trim();
@@ -365,7 +410,7 @@ class FDroid extends AppSource {
           filterVersionsByRegEx == null) {
         final String suggestedVersionCodeText = response['suggestedVersionCode']
             .toString();
-        var suggestedReleases = releases.where(
+        final suggestedReleases = releases.where(
           (element) =>
               element['versionCode'].toString() == suggestedVersionCodeText,
         );
@@ -378,21 +423,22 @@ class FDroid extends AppSource {
       if (filterVersionsByRegEx?.isNotEmpty == true) {
         version = null;
         releaseChoices = [];
-        for (final release in releases) {
-          if (RegExp(
-            filterVersionsByRegEx!,
-          ).hasMatch(release['versionName']?.toString() ?? '')) {
-            version = release['versionName']?.toString();
+        final versionFilter = RegExp(filterVersionsByRegEx!);
+        for (var i = 0; i < releases.length; i++) {
+          if (versionFilter.hasMatch(
+            releases[i]['versionName']?.toString() ?? '',
+          )) {
+            version = releases[i]['versionName']?.toString();
             break;
           }
         }
-        if (version == null) {
+        if (version == null || version.isEmpty) {
           throw NoVersionError();
         }
       }
       // Default to the highest version
       version ??= releases[0]['versionName']?.toString();
-      if (version == null) {
+      if (version == null || version.isEmpty) {
         throw NoVersionError();
       }
       // If a suggested release was not already picked, pick all those with the selected version
@@ -409,7 +455,7 @@ class FDroid extends AppSource {
             response['suggestedVersionCode'] != null) {
           final String suggestedVersionCodeText =
               response['suggestedVersionCode'].toString();
-          var suggestedReleases = releaseChoices.where(
+          final suggestedReleases = releaseChoices.where(
             (element) =>
                 element['versionCode'].toString() == suggestedVersionCodeText,
           );
@@ -421,15 +467,26 @@ class FDroid extends AppSource {
       if (releaseChoices.isEmpty) {
         throw NoReleasesError();
       }
-      List<String> apkUrls = releaseChoices
+      final List<String> apkUrls = releaseChoices
           .map((e) => '${apkUrlPrefix}_${e['versionCode']}.apk')
           .toList();
-      final uniqueApkUrls = apkUrls.toSet().toList();
+      final List<String> uniqueApkUrls = apkUrls.toSet().toList();
+      // Fork addition (reproducible-build verification): derive an initial
+      // status from the F-Droid packages API. A `binaries` field on the
+      // response or the selected release indicates a reproducible build; this
+      // may be refined to 'verified' by the fdroiddata metadata in
+      // getLatestAPKDetails.
+      final bool hasBinaries =
+          response['binaries'] != null ||
+          (releaseChoices.isNotEmpty &&
+              releaseChoices.first['binaries'] != null);
+      final String reproducibleStatus = hasBinaries
+          ? reproducibleBuildStatusVerified
+          : reproducibleBuildStatusNoData;
       // Skip the per-check APK-size HEAD and the package-page fetch (icon/name)
       // when the upstream version is unchanged since the last check. getApp()
-      // reuses the previous apkSizeBytes / iconUrl / name in that case (its
-      // `?? currentApp` fallbacks), so these network round-trips would just be
-      // wasted work on a no-op refresh.
+      // reuses the previous apkSizeBytes / iconUrl / name in that case, so these
+      // network round-trips would just be wasted work on a no-op refresh.
       final App? prevApp = previouslyCheckedApp;
       final bool versionUnchanged =
           prevApp != null &&
@@ -461,6 +518,10 @@ class FDroid extends AppSource {
           // File size is optional; update detection should still succeed.
         }
       }
+      // Display name resolution (readable-app-name): prefer the localized name
+      // from the packages API, then the official package page's parsed/title
+      // name; fall back to the package id last. Icon is picked up from the same
+      // package page when available.
       String? iconUrl;
       final String packageLabel;
       final Object? rawPackageName = response['packageName'];
@@ -534,13 +595,6 @@ class FDroid extends AppSource {
           // Icon is optional
         }
       }
-      final bool hasBinaries =
-          response['binaries'] != null ||
-          (releaseChoices.isNotEmpty &&
-              releaseChoices.first['binaries'] != null);
-      final String reproducibleStatus = hasBinaries
-          ? reproducibleBuildStatusVerified
-          : reproducibleBuildStatusNoData;
       return APKDetails(
         version,
         getApkUrlsFromUrls(uniqueApkUrls),

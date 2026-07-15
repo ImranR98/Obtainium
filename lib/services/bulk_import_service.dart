@@ -236,7 +236,10 @@ class BulkImportService {
     ];
     for (final String suffix in suffixes) {
       if (packageId.endsWith(suffix)) {
-        final String base = packageId.substring(0, packageId.length - suffix.length);
+        final String base = packageId.substring(
+          0,
+          packageId.length - suffix.length,
+        );
         if (base.contains('.')) {
           candidates.add(base);
         }
@@ -304,7 +307,10 @@ class BulkImportService {
       if (shouldAbort?.call() == true) {
         return result;
       }
-      final batch = queryCandidates.sublist(i, min(i + batchSize, queryCandidates.length));
+      final batch = queryCandidates.sublist(
+        i,
+        min(i + batchSize, queryCandidates.length),
+      );
       try {
         final response = await http
             .post(
@@ -326,7 +332,7 @@ class BulkImportService {
         if (response.statusCode == 200) {
           final data = jsonDecode(response.body) as Map<String, dynamic>;
           final dataList = data['data'] as List? ?? [];
-          
+
           final Map<String, ({bool exists, String? link})> batchResults = {};
           for (final item in dataList) {
             final pname = item['pname'] as String?;
@@ -342,7 +348,7 @@ class BulkImportService {
             final res = batchResults[candidate];
             final exists = res?.exists ?? false;
             final appLink = res?.link;
-            
+
             final originals = candidateToOriginal[candidate] ?? [];
             for (final original in originals) {
               if (exists && appLink != null) {
