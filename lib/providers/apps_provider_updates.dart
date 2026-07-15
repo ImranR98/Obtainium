@@ -103,13 +103,11 @@ extension AppsProviderUpdates on AppsProvider {
     final completer = updateCheckCompleter = Completer<List<App>>();
     var completed = 0;
     var total = 0;
-    refreshProgress = 0.0;
-    notify();
+    refreshProgress.value = 0.0;
     final progressTimer = Timer.periodic(const Duration(milliseconds: 250), (
       _,
     ) {
-      refreshProgress = total > 0 ? completed / total : 0.0;
-      notify();
+      refreshProgress.value = total > 0 ? completed / total : 0.0;
     });
     try {
       final List<App> updates = [];
@@ -144,81 +142,91 @@ extension AppsProviderUpdates on AppsProvider {
       total = appIds.length;
       final List<App> fetched = [];
       var lastSaveTime = DateTime.now();
-      const saveInterval = Duration(seconds: 1);
+      const saveInterval = Duration(seconds: 3);
+
+      // Fetching an app runs synchronous, CPU-bound work (HTML/JSON parsing)
+      // on the UI isolate. Firing every check at once saturates the event loop
+      // and freezes the UI for the whole refresh. Bound the number of in-flight
+      // checks so the isolate has room to render frames between them.
+      const maxConcurrent = 4;
+      var nextIndex = 0;
+
+      Future<MapEntry<App, bool>?> fetchOne(String appId) async {
+        final currentApp = apps[appId]?.app;
+        try {
+          final newApp = await fetchUpdate(appId);
+          if (newApp != null) {
+            final isUpdate =
+                currentApp != null &&
+                newApp.latestVersion != currentApp.latestVersion;
+            return MapEntry(newApp, isUpdate);
+          }
+        } on HandshakeException {
+          // Concurrent TLS handshakes to the same host can fail on
+          // certain devices/networks. Retry up to 5 times with
+          // staggered random delays to avoid all retries colliding.
+          const maxRetries = 5;
+          final rng = Random();
+          for (var attempt = 0; attempt < maxRetries; attempt++) {
+            await Future.delayed(
+              Duration(milliseconds: 250 + rng.nextInt(501)),
+            );
+            try {
+              final newApp = await fetchUpdate(appId);
+              if (newApp != null) {
+                final isUpdate =
+                    currentApp != null &&
+                    newApp.latestVersion != currentApp.latestVersion;
+                return MapEntry(newApp, isUpdate);
+              }
+              break;
+            } on HandshakeException {
+              if (attempt == maxRetries - 1) rethrow;
+            }
+          }
+        } catch (e) {
+          if ((e is RateLimitError || e is SocketException) &&
+              throwErrorsForRetry) {
+            rethrow;
+          }
+          if (e is RepositoryRenamedError) {
+            await updatePendingRepoRename(appId, e.newUrl);
+          } else {
+            errors.add(appId, e, appName: apps[appId]?.name);
+          }
+        }
+        return null;
+      }
+
+      Future<void> worker() async {
+        while (true) {
+          final int i = nextIndex++;
+          if (i >= appIds.length) return;
+          final result = await fetchOne(appIds[i]);
+          completed++;
+          // Save on a fixed time interval rather than per-app or per-N apps,
+          // so the UI rebuilds a bounded number of times regardless of how
+          // many apps are checked or how fast they complete.
+          if (result != null) {
+            fetched.add(result.key);
+            if (result.value) updates.add(result.key);
+          }
+          if (fetched.isNotEmpty &&
+              DateTime.now().difference(lastSaveTime) >= saveInterval) {
+            final batch = List<App>.from(fetched);
+            fetched.clear();
+            lastSaveTime = DateTime.now();
+            await saveApps(batch, reuseInstalledInfo: true);
+          }
+        }
+      }
+
       await Future.wait(
-        appIds
-            .map((appId) async {
-              final currentApp = apps[appId]?.app;
-              MapEntry<App, bool>? result;
-              try {
-                final newApp = await fetchUpdate(appId);
-                if (newApp != null) {
-                  final isUpdate =
-                      currentApp != null &&
-                      newApp.latestVersion != currentApp.latestVersion;
-                  result = MapEntry(newApp, isUpdate);
-                }
-              } on HandshakeException {
-                // Concurrent TLS handshakes to the same host can fail on
-                // certain devices/networks. Retry up to 5 times with
-                // staggered random delays to avoid all retries colliding.
-                const maxRetries = 5;
-                final rng = Random();
-                for (var attempt = 0; attempt < maxRetries; attempt++) {
-                  await Future.delayed(
-                    Duration(
-                      milliseconds: 250 + rng.nextInt(501),
-                    ),
-                  );
-                  try {
-                    final newApp = await fetchUpdate(appId);
-                    if (newApp != null) {
-                      final isUpdate =
-                          currentApp != null &&
-                          newApp.latestVersion != currentApp.latestVersion;
-                      result = MapEntry(newApp, isUpdate);
-                      break;
-                    }
-                  } on HandshakeException {
-                    if (attempt == maxRetries - 1) rethrow;
-                  }
-                }
-              } catch (e) {
-                if ((e is RateLimitError || e is SocketException) &&
-                    throwErrorsForRetry) {
-                  rethrow;
-                }
-                if (e is RepositoryRenamedError) {
-                  await updatePendingRepoRename(appId, e.newUrl);
-                } else {
-                  errors.add(appId, e, appName: apps[appId]?.name);
-                }
-              }
-              // Save on a fixed time interval rather than per-app or per-N
-              // apps, so the UI rebuilds a bounded number of times regardless
-              // of how many apps are checked or how fast they complete.
-              if (result != null) {
-                fetched.add(result.key);
-                if (result.value) updates.add(result.key);
-              }
-              if (fetched.isNotEmpty &&
-                  DateTime.now().difference(lastSaveTime) >= saveInterval) {
-                final batch = List<App>.from(fetched);
-                fetched.clear();
-                lastSaveTime = DateTime.now();
-                await saveApps(batch);
-              }
-              return result;
-            })
-            .map(
-              (f) => f.whenComplete(() {
-                completed++;
-              }),
-            ),
+        List.generate(min(maxConcurrent, appIds.length), (_) => worker()),
         eagerError: true,
       );
       if (fetched.isNotEmpty) {
-        await saveApps(fetched);
+        await saveApps(fetched, reuseInstalledInfo: true);
       }
       if (errors.idsByErrorString.isNotEmpty) {
         final ex = CheckUpdatesException(updates, errors);
@@ -235,7 +243,7 @@ extension AppsProviderUpdates on AppsProvider {
     } finally {
       progressTimer.cancel();
       updateCheckCompleter = null;
-      refreshProgress = null;
+      refreshProgress.value = null;
       notify();
     }
   }

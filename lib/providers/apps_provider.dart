@@ -833,7 +833,12 @@ class AppsProvider with ChangeNotifier {
   /// atomic guard (preventing concurrent batches) and a deduplication
   /// mechanism: subsequent callers receive the existing completer's future.
   Completer<List<App>>? updateCheckCompleter;
-  double? refreshProgress;
+
+  /// Update-check progress (0..1), or null when no check is running. Exposed as
+  /// a [ValueNotifier] so the progress bar can rebuild on frequent ticks
+  /// WITHOUT triggering a full [notify] (which would rerun the expensive app
+  /// list pipeline on every listener each tick and stutter the UI).
+  final ValueNotifier<double?> refreshProgress = ValueNotifier<double?>(null);
   LogsProvider logs = LogsProvider();
 
   // Serializes concurrent loadApps() calls without busy-waiting.
@@ -861,6 +866,7 @@ class AppsProvider with ChangeNotifier {
   late final SettingsProvider settingsProvider;
   Directory? _apkDir;
   Directory? _iconsCacheDir;
+  Directory? cachedAppsDir;
 
   Directory get apkDir {
     if (_apkDir == null) {
@@ -1029,6 +1035,7 @@ class AppsProvider with ChangeNotifier {
     foregroundSubscription?.cancel();
     _autoExportDebounce?.cancel();
     _eventSubscription?.cancel();
+    refreshProgress.dispose();
     super.dispose();
   }
 

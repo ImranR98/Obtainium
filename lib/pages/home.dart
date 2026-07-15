@@ -337,34 +337,23 @@ class _HomePageState extends State<HomePage> {
       onSelectionChanged: setAppsSelecting,
     );
 
-    final Widget content;
-    if (useTwoPane) {
-      content = Row(
-        children: [
-          Expanded(
-            flex: 2,
-            child: appsPage,
-          ),
-          const VerticalDivider(width: 1),
-          Expanded(flex: 3, child: detailPane),
-        ],
-      );
-    } else {
-      content = appsPage;
-    }
-
     void onAddPressed() {
       settingsProvider.selectionClick();
       pushAddApp();
     }
 
-    final actionsFab = FloatingActionButton(
-      onPressed: () {
-        settingsProvider.selectionClick();
-        appsPageKey.currentState?.showSelectedAppActions();
-      },
+    void onActionsPressed() {
+      settingsProvider.selectionClick();
+      appsPageKey.currentState?.showSelectedAppActions();
+    }
+
+    // Use the same extended (icon + label) FABs on every layout, so the
+    // tablet/two-pane UI matches mobile.
+    final actionsFab = FloatingActionButton.extended(
+      onPressed: onActionsPressed,
       tooltip: plural('action', 2),
-      child: const Icon(Icons.more_vert),
+      icon: const Icon(Icons.more_vert),
+      label: Text(plural('action', 2)),
     );
     final createFabExtended = FloatingActionButton.extended(
       onPressed: onAddPressed,
@@ -374,6 +363,32 @@ class _HomePageState extends State<HomePage> {
     );
 
     final loadingApps = context.select<AppsProvider, bool>((p) => p.loadingApps);
+
+    final Widget? fab = appsSelecting
+        ? actionsFab
+        : (loadingApps ? null : createFabExtended);
+
+    final Widget content;
+    if (useTwoPane) {
+      // Host the FAB in a nested Scaffold around the first pane so it aligns
+      // with the app list instead of floating over the detail pane.
+      content = Row(
+        children: [
+          Expanded(
+            flex: 2,
+            child: Scaffold(
+              backgroundColor: Colors.transparent,
+              body: appsPage,
+              floatingActionButton: fab,
+            ),
+          ),
+          const VerticalDivider(width: 1),
+          Expanded(flex: 3, child: detailPane),
+        ],
+      );
+    } else {
+      content = appsPage;
+    }
 
     return PopScope(
       canPop: true,
@@ -393,9 +408,7 @@ class _HomePageState extends State<HomePage> {
                   child: content,
                 ),
               ),
-    floatingActionButton: loadingApps || useTwoPane || appsSelecting
-        ? (appsSelecting ? actionsFab : null)
-        : createFabExtended,
+        floatingActionButton: useTwoPane ? null : fab,
       ),
     );
   }
