@@ -12,10 +12,6 @@ import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
 import android.content.pm.PackageManager
-import android.content.pm.ResolveInfo
-import android.graphics.Bitmap
-import android.graphics.Canvas
-import android.graphics.drawable.BitmapDrawable
 import android.net.Uri
 import android.net.wifi.WifiManager
 import android.os.Build
@@ -26,10 +22,10 @@ import android.os.PowerManager
 import android.os.SystemClock
 import android.provider.DocumentsContract
 import android.system.Os
+import androidx.core.content.FileProvider
 import io.flutter.embedding.android.FlutterActivity
 import io.flutter.embedding.engine.FlutterEngine
 import io.flutter.plugin.common.MethodChannel
-import java.io.ByteArrayOutputStream
 import java.io.File
 import java.io.PrintWriter
 import java.io.StringWriter
@@ -37,6 +33,7 @@ import java.util.UUID
 import kotlin.system.exitProcess
 
 private const val CHANNEL = "dev.imranr.obtainium/installer"
+private const val EXTERNAL_INSTALL_CHANNEL = "dev.imranr.obtainium/external_install"
 private const val DEVICE_APPS_CHANNEL = "dev.imranr.obtainium/device_apps"
 private const val POWER_CHANNEL = "dev.imranr.obtainium/power"
 private const val STORAGE_CHANNEL = "dev.imranr.obtainium/storage"
@@ -360,13 +357,6 @@ class MainActivity : FlutterActivity() {
         installerChannel = MethodChannel(flutterEngine.dartExecutor.binaryMessenger, CHANNEL)
         installerChannel?.setMethodCallHandler { call, result ->
             when (call.method) {
-                "queryApkInstallerActivities" -> {
-                    try {
-                        result.success(queryApkInstallerActivities())
-                    } catch (ex: Exception) {
-                        result.error("QUERY_ERROR", ex.message, null)
-                    }
-                }
                 "launchInstallIntent" -> {
                     try {
                         val pathArg = call.argument<String>("path")!!
@@ -379,6 +369,27 @@ class MainActivity : FlutterActivity() {
                         launchInstallIntent(apkSourcePaths, targetPackage, targetActivity, expectedPkgName, result)
                     } catch (ex: Exception) {
                         result.error("INSTALL_ERROR", ex.message, null)
+                    }
+                }
+                else -> result.notImplemented()
+            }
+        }
+        MethodChannel(
+            flutterEngine.dartExecutor.binaryMessenger,
+            EXTERNAL_INSTALL_CHANNEL,
+        ).setMethodCallHandler { call, result ->
+            when (call.method) {
+                "listInstallTargets" -> result.success(listInstallTargets())
+                "contentUriForFile" -> {
+                    val path = call.argument<String>("path")
+                    if (path.isNullOrEmpty()) {
+                        result.error("BAD_ARGS", "Missing file path", null)
+                    } else {
+                        try {
+                            result.success(contentUriForFile(path))
+                        } catch (ex: Exception) {
+                            result.error("URI_FAILED", ex.message, null)
+                        }
                     }
                 }
                 else -> result.notImplemented()
@@ -858,85 +869,33 @@ class MainActivity : FlutterActivity() {
         return labelsByPackageName
     }
 
-    private fun queryApkInstallerActivities(): List<Map<String, Any>> {
-        val results = mutableMapOf<String, Map<String, Any>>()
-
-        val installIntent = Intent(Intent.ACTION_INSTALL_PACKAGE).apply {
-            setDataAndType(Uri.parse("content://dummy/test.apk"), APK_MIME)
-            addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-        }
-        for (resolveInfo in packageManager.queryIntentActivities(installIntent, 0)) {
-            if (!shouldShowInstallerActivity(resolveInfo)) continue
-            val key = "${resolveInfo.activityInfo.packageName}|${resolveInfo.activityInfo.name}"
-            if (!results.containsKey(key)) {
-                results[key] = resolveInfoToMap(resolveInfo)
+    /**
+     * One entry per install-capable activity across all apps. Apps that expose
+     * several install-capable activities return all of them so the user can
+     * pick the specific intent they want.
+     */
+    private fun listInstallTargets(): List<Map<String, String>> {
+        val targets = ArrayList<Map<String, String>>()
+        val probe = Uri.parse("content://dev.imranr.obtainium.probe/sample.apk")
+        val actions = listOf(Intent.ACTION_VIEW, Intent.ACTION_INSTALL_PACKAGE)
+        for (action in actions) {
+            @Suppress("DEPRECATION")
+            val intent = Intent(action).setDataAndType(probe, APK_MIME)
+            for (resolved in packageManager.queryIntentActivities(intent, 0)) {
+                val info = resolved.activityInfo ?: continue
+                val pkg = info.packageName ?: continue
+                if (pkg == packageName) continue
+                val activity = info.name ?: continue
+                targets.add(mapOf("package" to pkg, "activity" to activity))
             }
         }
-
-        val viewIntent = Intent(Intent.ACTION_VIEW).apply {
-            setDataAndType(Uri.parse("content://dummy/test.apk"), APK_MIME)
-            addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-        }
-        for (resolveInfo in packageManager.queryIntentActivities(viewIntent, 0)) {
-            if (!shouldShowInstallerActivity(resolveInfo)) continue
-            val key = "${resolveInfo.activityInfo.packageName}|${resolveInfo.activityInfo.name}"
-            if (!results.containsKey(key)) {
-                results[key] = resolveInfoToMap(resolveInfo)
-            }
-        }
-
-        return results.values.toList()
+        return targets
     }
 
-    private fun shouldShowInstallerActivity(resolveInfo: ResolveInfo): Boolean {
-        val packageName = resolveInfo.activityInfo.packageName
-        if (!packageName.equals("io.github.muntashirakon.AppManager", ignoreCase = true)) {
-            return true
-        }
-        val activityName = resolveInfo.activityInfo.name.lowercase()
-        if (activityName.endsWith("packageinstalleractivity")) {
-            return true
-        }
-        return resolveInfo.loadLabel(packageManager)
-            .toString()
-            .trim()
-            .equals("install", ignoreCase = true)
-    }
-
-    private fun resolveInfoToMap(resolveInfo: ResolveInfo): Map<String, Any> {
-        val pkgName = resolveInfo.activityInfo.packageName
-        val activityName = resolveInfo.activityInfo.name
-        val label = resolveInfo.loadLabel(packageManager).toString()
-        val iconBytes = try {
-            val drawable = resolveInfo.loadIcon(packageManager)
-            val bitmap = if (drawable is BitmapDrawable && drawable.bitmap != null) {
-                drawable.bitmap
-            } else {
-                val bmp = Bitmap.createBitmap(
-                    drawable.intrinsicWidth.coerceAtLeast(1),
-                    drawable.intrinsicHeight.coerceAtLeast(1),
-                    Bitmap.Config.ARGB_8888
-                )
-                val canvas = Canvas(bmp)
-                drawable.setBounds(0, 0, canvas.width, canvas.height)
-                drawable.draw(canvas)
-                bmp
-            }
-            val stream = ByteArrayOutputStream()
-            bitmap.compress(Bitmap.CompressFormat.PNG, 100, stream)
-            stream.toByteArray()
-        } catch (_: Exception) {
-            ByteArray(0)
-        }
-        val result = mutableMapOf<String, Any>(
-            "packageName" to pkgName,
-            "activityName" to activityName,
-            "label" to label,
-        )
-        if (iconBytes.isNotEmpty()) {
-            result["icon"] = iconBytes
-        }
-        return result
+    /** Exposes a downloaded file through the app's FileProvider as a content:// URI. */
+    private fun contentUriForFile(path: String): String {
+        val uri = FileProvider.getUriForFile(this, packageName, File(path))
+        return uri.toString()
     }
 
     @Suppress("DEPRECATION")

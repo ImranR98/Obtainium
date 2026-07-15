@@ -12,7 +12,7 @@ import 'package:obtainium/providers/source_provider.dart';
 /// `launchInstallIntent` bridge via [installApkViaThirdParty] — the exact
 /// mechanism fork main uses — rather than reinventing the handoff. The target
 /// package + activity are what the settings UI writes
-/// (legacyInstallerPackage / legacyInstallerActivity).
+/// (externalInstallerPackage / externalInstallerComponent).
 class ExternalInstaller extends Installer {
   ExternalInstaller(super.settingsProvider);
 
@@ -35,11 +35,11 @@ class ExternalInstaller extends Installer {
 
   @override
   Future<bool> checkPermission() async =>
-      settingsProvider.legacyInstallerPackage != null;
+      settingsProvider.externalInstallerPackage != null;
 
   @override
   Future<void> ensurePermission() async {
-    if (settingsProvider.legacyInstallerPackage == null) {
+    if (settingsProvider.externalInstallerPackage == null) {
       throw ObtainiumError(tr('externalInstallerRequired'));
     }
   }
@@ -50,8 +50,8 @@ class ExternalInstaller extends Installer {
     required String appId,
     Map<String, dynamic> installOptions = const {},
   }) async {
-    final String? targetPackage = settingsProvider.legacyInstallerPackage;
-    final String? targetActivity = settingsProvider.legacyInstallerActivity;
+    final String? targetPackage = settingsProvider.externalInstallerPackage;
+    final String? targetActivity = settingsProvider.externalInstallerComponent;
     if (targetPackage == null ||
         targetActivity == null ||
         apkFilePaths.isEmpty) {

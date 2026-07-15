@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:typed_data';
 
 import 'package:android_package_manager/android_package_manager.dart'
     show PackageInfo;
@@ -24,11 +25,12 @@ import 'package:obtainium/main.dart';
 import 'package:obtainium/app_sources/github.dart';
 import 'package:obtainium/app_sources/gitlab.dart';
 import 'package:obtainium/providers/apps_provider.dart';
-import 'package:obtainium/providers/installer_provider.dart' as installer;
+import 'package:obtainium/providers/external_install_bridge.dart';
 import 'package:obtainium/providers/logs_provider.dart';
 import 'package:obtainium/providers/settings_provider.dart';
 import 'package:obtainium/providers/source_provider.dart';
 import 'package:obtainium/providers/virustotal_provider.dart';
+import 'package:obtainium/theme.dart';
 import 'package:obtainium/theme/app_dialog_theme.dart';
 import 'package:obtainium/theme/app_form_field_styles.dart';
 import 'package:obtainium/theme/app_theme_accent.dart';
@@ -1217,9 +1219,9 @@ class _UpdatesSection extends StatelessWidget {
                     sp.shizukuPretendToBeGooglePlay = value,
               ),
             if (sp.installerMode == 'legacy')
-              Padding(
-                padding: const EdgeInsets.only(top: 8),
-                child: _ThirdPartyInstallerSelector(settingsProvider: sp),
+              const Padding(
+                padding: EdgeInsets.only(top: 8),
+                child: _ExternalInstallerTile(),
               ),
           ],
         ),
@@ -3676,219 +3678,225 @@ class _CategoryEditorSelectorState extends State<CategoryEditorSelector> {
   }
 }
 
-class _ThirdPartyInstallerSelector extends StatefulWidget {
-  final SettingsProvider settingsProvider;
-  const _ThirdPartyInstallerSelector({required this.settingsProvider});
+class _ExternalInstallerTile extends StatefulWidget {
+  const _ExternalInstallerTile();
 
   @override
-  State<_ThirdPartyInstallerSelector> createState() =>
-      _ThirdPartyInstallerSelectorState();
+  State<_ExternalInstallerTile> createState() => _ExternalInstallerTileState();
 }
 
-class _ThirdPartyInstallerSelectorState
-    extends State<_ThirdPartyInstallerSelector> {
-  List<installer.InstallerAppInfo>? _installerApps;
-  bool _loading = true;
+class _ExternalInstallerTileState extends State<_ExternalInstallerTile> {
+  Future<List<InstallerTarget>>? _targetsFuture;
 
   @override
   void initState() {
     super.initState();
-    _loadInstallers();
+    _targetsFuture = ExternalInstallerBridge.instance.listTargets();
   }
 
-  Future<List<installer.InstallerAppInfo>?> _loadInstallers({
-    bool showLoading = false,
-  }) async {
-    if (showLoading && mounted) {
-      setState(() => _loading = true);
-    }
-    final apps = await installer.getApkInstallerApps();
-    if (!mounted) return null;
-    _repairSelectedInstaller(apps);
-    setState(() {
-      _installerApps = apps;
-      _loading = false;
-    });
-    return apps;
-  }
-
-  void _repairSelectedInstaller(List<installer.InstallerAppInfo> apps) {
-    final selectedPackage = widget.settingsProvider.legacyInstallerPackage;
-    final selectedActivity = widget.settingsProvider.legacyInstallerActivity;
-    final selectedActivityStillAvailable =
-        selectedPackage == null ||
-        selectedActivity == null ||
-        apps.any(
-          (app) =>
-              app.packageName == selectedPackage &&
-              app.activityName == selectedActivity,
-        );
-    if (!selectedActivityStillAvailable) {
-      final replacement = apps
-          .where((app) => app.packageName == selectedPackage)
-          .firstOrNull;
-      if (replacement != null) {
-        widget.settingsProvider.legacyInstallerActivity =
-            replacement.activityName;
+  InstallerTarget? _current(
+    List<InstallerTarget> targets,
+    SettingsProvider settingsProvider,
+  ) {
+    final String? package = settingsProvider.externalInstallerPackage;
+    final String? activity = settingsProvider.externalInstallerComponent;
+    if (package == null || activity == null) return null;
+    for (final InstallerTarget target in targets) {
+      if (target.package == package && target.activity == activity) {
+        return target;
       }
     }
+    return null;
   }
 
-  Future<void> _showInstallerPicker() async {
-    if (_loading) return;
-    final installerApps = await _loadInstallers(
-      showLoading: _installerApps == null,
-    );
-    if (!mounted || installerApps == null || installerApps.isEmpty) {
-      return;
+  Widget _targetIcon(InstallerTarget? target, {double size = 40}) {
+    final Uint8List? icon = target?.icon;
+    if (icon == null || icon.isEmpty) {
+      return Icon(Icons.extension_outlined, size: size);
     }
-
-    void updateSelectedInstaller(String? value) {
-      if (value != null) {
-        final selected = installerApps.firstWhere(
-          (a) => '${a.packageName}|${a.activityName}' == value,
-        );
-        widget.settingsProvider.legacyInstallerPackage = selected.packageName;
-        widget.settingsProvider.legacyInstallerActivity = selected.activityName;
-      }
-      setState(() {
-        _installerApps = installerApps;
-      });
-    }
-
-    final currentPkg = widget.settingsProvider.legacyInstallerPackage;
-    final currentAct = widget.settingsProvider.legacyInstallerActivity;
-    final currentValue = (currentPkg != null && currentAct != null)
-        ? '$currentPkg|$currentAct'
-        : null;
-
-    unawaited(
-      showAppModalSheet<void>(
-        context: context,
-        builder: (sheetContext) {
-          String? selectedValue = currentValue;
-          return StatefulBuilder(
-            builder: (builderContext, setSheetState) {
-              return RadioGroup<String>(
-                groupValue: selectedValue,
-                onChanged: (String? value) {
-                  setSheetState(() => selectedValue = value);
-                  updateSelectedInstaller(value);
-                  Navigator.pop(sheetContext);
-                },
-                child: AppSheetContent(
-                  padding: const EdgeInsets.fromLTRB(20, 4, 20, 8),
-                  children: [
-                    Padding(
-                      padding: const EdgeInsets.only(bottom: 16),
-                      child: Center(
-                        child: Text(
-                          tr('thirdPartyInstallerSelect'),
-                          style: Theme.of(builderContext).textTheme.titleMedium
-                              ?.copyWith(fontWeight: FontWeight.w600),
-                        ),
-                      ),
-                    ),
-                    ...installerApps.map((app) {
-                      final radioValue =
-                          '${app.packageName}|${app.activityName}';
-                      return RadioListTile<String>(
-                        contentPadding: const EdgeInsetsDirectional.only(
-                          end: 16,
-                        ),
-                        secondary: app.icon != null && app.icon!.isNotEmpty
-                            ? ClipRRect(
-                                borderRadius: BorderRadius.circular(8),
-                                child: Image.memory(
-                                  app.icon!,
-                                  width: 40,
-                                  height: 40,
-                                  fit: BoxFit.contain,
-                                  // Decode at the rendered size × DPR so a
-                                  // 512×512 launcher icon doesn't sit at full
-                                  // resolution in the raster cache for a 40-px row.
-                                  cacheWidth:
-                                      (40 *
-                                              MediaQuery.devicePixelRatioOf(
-                                                context,
-                                              ))
-                                          .round(),
-                                  cacheHeight:
-                                      (40 *
-                                              MediaQuery.devicePixelRatioOf(
-                                                context,
-                                              ))
-                                          .round(),
-                                  errorBuilder: (_, _, _) =>
-                                      const Icon(Icons.android, size: 40),
-                                ),
-                              )
-                            : const Icon(Icons.android, size: 40),
-                        title: Text(app.label),
-                        subtitle: Text(
-                          app.packageName,
-                          style: const TextStyle(fontSize: 12),
-                        ),
-                        value: radioValue,
-                      );
-                    }),
-                  ],
-                ),
-              );
-            },
-          );
-        },
+    final int cacheSize = (size * MediaQuery.devicePixelRatioOf(context))
+        .round();
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(8),
+      child: Image.memory(
+        icon,
+        width: size,
+        height: size,
+        fit: BoxFit.contain,
+        cacheWidth: cacheSize,
+        cacheHeight: cacheSize,
+        errorBuilder: (_, _, _) => Icon(Icons.extension_outlined, size: size),
       ),
     );
   }
 
+  Future<void> _choose(
+    List<InstallerTarget> targets,
+    SettingsProvider settingsProvider,
+  ) async {
+    if (targets.isEmpty) return;
+    final Map<String, List<InstallerTarget>> grouped = {};
+    for (final InstallerTarget target in targets) {
+      grouped.putIfAbsent(target.package, () => []).add(target);
+    }
+    for (final MapEntry<String, List<InstallerTarget>> entry
+        in grouped.entries) {
+      final Set<String> seenActivities = {};
+      entry.value.removeWhere(
+        (InstallerTarget target) => !seenActivities.add(target.activity),
+      );
+    }
+    grouped.removeWhere((_, List<InstallerTarget> targets) => targets.isEmpty);
+    final List<MapEntry<String, List<InstallerTarget>>> entries = grouped
+        .entries
+        .toList();
+    int expandedIndex = -1;
+    final InstallerTarget? picked = await showDialog<InstallerTarget>(
+      context: context,
+      builder: (BuildContext dialogContext) => StatefulBuilder(
+        builder: (BuildContext builderContext, StateSetter setDialogState) =>
+            AlertDialog(
+              scrollable: true,
+              title: Text(tr('chooseExternalInstaller')),
+              content: M3eExpressiveSettingsCard(
+                items: [
+                  for (int index = 0; index < entries.length; index++)
+                    Column(
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        ListTile(
+                          onTap: () {
+                            final entry = entries[index];
+                            if (entry.value.length == 1) {
+                              Navigator.of(
+                                dialogContext,
+                              ).pop(entry.value.first);
+                            } else {
+                              setDialogState(() {
+                                expandedIndex = expandedIndex == index
+                                    ? -1
+                                    : index;
+                              });
+                            }
+                          },
+                          leading: _targetIcon(
+                            entries[index].value.first,
+                            size: 36,
+                          ),
+                          title: Text(
+                            entries[index].value.first.label,
+                            style: Theme.of(
+                              builderContext,
+                            ).textTheme.titleSmall,
+                          ),
+                          subtitle: Text(
+                            entries[index].key,
+                            style: Theme.of(builderContext).textTheme.bodySmall,
+                          ),
+                          trailing: entries[index].value.length > 1
+                              ? AnimatedRotation(
+                                  turns: expandedIndex == index ? 0.5 : 0,
+                                  duration: ExpressiveMotion.short,
+                                  child: const Icon(Icons.expand_more),
+                                )
+                              : null,
+                        ),
+                        if (expandedIndex == index)
+                          ...entries[index].value.map(
+                            (InstallerTarget target) => ListTile(
+                              onTap: () =>
+                                  Navigator.of(dialogContext).pop(target),
+                              contentPadding: const EdgeInsetsDirectional.only(
+                                start: 68,
+                                end: 16,
+                              ),
+                              minTileHeight: 36,
+                              visualDensity: VisualDensity.compact,
+                              title: Text(
+                                _shortActivityName(
+                                  target,
+                                  entries[index].value,
+                                ),
+                                style: Theme.of(
+                                  builderContext,
+                                ).textTheme.bodySmall,
+                              ),
+                            ),
+                          ),
+                      ],
+                    ),
+                ],
+              ),
+            ),
+      ),
+    );
+    if (picked == null) return;
+    settingsProvider.externalInstallerPackage = picked.package;
+    settingsProvider.externalInstallerComponent = picked.activity;
+    if (mounted) setState(() {});
+  }
+
+  String _shortActivityName(
+    InstallerTarget target,
+    List<InstallerTarget> siblings,
+  ) {
+    final String shortName = target.activity.split('.').last;
+    final bool hasDuplicate = siblings.any(
+      (InstallerTarget sibling) =>
+          sibling != target && sibling.activity.split('.').last == shortName,
+    );
+    return hasDuplicate ? target.activity : shortName;
+  }
+
   @override
   Widget build(BuildContext context) {
-    final selectedPkg = widget.settingsProvider.legacyInstallerPackage;
-    final selectedAct = widget.settingsProvider.legacyInstallerActivity;
-    final selectedApp = (_installerApps ?? [])
-        .where(
-          (app) =>
-              app.packageName == selectedPkg && app.activityName == selectedAct,
-        )
-        .firstOrNull;
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        if (_loading)
-          const Center(child: ExpressiveLoadingIndicator())
-        else
-          ListTile(
-            contentPadding: EdgeInsets.zero,
-            visualDensity: VisualDensity.compact,
-            leading: selectedApp?.icon != null && selectedApp!.icon!.isNotEmpty
-                ? ClipRRect(
-                    borderRadius: BorderRadius.circular(8),
-                    child: Image.memory(
-                      selectedApp.icon!,
-                      width: 36,
-                      height: 36,
-                      fit: BoxFit.contain,
-                      cacheWidth: (36 * MediaQuery.devicePixelRatioOf(context))
-                          .round(),
-                      cacheHeight: (36 * MediaQuery.devicePixelRatioOf(context))
-                          .round(),
-                      errorBuilder: (_, _, _) =>
-                          const Icon(Icons.android, size: 36),
-                    ),
-                  )
-                : null,
-            title: Text(tr('thirdPartyInstallerSelect')),
-            subtitle: Text(
-              selectedApp?.label ??
-                  selectedPkg ??
-                  tr('thirdPartyInstallerNoneSelected'),
-            ),
-            trailing: const Icon(Icons.arrow_drop_down),
-            onTap: _showInstallerPicker,
-          ),
-      ],
+    final SettingsProvider settingsProvider = context.watch<SettingsProvider>();
+    return FutureBuilder<List<InstallerTarget>>(
+      future: _targetsFuture,
+      builder:
+          (
+            BuildContext context,
+            AsyncSnapshot<List<InstallerTarget>> snapshot,
+          ) {
+            if (snapshot.connectionState != ConnectionState.done) {
+              return const ListTile(
+                contentPadding: EdgeInsets.symmetric(horizontal: 8),
+                leading: SizedBox.square(
+                  dimension: 24,
+                  child: ExpressiveLoadingIndicator(),
+                ),
+              );
+            }
+            final List<InstallerTarget> targets =
+                snapshot.data ?? const <InstallerTarget>[];
+            final InstallerTarget? current = _current(
+              targets,
+              settingsProvider,
+            );
+            final int intentCount = targets
+                .where(
+                  (InstallerTarget target) =>
+                      target.package == current?.package,
+                )
+                .map((InstallerTarget target) => target.activity)
+                .toSet()
+                .length;
+            final String subtitle = current != null
+                ? intentCount > 1
+                      ? '${current.label} · ${current.activity.split('.').last}'
+                      : current.label
+                : settingsProvider.externalInstallerPackage ??
+                      tr('externalInstallerUnset');
+            return ListTile(
+              contentPadding: const EdgeInsets.symmetric(horizontal: 8),
+              leading: _targetIcon(current),
+              title: Text(tr('chooseExternalInstaller')),
+              subtitle: Text(subtitle),
+              trailing: const Icon(Icons.arrow_drop_down),
+              onTap: () => _choose(targets, settingsProvider),
+            );
+          },
     );
   }
 }

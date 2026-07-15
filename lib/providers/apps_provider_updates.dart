@@ -564,13 +564,36 @@ extension AppsProviderUpdates on AppsProvider {
         await maxParallelUpdateChecksForDevice(),
       );
 
+      Future<App?> fetchUpdateWithHandshakeRetry(String appId) async {
+        try {
+          return await fetchUpdate(appId);
+        } on HandshakeException {
+          // Concurrent TLS handshakes to the same host can fail on certain
+          // devices or networks. Keep retries inside the bounded worker so
+          // they cannot bypass the device-tuned concurrency limit.
+          const int maxRetries = 5;
+          final Random random = Random();
+          for (int attempt = 0; attempt < maxRetries; attempt++) {
+            await Future.delayed(
+              Duration(milliseconds: 250 + random.nextInt(501)),
+            );
+            try {
+              return await fetchUpdate(appId);
+            } on HandshakeException {
+              if (attempt == maxRetries - 1) rethrow;
+            }
+          }
+          return null;
+        }
+      }
+
       Future<void> runWorker() async {
         while (nextIndex < total) {
           final int resultIndex = nextIndex++;
           final String appId = appIds[resultIndex];
           final App? currentApp = apps[appId]?.app;
           try {
-            final App? newApp = await fetchUpdate(appId);
+            final App? newApp = await fetchUpdateWithHandshakeRetry(appId);
             if (newApp != null) {
               results[resultIndex] = MapEntry(
                 newApp,
@@ -579,7 +602,9 @@ extension AppsProviderUpdates on AppsProvider {
               );
             }
           } catch (e) {
-            if ((e is RateLimitError || e is SocketException) &&
+            if ((e is RateLimitError ||
+                    e is SocketException ||
+                    e is HandshakeException) &&
                 throwErrorsForRetry) {
               rethrow;
             }

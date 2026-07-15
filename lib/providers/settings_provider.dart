@@ -126,6 +126,7 @@ class SettingsProvider with ChangeNotifier {
     _migrateProgressiveBlurDefaultForExistingUsers();
     defaultAppDir = (await getAppStorageDir()).path;
     _migrateShizukuSetting();
+    _migrateExternalInstallerTarget();
     _migrateSwipeActionPrefs();
     _syncSwipeActionNameStringsIfMissing();
     _migrateThemeAccentPrefs();
@@ -280,6 +281,25 @@ class SettingsProvider with ChangeNotifier {
     prefs?.remove('useShizuku');
   }
 
+  void _migrateExternalInstallerTarget() {
+    if (prefs?.containsKey('externalInstallerPackage') != true) {
+      final String? legacyPackage = prefs?.getString('legacyInstallerPackage');
+      if (legacyPackage != null && legacyPackage.isNotEmpty) {
+        prefs?.setString('externalInstallerPackage', legacyPackage);
+      }
+    }
+    if (prefs?.containsKey('externalInstallerComponent') != true) {
+      final String? legacyActivity = prefs?.getString(
+        'legacyInstallerActivity',
+      );
+      if (legacyActivity != null && legacyActivity.isNotEmpty) {
+        prefs?.setString('externalInstallerComponent', legacyActivity);
+      }
+    }
+    prefs?.remove('legacyInstallerPackage');
+    prefs?.remove('legacyInstallerActivity');
+  }
+
   bool get useSystemFont {
     return prefs?.getBool('useSystemFont') ?? false;
   }
@@ -358,34 +378,6 @@ class SettingsProvider with ChangeNotifier {
 
   set useShizuku(bool useShizuku) {
     installerMode = useShizuku ? 'shizuku' : 'stock';
-  }
-
-  String? get legacyInstallerPackage {
-    final value = prefs?.getString('legacyInstallerPackage');
-    return (value != null && value.isNotEmpty) ? value : null;
-  }
-
-  set legacyInstallerPackage(String? pkg) {
-    if (pkg == null || pkg.isEmpty) {
-      prefs?.remove('legacyInstallerPackage');
-    } else {
-      prefs?.setString('legacyInstallerPackage', pkg);
-    }
-    notifyListeners();
-  }
-
-  String? get legacyInstallerActivity {
-    final value = prefs?.getString('legacyInstallerActivity');
-    return (value != null && value.isNotEmpty) ? value : null;
-  }
-
-  set legacyInstallerActivity(String? activity) {
-    if (activity == null || activity.isEmpty) {
-      prefs?.remove('legacyInstallerActivity');
-    } else {
-      prefs?.setString('legacyInstallerActivity', activity);
-    }
-    notifyListeners();
   }
 
   ThemeSettings get theme {
@@ -1603,7 +1595,7 @@ class SettingsProvider with ChangeNotifier {
   }
 
   bool get showActionBannerForUpdateOnly {
-    return prefs?.getBool('showActionBannerForUpdateOnly') ?? false;
+    return prefs?.getBool('showActionBannerForUpdateOnly') ?? true;
   }
 
   set showActionBannerForUpdateOnly(bool val) {

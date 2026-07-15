@@ -20,6 +20,7 @@ import 'package:obtainium/providers/source_provider.dart';
 import 'package:provider/provider.dart';
 import 'package:dynamic_color/dynamic_color.dart';
 import 'package:device_info_plus/device_info_plus.dart';
+import 'package:permission_handler/permission_handler.dart';
 import 'package:workmanager/workmanager.dart';
 import 'package:easy_localization/easy_localization.dart';
 // ignore: implementation_imports
@@ -30,8 +31,8 @@ import 'package:flutter_foreground_task/flutter_foreground_task.dart';
 
 List<MapEntry<Locale, String>> supportedLocales = const [
   MapEntry(Locale('en'), 'English'),
-  MapEntry(Locale('zh'), '简体中文'),
   MapEntry(Locale('zh', 'Hant_TW'), '臺灣話'),
+  MapEntry(Locale('zh'), '简体中文'),
   MapEntry(Locale('it'), 'Italiano'),
   MapEntry(Locale('ja'), '日本語'),
   MapEntry(Locale('hu'), 'Magyar'),
@@ -536,6 +537,9 @@ class _ObtainiumState extends State<Obtainium> {
       final bool isFirstRun = settingsProvider.checkAndFlipFirstRun();
       if (isFirstRun) {
         logs.add('This is the first ever run of ObtainX.');
+        if (!settingsProvider.isTV) {
+          unawaited(Permission.notification.request());
+        }
         // If this is the first run, add ObtainX to the Apps list
         if (!AppDistribution.fdroid) {
           getInstalledInfo(obtainiumId, includeOwnDebugBuild: true)
@@ -552,7 +556,7 @@ class _ObtainiumState extends State<Obtainium> {
                       apkUrls: [],
                       preferredApkIndex: 0,
                       additionalSettings: {
-                        'versionDetection': true,
+                        'versionDetection': 'auto',
                         'apkFilterRegEx': 'fdroid',
                         'invertAPKFilter': true,
                       },

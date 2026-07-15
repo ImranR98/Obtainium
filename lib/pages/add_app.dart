@@ -1239,7 +1239,7 @@ class AddAppPageState extends State<AddAppPage> {
 
     Widget getSearchBarRow() {
       final ColorScheme colorScheme = Theme.of(context).colorScheme;
-      final bool searchDisabled = searchQuery.isEmpty || doingSomething;
+      final bool searchDisabled = doingSomething;
       final Widget trailingSearch = searching
           ? SizedBox(
               width: 48,
@@ -1298,7 +1298,7 @@ class AddAppPageState extends State<AddAppPage> {
               },
               textInputAction: TextInputAction.search,
               onSubmitted: (_) {
-                if (!(searchQuery.isEmpty || doingSomething)) {
+                if (!doingSomething) {
                   _searchSomeSourcesFocusNode.unfocus();
                   hapticSelection();
                   runInlineSearch(
