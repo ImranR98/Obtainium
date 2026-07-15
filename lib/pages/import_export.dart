@@ -86,7 +86,7 @@ class _ImportFromURLListPageState extends State<ImportFromURLListPage> {
           final controller = context.watch<ImportFromURLListController>();
           return Scaffold(
             backgroundColor: Theme.of(context).colorScheme.surface,
-            appBar: AppBar(title: Text(tr('importFromURLList'))),
+            appBar: AppBar(automaticallyImplyLeading: false, title: Text(tr('importFromURLList'))),
             body: CustomScrollView(
               slivers: [
                 SliverToBoxAdapter(
