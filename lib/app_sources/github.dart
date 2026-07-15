@@ -434,50 +434,58 @@ class GitHub extends AppSource {
     bool useLatestAssetDateAsReleaseDate,
   ) {
     if (sortMethod == 'none') return;
-    releases.sort((a, b) {
-      if (a == null) {
-        return -1;
-      } else if (b == null) {
-        return 1;
-      } else {
-        final nameA = a['tag_name'] ?? a['name'];
-        final nameB = b['tag_name'] ?? b['name'];
-        final stdFormats = findStandardFormatsForVersion(
-          nameA,
-          false,
-        ).intersection(findStandardFormatsForVersion(nameB, false));
-        if (sortMethod == 'date' ||
-            (sortMethod == 'smartname-datefallback' && stdFormats.isEmpty)) {
-          final dateA = _getReleaseDateFromRelease(
-            a,
-            useLatestAssetDateAsReleaseDate,
-          );
-          final dateB = _getReleaseDateFromRelease(
-            b,
-            useLatestAssetDateAsReleaseDate,
-          );
-          // Null dates sort as oldest (matches main); DateTime(1)/DateTime(0)
-          // keep the both-null case deterministic.
-          return (dateA ?? DateTime(1)).compareTo(dateB ?? DateTime(0));
-        } else {
-          if (sortMethod != 'name' && stdFormats.isNotEmpty) {
-            final sortedFormats = stdFormats.toList()
-              ..sort((a, b) => b.length.compareTo(a.length));
-            final reg = RegExp(sortedFormats.first);
-            final matchA = reg.firstMatch(nameA);
-            final matchB = reg.firstMatch(nameB);
-            if (matchA == null || matchB == null) {
-              return compareAlphaNumeric((nameA as String), (nameB as String));
-            }
-            return compareAlphaNumeric(
-              (nameA as String).substring(matchA.start, matchA.end),
-              (nameB as String).substring(matchB.start, matchB.end),
-            );
-          } else {
-            return compareAlphaNumeric((nameA as String), (nameB as String));
-          }
-        }
+
+    // Precompute dates and (for smartname/name sorts) per-release format
+    // sets once. Memoization in findStandardFormatsForVersion already handles
+    // the per-version cache; we still precompute here so the sort comparator
+    // only performs O(1) lookups instead of O(n) per comparison.
+    final isDateOnly = sortMethod == 'date';
+    final Map<dynamic, DateTime?> dates = {};
+    final Map<dynamic, Set<String>> formats = {};
+    if (!isDateOnly) {
+      for (final r in releases) {
+        if (r == null) continue;
+        final name = (r['tag_name'] ?? r['name'])?.toString() ?? '';
+        formats[r] = findStandardFormatsForVersion(name, false);
       }
+    }
+
+    releases.sort((a, b) {
+      if (a == null) return -1;
+      if (b == null) return 1;
+
+      if (isDateOnly) {
+        final dateA = dates.putIfAbsent(a, () => _getReleaseDateFromRelease(a, useLatestAssetDateAsReleaseDate));
+        final dateB = dates.putIfAbsent(b, () => _getReleaseDateFromRelease(b, useLatestAssetDateAsReleaseDate));
+        return (dateA ?? DateTime(1)).compareTo(dateB ?? DateTime(0));
+      }
+
+      final nameA = a['tag_name'] ?? a['name'];
+      final nameB = b['tag_name'] ?? b['name'];
+      final stdFormats = formats[a]!.intersection(formats[b]!);
+
+      if (sortMethod == 'smartname-datefallback' && stdFormats.isEmpty) {
+        final dateA = _getReleaseDateFromRelease(a, useLatestAssetDateAsReleaseDate);
+        final dateB = _getReleaseDateFromRelease(b, useLatestAssetDateAsReleaseDate);
+        return (dateA ?? DateTime(1)).compareTo(dateB ?? DateTime(0));
+      }
+
+      if (sortMethod != 'name' && stdFormats.isNotEmpty) {
+        final sortedFormats = stdFormats.toList()
+          ..sort((x, y) => y.length.compareTo(x.length));
+        final reg = RegExp(sortedFormats.first);
+        final matchA = reg.firstMatch(nameA);
+        final matchB = reg.firstMatch(nameB);
+        if (matchA == null || matchB == null) {
+          return compareAlphaNumeric(nameA as String, nameB as String);
+        }
+        return compareAlphaNumeric(
+          (nameA as String).substring(matchA.start, matchA.end),
+          (nameB as String).substring(matchB.start, matchB.end),
+        );
+      }
+
+      return compareAlphaNumeric(nameA as String, nameB as String);
     });
   }
 

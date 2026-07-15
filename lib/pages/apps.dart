@@ -64,14 +64,6 @@ class AppsPageState extends State<AppsPage> {
 
   Timer? _searchDebounce;
 
-  int? _listDataSig;
-  List<AppInMemory>? _cachedListedApps;
-  List<String>? _cachedExistingUpdateIds;
-  List<String>? _cachedNewInstallIds;
-  List<String>? _cachedTrackOnlyUpdateIds;
-  Map<String?, List<int>>? _cachedGrouped;
-  List<String?>? _cachedListedGroups;
-
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
@@ -114,42 +106,6 @@ class AppsPageState extends State<AppsPage> {
     }
     setState(() {});
     widget.onSelectionChanged?.call(selectedAppIds.isNotEmpty);
-  }
-
-  int pipelineSignature(List<AppInMemory> apps) {
-    final parts = <Object?>[
-      filter.nameFilter,
-      filter.authorFilter,
-      filter.idFilter,
-      filter.includeUptodate,
-      filter.includeNonInstalled,
-      Object.hashAll(filter.categoryFilter),
-      filter.sourceFilter,
-      settingsProvider.sortColumn.index,
-      settingsProvider.sortOrder.index,
-      settingsProvider.pinUpdates,
-      settingsProvider.buryNonInstalled,
-      Object.hashAll(selectedAppIds),
-      settingsProvider.groupBy,
-      apps.length,
-    ];
-    for (final a in apps) {
-      final app = a.app;
-      parts.addAll(<Object?>[
-        app.id,
-        a.name,
-        a.author,
-        app.installedVersion,
-        app.latestVersion,
-        app.releaseDate,
-        app.pinned,
-        Object.hashAll(app.categories),
-        app.hasPendingRepoRename,
-        app.overrideSource,
-        app.settings.getBool('trackOnly'),
-      ]);
-    }
-    return Object.hashAll(parts);
   }
 
   List<AppInMemory> getFilteredAndSortedApps(
@@ -1042,29 +998,52 @@ class AppsPageState extends State<AppsPage> {
     ];
   }
 
-  void _computeListData(
-    AppsProvider appsProvider,
-    SettingsProvider settingsProvider,
-  ) {
-    final apps = appsProvider.getAppValues().toList();
-    final sig = pipelineSignature(apps);
-    if (sig == _listDataSig && _cachedListedApps != null) {
-      return;
+  @override
+  Widget build(BuildContext context) {
+    final appsProvider = context.watch<AppsProvider>();
+    final settingsProvider = context.watch<SettingsProvider>();
+
+    if (!appsProvider.loadingApps &&
+        appsProvider.apps.isNotEmpty &&
+        settingsProvider.checkJustStarted() &&
+        settingsProvider.checkOnStart) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        refreshIndicatorKey.currentState?.show();
+      });
     }
-    _listDataSig = sig;
 
-    var listedApps = apps;
-    final existingUpdates = appsProvider.findAppIdsWithPendingUpdates(
-      installedOnly: true,
-    );
-    listedApps = getFilteredAndSortedApps(listedApps, existingUpdates.toSet());
+    final apps = appsProvider.getAppValues().toList();
+    final allAppIds = apps.map((e) => e.app.id).toSet();
+    final localSelected = selectedAppIds.where(allAppIds.contains).toSet();
+    if (localSelected.length != selectedAppIds.length) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) {
+          final freshListedIds = appsProvider
+              .getAppValues()
+              .map((e) => e.app.id)
+              .toSet();
+          setState(() {
+            selectedAppIds = selectedAppIds
+                .where(freshListedIds.contains)
+                .toSet();
+          });
+          widget.onSelectionChanged?.call(selectedAppIds.isNotEmpty);
+        }
+      });
+    }
 
-    final listedAppIdSet = listedApps.map((e) => e.app.id).toSet();
+    final existingUpdates = appsProvider
+        .findAppIdsWithPendingUpdates(installedOnly: true)
+        .toSet();
+    final listedApps = getFilteredAndSortedApps(List<AppInMemory>.from(apps), existingUpdates);
+
+    final listedAppIdSet2 = listedApps.map((e) => e.app.id).toSet();
 
     var existingUpdateIdsAllOrSelected = existingUpdates
         .where(
           (element) => selectedAppIds.isEmpty
-              ? listedAppIdSet.contains(element)
+              ? listedAppIdSet2.contains(element)
               : selectedAppIds.contains(element),
         )
         .toList();
@@ -1072,7 +1051,7 @@ class AppsPageState extends State<AppsPage> {
         .findAppIdsWithPendingUpdates(nonInstalledOnly: true)
         .where(
           (element) => selectedAppIds.isEmpty
-              ? listedAppIdSet.contains(element)
+              ? listedAppIdSet2.contains(element)
               : selectedAppIds.contains(element),
         )
         .toList();
@@ -1121,65 +1100,6 @@ class AppsPageState extends State<AppsPage> {
       if (b == null) return -1;
       return a.toLowerCase().compareTo(b.toLowerCase());
     });
-
-    _cachedListedApps = listedApps;
-    _cachedExistingUpdateIds = existingUpdateIdsAllOrSelected;
-    _cachedNewInstallIds = newInstallIdsAllOrSelected;
-    _cachedTrackOnlyUpdateIds = trackOnlyUpdateIdsAllOrSelected;
-    _cachedGrouped = grouped;
-    _cachedListedGroups = listedGroups;
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final appsProvider = context.read<AppsProvider>();
-    final settingsProvider = context.watch<SettingsProvider>();
-
-    context.select((AppsProvider p) => p.loadingApps);
-    context.select(
-      (AppsProvider p) => pipelineSignature(p.getAppValues().toList()),
-    );
-
-    if (!appsProvider.loadingApps &&
-        appsProvider.apps.isNotEmpty &&
-        settingsProvider.checkJustStarted() &&
-        settingsProvider.checkOnStart) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (!mounted) return;
-        refreshIndicatorKey.currentState?.show();
-      });
-    }
-
-    final listedAppIdSet = appsProvider
-        .getAppValues()
-        .map((e) => e.app.id)
-        .toSet();
-    final localSelected = selectedAppIds.where(listedAppIdSet.contains).toSet();
-    if (localSelected.length != selectedAppIds.length) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (mounted) {
-          final freshListedIds = appsProvider
-              .getAppValues()
-              .map((e) => e.app.id)
-              .toSet();
-          setState(() {
-            selectedAppIds = selectedAppIds
-                .where(freshListedIds.contains)
-                .toSet();
-          });
-          widget.onSelectionChanged?.call(selectedAppIds.isNotEmpty);
-        }
-      });
-    }
-
-    _computeListData(appsProvider, settingsProvider);
-    final listedApps = _cachedListedApps!;
-    final existingUpdateIdsAllOrSelected = _cachedExistingUpdateIds!;
-    final newInstallIdsAllOrSelected = _cachedNewInstallIds!;
-    final trackOnlyUpdateIdsAllOrSelected = _cachedTrackOnlyUpdateIds!;
-    final groupBy = settingsProvider.groupBy;
-    final grouped = _cachedGrouped!;
-    final listedGroups = _cachedListedGroups!;
 
     return PopScope(
       canPop: selectedAppIds.isEmpty,
@@ -1273,9 +1193,7 @@ class AppsPageState extends State<AppsPage> {
 
   void showSelectedAppActions() {
     if (!mounted) return;
-    final listedApps =
-        _cachedListedApps ??
-        context.read<AppsProvider>().getAppValues().toList();
+    final listedApps = context.read<AppsProvider>().getAppValues().toList();
     final selectedApps = listedApps
         .map((e) => e.app)
         .where((a) => selectedAppIds.contains(a.id))

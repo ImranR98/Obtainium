@@ -44,6 +44,7 @@ extension AppsProviderLifecycle on AppsProvider {
   }
 
   Future<Directory> getAppsDir() async {
+    if (cachedAppsDir != null) return cachedAppsDir!;
     final Directory appsDir = Directory(
       '${(await getAppStorageDir()).path}/app_data',
     );
@@ -57,10 +58,10 @@ extension AppsProviderLifecycle on AppsProvider {
         if (!fallbackDir.existsSync()) {
           fallbackDir.createSync(recursive: true);
         }
-        return fallbackDir;
+        return cachedAppsDir = fallbackDir;
       }
     }
-    return appsDir;
+    return cachedAppsDir = appsDir;
   }
 
   bool isVersionDetectionPossible(AppInMemory? app) {

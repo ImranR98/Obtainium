@@ -866,6 +866,7 @@ class AppsProvider with ChangeNotifier {
   late final SettingsProvider settingsProvider;
   Directory? _apkDir;
   Directory? _iconsCacheDir;
+  Directory? cachedAppsDir;
 
   Directory get apkDir {
     if (_apkDir == null) {
