@@ -143,8 +143,8 @@ extension AppsProviderUpdates on AppsProvider {
       }
       total = appIds.length;
       final List<App> fetched = [];
-      var batchCount = 0;
-      const batchSize = 4;
+      var lastSaveTime = DateTime.now();
+      const saveInterval = Duration(seconds: 1);
       await Future.wait(
         appIds
             .map((appId) async {
@@ -194,16 +194,18 @@ extension AppsProviderUpdates on AppsProvider {
                   errors.add(appId, e, appName: apps[appId]?.name);
                 }
               }
-              // Save in batches to give the user a sense of progress
-              // without hammering the UI with per-app rebuilds.
+              // Save on a fixed time interval rather than per-app or per-N
+              // apps, so the UI rebuilds a bounded number of times regardless
+              // of how many apps are checked or how fast they complete.
               if (result != null) {
                 fetched.add(result.key);
                 if (result.value) updates.add(result.key);
               }
-              batchCount++;
-              if (batchCount % batchSize == 0 && fetched.isNotEmpty) {
+              if (fetched.isNotEmpty &&
+                  DateTime.now().difference(lastSaveTime) >= saveInterval) {
                 final batch = List<App>.from(fetched);
                 fetched.clear();
+                lastSaveTime = DateTime.now();
                 await saveApps(batch);
               }
               return result;
