@@ -398,13 +398,9 @@ class AppListTile extends StatelessWidget {
     final transparent = Colors.transparent.toARGB32();
     final categories = _app.categories;
     final List<double> stops = [
-      if (categories.length > 1)
-        ...categories.asMap().entries.map(
-          (e) => ((e.key / (categories.length - 1)).clamp(0.0, 1.0)),
-        )
-      else if (categories.length == 1)
-        0.9999,
-      1,
+      if (categories.isNotEmpty)
+        ...List.generate(categories.length, (i) => i / categories.length),
+      1.0,
     ];
     final appId = _app.id;
     final installed = _app.installedVersion;

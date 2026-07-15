@@ -12,6 +12,7 @@ import 'package:obtainium/theme.dart';
 import 'package:obtainium/custom_errors.dart';
 import 'package:obtainium/main.dart';
 import 'package:obtainium/pages/app.dart';
+import 'package:obtainium/pages/settings.dart';
 import 'package:obtainium/providers/apps_provider.dart';
 import 'package:obtainium/providers/notifications_provider.dart';
 import 'package:obtainium/providers/settings_provider.dart';
@@ -1007,6 +1008,19 @@ class AppsPageState extends State<AppsPage> {
     AppsProvider appsProvider,
     List<AppInMemory> listedApps,
   ) {
+    if (appsProvider.loadingApps && appsProvider.apps.isEmpty) {
+      return [
+        const SliverFillRemaining(
+          hasScrollBody: false,
+          child: Center(
+            child: CircularProgressIndicator(
+              strokeCap: StrokeCap.round,
+              strokeWidth: 6,
+            ),
+          ),
+        ),
+      ];
+    }
     return [
       if (appsProvider.loadingApps && listedApps.isEmpty)
         const SliverToBoxAdapter(
@@ -1019,14 +1033,10 @@ class AppsPageState extends State<AppsPage> {
         SliverFillRemaining(
           child: EmptyState(
             icon: appsProvider.apps.isEmpty
-                ? (appsProvider.loadingApps
-                      ? Icons.hourglass_empty_rounded
-                      : Icons.apps_outlined)
+                ? Icons.apps_outlined
                 : Icons.search_off_rounded,
             message: appsProvider.apps.isEmpty
-                ? appsProvider.loadingApps
-                      ? tr('pleaseWait')
-                      : tr('noApps')
+                ? tr('noApps')
                 : tr('noAppsForFilter'),
           ),
         ),
@@ -1201,7 +1211,19 @@ class AppsPageState extends State<AppsPage> {
                 physics: const AlwaysScrollableScrollPhysics(),
                 controller: scrollController,
                 slivers: <Widget>[
-                  CustomAppBar(title: tr('appsString')),
+                  CustomAppBar(title: tr('appsString'), actions: [
+                    IconButton(
+                      onPressed: () {
+                        Navigator.of(context).push(
+                          MaterialPageRoute(
+                            builder: (_) => const SettingsPage(),
+                          ),
+                        );
+                      },
+                      icon: const Icon(Icons.settings_outlined),
+                      tooltip: tr('settings'),
+                    ),
+                  ]),
                   if (appsProvider.apps.isNotEmpty)
                     _getSearchBarSliver(context, settingsProvider, listedApps),
                   if (appsProvider.apps.isNotEmpty)
