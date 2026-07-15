@@ -655,7 +655,9 @@ class AddAppPageState extends State<AddAppPage> {
         child: searching
             ? const Center(child: CircularProgressIndicator())
             : FilledButton(
-                onPressed: doingSomething ? null : () {
+                onPressed: doingSomething
+                    ? null
+                    : () {
                         runSearch(context);
                       },
                 child: Text(tr('search')),
@@ -807,8 +809,8 @@ class AddAppPageState extends State<AddAppPage> {
     padding: EdgeInsets.only(
       left: 16,
       right: 16,
-      top: 16,
-      bottom: 16 + MediaQuery.of(context).padding.bottom,
+      top: MediaQuery.of(context).padding.top,
+      bottom: MediaQuery.of(context).padding.bottom,
     ),
     child: Wrap(
       direction: Axis.horizontal,
@@ -848,7 +850,12 @@ class AddAppPageState extends State<AddAppPage> {
           CustomAppBar(title: tr('addApp')),
           SliverToBoxAdapter(
             child: Padding(
-              padding: const EdgeInsets.all(16),
+              padding: EdgeInsets.fromLTRB(
+                16,
+                MediaQuery.of(context).padding.top,
+                16,
+                MediaQuery.of(context).padding.bottom,
+              ),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.stretch,

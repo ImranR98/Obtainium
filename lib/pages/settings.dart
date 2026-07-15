@@ -295,7 +295,7 @@ class _SettingsPageState extends State<SettingsPage> {
             ),
           ],
         ),
-        const SizedBox(height: 16),
+        SizedBox(height: MediaQuery.of(context).padding.bottom),
       ],
     ),
   );
@@ -1400,8 +1400,9 @@ class _ExternalInstallerTileState extends State<_ExternalInstallerTile> {
                           }
                         },
                         shape: RoundedSuperellipseBorder(
-                          borderRadius:
-                              BorderRadius.circular(connectedTileBigRadius),
+                          borderRadius: BorderRadius.circular(
+                            connectedTileBigRadius,
+                          ),
                         ),
                         leading: _targetIcon(entries[i].value.first, size: 36),
                         title: Text(
@@ -1491,9 +1492,10 @@ class _ExternalInstallerTileState extends State<_ExternalInstallerTile> {
             .length;
         final subtitle = current != null
             ? intentCount > 1
-                ? '${current.label} · ${current.activity.split('.').last}'
-                : current.label
-            : settingsProvider.externalInstallerPackage ?? tr('externalInstallerUnset');
+                  ? '${current.label} · ${current.activity.split('.').last}'
+                  : current.label
+            : settingsProvider.externalInstallerPackage ??
+                  tr('externalInstallerUnset');
         return ListTile(
           contentPadding: const EdgeInsets.symmetric(horizontal: 8),
           shape: RoundedRectangleBorder(
