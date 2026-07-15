@@ -91,7 +91,12 @@ class _ImportFromURLListPageState extends State<ImportFromURLListPage> {
               slivers: [
                 SliverToBoxAdapter(
                   child: Padding(
-                    padding: const EdgeInsets.all(16),
+                    padding: EdgeInsets.fromLTRB(
+                      16,
+                      MediaQuery.of(context).padding.top,
+                      16,
+                      MediaQuery.of(context).padding.bottom,
+                    ),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       spacing: 16,

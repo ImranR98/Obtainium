@@ -322,7 +322,12 @@ class _AppPageState extends State<AppPage> {
                 ),
                 SliverToBoxAdapter(
                   child: Padding(
-                    padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
+                    padding: EdgeInsets.fromLTRB(
+                      16,
+                      MediaQuery.of(context).padding.top,
+                      16,
+                      MediaQuery.of(context).padding.bottom,
+                    ),
                     child: GeneratedForm(
                       tileMode: true,
                       items: items,
@@ -768,7 +773,6 @@ class _AppPageState extends State<AppPage> {
     ];
   }
 
-
   Widget _buildAppIcon(AppInMemory? app) {
     final icon = AppIcon(bytes: app?.icon, size: 56, radius: 14);
     if (app == null || app.installedInfo == null) return icon;
@@ -1118,30 +1122,30 @@ class _AppPageState extends State<AppPage> {
           Padding(
             padding: const EdgeInsets.only(bottom: 8),
             child: Row(
-            children: [
-              Expanded(
-                child: Semantics(
-                  label: app!.downloadProgress! >= 0
-                      ? tr(
-                          'percentProgress',
-                          args: [app.downloadProgress!.toInt().toString()],
-                        )
-                      : tr('installing'),
-                  child: LinearProgressIndicator(
-                    value: app.downloadProgress! >= 0
-                        ? app.downloadProgress! / 100
-                        : null,
+              children: [
+                Expanded(
+                  child: Semantics(
+                    label: app!.downloadProgress! >= 0
+                        ? tr(
+                            'percentProgress',
+                            args: [app.downloadProgress!.toInt().toString()],
+                          )
+                        : tr('installing'),
+                    child: LinearProgressIndicator(
+                      value: app.downloadProgress! >= 0
+                          ? app.downloadProgress! / 100
+                          : null,
+                    ),
                   ),
                 ),
-              ),
-              if (app.downloadProgress! >= 0) ...[
-                const SizedBox(width: 8),
-                DownloadCancelButton(
-                  onPressed: () => appsProvider.cancelDownload(widget.appId),
-                ),
+                if (app.downloadProgress! >= 0) ...[
+                  const SizedBox(width: 8),
+                  DownloadCancelButton(
+                    onPressed: () => appsProvider.cancelDownload(widget.appId),
+                  ),
+                ],
               ],
-            ],
-          ),
+            ),
           ),
         if (app?.downloadProgress != null &&
             app!.downloadProgress! >= 0 &&
@@ -1171,7 +1175,12 @@ class _AppPageState extends State<AppPage> {
                 trackOnly,
               ),
               const Spacer(),
-              _getPrimaryButton(context, app, appsProvider, areDownloadsRunning),
+              _getPrimaryButton(
+                context,
+                app,
+                appsProvider,
+                areDownloadsRunning,
+              ),
             ],
           ),
         ),
