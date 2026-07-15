@@ -385,19 +385,34 @@ extension AppsProviderLifecycle on AppsProvider {
   }
 
   /// Persists a list of [App] objects to disk as JSON files and updates in-memory state.
+  ///
+  /// When [reuseInstalledInfo] is true, the already-loaded [PackageInfo]/icon
+  /// for each app are reused instead of re-querying the platform and
+  /// re-decoding icons. This avoids expensive per-app platform-channel calls
+  /// and icon decoding on the UI isolate during bulk operations like update
+  /// checks, where installed info and icons don't change.
   Future<void> saveApps(
     List<App> apps, {
     bool attemptToCorrectInstallStatus = true,
     bool onlyIfExists = true,
+    bool reuseInstalledInfo = false,
   }) async {
     await Future.wait(
       apps.map((a) async {
         var app = a.copyWith();
-        final PackageInfo? info = await getInstalledInfo(app.id);
-        final Uint8List? icon = await info?.applicationInfo?.getAppIcon();
-        app = app.copyWith(
-          name: await (info?.applicationInfo?.getAppLabel()) ?? app.name,
-        );
+        final bool canReuse =
+            reuseInstalledInfo && this.apps.containsKey(app.id);
+        final PackageInfo? info = canReuse
+            ? this.apps[app.id]!.installedInfo
+            : await getInstalledInfo(app.id);
+        final Uint8List? icon = canReuse
+            ? this.apps[app.id]!.icon
+            : await info?.applicationInfo?.getAppIcon();
+        if (!canReuse) {
+          app = app.copyWith(
+            name: await (info?.applicationInfo?.getAppLabel()) ?? app.name,
+          );
+        }
         if (attemptToCorrectInstallStatus) {
           app = getCorrectedInstallStatusAppIfPossible(app, info) ?? app;
         }

@@ -71,7 +71,6 @@ class AppsPageState extends State<AppsPage> {
   List<String>? _cachedTrackOnlyUpdateIds;
   Map<String?, List<int>>? _cachedGrouped;
   List<String?>? _cachedListedGroups;
-  Set<App>? _cachedSelectedApps;
 
   @override
   void didChangeDependencies() {
@@ -1123,18 +1122,12 @@ class AppsPageState extends State<AppsPage> {
       return a.toLowerCase().compareTo(b.toLowerCase());
     });
 
-    final Set<App> selectedApps = listedApps
-        .map((e) => e.app)
-        .where((a) => selectedAppIds.contains(a.id))
-        .toSet();
-
     _cachedListedApps = listedApps;
     _cachedExistingUpdateIds = existingUpdateIdsAllOrSelected;
     _cachedNewInstallIds = newInstallIdsAllOrSelected;
     _cachedTrackOnlyUpdateIds = trackOnlyUpdateIdsAllOrSelected;
     _cachedGrouped = grouped;
     _cachedListedGroups = listedGroups;
-    _cachedSelectedApps = selectedApps;
   }
 
   @override
@@ -1187,7 +1180,6 @@ class AppsPageState extends State<AppsPage> {
     final groupBy = settingsProvider.groupBy;
     final grouped = _cachedGrouped!;
     final listedGroups = _cachedListedGroups!;
-    final selectedApps = _cachedSelectedApps!;
 
     return PopScope(
       canPop: selectedAppIds.isEmpty,
@@ -1256,18 +1248,6 @@ class AppsPageState extends State<AppsPage> {
             ),
           ),
         ),
-        floatingActionButton:
-            selectedAppIds.isNotEmpty && widget.onAppSelected == null
-            ? FloatingActionButton.extended(
-                onPressed: () {
-                  settingsProvider.selectionClick();
-                  showMoreOptionsBottomSheet(context, selectedApps);
-                },
-                tooltip: plural('action', 2),
-                icon: const Icon(Icons.more_vert),
-                label: Text(plural('action', 2)),
-              )
-            : null,
       ),
     );
   }
@@ -1311,17 +1291,20 @@ class _RefreshProgressBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final refreshProgress = context.select(
-      (AppsProvider p) => p.refreshProgress,
-    );
-    if (refreshProgress == null) {
-      return const SliverToBoxAdapter(child: SizedBox.shrink());
-    }
-    return SliverToBoxAdapter(
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(32, 0, 32, 8),
-        child: LinearProgressIndicator(value: refreshProgress),
-      ),
+    final progressNotifier = context.read<AppsProvider>().refreshProgress;
+    return ValueListenableBuilder<double?>(
+      valueListenable: progressNotifier,
+      builder: (context, refreshProgress, _) {
+        if (refreshProgress == null) {
+          return const SliverToBoxAdapter(child: SizedBox.shrink());
+        }
+        return SliverToBoxAdapter(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(32, 0, 32, 8),
+            child: LinearProgressIndicator(value: refreshProgress),
+          ),
+        );
+      },
     );
   }
 }
