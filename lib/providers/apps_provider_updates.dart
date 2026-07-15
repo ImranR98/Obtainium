@@ -4,6 +4,7 @@ import 'dart:math';
 
 import 'package:device_info_plus/device_info_plus.dart';
 import 'package:obtainium/custom_errors.dart';
+import 'package:obtainium/folders/app_folder.dart';
 import 'package:obtainium/providers/apps_provider.dart';
 import 'package:obtainium/providers/settings_provider.dart';
 import 'package:obtainium/providers/source_provider.dart';
@@ -422,6 +423,91 @@ String trackOnlyDownloadPageUrl(App app) {
   return app.url;
 }
 
+/// Returns the exact apps visible in the list surface being manually refreshed.
+/// Passing these IDs to [AppsProviderUpdates.checkUpdates] bypasses the normal
+/// freshness interval while preserving the fork's on-demand-only boundary.
+List<String> appIdsForManualRefresh({
+  required Iterable<App> apps,
+  required bool onDemandOnlyList,
+  required String? folderId,
+  required bool showFolderedAppsOnMainPage,
+  required Set<String> existingFolderIds,
+}) {
+  return apps
+      .where((App app) {
+        final bool onDemandOnly = app.settings.getBool('onDemandOnly');
+        if (onDemandOnlyList) {
+          return onDemandOnly;
+        }
+        if (onDemandOnly) {
+          return false;
+        }
+        if (folderId != null) {
+          return folderIdsForApp(app).contains(folderId);
+        }
+        if (showFolderedAppsOnMainPage) {
+          return true;
+        }
+        return folderIdsForApp(app).where(existingFolderIds.contains).isEmpty;
+      })
+      .map((App app) => app.id)
+      .toList();
+}
+
+/// Applies source-owned update fields to the latest live app row.
+///
+/// User-owned fields stay on [liveApp], so changes made while a network check
+/// is running are not overwritten. A result is discarded when the URL or
+/// source changed after the request started because it belongs to stale input.
+App? mergeFetchedUpdateWithLiveState({
+  required App requestedApp,
+  required App? liveApp,
+  required App fetchedApp,
+}) {
+  if (liveApp == null ||
+      liveApp.url != requestedApp.url ||
+      liveApp.overrideSource != requestedApp.overrideSource) {
+    return null;
+  }
+  final int preferredApkIndex =
+      liveApp.preferredApkIndex < fetchedApp.apkUrls.length
+      ? liveApp.preferredApkIndex
+      : fetchedApp.preferredApkIndex;
+  final bool malwareScanStillMatchesRelease =
+      liveApp.latestVersion == fetchedApp.latestVersion;
+  return liveApp.copyWith(
+    author: fetchedApp.author,
+    name: fetchedApp.name,
+    latestVersion: fetchedApp.latestVersion,
+    apkUrls: fetchedApp.apkUrls,
+    otherAssetUrls: fetchedApp.otherAssetUrls,
+    preferredApkIndex: preferredApkIndex,
+    lastUpdateCheck: fetchedApp.lastUpdateCheck,
+    releaseDate: fetchedApp.releaseDate,
+    changeLog: fetchedApp.changeLog,
+    pendingRepoRenameUrl: fetchedApp.pendingRepoRenameUrl,
+    iconUrl: fetchedApp.iconUrl,
+    apkSizeBytes: fetchedApp.apkSizeBytes,
+    rawLatestVersionFromSource: fetchedApp.rawLatestVersionFromSource,
+    rawApkNamesFromSource: fetchedApp.rawApkNamesFromSource,
+    rawReleaseTitlesFromSource: fetchedApp.rawReleaseTitlesFromSource,
+    latestIsReproducible: fetchedApp.latestIsReproducible,
+    latestReproducibleStatus: fetchedApp.latestReproducibleStatus,
+    latestAttestationStatus: fetchedApp.latestAttestationStatus,
+    latestMalwareScanStatus: malwareScanStillMatchesRelease
+        ? liveApp.latestMalwareScanStatus
+        : null,
+    latestMalwareScanDetail: malwareScanStillMatchesRelease
+        ? liveApp.latestMalwareScanDetail
+        : null,
+    latestMalwareScanReportUrl: malwareScanStillMatchesRelease
+        ? liveApp.latestMalwareScanReportUrl
+        : null,
+  );
+}
+
+typedef _FetchedAppUpdate = ({App requestedApp, App fetchedApp});
+
 /// Update checking and pending-update bookkeeping for [AppsProvider].
 extension AppsProviderUpdates on AppsProvider {
   /// Fetches the latest [App] metadata from its source WITHOUT persisting it.
@@ -430,14 +516,14 @@ extension AppsProviderUpdates on AppsProvider {
   /// Keeping fetch and save separate lets [checkUpdates] batch many checks into
   /// a few [saveApps] calls instead of saving (and triggering a full UI
   /// rebuild) once per app.
-  Future<App?> fetchUpdate(String appId) async {
+  Future<_FetchedAppUpdate?> _fetchUpdateSnapshot(String appId) async {
     final App? currentApp = apps[appId]?.app;
     // Pause update checks until the user resolves a pending repo rename.
     if (currentApp == null || currentApp.hasPendingRepoRename) {
       return null;
     }
     final SourceProvider sourceProvider = SourceProvider();
-    App newApp = await sourceProvider.getApp(
+    final App fetchedApp = await sourceProvider.getApp(
       sourceProvider.getSource(
         currentApp.url,
         overrideSource: currentApp.overrideSource,
@@ -446,23 +532,32 @@ extension AppsProviderUpdates on AppsProvider {
       currentApp.additionalSettings,
       currentApp: currentApp,
     );
-    if (currentApp.preferredApkIndex < newApp.apkUrls.length) {
-      newApp = newApp.copyWith(preferredApkIndex: currentApp.preferredApkIndex);
-    } else if (newApp.apkUrls.isNotEmpty) {
-      newApp = newApp.copyWith(preferredApkIndex: 0);
-    }
-    return newApp;
+    return (requestedApp: currentApp, fetchedApp: fetchedApp);
+  }
+
+  Future<App?> fetchUpdate(String appId) async {
+    final _FetchedAppUpdate? update = await _fetchUpdateSnapshot(appId);
+    if (update == null) return null;
+    return mergeFetchedUpdateWithLiveState(
+      requestedApp: update.requestedApp,
+      liveApp: apps[appId]?.app,
+      fetchedApp: update.fetchedApp,
+    );
   }
 
   Future<App?> checkUpdate(String appId) async {
-    final App? currentApp = apps[appId]?.app;
-    if (currentApp == null) return null;
-    final App? newApp = await fetchUpdate(appId);
-    if (newApp == null) {
-      return null;
-    }
-    await saveApps([newApp]);
-    return newApp.latestVersion != currentApp.latestVersion ? newApp : null;
+    final _FetchedAppUpdate? update = await _fetchUpdateSnapshot(appId);
+    if (update == null) return null;
+    final App? mergedApp = mergeFetchedUpdateWithLiveState(
+      requestedApp: update.requestedApp,
+      liveApp: apps[appId]?.app,
+      fetchedApp: update.fetchedApp,
+    );
+    if (mergedApp == null) return null;
+    await saveApps([mergedApp]);
+    return mergedApp.latestVersion != update.requestedApp.latestVersion
+        ? mergedApp
+        : null;
   }
 
   /// Returns app IDs sorted by last update check time, oldest first.
@@ -553,42 +648,29 @@ extension AppsProviderUpdates on AppsProvider {
                         DateTime.fromMicrosecondsSinceEpoch(0),
                   ),
         );
-      } else if (forceAll) {
-        appIds = apps.values.map((e) => e.app.id).toList();
-        appIds.sort(
-          (a, b) =>
-              (apps[a]!.app.lastUpdateCheck ??
-                      DateTime.fromMicrosecondsSinceEpoch(0))
-                  .compareTo(
-                    apps[b]!.app.lastUpdateCheck ??
-                        DateTime.fromMicrosecondsSinceEpoch(0),
-                  ),
-        );
-        if (settingsProvider.onlyCheckInstalledOrTrackOnlyApps) {
-          appIds.removeWhere((id) {
-            final a = apps[id]?.app;
-            return a?.installedVersion == null &&
-                a?.settings.getBool('trackOnly') != true;
-          });
-        }
       } else {
         appIds = getAppsSortedByUpdateCheckTime(
           onlyCheckInstalledOrTrackOnlyApps:
               settingsProvider.onlyCheckInstalledOrTrackOnlyApps,
+          forceAll: forceAll,
         );
       }
       total = appIds.length;
-      final List<MapEntry<App, bool>?> results =
-          List<MapEntry<App, bool>?>.filled(total, null);
+      final List<_FetchedAppUpdate?> results = List<_FetchedAppUpdate?>.filled(
+        total,
+        null,
+      );
       int nextIndex = 0;
       final int workerCount = min(
         total,
         await maxParallelUpdateChecksForDevice(),
       );
 
-      Future<App?> fetchUpdateWithHandshakeRetry(String appId) async {
+      Future<_FetchedAppUpdate?> fetchUpdateWithHandshakeRetry(
+        String appId,
+      ) async {
         try {
-          return await fetchUpdate(appId);
+          return await _fetchUpdateSnapshot(appId);
         } on HandshakeException {
           // Concurrent TLS handshakes to the same host can fail on certain
           // devices or networks. Keep retries inside the bounded worker so
@@ -600,7 +682,7 @@ extension AppsProviderUpdates on AppsProvider {
               Duration(milliseconds: 250 + random.nextInt(501)),
             );
             try {
-              return await fetchUpdate(appId);
+              return await _fetchUpdateSnapshot(appId);
             } on HandshakeException {
               if (attempt == maxRetries - 1) rethrow;
             }
@@ -613,15 +695,11 @@ extension AppsProviderUpdates on AppsProvider {
         while (nextIndex < total) {
           final int resultIndex = nextIndex++;
           final String appId = appIds[resultIndex];
-          final App? currentApp = apps[appId]?.app;
           try {
-            final App? newApp = await fetchUpdateWithHandshakeRetry(appId);
-            if (newApp != null) {
-              results[resultIndex] = MapEntry(
-                newApp,
-                currentApp != null &&
-                    newApp.latestVersion != currentApp.latestVersion,
-              );
+            final _FetchedAppUpdate? update =
+                await fetchUpdateWithHandshakeRetry(appId);
+            if (update != null) {
+              results[resultIndex] = update;
             }
           } catch (e) {
             if ((e is RateLimitError ||
@@ -645,10 +723,18 @@ extension AppsProviderUpdates on AppsProvider {
       await Future.wait(List.generate(workerCount, (_) => runWorker()));
       reportProgress(force: true);
       final List<App> fetched = [];
-      for (final r in results) {
-        if (r == null) continue;
-        fetched.add(r.key);
-        if (r.value) updates.add(r.key);
+      for (final _FetchedAppUpdate? result in results) {
+        if (result == null) continue;
+        final App? mergedApp = mergeFetchedUpdateWithLiveState(
+          requestedApp: result.requestedApp,
+          liveApp: apps[result.requestedApp.id]?.app,
+          fetchedApp: result.fetchedApp,
+        );
+        if (mergedApp == null) continue;
+        fetched.add(mergedApp);
+        if (mergedApp.latestVersion != result.requestedApp.latestVersion) {
+          updates.add(mergedApp);
+        }
       }
       if (fetched.isNotEmpty) {
         await saveApps(fetched);

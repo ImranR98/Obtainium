@@ -1041,8 +1041,9 @@ This app description should not be included.
       false,
     );
     expect(
-      normalizeSkippedLatestVersion(activeSkip)
-          .additionalSettings['skippedLatestVersion'],
+      normalizeSkippedLatestVersion(
+        activeSkip,
+      ).additionalSettings['skippedLatestVersion'],
       '2.0',
     );
   });

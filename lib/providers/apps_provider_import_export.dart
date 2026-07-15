@@ -10,7 +10,18 @@ import 'package:obtainium/folders/app_folder.dart';
 import 'package:obtainium/providers/apps_provider.dart';
 import 'package:obtainium/providers/settings_provider.dart';
 import 'package:obtainium/providers/source_provider.dart';
+import 'package:obtainium/providers/virustotal_provider.dart';
 import 'package:shared_storage/shared_storage.dart' as saf;
+
+/// Secret settings excluded from the "settings without secrets" backup mode.
+/// Source credentials conventionally end in `-creds`; VirusTotal predates that
+/// convention, so its key and otherwise-useless validation fingerprint are
+/// listed explicitly.
+bool isSecretSettingKey(String key) {
+  return key.endsWith('-creds') ||
+      key == virusTotalApiKeyKey ||
+      key == virusTotalValidatedApiKeyFingerprintKey;
+}
 
 /// Import/export of app configurations for [AppsProvider].
 extension AppsProviderImportExport on AppsProvider {
@@ -61,7 +72,7 @@ extension AppsProviderImportExport on AppsProvider {
     if (shouldExportSettings > 0) {
       final settingsValueKeys = settingsProvider.prefs?.getKeys().toSet();
       if (shouldExportSettings < 2) {
-        settingsValueKeys?.removeWhere((k) => k.endsWith('-creds'));
+        settingsValueKeys?.removeWhere(isSecretSettingKey);
       }
       settingsMap = Map<String, Object?>.fromEntries(
         (settingsValueKeys
@@ -354,9 +365,13 @@ class ExportSchema {
     final schemaVersion = json['schemaVersion'] as int? ?? 1;
     if (schemaVersion > currentExportSchemaVersion) {
       throw FormatException(
-        'Export was created by a newer version of Obtainium '
-        '(schema v$schemaVersion, current is v$currentExportSchemaVersion). '
-        'Please update Obtainium to import this file.',
+        tr(
+          'backupCreatedByNewerVersion',
+          args: [
+            schemaVersion.toString(),
+            currentExportSchemaVersion.toString(),
+          ],
+        ),
       );
     }
     return ExportSchema(

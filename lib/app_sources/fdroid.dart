@@ -111,6 +111,7 @@ class FDroid extends AppSource {
       GeneratedFormSwitch(
         'enforceReproducibleBuilds',
         label: tr('enforceReproducibleBuilds'),
+        labelTooltip: tr('reproducibleBuildsTooltip'),
         value: false,
       ),
     ],

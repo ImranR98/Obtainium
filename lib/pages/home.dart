@@ -438,9 +438,11 @@ class HomePageState extends State<HomePage> {
         .select<AppsProvider, (int, bool, int)>(
           (p) => (p.apps.length, p.loadingApps, p.pendingUpdateCount),
         );
-    // Only the blur toggle is read in build now; page switching is handled
+    // Only shell layout settings are watched here; page switching is handled
     // locally by the mounted tab stack.
-    context.select<SettingsProvider, bool>((s) => s.progressiveBlurEnabled);
+    context.select<SettingsProvider, int>(
+      (s) => Object.hash(s.progressiveBlurEnabled, s.alwaysUsePhoneLayout),
+    );
     final SettingsProvider settingsProvider = context.read<SettingsProvider>();
 
     final AddAppPageState? addPageState =
@@ -514,7 +516,9 @@ class HomePageState extends State<HomePage> {
           final Axis pageTransitionAxis = orientation == Orientation.landscape
               ? Axis.vertical
               : Axis.horizontal;
-          final bool isLargeScreen = screenWidth >= kLargeScreenWidthBreakpoint;
+          final bool isLargeScreen =
+              screenWidth >= kLargeScreenWidthBreakpoint &&
+              !settingsProvider.alwaysUsePhoneLayout;
 
           // Shared icon builder (adds the update-count badge to the first tab),
           // and build only the destination list the current layout actually

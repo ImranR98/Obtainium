@@ -466,17 +466,17 @@ class App {
     Object? overrideSource = _sentinel,
     bool? allowIdChange,
     Object? pendingRepoRenameUrl = _sentinel,
-    String? iconUrl,
-    int? apkSizeBytes,
-    String? rawLatestVersionFromSource,
-    String? rawApkNamesFromSource,
-    String? rawReleaseTitlesFromSource,
-    bool? latestIsReproducible,
-    String? latestReproducibleStatus,
-    String? latestAttestationStatus,
-    String? latestMalwareScanStatus,
-    String? latestMalwareScanDetail,
-    String? latestMalwareScanReportUrl,
+    Object? iconUrl = _sentinel,
+    Object? apkSizeBytes = _sentinel,
+    Object? rawLatestVersionFromSource = _sentinel,
+    Object? rawApkNamesFromSource = _sentinel,
+    Object? rawReleaseTitlesFromSource = _sentinel,
+    Object? latestIsReproducible = _sentinel,
+    Object? latestReproducibleStatus = _sentinel,
+    Object? latestAttestationStatus = _sentinel,
+    Object? latestMalwareScanStatus = _sentinel,
+    Object? latestMalwareScanDetail = _sentinel,
+    Object? latestMalwareScanReportUrl = _sentinel,
   }) {
     return App(
       id: id ?? this.id,
@@ -511,25 +511,37 @@ class App {
       pendingRepoRenameUrl: pendingRepoRenameUrl == _sentinel
           ? this.pendingRepoRenameUrl
           : pendingRepoRenameUrl as String?,
-      iconUrl: iconUrl ?? this.iconUrl,
-      apkSizeBytes: apkSizeBytes ?? this.apkSizeBytes,
-      rawLatestVersionFromSource:
-          rawLatestVersionFromSource ?? this.rawLatestVersionFromSource,
-      rawApkNamesFromSource:
-          rawApkNamesFromSource ?? this.rawApkNamesFromSource,
-      rawReleaseTitlesFromSource:
-          rawReleaseTitlesFromSource ?? this.rawReleaseTitlesFromSource,
-      latestIsReproducible: latestIsReproducible ?? this.latestIsReproducible,
-      latestReproducibleStatus:
-          latestReproducibleStatus ?? this.latestReproducibleStatus,
-      latestAttestationStatus:
-          latestAttestationStatus ?? this.latestAttestationStatus,
-      latestMalwareScanStatus:
-          latestMalwareScanStatus ?? this.latestMalwareScanStatus,
-      latestMalwareScanDetail:
-          latestMalwareScanDetail ?? this.latestMalwareScanDetail,
-      latestMalwareScanReportUrl:
-          latestMalwareScanReportUrl ?? this.latestMalwareScanReportUrl,
+      iconUrl: iconUrl == _sentinel ? this.iconUrl : iconUrl as String?,
+      apkSizeBytes: apkSizeBytes == _sentinel
+          ? this.apkSizeBytes
+          : apkSizeBytes as int?,
+      rawLatestVersionFromSource: rawLatestVersionFromSource == _sentinel
+          ? this.rawLatestVersionFromSource
+          : rawLatestVersionFromSource as String?,
+      rawApkNamesFromSource: rawApkNamesFromSource == _sentinel
+          ? this.rawApkNamesFromSource
+          : rawApkNamesFromSource as String?,
+      rawReleaseTitlesFromSource: rawReleaseTitlesFromSource == _sentinel
+          ? this.rawReleaseTitlesFromSource
+          : rawReleaseTitlesFromSource as String?,
+      latestIsReproducible: latestIsReproducible == _sentinel
+          ? this.latestIsReproducible
+          : latestIsReproducible as bool?,
+      latestReproducibleStatus: latestReproducibleStatus == _sentinel
+          ? this.latestReproducibleStatus
+          : latestReproducibleStatus as String?,
+      latestAttestationStatus: latestAttestationStatus == _sentinel
+          ? this.latestAttestationStatus
+          : latestAttestationStatus as String?,
+      latestMalwareScanStatus: latestMalwareScanStatus == _sentinel
+          ? this.latestMalwareScanStatus
+          : latestMalwareScanStatus as String?,
+      latestMalwareScanDetail: latestMalwareScanDetail == _sentinel
+          ? this.latestMalwareScanDetail
+          : latestMalwareScanDetail as String?,
+      latestMalwareScanReportUrl: latestMalwareScanReportUrl == _sentinel
+          ? this.latestMalwareScanReportUrl
+          : latestMalwareScanReportUrl as String?,
     );
   }
 

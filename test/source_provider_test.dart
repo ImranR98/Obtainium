@@ -150,11 +150,7 @@ class _StubFDroidRepo extends FDroidRepo {
     bool followRedirects = true,
     Object? postBody,
   }) async {
-    return Response(
-      indexXml,
-      200,
-      request: Request('GET', Uri.parse(url)),
-    );
+    return Response(indexXml, 200, request: Request('GET', Uri.parse(url)));
   }
 }
 
@@ -548,7 +544,8 @@ void main() {
   test(
     'F-Droid repo source uses shared parser for valid releases and metadata',
     () async {
-      final details = await _StubFDroidRepo('''
+      final details =
+          await _StubFDroidRepo('''
 <fdroid><repo name="Example Repo"/><application id="org.example.app">
   <name>Example App</name>
   <icon>example.png</icon>
@@ -565,10 +562,9 @@ void main() {
     <binaries>org.example.app_3.apk</binaries>
   </package>
 </application></fdroid>
-''').getLatestAPKDetails(
-        'https://repo.example/fdroid/repo',
-        <String, dynamic>{'appIdOrName': 'org.example.app'},
-      );
+''').getLatestAPKDetails('https://repo.example/fdroid/repo', <String, dynamic>{
+            'appIdOrName': 'org.example.app',
+          });
 
       expect(details.version, '3.0');
       expect(details.names.name, 'Example App');

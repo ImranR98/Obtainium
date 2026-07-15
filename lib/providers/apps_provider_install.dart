@@ -9,7 +9,7 @@ import 'package:archive/archive.dart' as archive;
 import 'package:crypto/crypto.dart';
 import 'package:device_info_plus/device_info_plus.dart';
 import 'package:easy_localization/easy_localization.dart';
-import 'package:flutter/foundation.dart' show kDebugMode;
+import 'package:flutter/foundation.dart' show kDebugMode, visibleForTesting;
 import 'package:flutter/material.dart';
 import 'package:flutter_archive/flutter_archive.dart';
 import 'package:flutter_fgbg/flutter_fgbg.dart';
@@ -30,6 +30,7 @@ import 'package:obtainium/providers/notifications_provider.dart';
 import 'package:obtainium/providers/settings_provider.dart';
 import 'package:obtainium/providers/source_provider.dart';
 import 'package:obtainium/providers/virustotal_provider.dart';
+import 'package:obtainium/theme/app_dialog_theme.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:provider/provider.dart';
 import 'package:share_plus/share_plus.dart';
@@ -56,6 +57,53 @@ const int _remainingStepsProgress = 90;
 // session still commits, so we poll (via waitForPackageInstall) for a short
 // window to confirm the install actually landed.
 const int _bgInstallConfirmAttempts = 20; // 20 × 500ms = 10 seconds
+
+@visibleForTesting
+bool isCleartextDownloadUrl(String url) {
+  return Uri.tryParse(url)?.scheme.toLowerCase() == 'http';
+}
+
+/// Processes completed downloads one at a time, in the order they finish.
+/// Entries selected by [deferUntilEnd] still download concurrently but are not
+/// processed until every other entry has completed. This keeps app installs
+/// serialized while avoiding a wait for the slowest download, and lets a
+/// self-update remain last so it cannot terminate the rest of the batch.
+@visibleForTesting
+Future<void> processDownloadResultsAsReady<T>({
+  required List<({String id, Future<T> result})> downloads,
+  required bool Function(String id) deferUntilEnd,
+  required Future<void> Function(T result) process,
+}) async {
+  Future<void> processChain = Future<void>.value();
+
+  Future<void> processWhenReady(
+    ({String id, Future<T> result}) download,
+  ) async {
+    final T result = await download.result;
+    final Completer<void> processed = Completer<void>();
+    processChain = processChain.then((_) async {
+      try {
+        await process(result);
+        processed.complete();
+      } catch (error, stackTrace) {
+        processed.completeError(error, stackTrace);
+      }
+    });
+    await processed.future;
+  }
+
+  final deferredDownloads = downloads.where(
+    (download) => deferUntilEnd(download.id),
+  );
+  await Future.wait(
+    downloads
+        .where((download) => !deferUntilEnd(download.id))
+        .map(processWhenReady),
+  );
+  for (final download in deferredDownloads) {
+    await process(await download.result);
+  }
+}
 
 class _InstallResult {
   final String id;
@@ -182,6 +230,20 @@ String storeFacingDownloadDisplayNameForApp(App app) {
   return sanitizeApkSaveDisplayName(key);
 }
 
+/// True when the stock Android installer is being asked to install a lower
+/// version code. Shizuku and third-party installers handle their own downgrade
+/// capabilities and must not be blocked by the stock-installer warning.
+bool isStockInstallerDowngrade({
+  required int? installedVersionCode,
+  required int? newVersionCode,
+  required String installerModeKey,
+}) {
+  return installerModeKey == 'stock' &&
+      installedVersionCode != null &&
+      newVersionCode != null &&
+      newVersionCode < installedVersionCode;
+}
+
 /// App download, install, and on-device package operations for [AppsProvider].
 extension AppsProviderInstall on AppsProvider {
   /// Returns the [Installer] strategy for the current installer mode setting.
@@ -296,6 +358,32 @@ extension AppsProviderInstall on AppsProvider {
         app.url,
         additionalSettingsPlusSourceConfig,
       );
+      if (context != null &&
+          context.mounted &&
+          isCleartextDownloadUrl(downloadUrl)) {
+        final bool? proceed = await showDialog<bool>(
+          context: context,
+          barrierDismissible: false,
+          builder: (BuildContext dialogContext) => AlertDialog(
+            title: Text(tr('insecureDownloadUrl')),
+            contentPadding: appDialogContentPadding,
+            content: Text(tr('cleartextDownloadWarningExplanation')),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(dialogContext).pop(false),
+                child: Text(tr('cancel')),
+              ),
+              FilledButton(
+                onPressed: () => Navigator.of(dialogContext).pop(true),
+                child: Text(tr('continue')),
+              ),
+            ],
+          ),
+        );
+        if (proceed != true) {
+          throw ObtainiumError(tr('cancelled'));
+        }
+      }
       if (notificationsProvider != null) {
         await notificationsProvider.cancel(notifId);
       }
@@ -852,24 +940,24 @@ extension AppsProviderInstall on AppsProvider {
     );
     final newVersionCode = newInfo.versionCode;
     final oldVersionCode = appInfo?.versionCode;
-    if (appInfo != null &&
-        newVersionCode != null &&
-        oldVersionCode != null &&
-        newVersionCode < oldVersionCode &&
-        !(await canDowngradeApps())) {
-      if (settingsProvider.showAppDowngradeError) {
-        try {
-          file.file.deleteSync();
-        } catch (e) {
-          unawaited(
-            logs.add(
-              'Failed to delete downgraded APK file: $e',
-              level: LogLevel.error,
-            ),
-          );
-        }
-        throw DowngradeError(oldVersionCode, newVersionCode);
+    if (isStockInstallerDowngrade(
+          installedVersionCode: oldVersionCode,
+          newVersionCode: newVersionCode,
+          installerModeKey: getInstaller().modeKey,
+        ) &&
+        !(await canDowngradeApps()) &&
+        settingsProvider.showAppDowngradeError) {
+      try {
+        file.file.deleteSync();
+      } catch (e) {
+        unawaited(
+          logs.add(
+            'Failed to delete downgraded APK file: $e',
+            level: LogLevel.error,
+          ),
+        );
       }
+      throw DowngradeError(oldVersionCode!, newVersionCode!);
     }
     if (needsBGWorkaround) {
       // Background process workaround (#896): the `await installApk` below
@@ -1200,15 +1288,40 @@ extension AppsProviderInstall on AppsProvider {
     appsToInstall = moveStrToEnd(appsToInstall, '$obtainiumId.fdroid');
     appsToInstall = moveStrToEnd(appsToInstall, '$obtainiumId.debug');
 
-    List<_InstallResult> downloadResults = [];
+    Future<void> installDownloadResult(_InstallResult result) async {
+      if ((result.downloadedFile == null && result.downloadedDir == null) ||
+          errors.appIdNames.containsKey(result.id)) {
+        return;
+      }
+      try {
+        await _installDownloadedApp(
+          result.id,
+          result.willBeSilent,
+          result.downloadedFile,
+          result.downloadedDir,
+          installedIds,
+          errors,
+          context != null && context.mounted ? context : null,
+          notificationsProvider,
+        );
+      } on MalwareScanBlockedError catch (error) {
+        malwareScanSkips.add((
+          appName: apps[result.id]?.name ?? result.id,
+          status: error.status,
+          detail: error.detail,
+        ));
+      } catch (error) {
+        errors.add(result.id, error, appName: apps[result.id]?.name);
+      }
+    }
+
     try {
       if (!forceParallelDownloads && !settingsProvider.parallelDownloads) {
-        for (var id in appsToInstall) {
-          downloadResults.add(
+        for (final id in appsToInstall) {
+          await installDownloadResult(
             await _downloadAppForInstall(
               id,
-              // ignore: use_build_context_synchronously
-              context,
+              context != null && context.mounted ? context : null,
               notificationsProvider,
               useExisting,
               errors,
@@ -1216,44 +1329,30 @@ extension AppsProviderInstall on AppsProvider {
           );
         }
       } else {
-        downloadResults = await Future.wait(
-          appsToInstall.map(
-            (id) => _downloadAppForInstall(
-              id,
-              context,
-              notificationsProvider,
-              useExisting,
-              errors,
+        final downloads = <({String id, Future<_InstallResult> result})>[
+          for (final id in appsToInstall)
+            (
+              id: id,
+              result: _downloadAppForInstall(
+                id,
+                context != null && context.mounted ? context : null,
+                notificationsProvider,
+                useExisting,
+                errors,
+              ),
             ),
-          ),
+        ];
+        final selfUpdateIds = <String>{
+          obtainiumId,
+          obtainiumTempId,
+          '$obtainiumId.fdroid',
+          '$obtainiumId.debug',
+        };
+        await processDownloadResultsAsReady(
+          downloads: downloads,
+          deferUntilEnd: selfUpdateIds.contains,
+          process: installDownloadResult,
         );
-      }
-      for (var res in downloadResults) {
-        if (!errors.appIdNames.containsKey(res.id)) {
-          try {
-            await _installDownloadedApp(
-              res.id,
-              res.willBeSilent,
-              res.downloadedFile,
-              res.downloadedDir,
-              installedIds,
-              errors,
-              // ignore: use_build_context_synchronously
-              context,
-              notificationsProvider,
-            );
-          } on MalwareScanBlockedError catch (e) {
-            final id = res.id;
-            malwareScanSkips.add((
-              appName: apps[id]?.name ?? id,
-              status: e.status,
-              detail: e.detail,
-            ));
-          } catch (e) {
-            final id = res.id;
-            errors.add(id, e, appName: apps[id]?.name);
-          }
-        }
       }
     } finally {
       // Clear any remaining progress in case the flow was interrupted
@@ -1430,7 +1529,7 @@ extension AppsProviderInstall on AppsProvider {
                 malwareScanContext: null,
                 cleanupOnSkip: () {
                   try {
-                    if (downloadedFile!.file.existsSync()) {
+                    if (downloadedFile.file.existsSync()) {
                       downloadedFile.file.deleteSync();
                     }
                   } catch (_) {}

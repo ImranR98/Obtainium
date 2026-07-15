@@ -123,6 +123,7 @@ class SettingsProvider with ChangeNotifier {
     _categoriesMemory = null;
     _appFoldersMemory = null;
     _folderViewCache.clear();
+    _removeUnusedUpstreamSettings();
     _migrateProgressiveBlurDefaultForExistingUsers();
     defaultAppDir = (await getAppStorageDir()).path;
     _migrateShizukuSetting();
@@ -137,6 +138,12 @@ class SettingsProvider with ChangeNotifier {
         info.systemFeatures.contains('android.software.leanback');
     _tactileFeedbackEnabled = prefs?.getBool('tactileFeedbackEnabled') ?? true;
     notifyListeners();
+  }
+
+  void _removeUnusedUpstreamSettings() {
+    if (prefs == null) return;
+    prefs!.remove('disableSwipeActions');
+    prefs!.remove('showActionBannerForUpdateOnly');
   }
 
   bool get tactileFeedbackEnabled =>
@@ -1582,24 +1589,6 @@ class SettingsProvider with ChangeNotifier {
 
   set alwaysUsePhoneLayout(bool val) {
     prefs?.setBool('alwaysUsePhoneLayout', val);
-    notifyListeners();
-  }
-
-  bool get disableSwipeActions {
-    return prefs?.getBool('disableSwipeActions') ?? false;
-  }
-
-  set disableSwipeActions(bool val) {
-    prefs?.setBool('disableSwipeActions', val);
-    notifyListeners();
-  }
-
-  bool get showActionBannerForUpdateOnly {
-    return prefs?.getBool('showActionBannerForUpdateOnly') ?? true;
-  }
-
-  set showActionBannerForUpdateOnly(bool val) {
-    prefs?.setBool('showActionBannerForUpdateOnly', val);
     notifyListeners();
   }
 

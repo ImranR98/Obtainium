@@ -568,7 +568,8 @@ class _AppListItem extends StatelessWidget {
     final double screenWidth = MediaQuery.sizeOf(context).width;
     final bool isLargeScreen =
         screenWidth >= kLargeScreenWidthBreakpoint &&
-        !context.read<SettingsProvider>().isTV;
+        !context.read<SettingsProvider>().isTV &&
+        !context.read<SettingsProvider>().alwaysUsePhoneLayout;
     final bool hideVersionAndChangelog =
         isLargeScreen &&
         MediaQuery.orientationOf(context) == Orientation.portrait;
@@ -1073,7 +1074,8 @@ Future<void> _openAdditionalOptionsModal(
   final double screenWidth = MediaQuery.sizeOf(context).width;
   final bool isLargeScreen =
       screenWidth >= kLargeScreenWidthBreakpoint &&
-      !context.read<SettingsProvider>().isTV;
+      !context.read<SettingsProvider>().isTV &&
+      !context.read<SettingsProvider>().alwaysUsePhoneLayout;
 
   if (isLargeScreen) {
     final appsPageState = context.findAncestorStateOfType<AppsPageState>();
@@ -1228,7 +1230,8 @@ class _SwipeableListItemState extends State<_SwipeableListItem>
           final double screenWidth = MediaQuery.sizeOf(context).width;
           final bool isLargeScreen =
               screenWidth >= kLargeScreenWidthBreakpoint &&
-              !context.read<SettingsProvider>().isTV;
+              !context.read<SettingsProvider>().isTV &&
+              !context.read<SettingsProvider>().alwaysUsePhoneLayout;
 
           if (isLargeScreen) {
             final appsPageState = context
@@ -2723,6 +2726,7 @@ class AppsPageState extends State<AppsPage> {
         s.cardCornerScale,
         s.leftSwipeAction,
         s.rightSwipeAction,
+        s.alwaysUsePhoneLayout,
         s.appFolders.length,
         // Folder-scoped overrides: only relevant when this page is a
         // folder view; a hash-as-zero collapse for the main-page case.
@@ -2814,59 +2818,19 @@ class AppsPageState extends State<AppsPage> {
         // [AppsProvider.updateAppIcon] with `ignoreCache: true` from the
         // app-detail page, which bypasses this map.
       });
-      final Future<List<App>> refreshFuture;
-      if (widget.onDemandOnlyList) {
-        refreshFuture = appsProvider.checkUpdates(
-          specificIds: appsProvider.apps.values
-              .where((a) => a.app.additionalSettings['onDemandOnly'] == true)
-              .map((a) => a.app.id)
-              .toList(),
-        );
-      } else if (widget.folderId != null) {
-        final String folderId = widget.folderId!;
-        refreshFuture = appsProvider.checkUpdates(
-          specificIds: appsProvider.apps.values
-              .where(
-                (a) =>
-                    a.app.additionalSettings['onDemandOnly'] != true &&
-                    folderIdsForApp(a.app).contains(folderId),
-              )
-              .map((a) => a.app.id)
-              .toList(),
-        );
-      } else {
-        // Main list: refresh scope matches what's visible on this tab.
-        //
-        // The pull-to-refresh contract is "refresh what I see". When
-        // [SettingsProvider.showFolderedAppsOnMainPage] is on, foldered
-        // apps are visible on the main tab and are included in the
-        // refresh, just like before. When it's off, foldered apps are
-        // hidden from the main tab - users have organized them into
-        // folders specifically to declutter the main view - so we exclude
-        // them from the refresh too. Each folder still has its own
-        // pull-to-refresh that scans only that folder's apps.
-        // Foldered apps are still picked up by background update checks
-        // (when enabled), so they don't go indefinitely stale.
-        //
-        // [getAppsSortedByUpdateCheckTime] skips on-demand-only apps, so the
-        // unscoped main-list path does not need to filter them again.
-        if (settingsProvider.showFolderedAppsOnMainPage) {
-          refreshFuture = appsProvider.checkUpdates();
-        } else {
-          refreshFuture = appsProvider.checkUpdates(
-            specificIds: appsProvider.apps.values
-                .where(
-                  (a) =>
-                      a.app.additionalSettings['onDemandOnly'] != true &&
-                      folderIdsForApp(
-                        a.app,
-                      ).where((id) => existingFolderIds.contains(id)).isEmpty,
-                )
-                .map((a) => a.app.id)
-                .toList(),
-          );
-        }
-      }
+      // Manual refresh always checks every app visible on this surface. An
+      // explicit ID list bypasses the background freshness interval while
+      // [checkUpdates] still applies the installed/track-only preference.
+      final Future<List<App>> refreshFuture = appsProvider.checkUpdates(
+        specificIds: appIdsForManualRefresh(
+          apps: appsProvider.apps.values.map((a) => a.app),
+          onDemandOnlyList: widget.onDemandOnlyList,
+          folderId: widget.folderId,
+          showFolderedAppsOnMainPage:
+              settingsProvider.showFolderedAppsOnMainPage,
+          existingFolderIds: existingFolderIds,
+        ),
+      );
       return refreshFuture
           .catchError((e) {
             if (!context.mounted) return <App>[];
@@ -3152,7 +3116,8 @@ class AppsPageState extends State<AppsPage> {
     final double screenWidth = MediaQuery.sizeOf(context).width;
     final bool isLargeScreen =
         screenWidth >= kLargeScreenWidthBreakpoint &&
-        !context.read<SettingsProvider>().isTV;
+        !context.read<SettingsProvider>().isTV &&
+        !settingsProvider.alwaysUsePhoneLayout;
 
     // The two-panel layout needs an effective selection, but mutating
     // [selectedAppId] during build is a Flutter anti-pattern. Derive it locally
@@ -3706,7 +3671,8 @@ class AppsPageState extends State<AppsPage> {
       final double screenWidth = MediaQuery.sizeOf(context).width;
       final bool isLargeScreen =
           screenWidth >= kLargeScreenWidthBreakpoint &&
-          !context.read<SettingsProvider>().isTV;
+          !context.read<SettingsProvider>().isTV &&
+          !settingsProvider.alwaysUsePhoneLayout;
 
       // Builds the row visual given the callback that should fire when the
       // user taps a non-selected row. Used by both the OpenContainer path
@@ -5848,7 +5814,8 @@ class AppsPageState extends State<AppsPage> {
     final double screenWidth = MediaQuery.sizeOf(context).width;
     final bool isLargeScreen =
         screenWidth >= kLargeScreenWidthBreakpoint &&
-        !context.read<SettingsProvider>().isTV;
+        !context.read<SettingsProvider>().isTV &&
+        !context.read<SettingsProvider>().alwaysUsePhoneLayout;
 
     if (isLargeScreen) {
       setState(() {

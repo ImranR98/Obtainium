@@ -1,6 +1,5 @@
 import 'dart:async';
 import 'dart:convert';
-import 'dart:typed_data';
 
 import 'package:android_package_manager/android_package_manager.dart'
     show PackageInfo;
@@ -105,6 +104,7 @@ class SettingsPageState extends State<SettingsPage> {
     sp.useGradientBackground,
     sp.progressiveBlurEnabled,
     sp.cardCornerScale,
+    sp.alwaysUsePhoneLayout,
   );
 
   static const List<String> _settingsSectionKeys = [
@@ -472,7 +472,8 @@ class SettingsPageState extends State<SettingsPage> {
     }
 
     final double screenWidth = MediaQuery.sizeOf(context).width;
-    final bool isLargeScreen = screenWidth >= kLargeScreenWidthBreakpoint;
+    final bool isLargeScreen =
+        screenWidth >= kLargeScreenWidthBreakpoint && !sp.alwaysUsePhoneLayout;
 
     final List<_SettingsCategory> categoriesList = [
       _SettingsCategory(
@@ -1748,6 +1749,7 @@ class _AppearanceSection extends StatelessWidget {
     sp.disablePageTransitions,
     sp.reversePageTransitions,
     sp.highlightTouchTargets,
+    sp.alwaysUsePhoneLayout,
   );
 
   @override
@@ -1785,6 +1787,11 @@ class _AppearanceSection extends StatelessWidget {
         ),
         const _UiScaleSlider(),
         const _CardCornerScaleSlider(),
+        SwitchListTile(
+          title: Text(tr('alwaysUsePhoneLayout')),
+          value: sp.alwaysUsePhoneLayout,
+          onChanged: (value) => sp.alwaysUsePhoneLayout = value,
+        ),
         SwitchListTile(
           title: Text(tr('showWebInAppView')),
           value: sp.showAppWebpage,
@@ -2661,9 +2668,7 @@ class _IntegrationsSectionState extends State<_IntegrationsSection>
                               );
                             case 'old_android_with_adb':
                               showError(
-                                ObtainiumError(
-                                  tr('shizukuOldAndroidWithADB'),
-                                ),
+                                ObtainiumError(tr('shizukuOldAndroidWithADB')),
                                 context,
                               );
                             case 'denied':
@@ -2734,7 +2739,8 @@ class AboutSectionContent extends StatelessWidget {
     final SettingsProvider sp = context.read<SettingsProvider>();
     final TextTheme textTheme = Theme.of(context).textTheme;
     final double screenWidth = MediaQuery.sizeOf(context).width;
-    final bool isLargeScreen = screenWidth >= kLargeScreenWidthBreakpoint;
+    final bool isLargeScreen =
+        screenWidth >= kLargeScreenWidthBreakpoint && !sp.alwaysUsePhoneLayout;
 
     return Stack(
       children: [
@@ -3902,9 +3908,7 @@ class _ExternalInstallerTileState extends State<_ExternalInstallerTile> {
               sibling.activityLabel?.toLowerCase() == normalizedLabel,
         )
         .length;
-    return matchingLabelCount > 1
-        ? _shortActivityName(target, siblings)
-        : null;
+    return matchingLabelCount > 1 ? _shortActivityName(target, siblings) : null;
   }
 
   Widget _activityChoiceRow({
@@ -3915,11 +3919,10 @@ class _ExternalInstallerTileState extends State<_ExternalInstallerTile> {
   }) {
     final ColorScheme colorScheme = Theme.of(context).colorScheme;
     final String? disambiguator = _activityDisambiguator(target, siblings);
-    final double cornerRadius =
-        SettingsProvider.cardCornerRadiusForScale(
-          14,
-          context.read<SettingsProvider>().cardCornerScale,
-        );
+    final double cornerRadius = SettingsProvider.cardCornerRadiusForScale(
+      14,
+      context.read<SettingsProvider>().cardCornerScale,
+    );
     return Padding(
       padding: const EdgeInsetsDirectional.fromSTEB(52, 3, 12, 3),
       child: Material(

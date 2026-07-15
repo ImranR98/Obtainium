@@ -331,6 +331,7 @@ class AddAppPageState extends State<AddAppPage> {
         s.useGradientBackground,
         s.progressiveBlurEnabled,
         s.cardCornerScale,
+        s.alwaysUsePhoneLayout,
         s.getSettingString(GitHub.githubCredsKey),
         s.getSettingString(GitHub.validatedPATFingerprintKey),
       ),
@@ -608,7 +609,9 @@ class AddAppPageState extends State<AddAppPage> {
         if (app != null) {
           if (!context.mounted) return;
           final double screenWidth = MediaQuery.sizeOf(context).width;
-          final bool isLargeScreen = screenWidth >= kLargeScreenWidthBreakpoint;
+          final bool isLargeScreen =
+              screenWidth >= kLargeScreenWidthBreakpoint &&
+              !settingsProvider.alwaysUsePhoneLayout;
           final homeState = context.findAncestorStateOfType<HomePageState>();
           if (isLargeScreen && homeState != null) {
             _resetUrlModeInput();
@@ -1559,6 +1562,7 @@ class AddAppPageState extends State<AddAppPage> {
     final bool isLargeScreen = isLargeScreenLayout(
       screenWidth,
       MediaQuery.orientationOf(context),
+      alwaysUsePhoneLayout: settingsProvider.alwaysUsePhoneLayout,
     );
 
     Widget buildModeTile(_AddMode modeObj, String title, IconData icon) {
