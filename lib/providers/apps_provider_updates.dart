@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:io';
+import 'dart:math';
 
 import 'package:device_info_plus/device_info_plus.dart';
 import 'package:obtainium/custom_errors.dart';
@@ -454,6 +455,7 @@ extension AppsProviderUpdates on AppsProvider {
       Duration(minutes: settingsProvider.updateInterval),
     );
     final List<String> appIds = apps.values
+        .where((app) => app.app.additionalSettings['onDemandOnly'] != true)
         .where(
           (app) =>
               forceAll ||
@@ -495,20 +497,40 @@ extension AppsProviderUpdates on AppsProvider {
     final completer = updateCheckCompleter = Completer<List<App>>();
     var completed = 0;
     var total = 0;
+    DateTime lastProgressNotification = DateTime.fromMillisecondsSinceEpoch(0);
     refreshProgress = 0.0;
-    notify();
-    final progressTimer = Timer.periodic(const Duration(milliseconds: 250), (
-      _,
-    ) {
-      refreshProgress = total > 0 ? completed / total : 0.0;
-      notify();
-    });
+    void reportProgress({bool force = false}) {
+      final DateTime now = DateTime.now();
+      if (force ||
+          now.difference(lastProgressNotification) >=
+              const Duration(milliseconds: 250)) {
+        lastProgressNotification = now;
+        refreshProgress = total > 0 ? completed / total : 0.0;
+      }
+    }
+
     try {
       final List<App> updates = [];
       final MultiAppMultiError errors = MultiAppMultiError();
       List<String> appIds;
       if (specificIds != null) {
-        appIds = List.from(specificIds);
+        appIds = specificIds.where(apps.containsKey).toSet().toList();
+        if (settingsProvider.onlyCheckInstalledOrTrackOnlyApps) {
+          appIds.removeWhere((id) {
+            final App app = apps[id]!.app;
+            return app.installedVersion == null &&
+                !app.settings.getBool('trackOnly');
+          });
+        }
+        appIds.sort(
+          (a, b) =>
+              (apps[a]!.app.lastUpdateCheck ??
+                      DateTime.fromMicrosecondsSinceEpoch(0))
+                  .compareTo(
+                    apps[b]!.app.lastUpdateCheck ??
+                        DateTime.fromMicrosecondsSinceEpoch(0),
+                  ),
+        );
       } else if (forceAll) {
         appIds = apps.values.map((e) => e.app.id).toList();
         appIds.sort(
@@ -534,37 +556,47 @@ extension AppsProviderUpdates on AppsProvider {
         );
       }
       total = appIds.length;
-      final results = await Future.wait(
-        appIds
-            .map((appId) async {
-              final currentApp = apps[appId]?.app;
-              try {
-                final newApp = await fetchUpdate(appId);
-                if (newApp == null) return null;
-                final isUpdate =
-                    currentApp != null &&
-                    newApp.latestVersion != currentApp.latestVersion;
-                return MapEntry(newApp, isUpdate);
-              } catch (e) {
-                if ((e is RateLimitError || e is SocketException) &&
-                    throwErrorsForRetry) {
-                  rethrow;
-                }
-                if (e is RepositoryRenamedError) {
-                  await updatePendingRepoRename(appId, e.newUrl);
-                  return null;
-                }
-                errors.add(appId, e, appName: apps[appId]?.name);
-                return null;
-              }
-            })
-            .map(
-              (f) => f.whenComplete(() {
-                completed++;
-              }),
-            ),
-        eagerError: true,
+      final List<MapEntry<App, bool>?> results =
+          List<MapEntry<App, bool>?>.filled(total, null);
+      int nextIndex = 0;
+      final int workerCount = min(
+        total,
+        await maxParallelUpdateChecksForDevice(),
       );
+
+      Future<void> runWorker() async {
+        while (nextIndex < total) {
+          final int resultIndex = nextIndex++;
+          final String appId = appIds[resultIndex];
+          final App? currentApp = apps[appId]?.app;
+          try {
+            final App? newApp = await fetchUpdate(appId);
+            if (newApp != null) {
+              results[resultIndex] = MapEntry(
+                newApp,
+                currentApp != null &&
+                    newApp.latestVersion != currentApp.latestVersion,
+              );
+            }
+          } catch (e) {
+            if ((e is RateLimitError || e is SocketException) &&
+                throwErrorsForRetry) {
+              rethrow;
+            }
+            if (e is RepositoryRenamedError) {
+              await updatePendingRepoRename(appId, e.newUrl);
+            } else {
+              errors.add(appId, e, appName: apps[appId]?.name);
+            }
+          } finally {
+            completed++;
+            reportProgress();
+          }
+        }
+      }
+
+      await Future.wait(List.generate(workerCount, (_) => runWorker()));
+      reportProgress(force: true);
       final List<App> fetched = [];
       for (final r in results) {
         if (r == null) continue;
@@ -587,10 +619,8 @@ extension AppsProviderUpdates on AppsProvider {
       }
       rethrow;
     } finally {
-      progressTimer.cancel();
       updateCheckCompleter = null;
       refreshProgress = null;
-      notify();
     }
   }
 

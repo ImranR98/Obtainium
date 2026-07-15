@@ -213,7 +213,7 @@ class AddAppPageState extends State<AddAppPage> {
   Set<String> _getSearchSelectedStores(SettingsProvider settingsProvider) {
     if (_searchSelectedStores == null) {
       final deselected = settingsProvider.searchDeselected.toSet();
-      _searchSelectedStores = sourceProvider.sources
+      _searchSelectedStores = sourceProvider.sourceTemplates
           .where((e) => e.canSearch && !deselected.contains(e.name))
           .map((e) => e.name)
           .toSet();
@@ -742,7 +742,7 @@ class AddAppPageState extends State<AddAppPage> {
             title: tr('supportedSources'),
             items: const [],
             additionalWidgets: [
-              ...sourceProvider.sources
+              ...sourceProvider.sourceTemplates
                   .where((e) => e.name != 'RockMods')
                   .map(
                     (e) => Padding(
@@ -891,7 +891,7 @@ class AddAppPageState extends State<AddAppPage> {
                       value: pickedSourceOverride ?? '',
                       [
                         MapEntry('', tr('none')),
-                        ...sourceProvider.sources
+                        ...sourceProvider.sourceTemplates
                             .where(
                               (s) =>
                                   s.allowOverride ||
@@ -1084,7 +1084,7 @@ class AddAppPageState extends State<AddAppPage> {
       FocusManager.instance.primaryFocus?.unfocus();
       _searchResultFilterController.clear();
 
-      final List<AppSource> selectedSources = sourceProvider.sources
+      final List<AppSource> selectedSources = sourceProvider.sourceTemplates
           .where((e) => searchSelectedStores.contains(e.name))
           .toList();
       // Results from sources that prompt for per-search options depend on that
@@ -1323,7 +1323,7 @@ class AddAppPageState extends State<AddAppPage> {
     }
 
     Widget getSearchStoreChips() {
-      final searchableSources = sourceProvider.sources
+      final searchableSources = sourceProvider.sourceTemplates
           .where((e) => e.canSearch)
           .toList();
       if (searchableSources.isEmpty) return const SizedBox.shrink();

@@ -303,6 +303,40 @@ void main() {
     SharedPreferences.setMockInitialValues({});
   });
 
+  test(
+    'source resolution reuses templates but returns fresh mutable sources',
+    () {
+      final SourceProvider provider = SourceProvider();
+      const String url = 'https://github.com/example/app';
+
+      final AppSource firstSource = provider.getSource(url);
+      final AppSource secondSource = provider.getSource(url);
+      final AppSource firstTemplate = provider.getSourceTemplate(url);
+      final AppSource secondTemplate = provider.getSourceTemplate(url);
+
+      expect(firstSource, isA<GitHub>());
+      expect(secondSource, isA<GitHub>());
+      expect(identical(firstSource, secondSource), isFalse);
+      expect(identical(firstTemplate, secondTemplate), isTrue);
+    },
+  );
+
+  test('override resolution mutates only the fresh matched source', () {
+    final SourceProvider provider = SourceProvider();
+    final AppSource githubTemplate = provider.getSourceTemplate(
+      'https://github.com/example/app',
+    );
+    final AppSource overriddenSource = provider.getSource(
+      'https://git.example.com/example/app',
+      overrideSource: githubTemplate.sourceIdentifier,
+    );
+
+    expect(overriddenSource, isA<GitHub>());
+    expect(overriddenSource.hosts, <String>['git.example.com']);
+    expect(overriddenSource.hostChanged, isTrue);
+    expect(githubTemplate.hosts, contains('github.com'));
+  });
+
   // ── Size cache key invalidation ─────────────────────────────────────
   // The contract: the size persisted onto an App is keyed implicitly by
   // (appId, latestVersion). When a refresh returns the same version,

@@ -60,6 +60,7 @@ const int _bgClientExceptionRetryWaitSeconds = 15 * 60;
 
 final packageManager = AndroidPackageManager();
 final packageInfoFlags = PackageInfoFlags({PMFlag.getSigningCertificates});
+final packageInfoFlagsLight = PackageInfoFlags({});
 
 /// Live download state for an app: the progress percent (listenable, with -1
 /// meaning "installing" and null meaning "idle") plus the bytes downloaded and
@@ -831,14 +832,17 @@ String? formatDownloadSize(int? receivedBytes, int? totalBytes) {
   return formatBytes(receivedBytes);
 }
 
-Future<List<PackageInfo>> getAllInstalledInfo() async {
-  return await packageManager.getInstalledPackages(flags: packageInfoFlags) ??
+Future<List<PackageInfo>> getAllInstalledInfo({bool light = false}) async {
+  return await packageManager.getInstalledPackages(
+        flags: light ? packageInfoFlagsLight : packageInfoFlags,
+      ) ??
       [];
 }
 
 Future<PackageInfo?> getInstalledInfo(
   String? packageName, {
   bool printErr = true,
+  bool light = true,
   bool includeOwnDebugBuild = false,
 }) async {
   if (packageName != null) {
@@ -849,7 +853,9 @@ Future<PackageInfo?> getInstalledInfo(
       namesToTry.insert(0, '$obtainiumId.debug');
     }
     try {
-      final List<PackageInfo> installedPackages = await getAllInstalledInfo();
+      final List<PackageInfo> installedPackages = await getAllInstalledInfo(
+        light: light,
+      );
       for (final String name in namesToTry) {
         for (final PackageInfo info in installedPackages) {
           if (info.packageName == name) {
@@ -943,8 +949,14 @@ class AppsProvider with ChangeNotifier {
   /// atomic guard (preventing concurrent batches) and a deduplication
   /// mechanism: subsequent callers receive the existing completer's future.
   Completer<List<App>>? updateCheckCompleter;
-  double? refreshProgress;
+  final ValueNotifier<double?> refreshProgressNotifier = ValueNotifier(null);
+  double? get refreshProgress => refreshProgressNotifier.value;
+  set refreshProgress(double? value) => refreshProgressNotifier.value = value;
   LogsProvider logs = LogsProvider();
+
+  int _cachedPendingUpdateCount = 0;
+  bool _pendingUpdateCountDirty = true;
+  int appsListRevision = 0;
 
   // Serializes concurrent loadApps() calls without busy-waiting.
   Completer<void>? appsLoadingCompleter;
@@ -962,6 +974,12 @@ class AppsProvider with ChangeNotifier {
   // Variables to keep track of the app foreground status (installs can't run in the background)
   bool isForeground = true;
   bool _isBg = false;
+  static const Duration _foregroundLoadCooldown = Duration(seconds: 5);
+  DateTime? _lastForegroundLoadAt;
+
+  /// Watermark used by incremental full-directory loads. Public so the
+  /// lifecycle extension can reuse unchanged JSON files across resumes.
+  DateTime? lastFullDiskLoadAt;
 
   /// Whether this provider runs in the background (WorkManager) isolate rather
   /// than the main UI isolate.
@@ -1020,13 +1038,25 @@ class AppsProvider with ChangeNotifier {
     return _userAppIconsDir!;
   }
 
-  /// Count of installed apps with an actionable or attention-needed update, for
-  /// the home-tab badge. Recomputed on demand via [findExistingUpdates].
-  int get pendingUpdateCount => findExistingUpdates(
-    installedOnly: true,
-    excludeOnDemandOnly: true,
-    includeVersionOrderUncertain: true,
-  ).length;
+  /// Count of installed apps with an actionable or attention-needed update.
+  /// Data mutations invalidate the cache; download/icon progress notifications
+  /// do not need to rescan the entire collection.
+  int get pendingUpdateCount {
+    if (_pendingUpdateCountDirty) {
+      _cachedPendingUpdateCount = findExistingUpdates(
+        installedOnly: true,
+        excludeOnDemandOnly: true,
+        includeVersionOrderUncertain: true,
+      ).length;
+      _pendingUpdateCountDirty = false;
+    }
+    return _cachedPendingUpdateCount;
+  }
+
+  void markAppsChanged() {
+    appsListRevision++;
+    _pendingUpdateCountDirty = true;
+  }
 
   /// Records a transient error banner for [appId]'s detail page.
   void setAppPageError(String appId, Object error, {String? title}) {
@@ -1125,7 +1155,18 @@ class AppsProvider with ChangeNotifier {
     foregroundSubscription = foregroundStream?.listen((event) async {
       isForeground = event == FGBGType.foreground;
       if (isForeground) {
-        await loadApps();
+        final DateTime now = DateTime.now();
+        final DateTime? previousLoad = _lastForegroundLoadAt;
+        if (previousLoad == null ||
+            now.difference(previousLoad) >= _foregroundLoadCooldown) {
+          _lastForegroundLoadAt = now;
+          await Future<void>.delayed(const Duration(milliseconds: 300));
+          if (!isForeground) {
+            _lastForegroundLoadAt = previousLoad;
+            return;
+          }
+          await loadApps(silent: true);
+        }
       }
     });
     if (!_isBg) {
@@ -1199,6 +1240,7 @@ class AppsProvider with ChangeNotifier {
       timer.cancel();
     }
     deferredObtainiumTimers.clear();
+    refreshProgressNotifier.dispose();
     // Pending JSON under app_data/pending_removal is intentionally left on disk;
     // the next loadApps commits the removal for any id without a live deferral.
     super.dispose();

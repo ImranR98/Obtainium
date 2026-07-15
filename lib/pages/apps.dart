@@ -405,107 +405,48 @@ AppTypeGroup classifyAppType(AppInMemory app) {
 /// Fingerprint so [AppsPage] rebuilds only when app-list data changes,
 /// not on every [AppsProvider.notifyListeners] (e.g. download-progress ticks
 /// or icon-load completions — icons are watched per-row by [_AppIconWidget]).
+/// [AppsProvider.appsListRevision] avoids hashing every app for each of those
+/// notifications, which is important while new rows lazily load their icons.
 int _appsPageAppsRebuildToken(AppsProvider provider) {
-  return Object.hashAll([
+  return Object.hash(
     provider.loadingApps,
     provider.areDownloadsRunning(),
-    ...provider.apps.values.map(
-      (a) => Object.hashAll([
-        a.app.id,
-        a.app.name,
-        a.app.author,
-        a.app.latestVersion,
-        a.app.installedVersion,
-        a.app.pinned,
-        a.app.categories.length,
-        Object.hashAll(a.app.categories),
-        a.app.additionalSettings['onDemandOnly'] == true,
-        a.app.additionalSettings['skippedLatestVersion'],
-        // Folder membership - needed so the main-page filter (hide foldered
-        // apps) and folder-view filter both re-run when membership changes.
-        Object.hashAll((a.app.additionalSettings['folderIds'] as List? ?? [])),
-        // Icon fields deliberately excluded: each row watches its own icon
-        // via _AppIconWidget.context.select, so icon loads only rebuild that
-        // one row widget instead of the entire apps list.
-        // [App.lastUpdateCheck] is also deliberately excluded. It changes for
-        // every app on every pull-to-refresh and would otherwise force the
-        // entire AppsPage (filter / sort / group / sliver list) to rebuild
-        // on every notifyListeners() tick (~4 Hz) during checkUpdates, which
-        // is the dominant cause of refresh-time scroll stutter on large lists.
-        // The list will still re-sort once at the end of refresh because the
-        // final notifyListeners() flips other fields (e.g. latestVersion) on
-        // any apps that actually got an update. Users sorting by
-        // [SortColumnSettings.lastUpdateCheck] see their order update once
-        // the refresh finishes rather than continuously during it - this is
-        // intentional, since reordering rows under the user's finger while
-        // they try to scroll is itself a usability problem.
-      ]),
-    ),
-  ]);
+    provider.appsListRevision,
+  );
 }
 
 /// Progress bar shown during pull-to-refresh and initial app-load.
 ///
 /// Subscribes to [AppsProvider] via a narrow [context.select] that returns
-/// only `(loadingApps, checkedCount)`. As [AppsProvider.checkUpdates] saves
-/// each app and calls [AppsProvider.notifyListeners] (~ every 250 ms),
-/// `checkedCount` ticks up and only THIS widget rebuilds - the surrounding
-/// [AppsPage] (filter / sort / sliver list) does not.
+/// only `(loadingApps, refreshProgressNotifier)`. The notifier updates this
+/// widget without notifying the provider, so the surrounding [AppsPage]
+/// (filter / sort / sliver list) does not rescan the whole app collection.
 ///
-/// Counterpart to the deliberate exclusion of [App.lastUpdateCheck] from
-/// [_appsPageAppsRebuildToken]. That exclusion is what fixed the scroll
-/// stutter; this widget restores the live progress feedback that the
-/// exclusion would otherwise have stripped out.
+/// App metadata changes advance [AppsProvider.appsListRevision] once after the
+/// batched save, while intermediate progress stays isolated here.
 class _RefreshProgressBar extends StatelessWidget {
-  const _RefreshProgressBar({
-    required this.refreshingSince,
-    required this.progressDenominator,
-    required this.onDemandOnlyList,
-    required this.folderId,
-  });
+  const _RefreshProgressBar({required this.refreshingSince});
 
   final DateTime? refreshingSince;
-  final int progressDenominator;
-  final bool onDemandOnlyList;
-  final String? folderId;
 
   @override
   Widget build(BuildContext context) {
-    final (bool loadingApps, int checkedCount) = context
-        .select<AppsProvider, (bool, int)>((p) {
-          if (p.loadingApps) {
-            return (true, 0);
-          }
-          final DateTime? since = refreshingSince;
-          if (since == null) {
-            return (false, 0);
-          }
-          int count = 0;
-          for (final a in p.apps.values) {
-            final last = a.app.lastUpdateCheck;
-            if (last == null || last.isBefore(since)) continue;
-            if (onDemandOnlyList &&
-                a.app.additionalSettings['onDemandOnly'] != true) {
-              continue;
-            }
-            final String? folder = folderId;
-            if (folder != null && !folderIdsForApp(a.app).contains(folder)) {
-              continue;
-            }
-            count++;
-          }
-          return (false, count);
-        });
+    final (bool loadingApps, ValueNotifier<double?> progressNotifier) = context
+        .select<AppsProvider, (bool, ValueNotifier<double?>)>(
+          (p) => (p.loadingApps, p.refreshProgressNotifier),
+        );
     // M3 Expressive linear progress indicator. Wavy active track with a
     // stop-dot at the end (per the M3E spec). The widget draws two
     // separate lanes (active above, track below) with a fixed gap so the
     // active and inactive segments never overlap.
-    return LinearRipplingWavyProgressIndicator(
-      value: loadingApps
-          ? null
-          : (progressDenominator > 0
-                ? checkedCount / progressDenominator
-                : 0.0),
+    return ValueListenableBuilder<double?>(
+      valueListenable: progressNotifier,
+      builder: (context, refreshProgress, _) =>
+          LinearRipplingWavyProgressIndicator(
+            value: loadingApps
+                ? null
+                : (refreshProgress ?? (refreshingSince != null ? 1.0 : 0.0)),
+          ),
     );
   }
 }
@@ -639,7 +580,7 @@ class _AppListItem extends StatelessWidget {
     final hasUncertainUpdate =
         installed != null && versionOrderUncertainUpdate(app.app);
     final settingsProvider = context.read<SettingsProvider>();
-    final source = SourceProvider().getSource(
+    final source = SourceProvider().getSourceTemplate(
       app.app.url,
       overrideSource: app.app.overrideSource,
     );
@@ -1736,7 +1677,7 @@ final RegExp _changeLogUrlRegExp = RegExp(
 );
 
 Null Function()? getChangeLogFn(BuildContext context, App app) {
-  final AppSource appSource = SourceProvider().getSource(
+  final AppSource appSource = SourceProvider().getSourceTemplate(
     app.url,
     overrideSource: app.overrideSource,
   );
@@ -2885,7 +2826,11 @@ class AppsPageState extends State<AppsPage> {
         final String folderId = widget.folderId!;
         refreshFuture = appsProvider.checkUpdates(
           specificIds: appsProvider.apps.values
-              .where((a) => folderIdsForApp(a.app).contains(folderId))
+              .where(
+                (a) =>
+                    a.app.additionalSettings['onDemandOnly'] != true &&
+                    folderIdsForApp(a.app).contains(folderId),
+              )
               .map((a) => a.app.id)
               .toList(),
         );
@@ -2903,17 +2848,19 @@ class AppsPageState extends State<AppsPage> {
         // Foldered apps are still picked up by background update checks
         // (when enabled), so they don't go indefinitely stale.
         //
-        // [getAppsSortedByUpdateCheckTime] already skips on-demand-only
-        // apps; we don't have to filter those out here.
+        // [getAppsSortedByUpdateCheckTime] skips on-demand-only apps, so the
+        // unscoped main-list path does not need to filter them again.
         if (settingsProvider.showFolderedAppsOnMainPage) {
           refreshFuture = appsProvider.checkUpdates();
         } else {
           refreshFuture = appsProvider.checkUpdates(
             specificIds: appsProvider.apps.values
                 .where(
-                  (a) => folderIdsForApp(
-                    a.app,
-                  ).where((id) => existingFolderIds.contains(id)).isEmpty,
+                  (a) =>
+                      a.app.additionalSettings['onDemandOnly'] != true &&
+                      folderIdsForApp(
+                        a.app,
+                      ).where((id) => existingFolderIds.contains(id)).isEmpty,
                 )
                 .map((a) => a.app.id)
                 .toList(),
@@ -3087,7 +3034,7 @@ class AppsPageState extends State<AppsPage> {
         }
         if (filter.sourceFilter.isNotEmpty &&
             sourceProvider
-                    .getSource(
+                    .getSourceTemplate(
                       app.app.url,
                       overrideSource: app.app.overrideSource,
                     )
@@ -3301,7 +3248,7 @@ class AppsPageState extends State<AppsPage> {
       if (app == null) {
         return false;
       }
-      final AppSource source = SourceProvider().getSource(
+      final AppSource source = SourceProvider().getSourceTemplate(
         app.url,
         overrideSource: app.overrideSource,
       );
@@ -3454,7 +3401,10 @@ class AppsPageState extends State<AppsPage> {
           final keys = appsSource
               .map(
                 (e) => sourceProvider
-                    .getSource(e.app.url, overrideSource: e.app.overrideSource)
+                    .getSourceTemplate(
+                      e.app.url,
+                      overrideSource: e.app.overrideSource,
+                    )
                     .runtimeType
                     .toString(),
               )
@@ -3489,7 +3439,7 @@ class AppsPageState extends State<AppsPage> {
             }
             if (isInUpdatesGroup(row)) continue;
             if (sourceProvider
-                    .getSource(
+                    .getSourceTemplate(
                       row.app.url,
                       overrideSource: row.app.overrideSource,
                     )
@@ -3635,47 +3585,6 @@ class AppsPageState extends State<AppsPage> {
         .toSet();
 
     List<Widget> getLoadingWidgets() {
-      final String? progressFolderId = widget.folderId;
-      final bool onlyCheckInstalledOrTrackOnly =
-          settingsProvider.onlyCheckInstalledOrTrackOnlyApps;
-      final bool showFolderedAppsOnMainPage =
-          settingsProvider.showFolderedAppsOnMainPage;
-      final Set<String> existingFolderIdsSet = settingsProvider.appFolders
-          .map((f) => f.id)
-          .toSet();
-
-      int progressCount = 0;
-      for (final a in appsProvider.apps.values) {
-        // 1. On-demand-only check
-        final bool isOnDemand =
-            a.app.additionalSettings['onDemandOnly'] == true;
-        if (widget.onDemandOnlyList) {
-          if (!isOnDemand) continue;
-        } else {
-          if (isOnDemand) continue;
-        }
-
-        // 2. Folder check
-        final String? folder = progressFolderId;
-        if (folder != null) {
-          if (!folderIdsForApp(a.app).contains(folder)) continue;
-        } else if (!widget.onDemandOnlyList && !showFolderedAppsOnMainPage) {
-          final hasFolder = folderIdsForApp(
-            a.app,
-          ).where((id) => existingFolderIdsSet.contains(id)).isNotEmpty;
-          if (hasFolder) continue;
-        }
-
-        // 3. Installed / Track-only check
-        if (onlyCheckInstalledOrTrackOnly) {
-          final isInstalled = a.app.installedVersion != null;
-          final isTrackOnly = a.app.additionalSettings['trackOnly'] == true;
-          if (!isInstalled && !isTrackOnly) continue;
-        }
-
-        progressCount++;
-      }
-      final int progressDenominator = progressCount > 0 ? progressCount : 1;
       return [
         if (listedApps.isEmpty)
           SliverFillRemaining(
@@ -3709,12 +3618,7 @@ class AppsPageState extends State<AppsPage> {
             // visible half-blurred line through the indicator.
             child: Padding(
               padding: const EdgeInsets.only(top: 12),
-              child: _RefreshProgressBar(
-                refreshingSince: refreshingSince,
-                progressDenominator: progressDenominator,
-                onDemandOnlyList: widget.onDemandOnlyList,
-                folderId: progressFolderId,
-              ),
+              child: _RefreshProgressBar(refreshingSince: refreshingSince),
             ),
           ),
       ];
@@ -3770,7 +3674,10 @@ class AppsPageState extends State<AppsPage> {
           installed != null && versionOrderUncertainUpdate(app.app);
       final downloadsRunning = appsProvider.areDownloadsRunning();
       final sourceHost = sourceProvider
-          .getSource(app.app.url, overrideSource: app.app.overrideSource)
+          .getSourceTemplate(
+            app.app.url,
+            overrideSource: app.app.overrideSource,
+          )
           .hosts
           .firstOrNull;
       // M3 Container Transform: tapping the row morphs the row's container
@@ -4096,7 +4003,7 @@ class AppsPageState extends State<AppsPage> {
           ? listedApps.firstWhere(
               (appInMem) =>
                   sourceProvider
-                      .getSource(
+                      .getSourceTemplate(
                         appInMem.app.url,
                         overrideSource: appInMem.app.overrideSource,
                       )
@@ -4106,7 +4013,7 @@ class AppsPageState extends State<AppsPage> {
             )
           : listedApps[matchingIndices.first];
       final sourceTitle = sourceProvider
-          .getSource(
+          .getSourceTemplate(
             firstForTitle.app.url,
             overrideSource: firstForTitle.app.overrideSource,
           )
@@ -6091,7 +5998,7 @@ class AppsPageState extends State<AppsPage> {
       final app = appInMem.app;
       if (excludedFolderIdsForApp(app).contains(folder.id)) continue;
       final resolvedSource = sourceProvider
-          .getSource(app.url, overrideSource: app.overrideSource)
+          .getSourceTemplate(app.url, overrideSource: app.overrideSource)
           .runtimeType
           .toString();
       if (folder.rule!.matches(app, resolvedSource: resolvedSource)) {
@@ -6148,7 +6055,10 @@ class AppsPageState extends State<AppsPage> {
           .where((a) => a.app.additionalSettings['onDemandOnly'] != true)
           .where((a) {
             final resolvedSource = sourceProvider
-                .getSource(a.app.url, overrideSource: a.app.overrideSource)
+                .getSourceTemplate(
+                  a.app.url,
+                  overrideSource: a.app.overrideSource,
+                )
                 .runtimeType
                 .toString();
             return rule.matches(a.app, resolvedSource: resolvedSource);

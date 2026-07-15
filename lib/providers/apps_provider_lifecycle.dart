@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
+import 'dart:math';
 import 'dart:ui' as ui;
 
 import 'package:android_intent_plus/android_intent.dart';
@@ -70,12 +71,11 @@ class RemoveAppsWithModalResult {
 
 extension AppsProviderLifecycle on AppsProvider {
   bool _getNaiveStandardVersionDetection(App app) {
-    final source = SourceProvider().getSource(
-      app.url,
-      overrideSource: app.overrideSource,
-    );
     return app.settings.getBool('naiveStandardVersionDetection') ||
-        source.naiveStandardVersionDetection;
+        SourceProvider().naiveStandardVersionDetectionForUrl(
+          app.url,
+          overrideSource: app.overrideSource,
+        );
   }
 
   String? _getRealInstalledVersion(App app, PackageInfo? installedInfo) {
@@ -109,7 +109,7 @@ extension AppsProviderLifecycle on AppsProvider {
     if (app?.app == null) {
       return false;
     }
-    final source = SourceProvider().getSource(
+    final source = SourceProvider().getSourceTemplate(
       app!.app.url,
       overrideSource: app.app.overrideSource,
     );
@@ -441,115 +441,159 @@ extension AppsProviderLifecycle on AppsProvider {
     return null;
   }
 
-  Future<void> loadApps({String? singleId}) async {
+  Future<void> loadApps({String? singleId, bool silent = false}) async {
     await waitForAppsToLoad();
     appsLoadingCompleter = Completer<void>();
-    loadingApps = true;
-    notify();
-    // Commit any deferred "remove from ObtainX" whose in-memory deferral was
-    // lost (e.g. process restart) before re-reading the app JSON dir.
-    await _purgeStalePendingRemovalFilesWithoutLiveDeferral();
+    if (!silent) {
+      loadingApps = true;
+      notify();
+    }
+    bool dataChanged = false;
     try {
+      // Commit any deferred "remove from ObtainX" whose in-memory deferral was
+      // lost (e.g. process restart) before re-reading the app JSON dir.
+      await _purgeStalePendingRemovalFilesWithoutLiveDeferral();
       final sp = SourceProvider();
       final List<List<String>> errors = [];
-      final installedAppsData = await getAllInstalledInfo();
+      final installedAppsData = await getAllInstalledInfo(light: true);
       final Map<String, PackageInfo> installedAppsMap = {
         for (var i in installedAppsData)
           if (i.packageName != null) i.packageName!: i,
       };
       final List<String> removedAppIds = [];
-      await Future.wait(
-        (await getAppsDir()) // Parse Apps from JSON
-            .listSync()
-            .map((item) async {
-              App? app;
-              if (item.path.toLowerCase().endsWith('.json') &&
-                  (singleId == null ||
-                      item.path.split('/').last.toLowerCase() ==
-                          '${singleId.toLowerCase()}.json')) {
-                try {
-                  app = App.fromJson(
-                    jsonDecode(await File(item.path).readAsString()),
-                  );
-                } catch (err) {
-                  if (err is FormatException) {
-                    // Genuinely corrupt JSON: set it aside so it stops failing.
-                    unawaited(
-                      logs.add(
-                        'Corrupt JSON, renaming ${item.path}: $err',
-                        level: LogLevel.error,
-                      ),
-                    );
-                    unawaited(item.rename('${item.path}$_corruptFileSuffix'));
-                  } else {
-                    // Other errors (e.g. a temporarily unresolvable source):
-                    // skip but keep the file so it can load once resolved.
-                    unawaited(
-                      logs.add(
-                        'Error loading app ${item.path} (skipped, file kept): $err',
-                        level: LogLevel.warning,
-                      ),
-                    );
-                  }
+      final DateTime? reuseWatermark = singleId == null
+          ? lastFullDiskLoadAt
+          : null;
+      final DateTime diskLoadStartedAt = DateTime.now();
+      final List<FileSystemEntity> appFiles = await (await getAppsDir())
+          .list()
+          .toList();
+      const int loadChunkSize = 16;
+      for (
+        int chunkStart = 0;
+        chunkStart < appFiles.length;
+        chunkStart += loadChunkSize
+      ) {
+        final int chunkEnd = min(chunkStart + loadChunkSize, appFiles.length);
+        await Future.wait(
+          appFiles.sublist(chunkStart, chunkEnd).map((item) async {
+            if (!item.path.toLowerCase().endsWith('.json')) return;
+            final String fileName = item.path.split('/').last;
+            if (singleId != null &&
+                fileName.toLowerCase() != '${singleId.toLowerCase()}.json') {
+              return;
+            }
+            final String idFromFile = fileName.substring(
+              0,
+              fileName.length - '.json'.length,
+            );
+            App? app;
+            bool reused = false;
+            final AppInMemory? existing = apps[idFromFile];
+            if (existing != null && reuseWatermark != null) {
+              try {
+                final FileStat stat = await item.stat();
+                if (stat.modified.isBefore(reuseWatermark)) {
+                  app = existing.app;
+                  reused = true;
                 }
+              } catch (_) {
+                // Fall through to reading and parsing this file.
               }
-              if (app != null) {
-                apps.update(
-                  app.id,
-                  (value) => value.copyWith(app: app!),
-                  ifAbsent: () => AppInMemory(app!, null, null, null),
+            }
+            if (!reused) {
+              try {
+                app = App.fromJson(
+                  jsonDecode(await File(item.path).readAsString()),
                 );
-                try {
-                  // Try getting the app's source to ensure no invalid apps get loaded
-                  final src = sp.getSource(
-                    app.url,
-                    overrideSource: app.overrideSource,
-                  );
-                  final sourceType = src.name;
-                  // If the app is installed, grab its OS data and reconcile install statuses
-                  final PackageInfo? installedInfo = installedAppsMap[app.id];
-                  // Reconcile differences between the installed and recorded install info
-                  final moddedApp = getCorrectedInstallStatusAppIfPossible(
-                    app,
-                    installedInfo,
-                  );
-                  if (moddedApp != null) {
-                    app = moddedApp;
-                    // Note the app ID if it was uninstalled externally
-                    if (moddedApp.installedVersion == null) {
-                      removedAppIds.add(moddedApp.id);
-                    }
-                  }
-                  // Update the app in memory with install info and corrections
-                  apps.update(
-                    app.id,
-                    (value) => value.copyWith(
-                      app: app!,
-                      installedInfo: installedInfo,
-                      sourceType: sourceType,
-                    ),
-                    ifAbsent: () => AppInMemory(
-                      app!,
-                      null,
-                      installedInfo,
-                      null,
-                      sourceType: sourceType,
+                dataChanged = dataChanged || existing == null;
+              } catch (err) {
+                if (err is FormatException) {
+                  // Genuinely corrupt JSON: set it aside so it stops failing.
+                  unawaited(
+                    logs.add(
+                      'Corrupt JSON, renaming ${item.path}: $err',
+                      level: LogLevel.error,
                     ),
                   );
-                } catch (e) {
-                  if (e is RateLimitError || e is SocketException) {
-                    unawaited(
-                      logs.add(
-                        'Transient error loading app ${app!.id}, will retry: $e',
-                      ),
-                    );
-                  } else {
-                    errors.add([app!.id, app.finalName, e.toString()]);
-                  }
+                  await item.rename('${item.path}$_corruptFileSuffix');
+                } else {
+                  // Other errors (e.g. a temporarily unresolvable source):
+                  // skip but keep the file so it can load once resolved.
+                  unawaited(
+                    logs.add(
+                      'Error loading app ${item.path} (skipped, file kept): $err',
+                      level: LogLevel.warning,
+                    ),
+                  );
                 }
               }
-            }),
-      );
+            }
+            if (app != null) {
+              final String loadingAppId = app.id;
+              final String loadingAppName = app.finalName;
+              final AppInMemory? before = apps[app.id];
+              try {
+                // Source validation is read-only; avoid constructing an adapter
+                // for every app during each list load.
+                final src = sp.getSourceTemplate(
+                  app.url,
+                  overrideSource: app.overrideSource,
+                );
+                final String sourceType = src.name;
+                final PackageInfo? installedInfo = installedAppsMap[app.id];
+                final App? correctedApp =
+                    getCorrectedInstallStatusAppIfPossible(app, installedInfo);
+                if (correctedApp != null) {
+                  app = correctedApp;
+                  dataChanged = true;
+                  if (correctedApp.installedVersion == null) {
+                    removedAppIds.add(correctedApp.id);
+                  }
+                }
+                final bool installedInfoChanged =
+                    before?.installedInfo?.packageName !=
+                        installedInfo?.packageName ||
+                    before?.installedInfo?.versionName !=
+                        installedInfo?.versionName ||
+                    before?.installedInfo?.versionCode !=
+                        installedInfo?.versionCode ||
+                    before?.installedInfo?.lastUpdateTime !=
+                        installedInfo?.lastUpdateTime;
+                if (!reused ||
+                    installedInfoChanged ||
+                    before?.sourceType != sourceType) {
+                  dataChanged = true;
+                }
+                apps[app.id] = AppInMemory(
+                  app,
+                  before?.downloadProgress,
+                  installedInfo,
+                  before?.icon,
+                  sourceType: sourceType,
+                  download: before?.download,
+                );
+              } catch (e) {
+                if (e is RateLimitError || e is SocketException) {
+                  unawaited(
+                    logs.add(
+                      'Transient error loading app $loadingAppId, will retry: $e',
+                    ),
+                  );
+                } else {
+                  errors.add([loadingAppId, loadingAppName, e.toString()]);
+                }
+              }
+            }
+          }),
+        );
+        if (singleId == null && chunkEnd < appFiles.length) {
+          await Future<void>.delayed(Duration.zero);
+        }
+      }
+      if (singleId == null) {
+        lastFullDiskLoadAt = diskLoadStartedAt;
+      }
       if (errors.isNotEmpty) {
         for (var error in errors) {
           unawaited(
@@ -559,34 +603,29 @@ extension AppsProviderLifecycle on AppsProvider {
             ),
           );
         }
-        unawaited(removeApps(errors.map((e) => e[0]).toList()));
+        await removeApps(errors.map((e) => e[0]).toList());
         unawaited(
           NotificationsProvider().notify(
             AppsRemovedNotification(errors.map((e) => [e[1], e[2]]).toList()),
           ),
         );
+        dataChanged = true;
       }
-      // Delete externally uninstalled Apps if needed
-      if (removedAppIds.isNotEmpty &&
-          settingsProvider.removeOnExternalUninstall) {
-        await removeApps(removedAppIds);
+      // Delete externally uninstalled Apps if needed.
+      if (removedAppIds.isNotEmpty) {
+        dataChanged = true;
+        if (settingsProvider.removeOnExternalUninstall) {
+          await removeApps(removedAppIds);
+        }
       }
     } finally {
       loadingApps = false;
       appsLoadingCompleter?.complete();
       appsLoadingCompleter = null;
-      notify();
-    }
-    if (!isBg && apps.isNotEmpty) {
-      unawaited(
-        Future(() async {
-          for (final entry in apps.entries.toList()) {
-            await updateAppIcon(entry.key);
-            await Future<void>.delayed(Duration.zero);
-          }
-          notify();
-        }),
-      );
+      if (!silent || dataChanged) {
+        markAppsChanged();
+        notify();
+      }
     }
   }
 
@@ -889,54 +928,113 @@ extension AppsProviderLifecycle on AppsProvider {
     // in-memory install info) and/or skip the post-save auto-export.
     bool updateInstalledInfo = true,
     bool autoExportAfterSave = true,
+    Map<String, PackageInfo>? prefetchedInstalledInfo,
   }) async {
-    await Future.wait(
-      apps.map((a) async {
-        var app = a.copyWith();
-        final PackageInfo? info = updateInstalledInfo
-            ? await getInstalledInfo(app.id)
-            : this.apps[app.id]?.installedInfo;
-        Uint8List? icon;
-        String? installedAppName;
-        final applicationInfo = info?.applicationInfo;
-        if (applicationInfo != null) {
-          try {
-            icon = await applicationInfo.getAppIcon();
-            installedAppName = await applicationInfo.getAppLabel();
-          } catch (e) {
-            unawaited(
-              logs.add(
-                'Installed package details unavailable for ${app.id}: $e',
-              ),
-            );
+    Map<String, PackageInfo>? installedInfoSnapshot = prefetchedInstalledInfo;
+    if (installedInfoSnapshot == null &&
+        updateInstalledInfo &&
+        apps.length > 1) {
+      try {
+        final List<PackageInfo> installedPackages = await getAllInstalledInfo(
+          light: true,
+        );
+        installedInfoSnapshot = {
+          for (final PackageInfo info in installedPackages)
+            if (info.packageName != null) info.packageName!: info,
+        };
+      } catch (e) {
+        unawaited(
+          logs.add(
+            'Failed to prefetch installed package info for bulk save: $e',
+            level: LogLevel.warning,
+          ),
+        );
+      }
+    }
+    final Directory appsDirectory = await getAppsDir();
+    final Map<String, PackageInfo>? effectiveInstalledInfoSnapshot =
+        installedInfoSnapshot;
+    const int saveChunkSize = 16;
+    for (
+      int chunkStart = 0;
+      chunkStart < apps.length;
+      chunkStart += saveChunkSize
+    ) {
+      final int chunkEnd = min(chunkStart + saveChunkSize, apps.length);
+      await Future.wait(
+        apps.sublist(chunkStart, chunkEnd).map((a) async {
+          var app = a.copyWith();
+          final AppInMemory? cached = this.apps[app.id];
+          final PackageInfo? info;
+          if (!updateInstalledInfo) {
+            info = cached?.installedInfo;
+          } else if (effectiveInstalledInfoSnapshot != null) {
+            info = effectiveInstalledInfoSnapshot[app.id];
+          } else {
+            info = await getInstalledInfo(app.id);
           }
-        }
-        app = app.copyWith(name: installedAppName ?? app.name);
-        if (attemptToCorrectInstallStatus) {
-          app = getCorrectedInstallStatusAppIfPossible(app, info) ?? app;
-        }
-        if (!onlyIfExists || this.apps.containsKey(app.id)) {
-          final String filePath = '${(await getAppsDir()).path}/${app.id}.json';
-          await File(
-            '$filePath.tmp',
-          ).writeAsString(jsonEncode(app.toJson())); // #2089
-          await File('$filePath.tmp').rename(filePath);
-        }
-        if (this.apps.containsKey(app.id)) {
-          this.apps[app.id] = this.apps[app.id]!.copyWith(
-            app: app,
-            installedInfo: info,
-            icon: icon,
-          );
-        } else if (!onlyIfExists) {
-          this.apps[app.id] = AppInMemory(app, null, info, icon);
-        }
-        if (info == null) {
-          final cachedIcon = File('${iconsCacheDir.path}/${app.id}.png');
-          if (cachedIcon.existsSync()) cachedIcon.deleteSync();
-        }
-      }),
-    );
+          Uint8List? icon = cached?.icon;
+          String? installedAppName;
+          if (!updateInstalledInfo) {
+            installedAppName = cached?.installedInfo == null
+                ? null
+                : cached?.app.name;
+          } else {
+            final bool installedPackageUnchanged =
+                cached != null &&
+                cached.installedInfo?.packageName == info?.packageName &&
+                cached.installedInfo?.versionName == info?.versionName &&
+                cached.installedInfo?.versionCode == info?.versionCode &&
+                cached.installedInfo?.lastUpdateTime == info?.lastUpdateTime;
+            if (installedPackageUnchanged) {
+              installedAppName = info == null ? null : cached.app.name;
+            } else {
+              icon = null;
+              final applicationInfo = info?.applicationInfo;
+              if (applicationInfo != null) {
+                try {
+                  icon = await applicationInfo.getAppIcon();
+                  installedAppName = await applicationInfo.getAppLabel();
+                } catch (e) {
+                  unawaited(
+                    logs.add(
+                      'Installed package details unavailable for ${app.id}: $e',
+                    ),
+                  );
+                }
+              }
+            }
+          }
+          app = app.copyWith(name: installedAppName ?? app.name);
+          if (attemptToCorrectInstallStatus) {
+            app = getCorrectedInstallStatusAppIfPossible(app, info) ?? app;
+          }
+          if (!onlyIfExists || this.apps.containsKey(app.id)) {
+            final String filePath = '${appsDirectory.path}/${app.id}.json';
+            await File(
+              '$filePath.tmp',
+            ).writeAsString(jsonEncode(app.toJson())); // #2089
+            await File('$filePath.tmp').rename(filePath);
+          }
+          if (cached != null) {
+            this.apps[app.id] = AppInMemory(
+              app,
+              cached.downloadProgress,
+              info,
+              icon,
+              sourceType: cached.sourceType,
+              download: cached.download,
+            );
+          } else if (!onlyIfExists) {
+            this.apps[app.id] = AppInMemory(app, null, info, icon);
+          }
+        }),
+      );
+      if (chunkEnd < apps.length) {
+        await Future<void>.delayed(Duration.zero);
+      }
+    }
+    markAppsChanged();
     notify();
     if (autoExportAfterSave) {
       scheduleAutoExport();
@@ -967,6 +1065,7 @@ extension AppsProviderLifecycle on AppsProvider {
       }),
     );
     if (appIds.isNotEmpty) {
+      markAppsChanged();
       notify();
       scheduleAutoExport();
     }
@@ -1212,6 +1311,7 @@ extension AppsProviderLifecycle on AppsProvider {
         _finalizeDeferredObtainiumRemoval(appId);
       });
     }
+    markAppsChanged();
     notify();
     unawaited(export(isAuto: true));
   }
@@ -1230,6 +1330,7 @@ extension AppsProviderLifecycle on AppsProvider {
       }
       apps[appId] = snapshot.deepCopy();
     }
+    markAppsChanged();
     notify();
     unawaited(export(isAuto: true));
   }
@@ -1299,7 +1400,7 @@ extension AppsProviderLifecycle on AppsProvider {
   Future<void> assignMatchingFoldersToAppIfNeeded(App app) async {
     final sourceProvider = SourceProvider();
     final resolvedSource = sourceProvider
-        .getSource(app.url, overrideSource: app.overrideSource)
+        .getSourceTemplate(app.url, overrideSource: app.overrideSource)
         .runtimeType
         .toString();
     bool changed = false;

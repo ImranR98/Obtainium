@@ -485,7 +485,7 @@ class _ImportExportPageState extends State<ImportExportPage> {
     }
 
     final sourceStrings = <String, List<String>>{};
-    sourceProvider.sources.where((e) => e.canSearch).forEach((s) {
+    sourceProvider.sourceTemplates.where((e) => e.canSearch).forEach((s) {
       sourceStrings[s.name] = [s.name];
     });
 

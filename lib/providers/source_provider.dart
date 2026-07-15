@@ -1398,9 +1398,11 @@ class SourceProvider {
   factory SourceProvider() => _instance;
   SourceProvider._();
 
-  // Builds a fresh set of source instances. Adding a source here makes it
-  // available via the service. Kept private so callers go through [sources]
-  // (cached) or, when per-call mutation is needed, [_buildSources] directly.
+  static final Map<String, RegExp> _sourceRegexCache = {};
+  static final Map<String, int> _sourceMatchIndexCache = {};
+
+  // Single source of truth for source construction. Matching uses cached,
+  // never-mutated templates and [getSource] constructs only the matched source.
   //
   // ORDER IS DELIBERATE — host-based sources are listed alphabetically by their
   // display name (the [name] field, comparing case-insensitively and ignoring
@@ -1412,41 +1414,44 @@ class SourceProvider {
   // match by URL *shape* rather than host, so they must be tried only after
   // every host-based source — DirectAPKLink (only .apk URLs) before HTML (the
   // universal fallback), so HTML is ALWAYS last.
-  static List<AppSource> _buildSources() => [
-    Apk4Free(),
-    APKCombo(),
-    APKMirror(),
-    APKPure(),
-    Aptoide(),
-    CoolApk(),
-    Farsroid(),
-    FDroid(), // "F-Droid official"
-    FDroidRepo(), // "F-Droid third-party repo"
-    Codeberg(), // "Forgejo (Codeberg)"
-    GitHub(),
-    GitLab(),
-    HuaweiAppGallery(), // "Huawei AppGallery"
-    ItchIO(), // "itch.io"
-    IzzyOnDroid(),
-    Jenkins(),
-    LiteAPKs(),
-    NeutronCode(),
-    RockMods(),
-    RuStore(),
-    SourceForge(),
-    SourceHut(),
-    TelegramApp(), // "Telegram <app>"
-    Tencent(), // "Tencent App Store"
-    Uptodown(),
-    VivoAppStore(), // "vivo App Store (CN)"
-    DirectAPKLink(), // "Direct APK link"
-    HTML(), // Must be the last entry — hostless sources are tried in order and HTML is the catch-all fallback
+  static final List<AppSource Function()> _sourceFactories = [
+    () => Apk4Free(),
+    () => APKCombo(),
+    () => APKMirror(),
+    () => APKPure(),
+    () => Aptoide(),
+    () => CoolApk(),
+    () => Farsroid(),
+    () => FDroid(), // "F-Droid official"
+    () => FDroidRepo(), // "F-Droid third-party repo"
+    () => Codeberg(), // "Forgejo (Codeberg)"
+    () => GitHub(),
+    () => GitLab(),
+    () => HuaweiAppGallery(), // "Huawei AppGallery"
+    () => ItchIO(), // "itch.io"
+    () => IzzyOnDroid(),
+    () => Jenkins(),
+    () => LiteAPKs(),
+    () => NeutronCode(),
+    () => RockMods(),
+    () => RuStore(),
+    () => SourceForge(),
+    () => SourceHut(),
+    () => TelegramApp(), // "Telegram <app>"
+    () => Tencent(), // "Tencent App Store"
+    () => Uptodown(),
+    () => VivoAppStore(), // "vivo App Store (CN)"
+    () => DirectAPKLink(), // "Direct APK link"
+    () => HTML(), // Must be the last entry - HTML is the catch-all fallback.
   ];
 
-  /// Cached, read-only source list built lazily by [_buildSources].
-  /// Because sources are immutable after construction, the cache is safe.
-  static List<AppSource>? _cachedSources;
-  List<AppSource> get sources => _cachedSources ??= _buildSources();
+  static List<AppSource>? _sourceTemplatesCache;
+  static List<AppSource> get _sourceTemplates => _sourceTemplatesCache ??=
+      _sourceFactories.map((factory) => factory()).toList();
+
+  /// Fresh source instances for callers that may mutate the returned objects.
+  List<AppSource> get sources =>
+      _sourceFactories.map((factory) => factory()).toList();
 
   /// Add mass URL source classes here so they are available via the service.
   List<MassAppUrlSource> massUrlSources = [GitHubStars()];
@@ -1455,7 +1460,7 @@ class SourceProvider {
   /// properties (name, hosts, form items) and never mutate them — e.g. the
   /// settings source-specific section and the filter-by-source sheet. Callers
   /// MUST NOT mutate the returned instances; use [sources] for a fresh copy.
-  List<AppSource> get sourceTemplates => sources;
+  List<AppSource> get sourceTemplates => _sourceTemplates;
 
   /// Read-only source resolution mirroring [getSource]; use on hot paths that
   /// only need the source's type or its (type-level) flags/form items — e.g.
@@ -1463,12 +1468,13 @@ class SourceProvider {
   /// NOT mutate the returned instance.
   AppSource getSourceTemplate(String url, {String? overrideSource}) {
     if (overrideSource != null) {
+      // Override resolution rewrites the source host for this app. Construct
+      // only that matched adapter so the shared template remains immutable.
       return getSource(url, overrideSource: overrideSource);
     }
-    // Read-only resolution against the cached source set (callers MUST NOT
-    // mutate the returned instance). Unlike [getSource] this does not build a
-    // fresh instance, keeping version-detection / JSON-compat checks cheap.
-    return _selectSourceForUrl(preStandardizeUrl(url), sources);
+    return _sourceTemplates[_matchSourceIndexForStandardizedUrl(
+      preStandardizeUrl(url),
+    )];
   }
 
   // `naiveStandardVersionDetection` depends only on the resolved source (a
@@ -1489,16 +1495,12 @@ class SourceProvider {
 
   AppSource getSource(String url, {String? overrideSource}) {
     url = preStandardizeUrl(url);
+    final int sourceIndex = _matchSourceIndexForStandardizedUrl(
+      url,
+      overrideSource: overrideSource,
+    );
+    final AppSource res = _sourceFactories[sourceIndex]();
     if (overrideSource != null) {
-      // The override path mutates the chosen source's host config, so build a
-      // throwaway instance here rather than touching the shared cache.
-      final srcs = _buildSources().where(
-        (e) => e.sourceIdentifier == overrideSource,
-      );
-      if (srcs.isEmpty) {
-        throw UnsupportedURLError()..url = url;
-      }
-      final res = srcs.first;
       final originalHosts = res.hosts;
       final newHost = Uri.parse(url).host;
       res.hosts = [newHost];
@@ -1506,51 +1508,59 @@ class SourceProvider {
       if (originalHosts.contains(newHost)) {
         res.hostIdenticalDespiteAnyChange = true;
       }
-      return res;
     }
-    // The result may be mutated by the caller (getApp stores per-check state
-    // such as previouslyCheckedApp on it), so return a FRESH instance to avoid
-    // cross-app races during concurrent update checks (parity with fork main).
-    // Read-only callers should use [getSourceTemplate], which reuses the cache.
-    return _selectSourceForUrl(url, _buildSources());
+    return res;
   }
 
-  /// Resolves the [AppSource] whose host/URL rules accept [url] from
-  /// [allSources]. A non-match is expected control flow during auto-detection,
-  /// so failures are intentionally not logged (they are just noise).
-  AppSource _selectSourceForUrl(String url, List<AppSource> allSources) {
-    AppSource? source;
-    for (var s in allSources.where((element) => element.hosts.isNotEmpty)) {
+  int _matchSourceIndexForStandardizedUrl(
+    String url, {
+    String? overrideSource,
+  }) {
+    final String matchCacheKey = '${overrideSource ?? ''}\n$url';
+    final int? cachedSourceIndex = _sourceMatchIndexCache[matchCacheKey];
+    if (cachedSourceIndex != null) {
+      return cachedSourceIndex;
+    }
+    final List<AppSource> templates = _sourceTemplates;
+    if (overrideSource != null) {
+      final int sourceIndex = templates.indexWhere(
+        (source) => source.sourceIdentifier == overrideSource,
+      );
+      if (sourceIndex < 0) {
+        throw UnsupportedURLError()..url = url;
+      }
+      _sourceMatchIndexCache[matchCacheKey] = sourceIndex;
+      return sourceIndex;
+    }
+    for (int sourceIndex = 0; sourceIndex < templates.length; sourceIndex++) {
+      final AppSource source = templates[sourceIndex];
+      if (source.hosts.isEmpty) continue;
       try {
-        if (RegExp(
-          '^${s.allowSubDomains ? '([^\\.]+\\.)*' : '(www\\.)?'}(${getSourceRegex(s.hosts)})\$',
-        ).hasMatch(Uri.parse(url).host)) {
-          source = s;
-          break;
+        final String cacheKey =
+            '${source.allowSubDomains}:${source.hosts.join(',')}';
+        final RegExp regex = _sourceRegexCache[cacheKey] ??= RegExp(
+          '^${source.allowSubDomains ? '([^\\.]+\\.)*' : '(www\\.)?'}(${getSourceRegex(source.hosts)})\$',
+        );
+        if (regex.hasMatch(Uri.parse(url).host)) {
+          _sourceMatchIndexCache[matchCacheKey] = sourceIndex;
+          return sourceIndex;
         }
-      } catch (e) {
+      } catch (_) {
         // Ignore and try the next source.
       }
     }
-    if (source == null) {
-      for (var s in allSources.where(
-        (element) => element.hosts.isEmpty && !element.neverAutoSelect,
-      )) {
-        // Hostless sources are tried in order until one accepts the URL; a
-        // rejection is normal and must not be logged as an error.
-        try {
-          s.sourceSpecificStandardizeURL(url, forSelection: true);
-          source = s;
-          break;
-        } catch (e) {
-          // Ignore and try the next source.
-        }
+    for (int sourceIndex = 0; sourceIndex < templates.length; sourceIndex++) {
+      final AppSource source = templates[sourceIndex];
+      if (source.hosts.isNotEmpty || source.neverAutoSelect) continue;
+      try {
+        source.sourceSpecificStandardizeURL(url, forSelection: true);
+        _sourceMatchIndexCache[matchCacheKey] = sourceIndex;
+        return sourceIndex;
+      } catch (_) {
+        // Ignore and try the next source.
       }
     }
-    if (source == null) {
-      throw UnsupportedURLError()..url = url;
-    }
-    return source;
+    throw UnsupportedURLError()..url = url;
   }
 
   bool ifRequiredAppSpecificSettingsExist(AppSource source) {
