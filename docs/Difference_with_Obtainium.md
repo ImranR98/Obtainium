@@ -4,8 +4,8 @@
 
 - [UI comparisons](#ui-comparisons)
   - [Your apps list – cards, grouping, and swipe gestures](#your-apps-list--cards-grouping-and-swipe-gestures)
-  - [Filters – type and watch the list breathe](#filters--type-and-watch-the-list-breathe)
   - [Themes and view options – on the Apps tab, where you use them](#themes-and-view-options--on-the-apps-tab-where-you-use-them)
+  - [Filters – type and watch the list breathe](#filters--type-and-watch-the-list-breathe)
   - [App detail – verdict first, beauty that scales](#app-detail--verdict-first-beauty-that-scales)
   - [Adding apps – one screen, three paths](#adding-apps--one-screen-three-paths)
   - [Adding apps – paste a link](#adding-apps--paste-a-link)
@@ -20,18 +20,26 @@
 - [On-Demand Only](#on-demand-only)
 - [More features worth knowing](#more-features-worth-knowing)
 
-## UI comparisons
+## UI and feature comparisons
 
-**Material 3 Expressive everywhere** – Full M3 Expressive treatment across every screen: cards, motion, sliders, and controls that feel like one coherent product across your app list, app details, adding apps, and settings.
+**Material 3 Expressive everywhere** – Full M3 Expressive treatment across every screen: cards, motion, sliders, and controls that feel like one coherent product across your app list, app details, adding apps, and settings. ObtainX adopted this in March 2026, well ahead of Obtainium's own Material 3 Expressive redesign in July 2026.
 
-### Your apps list – cards, grouping, and swipe gestures
+### Home page and apps list
 
-The main list is where you live. ObtainX rebuilt it around **clarity and speed** with a full **Material 3 Expressive** treatment: apps grouped into cards by category, smarter grouping options (by source, non-installed apps separated out), and a search bar that opens inline and filters the list live as you type. Every row supports **configurable swipe actions** – update, install, pin, edit, delete, open, and more – so common tasks are always a swipe away. The dynamic action bar shows only what's relevant at any point.
+| Feature | Obtainium | ObtainX |
+|---|---|---|
+| Navigation | - You have to return to homepage to go anywhere else<br>- Groups can be collapsed individually<br>- Expanded/collapsed state not remembered at app start | Pinned navigation bar - switch to any tab from any tab<br>- Groups can be collapsed individually or collase-all<br>- Every expanded/collapsed state is always remembered |
+| In-list live search | Yes, but search bar scrolls away with apps list | Yes, and search button stays pinned at the top |
+| Configurable per-row swipes | Yes, but 2 fixed actions | Yes, and 8 actions to choose from |
+| Ease of Update | - Button at center of app row, can misalign per row.<br>- Update-all button at the top of apps list<br>- Updates scattered across individual groups | - Button at right end, in perfect alignment<br>- Update-all button at the bottom, within easy thumb reach<br>- Unified Updates group at the top |
+| Source store badge on each row | ✗ | ✓ |
+| App-type badge on each row | ✗ | ✓ |
+|Categories on a row | Thin color strips, side-by-side. With several categories assigned, you can't tell them apart. | - Vertical stack of color bars, each category distinct and fully visible.<br>- Optionally, switch to labeled chips to see category names 
 
 <table>
 <tr>
 <td width="50%" align="center" valign="top">
-<img src="https://github.com/user-attachments/assets/a3155b9e-3c7c-4b63-86cb-fc5cff5b4a73" alt="Obtainium apps list" width="300" /><br /><strong>Obtainium</strong>
+<img src="../assets/screenshots/Compare_Apps_List_1.webp" alt="Obtainium apps list" width="300" /><br /><strong>Obtainium</strong>
 </td>
 <td width="50%" align="center" valign="top">
 <img src="../fastlane/metadata/android/en-US/images/phoneScreenshots/01_apps.jpg" alt="ObtainX apps list" width="300" /><br /><strong>ObtainX</strong>
@@ -39,39 +47,29 @@ The main list is where you live. ObtainX rebuilt it around **clarity and speed**
 </tr>
 </table>
 
-- Card UI per category; stronger grouping options (by source, non-installed split out).
-- Collapsible search in the top bar — expands to a full bar with live list filtering.
-- Configurable per-row swipes: edit, update, delete, pin, and more.
-- Each app row shows the source store badge
-- Dynamic action bar - controls appear only when they make sense. 
+---
 
-### Filters – type and watch the list breathe
+### View options
 
-**Live search and filters** mean zero guesswork. The list reshapes as you type, and the filter sheet keeps the rest of the UI visible so you never lose your bearings. Fast, readable, and you always see your apps and the filters at the same time.
+Obtainium keeps sorting/grouping options in Settings tab. You have to keep switching between Apps page and settings page to finalize how you want it. 
+ObtainX puts all sorting, grouping and view options in a sheet on the Apps tab itself — applied live while you watch the list.
 
-<table>
-<tr>
-<td width="50%" align="center" valign="top">
-<img src="https://github.com/user-attachments/assets/7447bb28-9b5b-4bc6-b55e-5000fd82777f" alt="Obtainium filters" width="300" /><br /><strong>Obtainium</strong>
-</td>
-<td width="50%" align="center" valign="top">
-<img src="../fastlane/metadata/android/en-US/images/phoneScreenshots/03_filters.jpg" alt="ObtainX filters" width="300" /><br /><strong>ObtainX</strong>
-</td>
-</tr>
-</table>
-
-- List updates live as you type — no need to confirm or submit.
-- Filter sheet slides up over the app list, keeping context visible behind it.
-- Save the filter as folder that dynamically updates. 
-
-### Themes and view options – on the Apps tab, where you use them
-
-View options live on the Apps tab itself, so you can switch grouping, sorting, or pinning while you're still looking at your apps and see the change happen instantly. Obtainium keeps these under Settings tab, so you have to keep tapping back-n-forth; ObtainX surfaces them closer to where you'd reach for them.
+| Feature | Obtainium | ObtainX |
+|---|---|---|
+| Where sort / group / view options live | Settings tab | Same apps tab |
+| Group by category | Yes | Yes |
+| Group by source | ✓ (added Jul 2026) | ✓ (added Mar 2026) |
+| Group by app type (user / system / privileged) | ✗ | ✓ |
+| Group updates separately | ✗ | ✓ |
+| Group non-installed apps separately | ✗ | ✓ |
+| Group track-only apps separately | ✗ | ✓ |
+| Show app-type / tracked-store / categories badges | ✗ | ✓ |
+| Per-folder view settings | ✗ (no folders) | ✓ each folder remembers its own sort/group |
 
 <table>
 <tr>
 <td width="50%" align="center" valign="top">
-<img src="https://github.com/user-attachments/assets/2b2e0fea-d7fe-4baf-a6b4-a0d060a8d9a9" alt="Obtainium view options" width="300" /><br /><strong>Obtainium</strong>
+<img src="../assets/screenshots/Compare_View_Options_1.webp" alt="Obtainium view options" width="300" /><br /><strong>Obtainium</strong>
 </td>
 <td width="50%" align="center" valign="top">
 <img src="../fastlane/metadata/android/en-US/images/phoneScreenshots/02_view_opts.jpg" alt="ObtainX view options" width="300" /><br /><strong>ObtainX</strong>
@@ -79,42 +77,89 @@ View options live on the Apps tab itself, so you can switch grouping, sorting, o
 </tr>
 </table>
 
-- Theme and layout choices are on the Apps tab — tweak and see the result immediately.
-- Extra customization options like "Group by App Type", Show badges for app type and tracked store, Group updates separately etc.
+---
 
-### App detail – verdict first, beauty that scales
+### App filters
 
-The detail screen is a **showpiece**: a smooth icon animation during transition, page colors drawn from the app's own icon, and information laid out in clear sections so it is easy to parse. The header states the **version verdict** prominently — including nuanced states beyond a simple "update available" or "up to date." Timestamps are clean and readable. Store shortcut buttons show where else the app is **confirmed to be available** — ObtainX verifies each store (including a live Play Store check) rather than showing speculative links. Results are cached so the page is instant on repeat views, and a pull-to-refresh on the main list quietly checks any app that hasn't been scanned yet. Only categories you've assigned appear, keeping the page uncluttered. A well-balanced bottom bar keeps all actions within thumb reach. **Skip version** lets you pass on a release you don't want without marking it as installed. **Edit in place** so you can change app details without backing out of the page. You can also change each app's icon.
+ObtainX's filters provide tri-state options (include/exclude/not part of filter) plus Any/All matching, and it reshapes the apps list in real time. Obtainium uses a submit-to-apply dialog with plain on/off toggles and include-only categories.
+
+| Feature | Obtainium | ObtainX |
+|---|---|---|
+| Filter surface | Center dialog that obscures the list | Bottom sheet over the list, context stays visible |
+| List updates live as you change filters | ✗ set all filters, tap continue, dialog goes away, result is shown | ✓ list filters live, change any number of times |
+| Filtering options | ✗ plain on/off toggles | ✓ tri-state: neutral / include / exclude |
+| Category matching | ✗ Shows apps that have any of the selected categories | ✓ that + you can flip to show apps that have all of the selected categories |
+| Category exclusion | ✗ | ✓ |
+| Save filter as a folder | ✗ no folders | ✓ turns the active filter into a folder rule |
 
 <table>
 <tr>
 <td width="50%" align="center" valign="top">
-<img src="https://github.com/user-attachments/assets/9658c03c-2f3f-4405-a17b-de7a96536b24" alt="Obtainium app detail" width="300" /><br /><strong>Obtainium</strong>
+<img src="../assets/screenshots/Compare_filters_1.webp" alt="Obtainium filters" width="300" /><br /><strong>Obtainium</strong>
 </td>
 <td width="50%" align="center" valign="top">
-<img src="https://github.com/user-attachments/assets/bb253ce1-90af-41a2-a286-e630e4186c80" alt="ObtainX app detail" width="300" /><br /><strong>ObtainX</strong>
+<img src="../fastlane/metadata/android/en-US/images/phoneScreenshots/03_filters.jpg" alt="ObtainX filters" width="300" /><br /><strong>ObtainX</strong>
 </td>
 </tr>
 </table>
 
-- Smooth icon animation; page colors drawn from the app's icon.
-- Grouped info cards; clear version verdict right at the top.
-- More verdict states — not just "update" or "up to date."
-- **Skip version** for updates you don't want. 
-- Cleaner timestamps; verified links to other stores (APKMirror, F-Droid, APKPure, Play Store — only shown when confirmed present, cached for instant repeat views); only your assigned categories shown.
-- Edit the app directly from this page.
-- Options to change app icon.
-- See the update file size right in the update button, before or during the download (for supported stores). 
+---
+
+### App detail
+
+| Feature | Obtainium | ObtainX |
+|---|---|---|
+| Apps list → app detail | App page slides in from right side | app's row expands/morphs into the app page, app icon smoothly flying to top of app page |
+| Page colors drawn from the app's icon | ✗ | ✓ |
+| Grouped info cards | Yes (from Jul 2026) | Yes (from Mar 2026) |
+| Version verdict | Binary (update / up-to-date) | ✓ 6 states |
+| Verified other-store links | ✗ | ✓ Play Store / F-Droid / APKPure / APKMirror |
+| Signing certificate hash | ✓ | ✗ |
+| Categories shown | shows the full category selector | Shows only assigned categories, keeping the page clean|
+| App's information editing | Combined with tracking configuration, opens a separate page | ✓ inline edit / save |
+| Change app icon | ✗ | ✓ |
+| Update size shown in advance | Yes (from Jul 2026) | ✓ Yes (from May 2026) |
+| Skip version | ✗ | ✓ |
+| Update check configuration | Options mixed with app metadata editing, in a long list of options | Only update related configurations, neatly grouped into separate sections for easier access|
+
+<table>
+<tr>
+<td width="50%" align="center" valign="top">
+<img src="../assets/screenshots/Compare_App_Page_1.webp" alt="Obtainium app detail" width="300" /><br /><strong>Obtainium</strong>
+</td>
+<td width="50%" align="center" valign="top">
+<img src="../assets/screenshots/Compare_App_Page_2.webp" alt="ObtainX app detail" width="300" /><br /><strong>ObtainX</strong>
+</td>
+</tr>
+<tr>
+<td width="50%" align="center" valign="top">
+<img src="../assets/screenshots/Compare_Additional_Options_1.webp" alt="Obtainium app detail" width="300" /><br /><strong>Obtainium</strong>
+</td>
+<td width="50%" align="center" valign="top">
+<img src="../assets/screenshots/Compare_Additional_Options_2.webp" alt="ObtainX app detail" width="300" /><br /><strong>ObtainX</strong>
+</td>
+</tr>
+</table>
+
+---
 
 ### Adding apps – one screen, three paths
 
-You add apps in **one place** with three tabs along the top: **URL** (paste a link), **Search** (look across stores), or **From Device** (bulk-add apps from your phone). Every step uses the full height so lists and buttons are easy to see and tap.
+ObtainX unifies URL / Search / From-Device on one screen behind a segmented control, with From-Device being a full bulk-add; Obtainium's add screen is a single page with only URL + an optional search bar and no from-device path.
 
-- Three clear ways to add apps — all on one screen, no navigation needed.
+| Feature | Obtainium | ObtainX |
+|---|---|---|
+| Three add paths on one screen | ✗ single page: URL field + optional search bar | ✓ segmented control: URL / Search / From Device |
+| From-Device bulk-add from the add screen | ✗ no device path at all | ✓ embedded in the "From Device" segment |
 
 ### Adding apps – paste a link
 
-Instead of one long wall of options, settings are grouped into **separate boxes** with clear headings. For any field where RegEx filters can be used, a **built-in helper** walks you through building the filter — no prior knowledge required.
+ObtainX groups a source's additional options into labeled section cards and offers a built-in RegEx-assist helper for filter fields; Obtainium renders the same options as one flat form with no helper.
+
+| Feature | Obtainium | ObtainX |
+|---|---|---|
+| Additional options grouped into labeled cards | ✗ one flat form | ✓ sectioned cards with headers |
+| Built-in RegEx assist helper | ✗ | ✓ guided builder on filter fields |
 
 <table>
 <tr>
@@ -122,18 +167,21 @@ Instead of one long wall of options, settings are grouped into **separate boxes*
 <img src="https://github.com/user-attachments/assets/6fff2569-44f5-4bdb-902f-ce5e1121d21b" alt="Obtainium add app options" width="300" /><br /><strong>Obtainium</strong>
 </td>
 <td width="50%" align="center" valign="top">
-<img src="../assets/screenshots/add_app_url.jpg" alt="ObtainX add app URL and options" width="300" /><br /><strong>ObtainX</strong>
+<img src="../assets/screenshots/add_app_url.webp" alt="ObtainX add app URL and options" width="300" /><br /><strong>ObtainX</strong>
 </td>
 </tr>
 </table>
 
-- **Grouped options** — related settings stay together, so the screen scans quickly.
-- **Built-in filter helper** — build advanced filters without knowing the syntax.
-
 ### Adding apps – search across stores
 
-Everything happens on one page. All stores are visible from the start. Tap Search and results load right there — no separate popups or screens to step through. Each result shows a small store badge so you always know where a result came from. Want to try a different store? Just tap it above and search again. Results replace inline, no backing up needed.
-<img width="1008" height="2244" alt="Search" src="" />
+ObtainX searches 9 stores (3 more than Obtainium), shows them all as chips upfront, runs the search inline with a per-result store badge and caching, and lets you flip stores and re-search without leaving the page; Obtainium searches 6 stores through a two-dialog flow with no per-result badge.
+
+| Feature | Obtainium | ObtainX |
+|---|---|---|
+| Searchable stores | 6 — GitHub, GitLab, Codeberg, F-Droid, F-Droid repo, Vivo App Store | 9 — those 6 **plus** IzzyOnDroid, CoolApk, Tencent |
+| All stores visible upfront | ✗ sources picked in a modal after tapping Search | ✓ store chips shown before searching |
+| Switch store & re-search inline | ✗ re-run the picker + results modals | ✓ toggle chips, search re-runs in place (cached) |
+| Per-result store badge | ✗ source name dropped before results | ✓ store icon on each result |
 
 <table>
 <tr>
@@ -154,14 +202,16 @@ Everything happens on one page. All stores are visible from the start. Tap Searc
 </tr>
 </table>
 
-- More stores are searchable than Obtainium.
-- All stores visible upfront — pick any, search, and see results on the same page.
-- Store badge on each result so you know at a glance where it comes from.
-- Switch store and search again without navigating away.
-
 ### Settings – cards, hierarchy, expressive controls
 
-Settings gets the **same card-based layout** as the rest of the app: related options grouped together, visually distinct from neighboring sections. Easier to scan, easier to find the thing you're looking for. **Material 3 Expressive** sliders and controls throughout.
+Both apps now group settings into cards, but only ObtainX makes those sections collapsible and sorts the per-app options into categorized cards.
+
+| Feature | Obtainium | ObtainX |
+|---|---|---|
+| Card-based settings grouping | Yes (Jul 2026 redesign) | Yes (v2.0.0, Mar 2026) |
+| Collapsible sections (independent + collapse-all) | ✗ always expanded | ✓ collapse each or all, state persisted |
+| Per-app "Additional options" layout | One flat form (in a dialog) | ✓ categorized section cards |
+| M3 Expressive sliders / controls | Yes (Jul 2026) | Yes (v2.0.0, Mar 2026) |
 
 <table>
 <tr>
@@ -169,22 +219,28 @@ Settings gets the **same card-based layout** as the rest of the app: related opt
 <img src="https://github.com/user-attachments/assets/4ba8a63b-8aaf-4fc2-a447-14e119199148" alt="Obtainium settings" width="300" /><br /><strong>Obtainium</strong>
 </td>
 <td width="50%" align="center" valign="top">
-<img src="../assets/screenshots/Compare_Settings.jpg" alt="ObtainX settings" width="300" /><br /><strong>ObtainX</strong>
+<img src="../assets/screenshots/Compare_Settings.webp" alt="ObtainX settings" width="300" /><br /><strong>ObtainX</strong>
 </td>
 </tr>
 </table>
 
-- Settings organized into logical cards — much easier to scan and navigate.
-- Material 3 Expressive sliders and controls throughout.
-
 ### Category management — color, rename, and bulk-edit without the wipe
 
-Both apps let you tag apps with categories, but Obtainium treats them as bare labels: colors cycle through a handful of fixed swatches, there's no real rename, and assigning a category to several apps at once **replaces** whatever they already had. ObtainX turns categories into a proper organization tool.
+Both now support exact color pick and rename-with-propagation; ObtainX adds contrast-aware labels, a merge-based bulk editor, a tri-state filter and on-row chips.
+
+| Feature | Obtainium | ObtainX |
+|---|---|---|
+| Exact color pick (hex / hue slider) | Yes (added Jun 2026) | Yes (v2.7.0, May 2026) |
+| Rename with propagation to all apps | Yes (added Jul 2026) | Yes (v2.7.0, May 2026) |
+| Automatic contrast label text | ✗ | ✓ black/white by luminance |
+| Bulk category edit | Replaces the whole set | ✓ merges — tri-state all/some/none, add or remove without wiping others |
+| Category filter | Include-only, matched "any" | ✓ include / exclude, Any or All |
+| On-row category display | Gradient color strip | ✓ colored chips with "+N more" |
 
 <table>
 <tr>
 <td width="66%" align="center" valign="top">
-<img src="../assets/screenshots/Compare_Category_Create_1.jpg" alt="Obtainium create-category screen" width="260" /> <img src="../assets/screenshots/Compare_Category_Bulk_1.jpg" alt="Obtainium bulk category assignment" width="260" /><br /><strong>Obtainium — separate, limited flows</strong>
+<img src="../assets/screenshots/Compare_Category_Create_1.webp" alt="Obtainium create-category screen" width="260" /> <img src="../assets/screenshots/Compare_Category_Bulk_1.webp" alt="Obtainium bulk category assignment" width="260" /><br /><strong>Obtainium — separate, limited flows</strong>
 </td>
 <td width="33%" align="center" valign="top">
 <img src="../fastlane/metadata/android/en-US/images/phoneScreenshots/12_BulkEdit.jpg" alt="ObtainX bulk category editor — create, color, and assign in one place" width="260" /><br /><strong>ObtainX — Rename, Choose Color, batch assign or remove</strong>
@@ -192,15 +248,10 @@ Both apps let you tag apps with categories, but Obtainium treats them as bare la
 </tr>
 </table>
 
-- **Any color, not a fixed cycle** — pick an exact color with a hex field or hue slider when you create or edit a category. Label text automatically flips between black and white by brightness, so your colors stay readable.
-- **Bulk-edit merges, it never wipes** — select several apps and each category shows whether **all, some, or none** of them already have it. Add or remove just the ones you mean; every other category each app already had is left untouched. (Obtainium's bulk assign overwrites the whole set.)
-- **Rename once, applied everywhere** — rename a category and every app that had it is updated automatically. Delete one and it's cleanly removed from all apps — no orphaned tags.
-- **Filter and group by category** — Obtainium's category filter only lets you pick categories to *include*, matched as "any." ObtainX makes it a real query: tap a category once to **include** it, again to **exclude** it, and flip the whole match between **Any** (in at least one selected category) and **All** (in every one). You can also group the entire list by category.
-
 <table>
 <tr>
 <td width="50%" align="center" valign="top">
-<img src="../assets/screenshots/Compare_Category_Filter_1.jpg" alt="Obtainium category filter — include only, matched as any" width="300" /><br /><strong>Obtainium — include only, "any"</strong>
+<img src="../assets/screenshots/Compare_Category_Filter_1.webp" alt="Obtainium category filter — include only, matched as any" width="300" /><br /><strong>Obtainium — include only, "any"</strong>
 </td>
 <td width="50%" align="center" valign="top">
 <img src="../fastlane/metadata/android/en-US/images/phoneScreenshots/03_filters.jpg" alt="ObtainX category filter — include or exclude, any or all" width="300" /><br /><strong>ObtainX — include / exclude, any / all</strong>
@@ -211,16 +262,24 @@ Both apps let you tag apps with categories, but Obtainium treats them as bare la
 And on the list itself — something Obtainium doesn't offer at all — every app row can show its categories as colored chips, with a "+N more" chip when an app has several:
 
 <p align="center">
-<img src="../assets/screenshots/Category_Badges.jpg" alt="ObtainX category chips shown on app rows" width="300" />
+<img src="../assets/screenshots/Category_Badges.webp" alt="ObtainX category chips shown on app rows" width="300" />
 </p>
 
 ### Built for big screens – tablets, foldables, and landscape
 
-This is the difference you feel the moment you rotate your phone or open a foldable. Obtainium runs the **same single phone column** on every device — on a tablet you just get one stretched-out page with a lot of empty space. ObtainX is **adaptive**. On a large screen it reshapes into a proper big-screen layout. Unfolded foldables and large phones benefit too, not only true tablets.
+ObtainX pioneered the large-screen layout (v2.9.0, Jun 2026); Obtainium added a two-pane apps list shortly after (v1.6.0, Jul 2026) — but that one screen is the extent of its tablet support.
 
-The result is an app that genuinely uses the screen you paid for, rather than a phone app blown up to fit.
+| Feature | Obtainium | ObtainX |
+|---|---|---|
+| Two-pane apps list + detail | Yes — v1.6.0 (Jul 2026), width ≥ 840 | Yes — v2.9.0 (Jun 2026) |
+| Persistent side navigation rail | ✗ (no nav rail anywhere) | ✓ persistent left rail across screens |
+| Add-app adapts to big screen | ✗ centered phone column | ✓ |
+| Bulk-import adapts to big screen | ✗ | ✓ |
+| Settings adapts to big screen | ✗ one long scroll even on tablets | ✓ master-detail (categories left, options right) |
+| Multi-select / batch actions on tablet | Yes | Yes |
+| Landscape / foldable / large-phone support | Two-pane at width ≥ 840 only | ✓ full adaptive layout |
 
-- **The apps list — one stretched column vs. two panes with details**
+- **The apps list — two panes with details**
 
     - Your app list sits **side-by-side with the app's detail page** in a true two-pane view — tap a row and it opens *in place* on the right, no full-screen push, no losing your place in the list. Editing happens in the same pane.
     - **side navigation rail** replaces the bottom bar, reclaiming vertical space.
@@ -228,7 +287,7 @@ The result is an app that genuinely uses the screen you paid for, rather than a 
     <table>
     <tr>
     <td width="50%" align="center" valign="top">
-    <img src="../assets/screenshots/Compare_Tablet_Apps.jpg" alt="Obtainium apps list on a tablet" width="400" /><br /><strong>Obtainium</strong>
+    <img src="../assets/screenshots/Compare_Tablet_Apps.webp" alt="Obtainium apps list on a tablet" width="400" /><br /><strong>Obtainium</strong>
     </td>
     <td width="50%" align="center" valign="top">
     <img src="../fastlane/metadata/android/en-US/images/phoneScreenshots/tablet_01_apps.jpg" alt="ObtainX two-pane app list and detail on a tablet" width="400" /><br /><strong>ObtainX</strong>
@@ -241,10 +300,10 @@ The result is an app that genuinely uses the screen you paid for, rather than a 
     <table>
     <tr>
     <td width="50%" align="center" valign="top">
-    <img src="../assets/screenshots/Compare_Tablet_MultiSelect_1.jpg" alt="Obtainium multi-select on a tablet" width="400" /><br /><strong>Obtainium</strong>
+    <img src="../assets/screenshots/Compare_Tablet_MultiSelect_1.webp" alt="Obtainium multi-select on a tablet" width="400" /><br /><strong>Obtainium</strong>
     </td>
     <td width="50%" align="center" valign="top">
-    <img src="../assets/screenshots/Compare_Tablet_MultiSelect_2.jpg" alt="ObtainX multi-select on a tablet" width="400" /><br /><strong>ObtainX</strong>
+    <img src="../assets/screenshots/Compare_Tablet_MultiSelect_2.webp" alt="ObtainX multi-select on a tablet" width="400" /><br /><strong>ObtainX</strong>
     </td>
     </tr>
     </table>
@@ -255,7 +314,7 @@ The result is an app that genuinely uses the screen you paid for, rather than a 
     <table>
     <tr>
     <td width="50%" align="center" valign="top">
-    <img src="../assets/screenshots/Compare_Tablet_Settings_1.jpg" alt="Obtainium settings on a tablet" width="400" /><br /><strong>Obtainium</strong>
+    <img src="../assets/screenshots/Compare_Tablet_Settings_1.webp" alt="Obtainium settings on a tablet" width="400" /><br /><strong>Obtainium</strong>
     </td>
     <td width="50%" align="center" valign="top">
     <img src="../fastlane/metadata/android/en-US/images/phoneScreenshots/tablet_04_settings.jpg" alt="ObtainX settings on a tablet — categories on the left, detail on the right" width="400" /><br /><strong>ObtainX</strong>
@@ -272,7 +331,7 @@ ObtainX surfaces **finer-grained states** rather than forcing every situation in
 <table>
 <tr>
 <td width="50%" align="center" valign="top">
-<img src="../assets/screenshots/App_Up_to_Date.jpg" alt="ObtainX status: up to date" width="300" /><br />
+<img src="../assets/screenshots/App_Up_to_Date.webp" alt="ObtainX status: up to date" width="300" /><br />
 <strong>Up to date</strong><br />
 What's on your device matches what the source is offering — you're current.
 </td>
@@ -284,24 +343,24 @@ The source has a newer version than what's installed — time to update.
 </tr>
 <tr>
 <td width="50%" align="center" valign="top">
-<img src="../assets/screenshots/App_Newer.jpg" alt="ObtainX status: newer on device" width="300" /><br />
+<img src="../assets/screenshots/App_Newer.webp" alt="ObtainX status: newer on device" width="300" /><br />
 <strong>Device has a higher version</strong><br />
 Your installed version is ahead of what the source advertises. Common with betas, sideloads, or sources that lag behind the actual release — shown correctly rather than flagged as a false update.
 </td>
 <td width="50%" align="center" valign="top">
-<img src="../assets/screenshots/App_Same_Build.jpg" alt="ObtainX status: same version different label" width="300" /><br />
+<img src="../assets/screenshots/App_Same_Build.webp" alt="ObtainX status: same version different label" width="300" /><br />
 <strong>Same version, shown differently</strong><br />
 The version is the same, but the text from the source and from Android don't match exactly. ObtainX recognizes this and doesn't send you chasing an "update" that isn't really one.
 </td>
 </tr>
 <tr>
 <td width="50%" align="center" valign="top">
-<img src="../assets/screenshots/App_Uncertain.jpg" alt="ObtainX status: unclear comparison" width="300" /><br />
+<img src="../assets/screenshots/App_Uncertain.webp" alt="ObtainX status: unclear comparison" width="300" /><br />
 <strong>Genuinely unclear</strong><br />
 Sometimes two versions can't be fairly compared — for example when a developer labels releases with commit hashes instead of version numbers. Rather than guessing, ObtainX says so and lets you check for yourself or skip it.
 </td>
 <td width="50%" align="center" valign="top">
-<img src="../assets/screenshots/App_Not_Installed.jpg" alt="ObtainX status: unclear comparison" width="300" /><br />
+<img src="../assets/screenshots/App_Not_Installed.webp" alt="ObtainX status: unclear comparison" width="300" /><br />
 <strong>App not installed</strong><br />
 This app is currently not installed on you device. Tip: if ObtainX somehow fetched a wrong package id when you added the app, that will cause it say "App not installed". In that case, you can click edit and fix the package id. 
 </td>
@@ -318,7 +377,7 @@ Obtainium installs APKs itself, through the standard Android package installer. 
 
 **Reason 1: You care about what you're installing.**
 
-Third-party installers like [InstallerX](https://github.com/MuntashirAkon/InstallerX) show you things the stock installer doesn't: the APK's version number, its minimum and target API levels, whether those levels changed from your currently installed version, and a range of install options the standard path simply doesn't expose. [App Manager](https://github.com/MuntashirAkon/AppManager) goes further and surfaces any trackers bundled in the APK before you commit to installing it. If you want to know what you're actually installing rather than just tapping through a system dialog, these tools give you that visibility — whcich you can't use via Obtainium.
+Third-party installers like [InstallerX](https://github.com/MuntashirAkon/InstallerX) show you things the stock installer doesn't: the APK's version number, its minimum and target API levels, whether those levels changed from your currently installed version, and a range of install options the standard path simply doesn't expose. [App Manager](https://github.com/MuntashirAkon/AppManager) goes further and surfaces any trackers bundled in the APK before you commit to installing it. If you want to know what you're actually installing rather than just tapping through a system dialog, these tools give you that visibility — which Obtainium couldn't offer when ObtainX built this.
 
 **Reason 2: Advanced Protection blocks sideloading.**
 
@@ -334,7 +393,7 @@ InstallerX and similar tools can be granted elevated install permissions via roo
 
 **ObtainX solves both.** You pick your installer. ObtainX fetches the APK and passes it to whichever installer you've configured. You get the visibility and control of a proper installer tool, and Advanced Protection stays on.
 
-A pull request with this feature was submitted to Obtainium — it hasn't been merged yet. While waiting, there were other rough edges worth fixing. Then a few more. That compounding list of improvements is what became ObtainX.
+A pull request with this feature was submitted to Obtainium — it wasn't merged. While waiting, there were other rough edges worth fixing. Then a few more. That compounding list of improvements is what became ObtainX. (Obtainium has since added its own generic installer-handoff option in v1.6.0, July 2026 — months after ObtainX shipped installer choice in v2.0.0, March 2026.)
 
 ---
 
@@ -353,21 +412,21 @@ ObtainX reads every app installed on your device, searches each of your chosen s
 <table>
 <tr>
 <td width="50%" align="center" valign="top">
-<img src="../assets/screenshots/Bulk_Add_1.jpg" alt="Select apps from device" width="300" /><br />
+<img src="../assets/screenshots/Bulk_Add_1.webp" alt="Select apps from device" width="300" /><br />
 <strong>Select</strong><br />Filter by app type, pick your stores, toggle Skip tracked / Skip privileged, search, select all or hand-pick.
 </td>
 <td width="50%" align="center" valign="top">
-<img src="../assets/screenshots/Bulk_Add_2.jpg" alt="Scanning stores in parallel" width="300" /><br />
+<img src="../assets/screenshots/Bulk_Add_2.webp" alt="Scanning stores in parallel" width="300" /><br />
 <strong>Scan</strong><br />Stores are searched, with live per-store progress. Results are cached — repeat scans skip what's already known.
 </td>
 </tr>
 <tr>
 <td width="50%" align="center" valign="top">
-<img src="../assets/screenshots/Bulk_Add_3.jpg" alt="Results with store badges" width="300" /><br />
+<img src="../assets/screenshots/Bulk_Add_3.webp" alt="Results with store badges" width="300" /><br />
 <strong>Review</strong><br />Found / Not found summary at a glance. Each result shows which store(s) it was found on. Uncheck anything you don't want.
 </td>
 <td width="50%" align="center" valign="top">
-<img src="../assets/screenshots/Bulk_Add_4.jpg" alt="Adding apps in progress" width="300" /><br />
+<img src="../assets/screenshots/Bulk_Add_4.webp" alt="Adding apps in progress" width="300" /><br />
 <strong>Add</strong><br />Tap "Add N found apps." Live progress as they're added. Cancel any time.
 </td>
 </tr>
