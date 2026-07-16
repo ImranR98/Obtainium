@@ -126,8 +126,22 @@ android.applicationVariants.configureEach {
 }
 
 
+// revanced-library pulls in a proto dependency that conflicts with one already on
+// the classpath; revanced-manager works around it the same way.
+configurations.all {
+    exclude(group = "com.google.api.grpc", module = "proto-google-common-protos")
+}
+
 dependencies {
     coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.5")
+
+    // ReVanced patching support. Deliberately scoped to the "normal" flavor only -
+    // F-Droid's inclusion policy prohibits apps that download and execute compiled
+    // code fetched at runtime (exactly what loading a patch bundle jar does), so
+    // the fdroid flavor never links these and RevancedIntegration is a no-op there.
+    "normalImplementation"("app.revanced:patcher-android:22.0.2-dev.1")
+    "normalImplementation"("app.revanced:library-android:4.0.0")
+    "normalImplementation"("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.9.0")
 }
 
 flutter {

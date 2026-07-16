@@ -485,6 +485,14 @@ flutter build apk --flavor normal   # or use ./build.sh
   switch to `ref: main`/`ref: master`.
 - `sign.sh` reads the keystore password from an env var and locates `apksigner` robustly;
   `build.sh` / `docker/Dockerfile` handle reproducible/CI builds.
+- **ReVanced patching (`normal` flavor only):** `app.revanced:patcher-android` /
+  `app.revanced:library-android` are published to GitHub Packages, which requires
+  authentication even for public read access. Set `githubPackagesUsername` /
+  `githubPackagesPassword` (a GitHub PAT with `read:packages`) in
+  `~/.gradle/gradle.properties`, or the `ORG_GRADLE_PROJECT_githubPackagesUsername` /
+  `ORG_GRADLE_PROJECT_githubPackagesPassword` env vars, to build the `normal` flavor.
+  The `fdroid` flavor does not need this (see `RevancedIntegration` in
+  `android/app/src/{normal,fdroid}/kotlin/dev/imranr/obtainium/revanced/`).
 - **Note:** The project currently lacks automated tests. Run `flutter analyze` and
   `dart format --set-exit-if-changed .` locally before opening a PR.
 

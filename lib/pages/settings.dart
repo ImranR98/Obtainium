@@ -13,6 +13,7 @@ import 'package:obtainium/components/settings_widgets.dart';
 import 'package:obtainium/custom_errors.dart';
 import 'package:obtainium/main.dart';
 import 'package:obtainium/pages/import_export.dart';
+import 'package:obtainium/pages/keystore_settings.dart';
 import 'package:obtainium/providers/logs_provider.dart';
 import 'package:obtainium/providers/apps_provider.dart';
 import 'package:obtainium/providers/external_install_bridge.dart';
@@ -528,6 +529,11 @@ class _SettingsPageState extends State<SettingsPage> {
                           title: tr('obtainiumExport'),
                           children: const [ExportSection()],
                         ),
+                        if (!isFdroidBuild)
+                          SettingsGroup(
+                            title: tr('revancedPatching'),
+                            children: const [KeystoreSection()],
+                          ),
                         _buildUpdatesSection(context, showBgSection, sdk),
                         if (sourceSpecificForm != null)
                           SettingsGroup(

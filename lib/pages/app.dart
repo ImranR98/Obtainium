@@ -10,9 +10,12 @@ import 'package:obtainium/components/category_editor.dart';
 import 'package:obtainium/components/generated_form_renderer.dart';
 import 'package:obtainium/components/ui_widgets.dart';
 import 'package:obtainium/components/app_detail_widgets.dart';
+import 'package:obtainium/components/patch_config_form.dart';
 import 'package:obtainium/providers/apps_provider.dart';
 import 'package:obtainium/providers/notifications_provider.dart';
 import 'package:obtainium/providers/logs_provider.dart';
+import 'package:obtainium/providers/revanced/patch_bundle_provider.dart';
+import 'package:obtainium/providers/revanced/patch_config.dart';
 import 'package:obtainium/providers/settings_provider.dart';
 import 'package:obtainium/providers/source_provider.dart';
 import 'package:obtainium/custom_errors.dart';
@@ -48,6 +51,7 @@ class _AppPageState extends State<AppPage> {
   bool _initialized = false;
 
   late final SourceProvider _sourceProvider;
+  final PatchBundleProvider _patchBundleProvider = PatchBundleProvider();
   WebViewController? webViewController;
   bool webViewLoaded = false;
   bool _webViewReady = false;
@@ -301,6 +305,9 @@ class _AppPageState extends State<AppPage> {
     }).toList();
 
     Map<String, dynamic> values = {};
+    PatchConfig patchConfig = app != null
+        ? PatchConfig.fromApp(app.app)
+        : const PatchConfig();
     return Navigator.of(context).push<Map<String, dynamic>>(
       MaterialPageRoute(
         builder: (ctx) => PopScope<Map<String, dynamic>>(
@@ -308,7 +315,7 @@ class _AppPageState extends State<AppPage> {
           canPop: false,
           onPopInvokedWithResult: (didPop, result) {
             if (didPop) return;
-            Navigator.of(ctx).pop(values);
+            Navigator.of(ctx).pop({...values, 'patchConfig': patchConfig.toJson()});
           },
           child: Scaffold(
             backgroundColor: Theme.of(context).colorScheme.surface,
@@ -329,12 +336,33 @@ class _AppPageState extends State<AppPage> {
                       16,
                       MediaQuery.of(context).padding.bottom,
                     ),
-                    child: GeneratedForm(
-                      tileMode: true,
-                      items: items,
-                      onValueChanges: (v, valid, isBuilding) {
-                        values = v;
-                      },
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        GeneratedForm(
+                          tileMode: true,
+                          items: items,
+                          onValueChanges: (v, valid, isBuilding) {
+                            values = v;
+                          },
+                        ),
+                        if (!isFdroidBuild) ...[
+                          const SizedBox(height: 16),
+                          Text(
+                            tr('revancedPatching'),
+                            style: TextStyle(
+                              color: Theme.of(context).colorScheme.primary,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          PatchConfigForm(
+                            initialConfig: patchConfig,
+                            bundleProvider: _patchBundleProvider,
+                            onChanged: (c) => patchConfig = c,
+                          ),
+                        ],
+                      ],
                     ),
                   ),
                 ),

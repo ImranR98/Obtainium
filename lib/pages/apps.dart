@@ -678,10 +678,10 @@ class AppsPageState extends State<AppsPage> {
     );
   }
 
-  void shareExport(Set<App> selectedApps) {
+  Future<void> shareExport(Set<App> selectedApps) async {
     const encoder = JsonEncoder.withIndent('    ');
     final exportJSON = encoder.convert(
-      appsProvider.generateExportJSON(
+      await appsProvider.generateExportJSON(
         appIds: selectedApps.map((e) => e.id).toList(),
         overrideExportSettings: 0,
       ),

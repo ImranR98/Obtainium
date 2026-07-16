@@ -5,6 +5,7 @@ import android.net.Uri
 import android.os.Bundle
 import android.widget.Toast
 import androidx.core.content.FileProvider
+import dev.imranr.obtainium.revanced.RevancedIntegration
 import io.flutter.embedding.android.FlutterActivity
 import io.flutter.embedding.engine.FlutterEngine
 import io.flutter.plugin.common.MethodChannel
@@ -63,6 +64,7 @@ class MainActivity : FlutterActivity() {
                 else -> result.notImplemented()
             }
         }
+        RevancedIntegration.register(flutterEngine, this)
         pendingShareIntent?.let {
             super.onNewIntent(it)
             pendingShareIntent = null

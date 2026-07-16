@@ -7,6 +7,7 @@ import 'package:easy_localization/easy_localization.dart';
 import 'package:obtainium/custom_errors.dart';
 
 import 'package:obtainium/providers/apps_provider.dart';
+import 'package:obtainium/providers/revanced/keystore_provider.dart';
 import 'package:obtainium/providers/settings_provider.dart';
 import 'package:obtainium/providers/source_provider.dart';
 import 'package:shared_storage/shared_storage.dart' as saf;
@@ -14,10 +15,18 @@ import 'package:shared_storage/shared_storage.dart' as saf;
 /// Import/export of app configurations for [AppsProvider].
 extension AppsProviderImportExport on AppsProvider {
   /// Builds an exportable JSON map containing app data and optionally settings.
-  Map<String, dynamic> generateExportJSON({
+  ///
+  /// Per-app patch configuration rides along automatically since it lives in
+  /// [App.additionalSettings], which is already part of [App.toJson]. The
+  /// keystore used to sign patched APKs is a separate, larger, binary secret,
+  /// so it's only bundled when [keystoreProvider] is supplied AND the
+  /// resolved settings level is exactly "all" (2) - not "none" or "exclude
+  /// secrets" - matching how "-creds" settings are already gated.
+  Future<Map<String, dynamic>> generateExportJSON({
     List<String>? appIds,
     int? overrideExportSettings,
-  }) {
+    KeystoreProvider? keystoreProvider,
+  }) async {
     final appList = apps.values
         .where((e) => appIds == null || appIds.contains(e.app.id))
         .map((e) => e.app.toJson())
@@ -39,12 +48,20 @@ extension AppsProviderImportExport on AppsProvider {
             [],
       );
     }
+    String? keystoreBase64;
+    if (shouldExportSettings == 2 && keystoreProvider != null) {
+      final bytes = await keystoreProvider.exportToBytes();
+      if (bytes != null) {
+        keystoreBase64 = base64Encode(bytes);
+      }
+    }
     final schema = ExportSchema(
       schemaVersion: currentExportSchemaVersion,
       exportedAt: DateTime.now().toIso8601String(),
       appVersion: kPackageVersion,
       apps: appList,
       settings: settingsMap,
+      keystoreBase64: keystoreBase64,
     );
     return schema.toJson();
   }
@@ -54,6 +71,7 @@ extension AppsProviderImportExport on AppsProvider {
     bool pickOnly = false,
     isAuto = false,
     SettingsProvider? sp,
+    KeystoreProvider? keystoreProvider,
   }) async {
     final SettingsProvider settingsProvider = sp ?? this.settingsProvider;
     var exportDir = await settingsProvider.getExportDir();
@@ -84,7 +102,9 @@ extension AppsProviderImportExport on AppsProvider {
     String? returnPath;
     if (!pickOnly) {
       const encoder = JsonEncoder.withIndent('    ');
-      final Map<String, dynamic> finalExport = generateExportJSON();
+      final Map<String, dynamic> finalExport = await generateExportJSON(
+        keystoreProvider: keystoreProvider,
+      );
       final result = await saf.createFile(
         exportDir,
         displayName:
@@ -103,7 +123,16 @@ extension AppsProviderImportExport on AppsProvider {
   }
 
   /// Imports apps (and optionally settings) from a JSON string, returning the parsed apps and a settings-present flag.
-  Future<MapEntry<List<App>, bool>> import(String appsJSON) async {
+  ///
+  /// If the export contains a bundled keystore, [confirmKeystoreImport] is
+  /// called to ask the user before it's imported (replacing any existing
+  /// keystore) - it must not happen silently. If [confirmKeystoreImport] is
+  /// omitted, any bundled keystore is ignored.
+  Future<MapEntry<List<App>, bool>> import(
+    String appsJSON, {
+    KeystoreProvider? keystoreProvider,
+    Future<bool> Function()? confirmKeystoreImport,
+  }) async {
     dynamic decodedJSON;
     try {
       decodedJSON = jsonDecode(appsJSON);
@@ -149,6 +178,17 @@ extension AppsProviderImportExport on AppsProvider {
       hasSettings = true;
       _applyImportedSettings(decodedJSON['settings'] as Map<String, Object?>);
     }
+    if (schema?.keystoreBase64 != null &&
+        keystoreProvider != null &&
+        confirmKeystoreImport != null &&
+        await confirmKeystoreImport()) {
+      final bytes = base64Decode(schema!.keystoreBase64!);
+      await keystoreProvider.importFromBytes(
+        Uint8List.fromList(bytes),
+        alias: keystoreProvider.alias,
+        password: keystoreProvider.password,
+      );
+    }
     return MapEntry<List<App>, bool>(importedApps, hasSettings);
   }
 
@@ -172,7 +212,10 @@ extension AppsProviderImportExport on AppsProvider {
   }
 }
 
-const int currentExportSchemaVersion = 2;
+// Bumped from 2 to 3 for the additive `keystoreBase64` field. Purely additive,
+// but keeping the version bumped means the "newer schema than this Obtainium
+// supports" guard below stays meaningful.
+const int currentExportSchemaVersion = 3;
 const String kPackageVersion = String.fromEnvironment(
   'APP_VERSION',
   defaultValue: '0.0.0',
@@ -184,6 +227,11 @@ class ExportSchema {
   final String appVersion;
   final List<Map<String, dynamic>> apps;
   final Map<String, dynamic>? settings;
+  // Only present when settings were exported at the "all" level - the
+  // signing keystore used for ReVanced-patched apps, base64-encoded. Kept
+  // inline in the JSON rather than as a companion file since the export is
+  // already a single SAF-picked JSON document and a keystore is only a few KB.
+  final String? keystoreBase64;
 
   ExportSchema({
     required this.schemaVersion,
@@ -191,6 +239,7 @@ class ExportSchema {
     required this.appVersion,
     required this.apps,
     this.settings,
+    this.keystoreBase64,
   });
 
   factory ExportSchema.fromJson(Map<String, dynamic> json) {
@@ -212,6 +261,7 @@ class ExportSchema {
               .toList() ??
           [],
       settings: json['settings'] as Map<String, dynamic>?,
+      keystoreBase64: json['keystoreBase64'] as String?,
     );
   }
 
@@ -221,5 +271,6 @@ class ExportSchema {
     'appVersion': appVersion,
     'apps': apps,
     'settings': settings,
+    if (keystoreBase64 != null) 'keystoreBase64': keystoreBase64,
   };
 }

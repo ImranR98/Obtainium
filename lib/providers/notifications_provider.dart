@@ -30,6 +30,11 @@ const int downloadNotificationBaseId = 100;
 /// between concurrently downloading apps as unlikely as a raw hashCode.
 const int downloadNotificationIdRange = 2000000000;
 
+/// Base id for the per-app ReVanced patching notifications, kept well clear
+/// of the small fixed IDs above and the download-notification range.
+const int patchingNotificationBaseId = 2000000200;
+const int patchingNotificationIdRange = 100000000;
+
 /// Name under which the main isolate registers a port to receive download-cancel
 /// requests forwarded from the notification-action background isolate.
 const String _downloadCancelPortName = 'obtainium_download_cancel';
@@ -249,6 +254,36 @@ class DownloadedNotification extends ObtainiumNotification {
         tr('downloadedXNotifChannel', args: [tr('app')]),
         tr('downloadedX', args: [tr('app')]),
         Importance.defaultImportance,
+      );
+}
+
+class PatchingNotification extends ObtainiumNotification {
+  PatchingNotification(String appName)
+    : super(
+        patchingNotificationBaseId +
+            (appName.hashCode.abs() % patchingNotificationIdRange),
+        tr('patchingX', args: [appName]),
+        '',
+        'APP_PATCHING',
+        tr('patchingXNotifChannel', args: [tr('app')]),
+        tr('patchingNotifDescription'),
+        Importance.low,
+        onlyAlertOnce: true,
+      );
+}
+
+class PatchingFailedNotification extends ObtainiumNotification {
+  PatchingFailedNotification(String appName, String error)
+    : super(
+        patchingNotificationBaseId +
+            (appName.hashCode.abs() % patchingNotificationIdRange) +
+            1,
+        tr('patchingFailedX', args: [appName]),
+        error,
+        'APP_PATCHING_FAILED',
+        tr('patchingFailedNotifChannel'),
+        tr('patchingFailedNotifDescription'),
+        Importance.high,
       );
 }
 

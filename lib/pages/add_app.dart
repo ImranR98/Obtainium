@@ -6,11 +6,15 @@ import 'package:obtainium/components/ui_widgets.dart';
 import 'package:obtainium/components/generated_form_renderer.dart';
 import 'package:obtainium/components/settings_widgets.dart';
 import 'package:obtainium/components/category_editor.dart';
+import 'package:obtainium/components/patch_config_form.dart';
 import 'package:obtainium/custom_errors.dart';
+import 'package:obtainium/main.dart';
 import 'package:obtainium/pages/app.dart';
 import 'package:obtainium/pages/import_export.dart';
 import 'package:obtainium/providers/apps_provider.dart';
 import 'package:obtainium/providers/notifications_provider.dart';
+import 'package:obtainium/providers/revanced/patch_bundle_provider.dart';
+import 'package:obtainium/providers/revanced/patch_config.dart';
 import 'package:obtainium/providers/settings_provider.dart';
 import 'package:obtainium/providers/source_provider.dart';
 import 'package:provider/provider.dart';
@@ -43,6 +47,8 @@ class AddAppPageState extends State<AddAppPage> {
   AppSource? pickedSource;
   Map<String, dynamic> additionalSettings = {};
   bool additionalSettingsValid = true;
+  PatchConfig patchConfig = const PatchConfig();
+  final PatchBundleProvider _patchBundleProvider = PatchBundleProvider();
   bool _urlValid = false;
   bool _prevValid = false;
   bool inferAppIdIfOptional = true;
@@ -238,6 +244,9 @@ class AddAppPageState extends State<AddAppPage> {
       if (confirmed) {
         final s = pickedSource!;
         final trackOnly = s.enforceTrackOnly || userPickedTrackOnly;
+        if (patchConfig.isNotEmpty) {
+          additionalSettings['patchConfig'] = patchConfig.toJson();
+        }
         app = await sourceProvider.getApp(
           s,
           userInput.trim(),
@@ -729,6 +738,22 @@ class AddAppPageState extends State<AddAppPage> {
       ),
       const SizedBox(height: 16),
       _buildSourceSpecificForm(settingsProvider),
+      if (!isFdroidBuild) ...[
+        const SizedBox(height: 16),
+        Text(
+          tr('revancedPatching'),
+          style: TextStyle(
+            color: Theme.of(context).colorScheme.primary,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        const SizedBox(height: 8),
+        PatchConfigForm(
+          initialConfig: patchConfig,
+          bundleProvider: _patchBundleProvider,
+          onChanged: (c) => setState(() => patchConfig = c),
+        ),
+      ],
       const SizedBox(height: 12),
       SettingsTile(
         padding: const EdgeInsets.all(12),

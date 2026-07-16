@@ -8,6 +8,8 @@ import 'package:obtainium/custom_errors.dart';
 import 'package:obtainium/providers/apps_provider.dart';
 import 'package:obtainium/providers/logs_provider.dart';
 import 'package:obtainium/providers/notifications_provider.dart';
+import 'package:obtainium/providers/revanced/keystore_provider.dart';
+import 'package:obtainium/providers/revanced/patch_job_provider.dart';
 import 'package:obtainium/providers/settings_provider.dart';
 import 'package:obtainium/providers/source_provider.dart';
 import 'package:obtainium/pages/home.dart';
@@ -138,6 +140,7 @@ void main() async {
   );
   final np = NotificationsProvider();
   await np.initialize();
+  final keystoreProvider = KeystoreProvider(settingsProvider: settingsProvider);
 
   await initializeDateFormatting();
   await EasyLocalization.ensureInitialized();
@@ -164,6 +167,7 @@ void main() async {
         Provider.value(value: logs),
         Provider<Logger>.value(value: logger),
         Provider<SourceProvider>.value(value: sourceProvider),
+        ChangeNotifierProvider.value(value: keystoreProvider),
       ],
       child: EasyLocalization(
         supportedLocales: supportedLocales.map((e) => e.key).toList(),
@@ -279,6 +283,15 @@ class _ObtainiumState extends State<Obtainium> {
       if (!_launchByNotifChecked) {
         _launchByNotifChecked = true;
         notifs.checkLaunchByNotif();
+      }
+
+      if (!isFdroidBuild) {
+        unawaited(
+          appsProvider.runPendingPatchJobs(
+            context,
+            notificationsProvider: notifs,
+          ),
+        );
       }
     });
   }
