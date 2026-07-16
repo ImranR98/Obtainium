@@ -20,6 +20,8 @@ import 'package:obtainium/installers/external_installer.dart';
 import 'package:obtainium/providers/apps_provider.dart';
 import 'package:obtainium/providers/logs_provider.dart';
 import 'package:obtainium/providers/notifications_provider.dart';
+import 'package:obtainium/providers/revanced/patch_executor.dart';
+import 'package:obtainium/providers/revanced/patch_job_provider.dart';
 import 'package:obtainium/providers/settings_provider.dart';
 import 'package:obtainium/providers/source_provider.dart';
 import 'package:permission_handler/permission_handler.dart';
@@ -1262,6 +1264,50 @@ extension AppsProviderInstall on AppsProvider {
         throw ObtainiumError(tr('downloadFailed'))..url = apps[id]?.app.url;
       }
       id = downloadedFile?.appId ?? downloadedDir?.appId ?? id;
+      if (appNeedsPatching(apps[id]!.app)) {
+        if (downloadedDir != null) {
+          // Patching only supports single-APK downloads for now.
+          unawaited(
+            logs.add(
+              'Skipping patch config for ${apps[id]?.name}: multi-APK/XAPK downloads are not supported by the patch engine, installing unpatched.',
+              level: LogLevel.warning,
+            ),
+          );
+        } else if (downloadedFile != null) {
+          if (context != null) {
+            final patchedFile = await patchDownloadedApkIfConfigured(
+              apps[id]!.app,
+              downloadedFile.file,
+              context,
+              notificationsProvider: notificationsProvider,
+            );
+            downloadedFile = DownloadedApk(downloadedFile.appId, patchedFile);
+          } else {
+            // No native engine reachable from the background isolate - defer
+            // this app's update until the app is next opened in foreground.
+            await saveApps([
+              apps[id]!.app.withPatchJobPending(true),
+            ], onlyIfExists: true);
+            downloadedFile = null;
+          }
+        }
+      } else if (apps[id]!.app.hasPendingPatchJob) {
+        await saveApps([
+          apps[id]!.app.withPatchJobPending(false),
+        ], onlyIfExists: true);
+      }
+      if (downloadedFile == null && downloadedDir == null) {
+        if (apps[id] != null) {
+          apps[id]!.downloadProgress = null;
+          notify();
+        }
+        return _InstallResult(
+          id: id,
+          willBeSilent: false,
+          downloadedFile: null,
+          downloadedDir: null,
+        );
+      }
       // Bridge download-to-install gap so the Dismissible stays disabled.
       // Use 100 (download complete) rather than -1 (installing) so the UI
       // doesn't report "Installing" before installation actually begins.

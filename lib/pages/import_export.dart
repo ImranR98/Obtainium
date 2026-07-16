@@ -8,8 +8,10 @@ import 'package:flutter/services.dart';
 import 'package:obtainium/components/generated_form_renderer.dart';
 import 'package:obtainium/components/ui_widgets.dart';
 import 'package:obtainium/custom_errors.dart';
+import 'package:obtainium/main.dart';
 import 'package:obtainium/providers/apps_provider.dart';
 import 'package:obtainium/providers/logs_provider.dart';
+import 'package:obtainium/providers/revanced/keystore_provider.dart';
 import 'package:obtainium/providers/settings_provider.dart';
 import 'package:obtainium/providers/source_provider.dart';
 import 'package:provider/provider.dart';
@@ -200,7 +202,15 @@ class _ImportSectionState extends State<ImportSection> {
             } catch (e) {
               throw ObtainiumError(tr('invalidInput'));
             }
-            final value = await appsProvider.import(data);
+            final value = await appsProvider.import(
+              data,
+              keystoreProvider: isFdroidBuild
+                  ? null
+                  : context.read<KeystoreProvider>(),
+              confirmKeystoreImport: isFdroidBuild
+                  ? null
+                  : () => _confirmKeystoreImport(context),
+            );
             appsProvider.addMissingCategories(settingsProvider);
             if (!context.mounted) return;
             showMessage(
@@ -377,6 +387,9 @@ class _ExportSectionState extends State<ExportSection> {
               pickOnly:
                   pickOnly || (await settingsProvider.getExportDir()) == null,
               sp: settingsProvider,
+              keystoreProvider: isFdroidBuild
+                  ? null
+                  : context.read<KeystoreProvider>(),
             )
             .then((String? result) {
               if (result != null) {
@@ -454,6 +467,19 @@ class _ExportSectionState extends State<ExportSection> {
                         }
                       }
                     },
+                  ),
+                ),
+              if (snapshot.data != null &&
+                  !isFdroidBuild &&
+                  settingsProvider.exportSettings == 2)
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+                  child: Text(
+                    tr('keystoreIncludedInAllExport'),
+                    style: const TextStyle(
+                      fontStyle: FontStyle.italic,
+                      fontSize: 12,
+                    ),
                   ),
                 ),
             ],
@@ -887,6 +913,27 @@ class _SelectionModalState extends State<SelectionModal> {
       ],
     );
   }
+}
+
+Future<bool> _confirmKeystoreImport(BuildContext context) async {
+  final result = await showDialog<bool>(
+    context: context,
+    builder: (ctx) => AlertDialog(
+      title: Text(tr('importKeystore')),
+      content: Text(tr('importKeystoreFromExportWarning')),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(ctx).pop(false),
+          child: Text(tr('cancel')),
+        ),
+        FilledButton(
+          onPressed: () => Navigator.of(ctx).pop(true),
+          child: Text(tr('import')),
+        ),
+      ],
+    ),
+  );
+  return result ?? false;
 }
 
 void _showImportError(dynamic e, BuildContext context) {

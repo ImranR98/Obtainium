@@ -469,22 +469,29 @@ Source credentials (e.g. `github-creds`, `gitlab-creds`) are stored in
 
 ## 8. Building, running, testing
 
+Full environment setup (Flutter/Android SDK/JDK, the pinned `.flutter`
+submodule, GitHub Packages credentials for ReVanced deps, Docker-based
+reproducible builds, signing) is in [`BUILD.md`](./BUILD.md) — that's the
+authoritative doc; don't duplicate its steps here. Once set up, the everyday
+loop is:
+
 ```bash
 flutter pub get
 flutter analyze        # must be clean
 dart format --set-exit-if-changed .
-flutter run            # default flavour
-flutter build apk --flavor normal   # or use ./build.sh
+flutter run            # default (normal) flavour
+flutter build apk --flavor normal                          # or use ./build.sh
+flutter build apk --flavor fdroid -t lib/main_fdroid.dart   # fdroid needs this alternate entry point
 ```
 
 - **Flavours:** `normal` (default, `lib/main.dart`) and `fdroid` (`lib/main_fdroid.dart`,
-  reproducible-build friendly).
+  reproducible-build friendly). ReVanced patching (patcher-android/library-android,
+  `android/app/src/normal/kotlin/dev/imranr/obtainium/revanced/`) only exists in
+  the `normal` flavor — see `BUILD.md` §3.4 for the GitHub Packages auth this needs.
 - Several dependencies are **git-pinned to commit SHAs** in `pubspec.yaml`
   (`android_package_installer`, `android_package_manager`, `shared_storage`,
   `shizuku_apk_installer`, `android_system_font`) — keep them pinned; don't
   switch to `ref: main`/`ref: master`.
-- `sign.sh` reads the keystore password from an env var and locates `apksigner` robustly;
-  `build.sh` / `docker/Dockerfile` handle reproducible/CI builds.
 - **Note:** The project currently lacks automated tests. Run `flutter analyze` and
   `dart format --set-exit-if-changed .` locally before opening a PR.
 
