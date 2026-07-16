@@ -62,6 +62,17 @@ final packageManager = AndroidPackageManager();
 final packageInfoFlags = PackageInfoFlags({PMFlag.getSigningCertificates});
 final packageInfoFlagsLight = PackageInfoFlags({});
 
+List<String> certificateHashesFromSignatures(
+  Iterable<List<int>> signatures,
+) {
+  return signatures.map((signature) {
+    final digest = sha256.convert(signature);
+    return digest.bytes
+        .map((byte) => byte.toRadixString(16).padLeft(2, '0').toUpperCase())
+        .join(':');
+  }).toList(growable: false);
+}
+
 /// Live download state for an app: the progress percent (listenable, with -1
 /// meaning "installing" and null meaning "idle") plus the bytes downloaded and
 /// total size when known. Held by reference and shared across [AppInMemory]
@@ -142,13 +153,9 @@ class AppInMemory {
         ? installedInfo?.signingInfo?.apkContentSigners
         : installedInfo?.signingInfo?.signingCertificateHistory;
 
-    return signatures?.map((signature) {
-          final digest = sha256.convert(signature);
-          return digest.bytes
-              .map((b) => b.toRadixString(16).padLeft(2, '0').toUpperCase())
-              .join(':');
-        }).toList() ??
-        [];
+    return certificateHashesFromSignatures(
+      signatures ?? const <List<int>>[],
+    );
   }
 }
 

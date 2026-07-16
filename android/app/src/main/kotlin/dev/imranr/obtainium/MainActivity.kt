@@ -23,6 +23,7 @@ import android.os.PowerManager
 import android.os.SystemClock
 import android.provider.DocumentsContract
 import android.system.Os
+import android.text.format.DateFormat
 import android.util.DisplayMetrics
 import androidx.core.content.FileProvider
 import io.flutter.embedding.android.FlutterActivity
@@ -368,6 +369,15 @@ class MainActivity : FlutterActivity() {
                         return@setMethodCallHandler
                     }
                     result.success(getApplicationLabels(packageNames))
+                }
+                "getSigningCertificates" -> {
+                    val packageName = call.argument<String>("packageName")
+                    result.success(
+                        packageName?.let { getSigningCertificates(it) },
+                    )
+                }
+                "uses24HourFormat" -> {
+                    result.success(DateFormat.is24HourFormat(this))
                 }
                 else -> result.notImplemented()
             }
@@ -823,6 +833,52 @@ class MainActivity : FlutterActivity() {
             }
         }
         return labelsByPackageName
+    }
+
+    @Suppress("DEPRECATION")
+    private fun getSigningCertificates(packageName: String): Map<String, Any>? {
+        val packageInfo = try {
+            when {
+                Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU ->
+                    packageManager.getPackageInfo(
+                        packageName,
+                        PackageManager.PackageInfoFlags.of(
+                            PackageManager.GET_SIGNING_CERTIFICATES.toLong(),
+                        ),
+                    )
+                Build.VERSION.SDK_INT >= Build.VERSION_CODES.P ->
+                    packageManager.getPackageInfo(
+                        packageName,
+                        PackageManager.GET_SIGNING_CERTIFICATES,
+                    )
+                else ->
+                    packageManager.getPackageInfo(
+                        packageName,
+                        PackageManager.GET_SIGNATURES,
+                    )
+            }
+        } catch (_: PackageManager.NameNotFoundException) {
+            return null
+        }
+
+        val hasMultipleSigners =
+            Build.VERSION.SDK_INT >= Build.VERSION_CODES.P &&
+                packageInfo.signingInfo?.hasMultipleSigners() == true
+        val signatures = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+            val signingInfo = packageInfo.signingInfo ?: return null
+            if (hasMultipleSigners) {
+                signingInfo.apkContentsSigners
+            } else {
+                signingInfo.signingCertificateHistory
+            }
+        } else {
+            packageInfo.signatures
+        }
+
+        return mapOf(
+            "hasMultipleSigners" to hasMultipleSigners,
+            "signatures" to (signatures?.map { it.toByteArray() } ?: emptyList<ByteArray>()),
+        )
     }
 
     /**

@@ -1125,10 +1125,14 @@ extension AppsProviderInstall on AppsProvider {
       urlsToSelectFrom = [...urlsToSelectFrom, ...app.otherAssetUrls];
     }
     // If the App has more than one APK, the user should pick one (if context provided)
-    MapEntry<String, String>? appFileUrl =
-        urlsToSelectFrom[app.preferredApkIndex >= 0
-            ? app.preferredApkIndex
-            : 0];
+    MapEntry<String, String>? appFileUrl;
+    if (urlsToSelectFrom.isNotEmpty) {
+      final int selectedApkIndex = app.preferredApkIndex >= 0 &&
+              app.preferredApkIndex < urlsToSelectFrom.length
+          ? app.preferredApkIndex
+          : 0;
+      appFileUrl = urlsToSelectFrom[selectedApkIndex];
+    }
     // When picking any asset, use the APK filter regex to pre-select the best matching
     // asset by default, without hiding other assets from the user.
     if (pickAnyAsset &&

@@ -58,6 +58,16 @@ class InstalledAppInfo {
   }
 }
 
+class SigningCertificateInfo {
+  const SigningCertificateInfo({
+    required this.signatures,
+    required this.hasMultipleSigners,
+  });
+
+  final List<Uint8List> signatures;
+  final bool hasMultipleSigners;
+}
+
 class BulkImportService {
   static final _pm = AndroidPackageManager();
 
@@ -101,6 +111,45 @@ class BulkImportService {
     return Map<String, String>.from(
       labelsByPackageName ?? const <String, String>{},
     );
+  }
+
+  static Future<SigningCertificateInfo?> getSigningCertificates(
+    String packageName,
+  ) async {
+    Map<String, dynamic>? certificateData;
+    try {
+      certificateData = await _deviceAppsChannel
+          .invokeMapMethod<String, dynamic>('getSigningCertificates', {
+            'packageName': packageName,
+          });
+    } on MissingPluginException {
+      return null;
+    } on PlatformException {
+      return null;
+    }
+    if (certificateData == null) return null;
+
+    final List<dynamic> rawSignatures =
+        certificateData['signatures'] as List<dynamic>? ?? const <dynamic>[];
+    final signatures = rawSignatures.map((rawSignature) {
+      if (rawSignature is Uint8List) return rawSignature;
+      return Uint8List.fromList(List<int>.from(rawSignature as List<dynamic>));
+    }).toList(growable: false);
+    return SigningCertificateInfo(
+      signatures: signatures,
+      hasMultipleSigners:
+          certificateData['hasMultipleSigners'] as bool? ?? false,
+    );
+  }
+
+  static Future<bool?> uses24HourFormat() async {
+    try {
+      return await _deviceAppsChannel.invokeMethod<bool>('uses24HourFormat');
+    } on MissingPluginException {
+      return null;
+    } on PlatformException {
+      return null;
+    }
   }
 
   /// Returns all installed apps, filtered by system/user.

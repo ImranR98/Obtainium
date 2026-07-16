@@ -28,13 +28,13 @@
 
 | Feature | Obtainium | ObtainX |
 |---|---|---|
-| Navigation | - You have to return to homepage to go anywhere else<br>- Groups can be collapsed individually<br>- Expanded/collapsed state not remembered at app start | Pinned navigation bar - switch to any tab from any tab<br>- Groups can be collapsed individually or collase-all<br>- Every expanded/collapsed state is always remembered |
+| Navigation | • You have to return to homepage to go anywhere else<br>• Groups can be collapsed individually<br>• Expanded/collapsed state not remembered at app start | • Pinned navigation bar - switch to any tab from any tab<br>• Groups can be collapsed individually or collase-all<br>• Every expanded/collapsed state is always remembered |
 | In-list live search | Yes, but search bar scrolls away with apps list | Yes, and search button stays pinned at the top |
 | Configurable per-row swipes | Yes, but 2 fixed actions | Yes, and 8 actions to choose from |
-| Ease of Update | - Button at center of app row, can misalign per row.<br>- Update-all button at the top of apps list<br>- Updates scattered across individual groups | - Button at right end, in perfect alignment<br>- Update-all button at the bottom, within easy thumb reach<br>- Unified Updates group at the top |
+| Ease of Update | • Button at center of app row, can misalign per row.<br>• Update-all button at the top of apps list<br>• Updates scattered across individual groups | • Button at right end, in perfect alignment<br>• Update-all button at the bottom, within easy thumb reach<br>• Unified Updates group at the top |
 | Source store badge on each row | ✗ | ✓ |
 | App-type badge on each row | ✗ | ✓ |
-|Categories on a row | Thin color strips, side-by-side. With several categories assigned, you can't tell them apart. | - Vertical stack of color bars, each category distinct and fully visible.<br>- Optionally, switch to labeled chips to see category names 
+|Categories on a row | Thin color strips, side-by-side. With several categories assigned, you can't tell them apart. | • Vertical stack of color bars, each category distinct and fully visible.<br>• Optionally, switch to labeled chips to see category names 
 
 <table>
 <tr>
@@ -85,10 +85,10 @@ ObtainX's filters provide tri-state options (include/exclude/not part of filter)
 
 | Feature | Obtainium | ObtainX |
 |---|---|---|
-| Filter surface | Center dialog that obscures the list | Bottom sheet over the list, context stays visible |
-| List updates live as you change filters | ✗ set all filters, tap continue, dialog goes away, result is shown | ✓ list filters live, change any number of times |
-| Filtering options | ✗ plain on/off toggles | ✓ tri-state: neutral / include / exclude |
-| Category matching | ✗ Shows apps that have any of the selected categories | ✓ that + you can flip to show apps that have all of the selected categories |
+| Filter surface | Centered floating panel that obscures the list | Bottom sheet over the list, context stays visible |
+| Filtering results | Set all filters, tap continue, dialog goes away, result is shown | App list filters live as you tap any options |
+| Filtering options | Plain on/off toggles | Tri-state: neutral / include / exclude |
+| Category matching | Shows apps that have any of the selected categories | That + you can flip to show apps that have all of the selected categories |
 | Category exclusion | ✗ | ✓ |
 | Save filter as a folder | ✗ no folders | ✓ turns the active filter into a folder rule |
 
@@ -114,12 +114,14 @@ ObtainX's filters provide tri-state options (include/exclude/not part of filter)
 | Grouped info cards | Yes (from Jul 2026) | Yes (from Mar 2026) |
 | Version verdict | Binary (update / up-to-date) | ✓ 6 states |
 | Verified other-store links | ✗ | ✓ Play Store / F-Droid / APKPure / APKMirror |
-| Signing certificate hash | ✓ | ✗ |
-| Categories shown | shows the full category selector | Shows only assigned categories, keeping the page clean|
+| Signing certificate hash | ✓ (from the start) | ✓ (from July 2026) |
+| Categories shown | All categories - assigned and not assigned | Shows only assigned categories, keeping the page clean|
 | App's information editing | Combined with tracking configuration, opens a separate page | ✓ inline edit / save |
 | Change app icon | ✗ | ✓ |
-| Update size shown in advance | Yes (from Jul 2026) | ✓ Yes (from May 2026) |
+| Update size shown in advance | Shown for most stores (from Jul 2026) — but not APKMirror | Shown for those same stores (from May 2026) — and APKMirror too|
+| App icon for non-installed apps | ✗ Only installed apps (from the device) | Shown up front for stores that provide one — F-Droid (+repo), IzzyOnDroid, APKMirror, Tencent, Vivo, CoolApk |
 | Skip version | ✗ | ✓ |
+| Changelog view | • Centered, narrow panel squishes text vertically<br>• Completely blocks the center of the screen | • Full-width bottom sheet (wider, readable text layout)<br>• Keeps background app context visible
 | Update check configuration | Options mixed with app metadata editing, in a long list of options | Only update related configurations, neatly grouped into separate sections for easier access|
 
 <table>
@@ -133,10 +135,18 @@ ObtainX's filters provide tri-state options (include/exclude/not part of filter)
 </tr>
 <tr>
 <td width="50%" align="center" valign="top">
-<img src="../assets/screenshots/Compare_Additional_Options_1.webp" alt="Obtainium app detail" width="300" /><br /><strong>Obtainium</strong>
+<img src="../assets/screenshots/Compare_Chanelog_1.webp" alt="Obtainium app changelog view" width="300" /><br /><strong>Obtainium</strong>
 </td>
 <td width="50%" align="center" valign="top">
-<img src="../assets/screenshots/Compare_Additional_Options_2.webp" alt="ObtainX app detail" width="300" /><br /><strong>ObtainX</strong>
+<img src="../assets/screenshots/Compare_Chanelog_2.webp" alt="ObtainX app changelog view" width="300" /><br /><strong>ObtainX</strong>
+</td>
+</tr>
+<tr>
+<td width="50%" align="center" valign="top">
+<img src="../assets/screenshots/Compare_Additional_Options_1.webp" alt="Obtainium app additional options" width="300" /><br /><strong>Obtainium</strong>
+</td>
+<td width="50%" align="center" valign="top">
+<img src="../assets/screenshots/Compare_Additional_Options_2.webp" alt="ObtainX app additional options" width="300" /><br /><strong>ObtainX</strong>
 </td>
 </tr>
 </table>
