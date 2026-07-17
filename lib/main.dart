@@ -641,11 +641,13 @@ class _ObtainiumState extends State<Obtainium> {
             );
           }
 
-          NavigationBarThemeData navigationBarThemeFor(ColorScheme scheme) {
-            // Use labelMedium as base so nav labels keep M3 size (bare color-only TextStyle inherits body scale and can wrap).
-            final TextStyle navLabelBase = Theme.of(
-              context,
-            ).textTheme.labelMedium!;
+          NavigationBarThemeData navigationBarThemeFor(
+            ColorScheme scheme,
+            TextTheme appTextTheme,
+          ) {
+            // Use the app theme's labelMedium so nav labels keep both the M3
+            // sizing and ObtainX's active Montserrat/SystemFont family.
+            final TextStyle navLabelBase = appTextTheme.labelMedium!;
             return NavigationBarThemeData(
               backgroundColor: scheme.surface,
               surfaceTintColor: Colors.transparent,
@@ -730,7 +732,10 @@ class _ObtainiumState extends State<Obtainium> {
               canvasColor: themeColorScheme.surface,
               cardColor: themeColorScheme.surfaceContainer,
               focusColor: themeColorScheme.primary.withValues(alpha: 0.12),
-              navigationBarTheme: navigationBarThemeFor(themeColorScheme),
+              navigationBarTheme: navigationBarThemeFor(
+                themeColorScheme,
+                lightBaseTheme.textTheme,
+              ),
               segmentedButtonTheme: appSegmentedButtonTheme(themeColorScheme),
               switchTheme: appSwitchTheme(themeColorScheme),
               tooltipTheme: tooltipThemeFor(themeColorScheme),
@@ -751,7 +756,10 @@ class _ObtainiumState extends State<Obtainium> {
               canvasColor: darkThemeColorScheme.surface,
               cardColor: darkThemeColorScheme.surfaceContainer,
               focusColor: darkThemeColorScheme.primary.withValues(alpha: 0.24),
-              navigationBarTheme: navigationBarThemeFor(darkThemeColorScheme),
+              navigationBarTheme: navigationBarThemeFor(
+                darkThemeColorScheme,
+                darkBaseTheme.textTheme,
+              ),
               segmentedButtonTheme: appSegmentedButtonTheme(
                 darkThemeColorScheme,
               ),

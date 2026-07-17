@@ -33,7 +33,9 @@ import 'package:obtainium/components/custom_app_bar.dart';
 import 'package:obtainium/components/generated_form_renderer.dart';
 import 'package:obtainium/components/rippling_wavy_progress/circular.dart';
 import 'package:obtainium/components/rippling_wavy_progress/linear.dart';
+import 'package:obtainium/components/ui_widgets.dart' show ActionListTile;
 import 'package:obtainium/custom_errors.dart';
+import 'package:obtainium/date_time_format.dart';
 import 'package:obtainium/main.dart';
 import 'package:obtainium/pages/additional_options_page.dart';
 import 'package:obtainium/pages/page_route_slide_up.dart';
@@ -61,6 +63,8 @@ import 'package:markdown/markdown.dart' as md;
 enum CategoryFilterIntent { neutral, include, exclude }
 
 enum CategoryFilterMatchMode { any, all }
+
+const int _maxFolderNameLength = 20;
 
 CategoryFilterIntent nextCategoryFilterIntent(CategoryFilterIntent intent) =>
     switch (intent) {
@@ -828,8 +832,8 @@ class _AppListItem extends StatelessWidget {
         !context.read<SettingsProvider>().isTV &&
         !context.read<SettingsProvider>().alwaysUsePhoneLayout;
     final bool hideVersionAndChangelog =
-        isLargeScreen &&
-        MediaQuery.orientationOf(context) == Orientation.portrait;
+        isLargeScreen ||
+        MediaQuery.orientationOf(context) == Orientation.landscape;
 
     final showChangesFn = getChangeLogFn(context, app.app);
     final installed = app.app.installedVersion;
@@ -929,10 +933,10 @@ class _AppListItem extends StatelessWidget {
       );
     }
 
-    final String versionText = app.app.installedVersion ?? tr('notInstalled');
+    final String versionText = app.app.installedVersion ?? tr('none');
     final String changesButtonString = app.app.releaseDate == null
         ? (showChangesFn != null ? tr('changes') : '')
-        : DateFormat('yyyy-MM-dd').format(app.app.releaseDate!.toLocal());
+        : formatDeviceOrderedNumericDate(context, app.app.releaseDate!);
 
     final bool hasTrailingWidgets =
         skipActive ||
@@ -3808,21 +3812,48 @@ class AppsPageState extends State<AppsPage> {
           ),
         ];
       }
+      final bool isMainAppsPage =
+          !widget.onDemandOnlyList && widget.folderId == null;
+      final Widget emptyStateText = Text(
+        isMainAppsPage || appsProvider.apps.isEmpty
+            ? tr('noApps')
+            : widget.onDemandOnlyList && onDemandOnlyAppCount == 0
+            ? tr('onDemandOnlyEmpty')
+            : tr('noAppsForFilter'),
+        style: Theme.of(context).textTheme.headlineMedium,
+        textAlign: TextAlign.center,
+      );
       return [
         if (listedApps.isEmpty)
-          SliverFillRemaining(
-            child: Center(
-              child: Text(
-                appsProvider.apps.isEmpty
-                    ? tr('noApps')
-                    : widget.onDemandOnlyList && onDemandOnlyAppCount == 0
-                    ? tr('onDemandOnlyEmpty')
-                    : tr('noAppsForFilter'),
-                style: Theme.of(context).textTheme.headlineMedium,
-                textAlign: TextAlign.center,
-              ),
-            ),
-          ),
+          isMainAppsPage
+              ? SliverLayoutBuilder(
+                  builder: (context, constraints) {
+                    // Account for the app bar so the message itself lands at
+                    // the viewport center without reserving the lower half.
+                    final double spaceBeforeViewportCenter = math.max(
+                      0.0,
+                      constraints.viewportMainAxisExtent / 2 -
+                          constraints.precedingScrollExtent,
+                    );
+                    return SliverToBoxAdapter(
+                      child: Padding(
+                        padding: EdgeInsets.fromLTRB(
+                          16,
+                          spaceBeforeViewportCenter,
+                          16,
+                          0,
+                        ),
+                        child: FractionalTranslation(
+                          translation: const Offset(0, -0.5),
+                          child: emptyStateText,
+                        ),
+                      ),
+                    );
+                  },
+                )
+              : SliverFillRemaining(
+                  child: Center(child: emptyStateText),
+                ),
         // Initial empty-library loading uses the centered M3E indicator above.
         // Keep this compact bar for explicit user-initiated refreshes only.
         if (refreshingSince != null)
@@ -4488,10 +4519,7 @@ class AppsPageState extends State<AppsPage> {
             ],
           );
         },
-      ).whenComplete(() {
-        if (!context.mounted) return;
-        Navigator.of(context).pop();
-      });
+      );
     }
 
     void pinSelectedApps() {
@@ -4500,12 +4528,11 @@ class AppsPageState extends State<AppsPage> {
         selectedApps.map((e) => e.copyWith(pinned: pinStatus)).toList(),
         updateInstalledInfo: false,
       );
-      Navigator.of(context).pop();
     }
 
-    // Shared bulk-action bodies, used by both the phone "more options" dialog
+    // Shared bulk-action bodies, used by both the phone "more options" sheet
     // and the large-screen action pane. They intentionally do not dismiss any
-    // surface — the phone dialog pops at its own call sites; the pane stays.
+    // surface - the phone sheet pops at its own call sites; the pane stays.
     void downloadSelectedAppAssets() {
       appsProvider
           .downloadAppAssets(
@@ -4560,93 +4587,70 @@ class AppsPageState extends State<AppsPage> {
       );
     }
 
-    Future<dynamic> showMoreOptionsDialog() {
-      return showDialog(
+    Future<void> showMoreOptionsBottomSheet() {
+      final bool selectedAppsArePinned = selectedApps.any(
+        (selectedApp) => selectedApp.pinned,
+      );
+      return showAppModalSheet<void>(
         context: context,
-        builder: (BuildContext ctx) {
-          return AlertDialog(
-            scrollable: true,
-            contentPadding: appDialogContentPadding,
-            content: Padding(
-              padding: const EdgeInsets.only(top: 6),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.spaceAround,
-                children: [
-                  TextButton(
-                    onPressed: pinSelectedApps,
-                    child: Text(
-                      selectedApps.where((element) => element.pinned).isEmpty
-                          ? tr('pinToTop')
-                          : tr('unpinFromTop'),
-                      textAlign: TextAlign.center,
-                    ),
-                  ),
-                  const Divider(),
-                  TextButton(
-                    onPressed: () {
-                      Navigator.of(context).pop();
-                      _showFolderAssignDialog(context, selectedApps);
-                    },
-                    child: Text(tr('addToFolder'), textAlign: TextAlign.center),
-                  ),
-                  const Divider(),
-                  TextButton(
-                    onPressed: () {
-                      shareSelectedAppUrls();
-                      Navigator.of(context).pop();
-                    },
-                    child: Text(
-                      tr('shareSelectedAppURLs'),
-                      textAlign: TextAlign.center,
-                    ),
-                  ),
-                  const Divider(),
-                  TextButton(
-                    onPressed: selectedAppIds.isEmpty
-                        ? null
-                        : shareSelectedAppConfigLinks,
-                    child: Text(
-                      tr('shareAppConfigLinks'),
-                      textAlign: TextAlign.center,
-                    ),
-                  ),
-                  const Divider(),
-                  TextButton(
-                    onPressed: selectedAppIds.isEmpty
-                        ? null
-                        : exportSelectedApps,
-                    child: Text(
-                      '${tr('share')} - ${tr('obtainiumExport')}',
-                      textAlign: TextAlign.center,
-                    ),
-                  ),
-                  const Divider(),
-                  TextButton(
-                    onPressed: () {
-                      downloadSelectedAppAssets();
-                      Navigator.of(context).pop();
-                    },
-                    child: Text(
-                      tr(
-                        'downloadX',
-                        args: [lowerCaseIfEnglish(tr('releaseAsset'))],
-                      ),
-                      textAlign: TextAlign.center,
-                    ),
-                  ),
-                  const Divider(),
-                  TextButton(
-                    onPressed: appsProvider.areDownloadsRunning()
-                        ? null
-                        : showMassMarkDialog,
-                    child: Text(
-                      tr('markSelectedAppsUpdated'),
-                      textAlign: TextAlign.center,
-                    ),
-                  ),
-                ],
+        builder: (BuildContext sheetContext) {
+          return AppSheetContent(
+            padding: const EdgeInsets.fromLTRB(8, 0, 8, 8),
+            children: [
+              ActionListTile(
+                icon: selectedAppsArePinned
+                    ? Icons.push_pin
+                    : Icons.push_pin_outlined,
+                label: selectedAppsArePinned
+                    ? tr('unpinFromTop')
+                    : tr('pinToTop'),
+                onTap: pinSelectedApps,
+                autoPop: true,
               ),
-            ),
+              ActionListTile(
+                icon: Icons.folder_copy_outlined,
+                label: tr('addToFolder'),
+                onTap: () => _showFolderAssignDialog(context, selectedApps),
+                autoPop: true,
+              ),
+              ActionListTile(
+                icon: Icons.share_outlined,
+                label: tr('shareSelectedAppURLs'),
+                onTap: shareSelectedAppUrls,
+                autoPop: true,
+              ),
+              ActionListTile(
+                icon: Icons.link_outlined,
+                label: tr('shareAppConfigLinks'),
+                onTap: selectedAppIds.isEmpty
+                    ? null
+                    : shareSelectedAppConfigLinks,
+                autoPop: true,
+              ),
+              ActionListTile(
+                icon: Icons.file_download_outlined,
+                label: '${tr('share')} - ${tr('obtainiumExport')}',
+                onTap: selectedAppIds.isEmpty ? null : exportSelectedApps,
+                autoPop: true,
+              ),
+              ActionListTile(
+                icon: Icons.download_outlined,
+                label: tr(
+                  'downloadX',
+                  args: [lowerCaseIfEnglish(tr('releaseAsset'))],
+                ),
+                onTap: downloadSelectedAppAssets,
+                autoPop: true,
+              ),
+              ActionListTile(
+                icon: Icons.done_all,
+                label: tr('markSelectedAppsUpdated'),
+                onTap: appsProvider.areDownloadsRunning()
+                    ? null
+                    : showMassMarkDialog,
+                autoPop: true,
+              ),
+            ],
           );
         },
       );
@@ -4907,6 +4911,8 @@ class AppsPageState extends State<AppsPage> {
         foregroundColor: colorScheme.primary,
         visualDensity: VisualDensity.compact,
         iconSize: 24,
+        minimumSize: const Size(48, 48),
+        padding: const EdgeInsets.symmetric(horizontal: 4),
         textStyle: Theme.of(context).textTheme.labelLarge?.copyWith(
           color: colorScheme.primary,
           fontWeight: FontWeight.w600,
@@ -4931,7 +4937,14 @@ class AppsPageState extends State<AppsPage> {
                             });
                           },
                     icon: const Icon(Icons.select_all_outlined, size: 24),
-                    label: Text(selectedAppIds.length.toString()),
+                    label: FittedBox(
+                      fit: BoxFit.scaleDown,
+                      child: Text(
+                        selectedAppIds.length.toString(),
+                        maxLines: 1,
+                        softWrap: false,
+                      ),
+                    ),
                   ),
                 ),
               ),
@@ -5032,7 +5045,7 @@ class AppsPageState extends State<AppsPage> {
                   visualDensity: VisualDensity.compact,
                   iconSize: 24,
                   color: colorScheme.primary,
-                  onPressed: showMoreOptionsDialog,
+                  onPressed: showMoreOptionsBottomSheet,
                   tooltip: tr('more'),
                   icon: const Icon(Icons.more_horiz),
                 ),
@@ -5059,7 +5072,14 @@ class AppsPageState extends State<AppsPage> {
                           });
                         },
                   icon: const Icon(Icons.select_all_outlined, size: 24),
-                  label: Text(selectedAppIds.length.toString()),
+                  label: FittedBox(
+                    fit: BoxFit.scaleDown,
+                    child: Text(
+                      selectedAppIds.length.toString(),
+                      maxLines: 1,
+                      softWrap: false,
+                    ),
+                  ),
                 ),
               ),
             ),
@@ -5397,8 +5417,11 @@ class AppsPageState extends State<AppsPage> {
                                     children: [
                                       // Manage Folders button
                                       TextButton.icon(
-                                        onPressed: () =>
-                                            _showFolderManageDialog(context),
+                                        onPressed: () {
+                                          unawaited(
+                                            _showFolderManageSheet(context),
+                                          );
+                                        },
                                         icon: const Icon(
                                           Icons.folder_copy_outlined,
                                           size: 18,
@@ -5465,7 +5488,8 @@ class AppsPageState extends State<AppsPage> {
                                               }(),
                                               label: Text(
                                                 '${folder.name} '
-                                                '(${folderAppCounts[folder.id] ?? 0} ${tr('appsString').toLowerCase()})',
+                                                '(${folderAppCounts[folder.id] ?? 0})',
+                                                textAlign: TextAlign.center,
                                               ),
                                             ),
                                           ),
@@ -5489,7 +5513,8 @@ class AppsPageState extends State<AppsPage> {
                                         ),
                                         label: Text(
                                           '${tr('onDemandOnly')} '
-                                          '($onDemandOnlyAppCount ${tr('appsString').toLowerCase()})',
+                                          '($onDemandOnlyAppCount)',
+                                          textAlign: TextAlign.center,
                                         ),
                                       ),
                                       const SizedBox(height: 20),
@@ -6268,225 +6293,6 @@ class AppsPageState extends State<AppsPage> {
     }
   }
 
-  // ── Folder edit dialog ──────────────────────────────────────────────────────
-
-  void _showFolderEditDialog(
-    BuildContext context, {
-    AppFolder? existing,
-    FolderRule? prefillRule,
-  }) {
-    // Capture providers BEFORE entering the dialog builder.
-    // context.read() must NOT be called inside a build/StatefulBuilder body.
-    // SourceProvider is not in the widget tree — always instantiate directly.
-    final sourceProvider = SourceProvider();
-    final appsProvider = context.read<AppsProvider>();
-    final settingsProvider = context.read<SettingsProvider>();
-
-    int countRuleMatches(FolderRule rule) {
-      return appsProvider.apps.values
-          .where((a) => a.app.additionalSettings['onDemandOnly'] != true)
-          .where((a) {
-            final resolvedSource = sourceProvider
-                .getSourceTemplate(
-                  a.app.url,
-                  overrideSource: a.app.overrideSource,
-                )
-                .runtimeType
-                .toString();
-            return rule.matches(a.app, resolvedSource: resolvedSource);
-          })
-          .length;
-    }
-
-    final initialRule = existing?.rule ?? prefillRule;
-    final nameCtrl = TextEditingController(text: existing?.name ?? '');
-    var ruleEnabled = initialRule != null;
-    var ruleField = initialRule?.field ?? FolderRuleField.name;
-    var ruleMatch = initialRule?.matchType ?? FolderRuleMatchType.contains;
-    final ruleValueCtrl = TextEditingController(text: initialRule?.value ?? '');
-
-    showDialog<void>(
-      context: context,
-      builder: (dCtx) => StatefulBuilder(
-        builder: (dCtx, setDState) {
-          final currentRule = ruleEnabled && ruleValueCtrl.text.isNotEmpty
-              ? FolderRule(
-                  field: ruleField,
-                  matchType: ruleMatch,
-                  value: ruleValueCtrl.text,
-                )
-              : null;
-          // Safe: countRuleMatches uses the pre-captured providers,
-          // not context.read() inside build.
-          final matchCount = currentRule != null
-              ? countRuleMatches(currentRule)
-              : null;
-
-          return AlertDialog(
-            title: Text(existing == null ? tr('newFolder') : tr('editFolder')),
-            contentPadding: appDialogContentPadding,
-            content: SingleChildScrollView(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  TextField(
-                    controller: nameCtrl,
-                    decoration: appPageOutlinedInputDecoration(
-                      dCtx,
-                      labelText: tr('folderName'),
-                    ),
-                    autofocus: true,
-                    textCapitalization: TextCapitalization.words,
-                  ),
-                  const SizedBox(height: 16),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: Text(
-                          tr('folderRule'),
-                          style: Theme.of(dCtx).textTheme.titleSmall,
-                        ),
-                      ),
-                      Switch(
-                        value: ruleEnabled,
-                        onChanged: (v) => setDState(() => ruleEnabled = v),
-                      ),
-                    ],
-                  ),
-                  if (ruleEnabled) ...[
-                    const SizedBox(height: 8),
-                    // PopupMenuButton opens a floating menu without touching
-                    // keyboard focus, so the keyboard stays open while picking.
-                    PopupMenuButton<FolderRuleField>(
-                      initialValue: ruleField,
-                      onSelected: (v) => setDState(() => ruleField = v),
-                      itemBuilder: (_) => FolderRuleField.values
-                          .map(
-                            (f) => PopupMenuItem(
-                              value: f,
-                              child: Text(_folderRuleFieldLabel(f)),
-                            ),
-                          )
-                          .toList(),
-                      child: InputDecorator(
-                        decoration:
-                            appPageOutlinedInputDecoration(
-                              dCtx,
-                              labelText: tr('folderRuleField'),
-                            ).copyWith(
-                              suffixIcon: const Icon(Icons.arrow_drop_down),
-                              contentPadding: const EdgeInsets.fromLTRB(
-                                12,
-                                16,
-                                4,
-                                16,
-                              ),
-                            ),
-                        child: Text(_folderRuleFieldLabel(ruleField)),
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    PopupMenuButton<FolderRuleMatchType>(
-                      initialValue: ruleMatch,
-                      onSelected: (v) => setDState(() => ruleMatch = v),
-                      itemBuilder: (_) => FolderRuleMatchType.values
-                          .map(
-                            (m) => PopupMenuItem(
-                              value: m,
-                              child: Text(_folderRuleMatchLabel(m)),
-                            ),
-                          )
-                          .toList(),
-                      child: InputDecorator(
-                        decoration:
-                            appPageOutlinedInputDecoration(
-                              dCtx,
-                              labelText: tr('folderRuleMatch'),
-                            ).copyWith(
-                              suffixIcon: const Icon(Icons.arrow_drop_down),
-                              contentPadding: const EdgeInsets.fromLTRB(
-                                12,
-                                16,
-                                4,
-                                16,
-                              ),
-                            ),
-                        child: Text(_folderRuleMatchLabel(ruleMatch)),
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    TextField(
-                      controller: ruleValueCtrl,
-                      decoration:
-                          appPageOutlinedInputDecoration(
-                            dCtx,
-                            labelText: tr('folderRuleValue'),
-                          ).copyWith(
-                            helperText: matchCount != null
-                                ? tr(
-                                    'ruleMatchesXApps',
-                                    namedArgs: {'count': '$matchCount'},
-                                  )
-                                : null,
-                          ),
-                      onChanged: (_) => setDState(() {}),
-                    ),
-                  ],
-                ],
-              ),
-            ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.of(dCtx).pop(),
-                child: Text(tr('cancel')),
-              ),
-              FilledButton(
-                onPressed: () async {
-                  final name = nameCtrl.text.trim();
-                  if (name.isEmpty) return;
-                  final rule =
-                      ruleEnabled && ruleValueCtrl.text.trim().isNotEmpty
-                      ? FolderRule(
-                          field: ruleField,
-                          matchType: ruleMatch,
-                          value: ruleValueCtrl.text.trim(),
-                        )
-                      : null;
-                  final folders = List<AppFolder>.from(
-                    settingsProvider.appFolders,
-                  );
-                  final AppFolder folder;
-                  if (existing == null) {
-                    folder = AppFolder(
-                      id: AppFolder.generateId(),
-                      name: name,
-                      rule: rule,
-                    );
-                    folders.add(folder);
-                  } else {
-                    folder = existing.copyWith(
-                      name: name,
-                      rule: rule,
-                      clearRule: rule == null,
-                    );
-                    final idx = folders.indexWhere((f) => f.id == existing.id);
-                    if (idx >= 0) folders[idx] = folder;
-                  }
-                  settingsProvider.appFolders = folders;
-                  if (!dCtx.mounted) return;
-                  Navigator.of(dCtx).pop();
-                  await _applyFolderRuleToAllApps(folder);
-                },
-                child: Text(tr('save')),
-              ),
-            ],
-          );
-        },
-      ),
-    );
-  }
-
   String _folderRuleFieldLabel(FolderRuleField field) {
     switch (field) {
       case FolderRuleField.name:
@@ -6546,9 +6352,15 @@ class AppsPageState extends State<AppsPage> {
         value: entry.value,
       );
     }
-    // Multiple fields or no fields → open edit dialog with no pre-filled rule;
-    // the user can configure it manually.
-    _showFolderEditDialog(context, prefillRule: derivedRule);
+    // Multiple fields or no fields open an empty editor; the user can configure
+    // the rule manually in the same Manage Folders sheet.
+    unawaited(
+      _showFolderManageSheet(
+        context,
+        createNewFolder: true,
+        prefillRule: derivedRule,
+      ),
+    );
   }
 
   // ── Folder assign dialog ────────────────────────────────────────────────────
@@ -6581,30 +6393,43 @@ class AppsPageState extends State<AppsPage> {
             final name = await showDialog<String>(
               context: dCtx,
               builder: (ctx) => AlertDialog(
+                scrollable: true,
                 title: Text(tr('newFolder')),
                 contentPadding: appDialogContentPadding,
-                content: TextField(
-                  controller: nameCtrl,
-                  autofocus: true,
-                  textCapitalization: TextCapitalization.sentences,
-                  decoration: appPageOutlinedInputDecoration(
-                    ctx,
-                    labelText: tr('folderName'),
-                  ),
-                  onSubmitted: (_) =>
-                      Navigator.of(ctx).pop(nameCtrl.text.trim()),
+                content: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    TextField(
+                      controller: nameCtrl,
+                      maxLength: _maxFolderNameLength,
+                      autofocus: true,
+                      textCapitalization: TextCapitalization.sentences,
+                      decoration: appPageOutlinedInputDecoration(
+                        ctx,
+                        labelText: tr('folderName'),
+                      ),
+                      onSubmitted: (_) =>
+                          Navigator.of(ctx).pop(nameCtrl.text.trim()),
+                    ),
+                    const SizedBox(height: 8),
+                    OverflowBar(
+                      alignment: MainAxisAlignment.end,
+                      spacing: 8,
+                      children: [
+                        TextButton(
+                          onPressed: () => Navigator.of(ctx).pop(),
+                          child: Text(tr('cancel')),
+                        ),
+                        FilledButton(
+                          onPressed: () =>
+                              Navigator.of(ctx).pop(nameCtrl.text.trim()),
+                          child: Text(tr('ok')),
+                        ),
+                      ],
+                    ),
+                  ],
                 ),
-                actions: [
-                  TextButton(
-                    onPressed: () => Navigator.of(ctx).pop(),
-                    child: Text(tr('cancel')),
-                  ),
-                  FilledButton(
-                    onPressed: () =>
-                        Navigator.of(ctx).pop(nameCtrl.text.trim()),
-                    child: Text(tr('ok')),
-                  ),
-                ],
               ),
             );
             nameCtrl.dispose();
@@ -6703,7 +6528,8 @@ class AppsPageState extends State<AppsPage> {
                     apps.toList(),
                     updateInstalledInfo: false,
                   );
-                  if (!dCtx.mounted) return;
+                  if (!mounted || !dCtx.mounted) return;
+                  clearSelected();
                   Navigator.of(dCtx).pop();
                 },
                 child: Text(tr('save')),
@@ -6715,15 +6541,97 @@ class AppsPageState extends State<AppsPage> {
     );
   }
 
-  // ── Folder manage dialog ────────────────────────────────────────────────────
+  // ── Folder management sheet ─────────────────────────────────────────────────
 
-  void _showFolderManageDialog(BuildContext context) {
-    showAppModalSheet<void>(
+  Future<void> _showFolderManageSheet(
+    BuildContext context, {
+    bool createNewFolder = false,
+    FolderRule? prefillRule,
+  }) async {
+    var creatingFolder = createNewFolder;
+    var newFolderInitialRule = prefillRule;
+    AppFolder? editingFolder;
+    AppFolder? folderPendingDelete;
+    final appsProvider = context.read<AppsProvider>();
+    final sourceProvider = SourceProvider();
+
+    int countRuleMatches(FolderRule rule) {
+      return appsProvider.apps.values
+          .where((app) => app.app.additionalSettings['onDemandOnly'] != true)
+          .where((app) {
+            final resolvedSource = sourceProvider
+                .getSourceTemplate(
+                  app.app.url,
+                  overrideSource: app.app.overrideSource,
+                )
+                .runtimeType
+                .toString();
+            return rule.matches(app.app, resolvedSource: resolvedSource);
+          })
+          .length;
+    }
+
+    await showAppModalSheet<void>(
       context: context,
       builder: (sheetCtx) => StatefulBuilder(
         builder: (sheetCtx, setSheetState) {
           final settingsProvider = sheetCtx.watch<SettingsProvider>();
           final folders = settingsProvider.appFolders;
+
+          Future<void> saveFolder(
+            AppFolder? existing,
+            String name,
+            FolderRule? rule,
+          ) async {
+            hapticSelection();
+            final updatedFolders = List<AppFolder>.from(
+              settingsProvider.appFolders,
+            );
+            final AppFolder savedFolder;
+            if (existing == null) {
+              savedFolder = AppFolder(
+                id: AppFolder.generateId(),
+                name: name,
+                rule: rule,
+              );
+              updatedFolders.add(savedFolder);
+            } else {
+              savedFolder = existing.copyWith(
+                name: name,
+                rule: rule,
+                clearRule: rule == null,
+              );
+              final folderIndex = updatedFolders.indexWhere(
+                (folder) => folder.id == existing.id,
+              );
+              if (folderIndex >= 0) {
+                updatedFolders[folderIndex] = savedFolder;
+              }
+            }
+            settingsProvider.appFolders = updatedFolders;
+            FocusScope.of(sheetCtx).unfocus();
+            setSheetState(() {
+              creatingFolder = false;
+              newFolderInitialRule = null;
+              editingFolder = null;
+            });
+            await _applyFolderRuleToAllApps(savedFolder);
+          }
+
+          Future<void> deleteFolder(AppFolder folder) async {
+            hapticSelection();
+            settingsProvider.appFolders = settingsProvider.appFolders
+                .where((candidate) => candidate.id != folder.id)
+                .toList();
+            settingsProvider.clearFolderViewSettings(folder.id);
+            setSheetState(() {
+              folderPendingDelete = null;
+              if (editingFolder?.id == folder.id) {
+                editingFolder = null;
+              }
+            });
+            await _removeFolderFromAllApps(folder.id);
+          }
 
           return AppSheetContent(
             padding: const EdgeInsets.fromLTRB(16, 4, 16, 16),
@@ -6746,103 +6654,412 @@ class AppsPageState extends State<AppsPage> {
                   shrinkWrap: true,
                   physics: const NeverScrollableScrollPhysics(),
                   itemCount: folders.length,
-                  itemBuilder: (_, i) {
-                    final folder = folders[i];
-                    return ListTile(
-                      leading: const Icon(Icons.folder_outlined),
-                      title: Text(folder.name),
-                      subtitle: folder.rule != null
-                          ? Text(
-                              '${_folderRuleFieldLabel(folder.rule!.field)}'
-                              ' ${_folderRuleMatchLabel(folder.rule!.matchType).toLowerCase()}'
-                              ' "${folder.rule!.value}"',
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                            )
-                          : null,
-                      trailing: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          IconButton(
-                            icon: const Icon(Icons.edit_outlined),
-                            tooltip: tr('editFolder'),
-                            onPressed: () {
-                              Navigator.of(sheetCtx).pop();
-                              _showFolderEditDialog(context, existing: folder);
-                            },
-                          ),
-                          IconButton(
-                            icon: const Icon(Icons.delete_outlined),
-                            tooltip: tr('deleteFolder'),
-                            onPressed: () async {
-                              final confirm = await showDialog<bool>(
-                                context: sheetCtx,
-                                builder: (dCtx) => AlertDialog(
-                                  contentPadding: appDialogContentPadding,
-                                  content: Text(
-                                    tr(
-                                      'deleteFolderConfirm',
-                                      namedArgs: {'name': folder.name},
-                                    ),
-                                  ),
-                                  actions: [
-                                    TextButton(
-                                      onPressed: () =>
-                                          Navigator.of(dCtx).pop(false),
-                                      child: Text(tr('cancel')),
-                                    ),
-                                    FilledButton(
-                                      onPressed: () =>
-                                          Navigator.of(dCtx).pop(true),
-                                      style: FilledButton.styleFrom(
-                                        backgroundColor: Theme.of(
-                                          dCtx,
-                                        ).colorScheme.error,
-                                        foregroundColor: Theme.of(
-                                          dCtx,
-                                        ).colorScheme.onError,
-                                      ),
-                                      child: Text(tr('delete')),
-                                    ),
-                                  ],
+                  itemBuilder: (_, index) {
+                    final folder = folders[index];
+                    final isEditing = editingFolder?.id == folder.id;
+                    final isPendingDelete =
+                        folderPendingDelete?.id == folder.id;
+                    return Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        ListTile(
+                          leading: const Icon(Icons.folder_outlined),
+                          title: Text(folder.name),
+                          subtitle: folder.rule != null
+                              ? Text(
+                                  '${_folderRuleFieldLabel(folder.rule!.field)}'
+                                  ' ${_folderRuleMatchLabel(folder.rule!.matchType).toLowerCase()}'
+                                  ' "${folder.rule!.value}"',
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                )
+                              : null,
+                          trailing: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              IconButton(
+                                icon: Icon(
+                                  isEditing
+                                      ? Icons.expand_less
+                                      : Icons.edit_outlined,
                                 ),
-                              );
-                              if (confirm != true) return;
-                              // ignore: use_build_context_synchronously
-                              if (!context.mounted) return;
-                              final sp = context.read<SettingsProvider>();
-                              final updated = sp.appFolders
-                                  .where((f) => f.id != folder.id)
-                                  .toList();
-                              sp.appFolders = updated;
-                              sp.clearFolderViewSettings(folder.id);
-                              await _removeFolderFromAllApps(folder.id);
-                              if (sheetCtx.mounted) {
-                                setSheetState(() {});
-                              }
-                            },
+                                tooltip: tr('editFolder'),
+                                onPressed: () {
+                                  hapticSelection();
+                                  FocusScope.of(sheetCtx).unfocus();
+                                  setSheetState(() {
+                                    editingFolder = isEditing ? null : folder;
+                                    creatingFolder = false;
+                                    newFolderInitialRule = null;
+                                    folderPendingDelete = null;
+                                  });
+                                },
+                              ),
+                              IconButton(
+                                icon: const Icon(Icons.delete_outlined),
+                                tooltip: tr('deleteFolder'),
+                                onPressed: () {
+                                  hapticSelection();
+                                  FocusScope.of(sheetCtx).unfocus();
+                                  setSheetState(() {
+                                    folderPendingDelete = isPendingDelete
+                                        ? null
+                                        : folder;
+                                    editingFolder = null;
+                                    creatingFolder = false;
+                                    newFolderInitialRule = null;
+                                  });
+                                },
+                              ),
+                            ],
                           ),
-                        ],
-                      ),
+                        ),
+                        SizedBox(
+                          width: double.infinity,
+                          child: AnimatedSize(
+                            duration: const Duration(milliseconds: 220),
+                            curve: Curves.easeInOutCubic,
+                            alignment: Alignment.topCenter,
+                            child: isEditing
+                                ? Padding(
+                                    padding: const EdgeInsets.fromLTRB(
+                                      16,
+                                      4,
+                                      16,
+                                      16,
+                                    ),
+                                    child: _InlineFolderEditor(
+                                      key: ValueKey('edit-${folder.id}'),
+                                      existing: folder,
+                                      countRuleMatches: countRuleMatches,
+                                      folderRuleFieldLabel:
+                                          _folderRuleFieldLabel,
+                                      folderRuleMatchLabel:
+                                          _folderRuleMatchLabel,
+                                      onCancel: () {
+                                        FocusScope.of(sheetCtx).unfocus();
+                                        setSheetState(() {
+                                          editingFolder = null;
+                                        });
+                                      },
+                                      onSave: (name, rule) =>
+                                          saveFolder(folder, name, rule),
+                                    ),
+                                  )
+                                : isPendingDelete
+                                ? Padding(
+                                    padding: const EdgeInsets.fromLTRB(
+                                      16,
+                                      4,
+                                      16,
+                                      16,
+                                    ),
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.stretch,
+                                      children: [
+                                        Text(
+                                          tr(
+                                            'deleteFolderConfirm',
+                                            namedArgs: {'name': folder.name},
+                                          ),
+                                        ),
+                                        const SizedBox(height: 12),
+                                        OverflowBar(
+                                          alignment: MainAxisAlignment.end,
+                                          spacing: 8,
+                                          children: [
+                                            TextButton(
+                                              onPressed: () {
+                                                setSheetState(() {
+                                                  folderPendingDelete = null;
+                                                });
+                                              },
+                                              child: Text(tr('cancel')),
+                                            ),
+                                            FilledButton(
+                                              onPressed: () {
+                                                unawaited(
+                                                  deleteFolder(folder),
+                                                );
+                                              },
+                                              style: FilledButton.styleFrom(
+                                                backgroundColor: Theme.of(
+                                                  sheetCtx,
+                                                ).colorScheme.error,
+                                                foregroundColor: Theme.of(
+                                                  sheetCtx,
+                                                ).colorScheme.onError,
+                                              ),
+                                              child: Text(tr('delete')),
+                                            ),
+                                          ],
+                                        ),
+                                      ],
+                                    ),
+                                  )
+                                : const SizedBox.shrink(),
+                          ),
+                        ),
+                      ],
                     );
                   },
                 ),
               const SizedBox(height: 8),
               SizedBox(
                 width: double.infinity,
-                child: FilledButton.icon(
+                child: OutlinedButton.icon(
                   onPressed: () {
-                    Navigator.of(sheetCtx).pop();
-                    _showFolderEditDialog(context);
+                    hapticSelection();
+                    final shouldExpand = !creatingFolder;
+                    FocusScope.of(sheetCtx).unfocus();
+                    setSheetState(() {
+                      creatingFolder = shouldExpand;
+                      newFolderInitialRule = null;
+                      editingFolder = null;
+                      folderPendingDelete = null;
+                    });
                   },
-                  icon: const Icon(Icons.create_new_folder_outlined),
+                  icon: Icon(
+                    creatingFolder
+                        ? Icons.expand_less
+                        : Icons.create_new_folder_outlined,
+                  ),
                   label: Text(tr('newFolder')),
+                ),
+              ),
+              SizedBox(
+                width: double.infinity,
+                child: AnimatedSize(
+                  duration: const Duration(milliseconds: 220),
+                  curve: Curves.easeInOutCubic,
+                  alignment: Alignment.topCenter,
+                  child: creatingFolder
+                      ? Padding(
+                          padding: const EdgeInsets.only(top: 12),
+                          child: _InlineFolderEditor(
+                            key: const ValueKey('new-folder'),
+                            initialRule: newFolderInitialRule,
+                            countRuleMatches: countRuleMatches,
+                            folderRuleFieldLabel: _folderRuleFieldLabel,
+                            folderRuleMatchLabel: _folderRuleMatchLabel,
+                            onCancel: () {
+                              FocusScope.of(sheetCtx).unfocus();
+                              setSheetState(() {
+                                creatingFolder = false;
+                                newFolderInitialRule = null;
+                              });
+                            },
+                            onSave: (name, rule) =>
+                                saveFolder(null, name, rule),
+                          ),
+                        )
+                      : const SizedBox.shrink(),
                 ),
               ),
             ],
           );
         },
       ),
+    );
+  }
+}
+
+class _InlineFolderEditor extends StatefulWidget {
+  const _InlineFolderEditor({
+    super.key,
+    required this.countRuleMatches,
+    required this.folderRuleFieldLabel,
+    required this.folderRuleMatchLabel,
+    required this.onCancel,
+    required this.onSave,
+    this.existing,
+    this.initialRule,
+  });
+
+  final AppFolder? existing;
+  final FolderRule? initialRule;
+  final int Function(FolderRule rule) countRuleMatches;
+  final String Function(FolderRuleField field) folderRuleFieldLabel;
+  final String Function(FolderRuleMatchType match) folderRuleMatchLabel;
+  final VoidCallback onCancel;
+  final Future<void> Function(String name, FolderRule? rule) onSave;
+
+  @override
+  State<_InlineFolderEditor> createState() => _InlineFolderEditorState();
+}
+
+class _InlineFolderEditorState extends State<_InlineFolderEditor> {
+  late final TextEditingController _nameController;
+  late final TextEditingController _ruleValueController;
+  late bool _ruleEnabled;
+  late FolderRuleField _ruleField;
+  late FolderRuleMatchType _ruleMatch;
+
+  @override
+  void initState() {
+    super.initState();
+    final initialRule = widget.existing?.rule ?? widget.initialRule;
+    _nameController = TextEditingController(text: widget.existing?.name ?? '');
+    _ruleValueController = TextEditingController(
+      text: initialRule?.value ?? '',
+    );
+    _ruleEnabled = initialRule != null;
+    _ruleField = initialRule?.field ?? FolderRuleField.name;
+    _ruleMatch = initialRule?.matchType ?? FolderRuleMatchType.contains;
+  }
+
+  @override
+  void dispose() {
+    _nameController.dispose();
+    _ruleValueController.dispose();
+    super.dispose();
+  }
+
+  FolderRule? get _folderRule {
+    final value = _ruleValueController.text.trim();
+    if (!_ruleEnabled || value.isEmpty) return null;
+    return FolderRule(field: _ruleField, matchType: _ruleMatch, value: value);
+  }
+
+  Future<void> _saveFolder() async {
+    final name = _nameController.text.trim();
+    if (name.isEmpty) return;
+    await widget.onSave(name, _folderRule);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final rule = _folderRule;
+    final matchCount = rule == null ? null : widget.countRuleMatches(rule);
+    final canSave = _nameController.text.trim().isNotEmpty;
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        TextField(
+          controller: _nameController,
+          maxLength: _maxFolderNameLength,
+          autofocus: true,
+          textCapitalization: TextCapitalization.words,
+          decoration: appPageOutlinedInputDecoration(
+            context,
+            labelText: tr('folderName'),
+          ),
+          onChanged: (_) => setState(() {}),
+        ),
+        const SizedBox(height: 8),
+        Row(
+          children: [
+            Expanded(
+              child: Text(
+                tr('folderRule'),
+                style: Theme.of(context).textTheme.titleSmall,
+              ),
+            ),
+            Switch(
+              value: _ruleEnabled,
+              onChanged: (value) {
+                setState(() {
+                  _ruleEnabled = value;
+                });
+              },
+            ),
+          ],
+        ),
+        if (_ruleEnabled) ...[
+          const SizedBox(height: 8),
+          PopupMenuButton<FolderRuleField>(
+            initialValue: _ruleField,
+            onSelected: (value) {
+              setState(() {
+                _ruleField = value;
+              });
+            },
+            itemBuilder: (_) => FolderRuleField.values
+                .map(
+                  (field) => PopupMenuItem(
+                    value: field,
+                    child: Text(widget.folderRuleFieldLabel(field)),
+                  ),
+                )
+                .toList(),
+            child: InputDecorator(
+              decoration:
+                  appPageOutlinedInputDecoration(
+                    context,
+                    labelText: tr('folderRuleField'),
+                  ).copyWith(
+                    suffixIcon: const Icon(Icons.arrow_drop_down),
+                    contentPadding: const EdgeInsets.fromLTRB(12, 16, 4, 16),
+                  ),
+              child: Text(widget.folderRuleFieldLabel(_ruleField)),
+            ),
+          ),
+          const SizedBox(height: 8),
+          PopupMenuButton<FolderRuleMatchType>(
+            initialValue: _ruleMatch,
+            onSelected: (value) {
+              setState(() {
+                _ruleMatch = value;
+              });
+            },
+            itemBuilder: (_) => FolderRuleMatchType.values
+                .map(
+                  (match) => PopupMenuItem(
+                    value: match,
+                    child: Text(widget.folderRuleMatchLabel(match)),
+                  ),
+                )
+                .toList(),
+            child: InputDecorator(
+              decoration:
+                  appPageOutlinedInputDecoration(
+                    context,
+                    labelText: tr('folderRuleMatch'),
+                  ).copyWith(
+                    suffixIcon: const Icon(Icons.arrow_drop_down),
+                    contentPadding: const EdgeInsets.fromLTRB(12, 16, 4, 16),
+                  ),
+              child: Text(widget.folderRuleMatchLabel(_ruleMatch)),
+            ),
+          ),
+          const SizedBox(height: 8),
+          TextField(
+            controller: _ruleValueController,
+            decoration:
+                appPageOutlinedInputDecoration(
+                  context,
+                  labelText: tr('folderRuleValue'),
+                ).copyWith(
+                  helperText: matchCount == null
+                      ? null
+                      : tr(
+                          'ruleMatchesXApps',
+                          namedArgs: {'count': '$matchCount'},
+                        ),
+                ),
+            onChanged: (_) => setState(() {}),
+          ),
+        ],
+        const SizedBox(height: 12),
+        OverflowBar(
+          alignment: MainAxisAlignment.end,
+          spacing: 8,
+          children: [
+            TextButton(onPressed: widget.onCancel, child: Text(tr('cancel'))),
+            FilledButton.icon(
+              onPressed: canSave
+                  ? () {
+                      unawaited(_saveFolder());
+                    }
+                  : null,
+              icon: const Icon(Icons.save_outlined),
+              label: Text(tr('save')),
+            ),
+          ],
+        ),
+      ],
     );
   }
 }

@@ -24,6 +24,7 @@ import 'package:obtainium/theme/app_form_field_styles.dart';
 import 'package:obtainium/theme/app_page_icon_colors.dart';
 import 'package:obtainium/theme/app_theme_accent.dart';
 import 'package:obtainium/custom_errors.dart';
+import 'package:obtainium/date_time_format.dart';
 import 'package:obtainium/main.dart';
 import 'package:obtainium/pages/apps.dart';
 import 'package:obtainium/pages/settings.dart';
@@ -2231,18 +2232,7 @@ class _AppPageState extends State<AppPage> with WidgetsBindingObserver {
     String formatCheckedAtTimestamp(BuildContext ctx, DateTime dateTime) {
       final local = dateTime.toLocal();
       final materialLocalizations = MaterialLocalizations.of(ctx);
-      final datePattern = materialLocalizations.dateHelpText.toLowerCase();
-      final monthPosition = datePattern.indexOf('m');
-      final dayPosition = datePattern.indexOf('d');
-      final monthComesFirst = monthPosition < 0 ||
-          dayPosition < 0 ||
-          monthPosition < dayPosition;
-      final month = local.month.toString().padLeft(2, '0');
-      final day = local.day.toString().padLeft(2, '0');
-      final monthAndDay = monthComesFirst ? '$month-$day' : '$day-$month';
-      final date = local.year == DateTime.now().year
-          ? monthAndDay
-          : '${local.year}-$monthAndDay';
+      final date = formatDeviceOrderedNumericDate(ctx, local);
       final time = materialLocalizations.formatTimeOfDay(
         TimeOfDay.fromDateTime(local),
         alwaysUse24HourFormat:
