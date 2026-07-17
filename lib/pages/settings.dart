@@ -211,9 +211,8 @@ class _SettingsPageState extends State<SettingsPage> {
     child: Text(text, style: Theme.of(context).textTheme.labelSmall),
   );
 
-  Widget _fieldTile(BuildContext context, Widget field) => CardTile(
+  Widget _fieldTile(BuildContext context, Widget field) => ConnectedCard(
     color: Theme.of(context).colorScheme.surfaceContainerHighest,
-    padding: EdgeInsets.zero,
     child: field,
   );
 

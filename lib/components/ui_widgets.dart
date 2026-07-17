@@ -423,20 +423,22 @@ Widget _wrapChildWithRadius(Widget w, BorderRadius radius) {
     );
   }
   if (w is ToggleTile) {
-    return ToggleTile(
-      key: w.key,
-      label: w.label,
-      value: w.value,
-      onChanged: w.onChanged,
-      subtitle: w.subtitle,
-      borderRadius: radius,
-      helpWidgets: w.helpWidgets,
+    final r = radius;
+    final isFirst = r.topLeft.x == connectedTileBigRadius;
+    final isLast = r.bottomLeft.x == connectedTileBigRadius;
+    return ConnectedCard(
+      isFirst: isFirst,
+      isLast: isLast,
+      child: w,
     );
   }
   if (w is ConnectedCard) {
+    final r = radius;
+    final isFirst = r.topLeft.x == connectedTileBigRadius;
+    final isLast = r.bottomLeft.x == connectedTileBigRadius;
     return ConnectedCard(
-      isFirst: radius.topLeft == Radius.zero ? false : true,
-      isLast: radius.bottomRight == Radius.zero ? false : true,
+      isFirst: isFirst,
+      isLast: isLast,
       color: w.color,
       padding: w.padding,
       child: w.child,
@@ -500,7 +502,6 @@ class ToggleTile extends StatelessWidget {
   final bool value;
   final ValueChanged<bool>? onChanged;
   final Widget? subtitle;
-  final BorderRadius? borderRadius;
   final List<Widget> helpWidgets;
 
   const ToggleTile({
@@ -509,41 +510,32 @@ class ToggleTile extends StatelessWidget {
     required this.value,
     required this.onChanged,
     this.subtitle,
-    this.borderRadius,
     this.helpWidgets = const [],
   });
 
   @override
   Widget build(BuildContext context) {
-    final tileShape = borderRadius != null
-        ? RoundedSuperellipseBorder(borderRadius: borderRadius!)
-        : null;
-    return CardTile(
-      padding: EdgeInsets.zero,
-      borderRadius: borderRadius,
-      child: ListTile(
-        contentPadding: const EdgeInsets.symmetric(horizontal: 20),
-        shape: tileShape,
-        title: Text(label),
-        subtitle: subtitle,
-        trailing: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            if (helpWidgets.isNotEmpty)
-              IconButton(
-                icon: const Icon(Icons.help_outline),
-                tooltip: tr('about'),
-                onPressed: () =>
-                    showHelpDialog(context, title: label, content: helpWidgets),
-              ),
-            Switch(
-              value: value,
-              onChanged: onChanged == null
-                  ? null
-                  : hapticSwitchOnChanged(context, onChanged!),
+    return ListTile(
+      contentPadding: const EdgeInsets.symmetric(horizontal: 20),
+      title: Text(label),
+      subtitle: subtitle,
+      trailing: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          if (helpWidgets.isNotEmpty)
+            IconButton(
+              icon: const Icon(Icons.help_outline),
+              tooltip: tr('about'),
+              onPressed: () =>
+                  showHelpDialog(context, title: label, content: helpWidgets),
             ),
-          ],
-        ),
+          Switch(
+            value: value,
+            onChanged: onChanged == null
+                ? null
+                : hapticSwitchOnChanged(context, onChanged!),
+          ),
+        ],
       ),
     );
   }

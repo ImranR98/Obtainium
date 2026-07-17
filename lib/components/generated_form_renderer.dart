@@ -140,40 +140,6 @@ class _TvTextFieldFocusState extends State<TvTextFieldFocus> {
   }
 }
 
-class _FormSwitchRow extends StatelessWidget {
-  const _FormSwitchRow({
-    required this.item,
-    required this.value,
-    required this.onChanged,
-  });
-
-  final GeneratedFormSwitch item;
-  final bool value;
-  final ValueChanged<bool>? onChanged;
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        Flexible(
-          child: Text(
-            tr(item.label),
-            style: Theme.of(context).textTheme.bodyLarge,
-          ),
-        ),
-        const SizedBox(width: 8),
-        Switch(
-          value: value,
-          onChanged: item.disabled
-              ? null
-              : hapticSwitchOnChanged(context, onChanged!),
-        ),
-      ],
-    );
-  }
-}
-
 class _GeneratedFormState extends State<GeneratedForm> {
   Map<String, dynamic> values = {};
   late List<List<Widget>> formInputs;
@@ -538,8 +504,8 @@ class _GeneratedFormState extends State<GeneratedForm> {
         final item = widget.items[r][e];
         final String fieldKey = item.key;
         if (item is GeneratedFormSwitch) {
-          renderedInputs[r][e] = _FormSwitchRow(
-            item: item,
+          renderedInputs[r][e] = ToggleTile(
+            label: tr(item.label),
             value: values[fieldKey] as bool,
             onChanged: item.disabled
                 ? null
@@ -590,9 +556,6 @@ class _GeneratedFormState extends State<GeneratedForm> {
             color: isFieldRow(r)
                 ? colorScheme.surfaceContainerHighest
                 : colorScheme.surfaceContainerLow,
-            padding: isFieldRow(r)
-                ? null
-                : const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
             child: inputRowWidgets[r],
           ),
         );
