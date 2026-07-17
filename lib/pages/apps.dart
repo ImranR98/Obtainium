@@ -1,5 +1,6 @@
 import 'dart:async' show Timer, unawaited;
 import 'dart:convert';
+import 'dart:math' as math;
 
 import 'package:animations/animations.dart';
 import 'package:easy_localization/easy_localization.dart' hide TextDirection;
@@ -9,8 +10,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart'
     show
         PaintingContext,
+        PipelineOwner,
         ScrollCacheExtent,
         RenderSliverMainAxisGroup,
+        RenderProxySliver,
+        SliverConstraints,
+        SliverGeometry,
+        LayerHandle,
+        ClipRectLayer,
         SliverPhysicalParentData,
         RenderSliver;
 import 'package:flutter/services.dart';
@@ -140,14 +147,6 @@ String visibilityFilterChipLabel(String label, CategoryFilterIntent intent) {
   };
 }
 
-/// Group header strip: stronger primary tint than rows; when luminance matches
-/// row fill (common with Material You), nudge toward [surfaceBright] so the
-/// header still reads as its own band.
-Color _appsListGroupHeaderColor(ColorScheme scheme) {
-  if (scheme.usesPureBlackBackgrounds) return Colors.black;
-  return Color.lerp(scheme.secondaryContainer, scheme.primaryContainer, 0.30)!;
-}
-
 const Duration _appsGroupHeaderTransitionDuration = Duration(milliseconds: 300);
 const Curve _appsGroupTransitionCurve = Curves.easeInOutCubicEmphasized;
 
@@ -171,10 +170,14 @@ class _AppsGroupHeaderDelegate extends SliverPersistentHeaderDelegate {
   });
 
   @override
-  double get minExtent => SettingsProvider.collapsedHeaderHeight + 6.0;
+  double get minExtent =>
+      SettingsProvider.collapsedHeaderHeight +
+      SettingsProvider.collapsedHeaderGap;
 
   @override
-  double get maxExtent => SettingsProvider.collapsedHeaderHeight + 6.0;
+  double get maxExtent =>
+      SettingsProvider.collapsedHeaderHeight +
+      SettingsProvider.collapsedHeaderGap;
 
   @override
   Widget build(
@@ -199,13 +202,18 @@ class _AppsGroupHeaderDelegate extends SliverPersistentHeaderDelegate {
           );
 
     return Padding(
-      padding: const EdgeInsets.fromLTRB(12, 6, 12, 0),
+      padding: const EdgeInsets.fromLTRB(
+        12,
+        SettingsProvider.collapsedHeaderGap,
+        12,
+        0,
+      ),
       child: Material(
         elevation: 3,
         shadowColor: colorScheme.shadow.withAlpha(100),
         surfaceTintColor: colorScheme.surfaceTint,
         shape: shape,
-        color: _appsListGroupHeaderColor(colorScheme),
+        color: m3eCollapsedGroupHeaderFill(colorScheme),
         clipBehavior: Clip.antiAlias,
         child: InkWell(
           onTap: onTap,
@@ -318,8 +326,10 @@ class _RenderZOrderSliverMainAxisGroup extends RenderSliverMainAxisGroup {
       final RenderSliver first = children[0];
       final SliverPhysicalParentData firstParentData =
           first.parentData! as SliverPhysicalParentData;
-      // Visual top of the header card within the group's coordinate space (adding 6.0 for top padding).
-      headerTop = firstParentData.paintOffset.dy + 6.0;
+      // Visual top of the header card within the group's coordinate space.
+      headerTop =
+          firstParentData.paintOffset.dy +
+          SettingsProvider.collapsedHeaderGap;
     }
 
     // Paint all content slivers first (from index 1 to N-1)
@@ -360,6 +370,253 @@ class _RenderZOrderSliverMainAxisGroup extends RenderSliverMainAxisGroup {
         context.paintChild(first, offset + childParentData.paintOffset);
       }
     }
+  }
+}
+
+typedef _AnimatedAppsGroupItemBuilder =
+    Widget Function(BuildContext context, int index);
+
+class _AnimatedAppsGroupBody extends StatefulWidget {
+  const _AnimatedAppsGroupBody({
+    super.key,
+    required this.expanded,
+    required this.itemCount,
+    required this.itemBuilder,
+  });
+
+  final bool expanded;
+  final int itemCount;
+  final _AnimatedAppsGroupItemBuilder itemBuilder;
+
+  @override
+  State<_AnimatedAppsGroupBody> createState() =>
+      _AnimatedAppsGroupBodyState();
+}
+
+class _AnimatedAppsGroupBodyState extends State<_AnimatedAppsGroupBody>
+    with SingleTickerProviderStateMixin {
+  static const Duration _expandDuration = Duration(milliseconds: 360);
+  static const Duration _collapseDuration = Duration(milliseconds: 250);
+
+  late final AnimationController _controller;
+  late final CurvedAnimation _factor;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: _expandDuration,
+      reverseDuration: _collapseDuration,
+      value: widget.expanded ? 1.0 : 0.0,
+    );
+    // A single, idempotent 0..1 reveal factor drives the whole group body as
+    // one unit (see [_SliverCollapseReveal]). Re-toggling mid-flight just
+    // redirects THIS controller from its current value — it can never stack
+    // overlapping per-item insert/remove transitions the way the old
+    // SliverAnimatedList did, which is what let rapid header taps fan the tiles
+    // out into "helicopter blade" ghost rows.
+    _factor = CurvedAnimation(
+      parent: _controller,
+      curve: Curves.easeInOutCubicEmphasized,
+      reverseCurve: Curves.easeOutCubic,
+    );
+  }
+
+  @override
+  void didUpdateWidget(covariant _AnimatedAppsGroupBody oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.expanded != oldWidget.expanded) {
+      if (widget.expanded) {
+        _controller.forward();
+      } else {
+        _controller.reverse();
+      }
+    }
+  }
+
+  @override
+  void dispose() {
+    _factor.dispose();
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return _SliverCollapseReveal(
+      factor: _factor,
+      sliver: SliverList(
+        delegate: SliverChildBuilderDelegate(
+          widget.itemBuilder,
+          childCount: widget.itemCount,
+        ),
+      ),
+    );
+  }
+}
+
+/// Reveals/collapses a lazy child sliver as ONE unit by scaling its reported
+/// extents (and clipping its paint) by a single [factor] animation — a
+/// sliver-level equivalent of [SizeTransition], but for a `SliverList` instead
+/// of a box.
+///
+/// Why not animate each tile in/out individually: a per-item approach uses
+/// imperative, non-cancellable insert/remove animations, so interrupting a
+/// collapse with an expand (rapid header taps) leaves both sets of transitions
+/// in flight at once and their half-sized rows show through as ghosts. A single
+/// re-targetable factor has no such state to desync.
+///
+/// Laziness is preserved: when fully collapsed the child is laid out with zero
+/// remaining extent so a `SliverList` builds no tiles (important when many
+/// groups are collapsed simultaneously); only the group actually
+/// expanding/animating builds the tiles the viewport needs.
+class _SliverCollapseReveal extends SingleChildRenderObjectWidget {
+  const _SliverCollapseReveal({required this.factor, required Widget sliver})
+    : super(child: sliver);
+
+  final Animation<double> factor;
+
+  @override
+  RenderObject createRenderObject(BuildContext context) {
+    return _RenderSliverCollapseReveal(factor: factor);
+  }
+
+  @override
+  void updateRenderObject(
+    BuildContext context,
+    covariant _RenderSliverCollapseReveal renderObject,
+  ) {
+    renderObject.factor = factor;
+  }
+}
+
+class _RenderSliverCollapseReveal extends RenderProxySliver {
+  _RenderSliverCollapseReveal({required this._factor});
+
+  // Plain field + explicit setter (not `final`): the setter re-wires the
+  // relayout listener when the widget hands us a new animation instance.
+  Animation<double> _factor;
+  Animation<double> get factor => _factor;
+  set factor(Animation<double> value) {
+    if (identical(_factor, value)) return;
+    if (attached) _factor.removeListener(markNeedsLayout);
+    _factor = value;
+    if (attached) _factor.addListener(markNeedsLayout);
+    markNeedsLayout();
+  }
+
+  final LayerHandle<ClipRectLayer> _clipHandle = LayerHandle<ClipRectLayer>();
+
+  @override
+  void attach(PipelineOwner owner) {
+    super.attach(owner);
+    _factor.addListener(markNeedsLayout);
+  }
+
+  @override
+  void detach() {
+    _factor.removeListener(markNeedsLayout);
+    super.detach();
+  }
+
+  @override
+  void dispose() {
+    _clipHandle.layer = null;
+    super.dispose();
+  }
+
+  @override
+  void performLayout() {
+    final SliverConstraints constraints = this.constraints;
+    final double f = _factor.value.clamp(0.0, 1.0).toDouble();
+
+    if (f <= 0.0) {
+      // Fully collapsed: starve the child of room so a lazy SliverList builds
+      // no tiles, and occupy no space in the scroll.
+      child!.layout(
+        constraints.copyWith(
+          remainingPaintExtent: 0.0,
+          remainingCacheExtent: 0.0,
+          overlap: 0.0,
+        ),
+        parentUsesSize: true,
+      );
+      geometry = SliverGeometry.zero;
+      return;
+    }
+
+    child!.layout(constraints, parentUsesSize: true);
+    final SliverGeometry childGeometry = child!.geometry!;
+
+    if (f >= 1.0) {
+      geometry = childGeometry;
+      return;
+    }
+
+    // Uniformly shrink the child's extents by the reveal factor. Because
+    // layoutExtent scales too, the slivers below slide up/down smoothly as the
+    // group grows/collapses.
+    final double paintExtent = math.min(
+      childGeometry.paintExtent * f,
+      constraints.remainingPaintExtent,
+    );
+    final double layoutExtent = math.min(
+      childGeometry.layoutExtent * f,
+      paintExtent,
+    );
+    geometry = SliverGeometry(
+      scrollExtent: childGeometry.scrollExtent * f,
+      paintExtent: paintExtent,
+      layoutExtent: layoutExtent,
+      maxPaintExtent: childGeometry.maxPaintExtent * f,
+      hasVisualOverflow: true,
+      cacheExtent: childGeometry.cacheExtent,
+    );
+  }
+
+  @override
+  void paint(PaintingContext context, Offset offset) {
+    if (child == null || geometry == null || !geometry!.visible) {
+      _clipHandle.layer = null;
+      return;
+    }
+    final double f = _factor.value.clamp(0.0, 1.0).toDouble();
+    if (f >= 1.0) {
+      _clipHandle.layer = null;
+      context.paintChild(child!, offset);
+      return;
+    }
+    // The child paints its tiles top-anchored from the sliver origin; clip to
+    // the revealed extent so tiles are hidden from the bottom up (matching a
+    // top-aligned SizeTransition).
+    final double paintExtent = geometry!.paintExtent;
+    final Rect clipRect;
+    switch (constraints.axis) {
+      case Axis.vertical:
+        clipRect = Rect.fromLTWH(
+          0,
+          0,
+          constraints.crossAxisExtent,
+          paintExtent,
+        );
+      case Axis.horizontal:
+        clipRect = Rect.fromLTWH(
+          0,
+          0,
+          paintExtent,
+          constraints.crossAxisExtent,
+        );
+    }
+    _clipHandle.layer = context.pushClipRect(
+      needsCompositing,
+      offset,
+      clipRect,
+      (PaintingContext context, Offset offset) =>
+          context.paintChild(child!, offset),
+      clipBehavior: Clip.hardEdge,
+      oldLayer: _clipHandle.layer,
+    );
   }
 }
 
@@ -3854,9 +4111,9 @@ class AppsPageState extends State<AppsPage> {
               },
             ),
           ),
-          if (isExpanded && matchingIndices.isNotEmpty)
+          if (matchingIndices.isNotEmpty)
             SliverPadding(
-              padding: const EdgeInsets.fromLTRB(12, 0, 12, 6),
+              padding: const EdgeInsets.symmetric(horizontal: 12),
               sliver: DecoratedSliver(
                 decoration: BoxDecoration(
                   color: settingsProvider.useGradientBackground
@@ -3880,15 +4137,21 @@ class AppsPageState extends State<AppsPage> {
                     ),
                   ),
                 ),
-                sliver: SliverPadding(
-                  padding: const EdgeInsets.only(top: kM3eHeaderToFirstCardGap),
-                  sliver: SliverList(
-                    delegate: SliverChildBuilderDelegate((context, index) {
-                      final int tileIndex = index ~/ 2;
-                      if (index.isOdd) {
-                        return const SizedBox(height: kM3eItemGap);
-                      }
-                      return getSingleAppHorizTile(
+                sliver: _AnimatedAppsGroupBody(
+                  key: ValueKey('${groupKey}_body'),
+                  expanded: isExpanded,
+                  itemCount: matchingIndices.length,
+                  itemBuilder: (context, tileIndex) {
+                    return Padding(
+                      padding: EdgeInsets.only(
+                        top: tileIndex == 0
+                            ? kM3eHeaderToFirstCardGap
+                            : kM3eItemGap,
+                        bottom: tileIndex == matchingIndices.length - 1
+                            ? SettingsProvider.collapsedHeaderGap
+                            : 0,
+                      ),
+                      child: getSingleAppHorizTile(
                         matchingIndices[tileIndex],
                         groupPosition: matchingIndices.length == 1
                             ? M3eListGroupPosition.only
@@ -3897,9 +4160,9 @@ class AppsPageState extends State<AppsPage> {
                             : tileIndex == matchingIndices.length - 1
                             ? M3eListGroupPosition.last
                             : M3eListGroupPosition.middle,
-                      );
-                    }, childCount: matchingIndices.length * 2 - 1),
-                  ),
+                      ),
+                    );
+                  },
                 ),
               ),
             ),

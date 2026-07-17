@@ -390,6 +390,7 @@ class HomePageState extends State<HomePage> {
     if (!mounted) {
       return;
     }
+    FocusManager.instance.primaryFocus?.unfocus();
 
     pageSwitchRequestId += 1;
     final int currentRequestId = pageSwitchRequestId;
@@ -473,6 +474,10 @@ class HomePageState extends State<HomePage> {
         if (currentKey is GlobalKey<AddAppPageState>) {
           final AddAppPageState? addAppPageState = currentKey.currentState;
           if (addAppPageState != null) {
+            // The nested Add App PopScope owns back navigation while its
+            // launcher is showing an inline flow. Handling the same event here
+            // would open a second discard dialog and then switch tabs.
+            if (addAppPageState.hasInlineLauncherFlow) return;
             if (!await addAppPageState.confirmCancelBulkScanForNavigation()) {
               return;
             }

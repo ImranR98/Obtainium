@@ -3,9 +3,9 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:easy_localization/easy_localization.dart' hide TextDirection;
+import 'package:expressive_loading_indicator/expressive_loading_indicator.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart' show ScrollCacheExtent;
-import 'package:obtainium/app_sources/fdroidrepo.dart';
 import 'package:obtainium/components/rippling_wavy_progress/linear.dart';
 import 'package:obtainium/components/app_dropdown_field.dart';
 import 'package:obtainium/components/custom_app_bar.dart';
@@ -318,107 +318,6 @@ class _ImportExportPageState extends State<ImportExportPage> {
       }
     }
 
-    void runSourceSearch(AppSource source) {
-      () async {
-            final values = await showDialog<Map<String, dynamic>?>(
-              context: context,
-              builder: (BuildContext ctx) {
-                return GeneratedFormModal(
-                  title: tr('searchX', args: [source.name]),
-                  items: [
-                    [
-                      GeneratedFormTextField(
-                        'searchQuery',
-                        label: tr('searchQuery'),
-                        required: source.name != FDroidRepo().name,
-                      ),
-                    ],
-                    ...source.searchQuerySettingFormItems.map((e) => [e]),
-                    [
-                      GeneratedFormTextField(
-                        'url',
-                        label: source.hosts.isNotEmpty
-                            ? tr('overrideSource')
-                            : plural('url', 1).substring(2),
-                        value: source.hosts.isNotEmpty ? source.hosts[0] : '',
-                        required: true,
-                      ),
-                    ],
-                  ],
-                );
-              },
-            );
-            if (values != null) {
-              setState(() {
-                importInProgress = true;
-              });
-              if (source.hosts.isEmpty || values['url'] != source.hosts[0]) {
-                source = sourceProvider.getSource(
-                  values['url'],
-                  overrideSource: source.runtimeType.toString(),
-                );
-              }
-              final urlsWithDescriptions = await source.search(
-                values['searchQuery'] as String,
-                querySettings: values,
-              );
-              if (urlsWithDescriptions.isNotEmpty) {
-                if (!context.mounted) return;
-                final selectedUrls = await showDialog<List<String>?>(
-                  context: context,
-                  builder: (BuildContext ctx) {
-                    return SelectionModal(
-                      entries: urlsWithDescriptions,
-                      selectedByDefault: false,
-                    );
-                  },
-                );
-                if (selectedUrls != null && selectedUrls.isNotEmpty) {
-                  final errors = await appsProvider.addAppsByURL(
-                    selectedUrls,
-                    sourceOverride: source,
-                  );
-                  if (!context.mounted) return;
-                  if (errors.isEmpty) {
-                    showMessage(
-                      tr(
-                        'importedX',
-                        args: [
-                          plural('apps', selectedUrls.length).toLowerCase(),
-                        ],
-                      ),
-                      context,
-                    );
-                  } else {
-                    unawaited(
-                      showDialog(
-                        context: context,
-                        builder: (BuildContext ctx) {
-                          return ImportErrorDialog(
-                            urlsLength: selectedUrls.length,
-                            errors: errors,
-                          );
-                        },
-                      ),
-                    );
-                  }
-                }
-              } else {
-                throw ObtainiumError(tr('noResults'));
-              }
-            }
-          }()
-          .catchError((e) {
-            if (!context.mounted) return;
-            showError(e, context);
-          })
-          .whenComplete(() {
-            setState(() {
-              importInProgress = false;
-            });
-          });
-    }
-
     void runMassSourceImport(MassAppUrlSource source) {
       () async {
             final values = await showDialog<Map<String, dynamic>?>(
@@ -483,11 +382,6 @@ class _ImportExportPageState extends State<ImportExportPage> {
             });
           });
     }
-
-    final sourceStrings = <String, List<String>>{};
-    sourceProvider.sourceTemplates.where((e) => e.canSearch).forEach((s) {
-      sourceStrings[s.name] = [s.name];
-    });
 
     final ColorScheme impScheme = Theme.of(context).colorScheme;
 
@@ -589,43 +483,6 @@ class _ImportExportPageState extends State<ImportExportPage> {
     }
 
     final List<Widget> batchImportCells = [
-      TextButton(
-        style: outlineButtonStyle,
-        onPressed: importInProgress
-            ? null
-            : () async {
-                final searchSourceName =
-                    await showDialog<List<String>?>(
-                      context: context,
-                      builder: (BuildContext ctx) {
-                        return SelectionModal(
-                          title: tr(
-                            'selectX',
-                            args: [tr('source').toLowerCase()],
-                          ),
-                          entries: sourceStrings,
-                          selectedByDefault: false,
-                          onlyOneSelectionAllowed: true,
-                          titlesAreLinks: false,
-                        );
-                      },
-                    ) ??
-                    [];
-                final searchSource = sourceProvider.sources
-                    .where((e) => searchSourceName.contains(e.name))
-                    .toList();
-                if (searchSource.isNotEmpty) {
-                  runSourceSearch(searchSource[0]);
-                }
-              },
-        child: Text(
-          tr('searchX', args: [lowerCaseIfEnglish(tr('source'))]),
-          textAlign: TextAlign.center,
-          maxLines: 2,
-          overflow: TextOverflow.ellipsis,
-          style: Theme.of(context).textTheme.labelLarge?.copyWith(fontSize: 13),
-        ),
-      ),
       TextButton(
         style: outlineButtonStyle,
         onPressed: importInProgress ? null : urlListImport,
@@ -1162,6 +1019,7 @@ class SelectionModal extends StatefulWidget {
     this.deselectThese = const [],
     this.presentAsBottomSheet = false,
     this.showFilterField = true,
+    this.onSubmitSelection,
   });
 
   String? title;
@@ -1177,6 +1035,10 @@ class SelectionModal extends StatefulWidget {
   /// When false, the regex filter field is hidden (for short lists such as searchable sources).
   bool showFilterField;
 
+  /// Runs before a bottom-sheet selection is dismissed. Returning true closes
+  /// the sheet; returning false keeps the results visible for another attempt.
+  Future<bool> Function(List<String>, VoidCallback)? onSubmitSelection;
+
   @override
   State<SelectionModal> createState() => _SelectionModalState();
 }
@@ -1184,6 +1046,7 @@ class SelectionModal extends StatefulWidget {
 class _SelectionModalState extends State<SelectionModal> {
   Map<MapEntry<String, List<String>>, bool> entrySelections = {};
   String filterRegex = '';
+  bool _isSubmitting = false;
   @override
   void initState() {
     super.initState();
@@ -1400,27 +1263,40 @@ class _SelectionModalState extends State<SelectionModal> {
         ),
       );
 
-      final multiSelectTile = SwitchListTile(
+      final bool isSelected = entrySelections[entry] ?? false;
+      final multiSelectTile = ListTile(
+        contentPadding: const EdgeInsets.symmetric(horizontal: 4),
+        dense: true,
+        minVerticalPadding: 4,
+        visualDensity: const VisualDensity(horizontal: -4, vertical: -4),
         title: GestureDetector(
-          onTap: widget.titlesAreLinks
+          onTap: widget.titlesAreLinks || _isSubmitting
               ? null
               : () {
-                  selectThis(!(entrySelections[entry] ?? false));
+                  selectThis(!isSelected);
                 },
           child: urlLink,
         ),
         subtitle: entry.value.length <= 1
             ? null
             : GestureDetector(
-                onTap: () {
-                  selectThis(!(entrySelections[entry] ?? false));
-                },
+                onTap: _isSubmitting
+                    ? null
+                    : () {
+                        selectThis(!isSelected);
+                      },
                 child: descriptionText,
               ),
-        value: entrySelections[entry] ?? false,
-        onChanged: (bool value) {
-          selectThis(value);
-        },
+        trailing: SizedBox.square(
+          dimension: 28,
+          child: Checkbox(
+            value: isSelected,
+            materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+            visualDensity: const VisualDensity(horizontal: -4, vertical: -4),
+            onChanged: _isSubmitting ? null : selectThis,
+          ),
+        ),
+        onTap: _isSubmitting ? null : () => selectThis(!isSelected),
       );
 
       return widget.onlyOneSelectionAllowed
@@ -1485,9 +1361,55 @@ class _SelectionModalState extends State<SelectionModal> {
         );
       }
 
+      Future<void> submitSelectedKeys() async {
+        final List<String> selectedKeys = entrySelections.entries
+            .where(
+              (MapEntry<MapEntry<String, List<String>>, bool> entry) =>
+                  entry.value,
+            )
+            .map(
+              (MapEntry<MapEntry<String, List<String>>, bool> entry) =>
+                  entry.key.key,
+            )
+            .toList();
+        final Future<bool> Function(List<String>, VoidCallback)?
+            onSubmitSelection = widget.onSubmitSelection;
+        if (onSubmitSelection == null) {
+          Navigator.of(context).pop(selectedKeys);
+          return;
+        }
+
+        setState(() {
+          _isSubmitting = true;
+        });
+        void stopSubmitting() {
+          if (mounted && _isSubmitting) {
+            setState(() {
+              _isSubmitting = false;
+            });
+          }
+        }
+
+        final bool closeSheet = await onSubmitSelection(
+          selectedKeys,
+          stopSubmitting,
+        );
+        if (!mounted) return;
+        if (closeSheet) {
+          Navigator.of(context).pop(selectedKeys);
+        } else {
+          setState(() {
+            _isSubmitting = false;
+          });
+        }
+      }
+
       final bool hasSelection = entrySelections.values.any(
         (bool selected) => selected,
       );
+      final int selectionCount = entrySelections.values
+          .where((bool selected) => selected)
+          .length;
 
       final double sheetBottomInset = MediaQuery.paddingOf(context).bottom + 20;
 
@@ -1535,11 +1457,13 @@ class _SelectionModalState extends State<SelectionModal> {
                   color: colorScheme.primary,
                   tooltip: tr('selectAll'),
                   icon: const Icon(Icons.select_all_outlined),
-                  onPressed: () {
-                    setState(() {
-                      selectAll();
-                    });
-                  },
+                  onPressed: _isSubmitting
+                      ? null
+                      : () {
+                          setState(() {
+                            selectAll();
+                          });
+                        },
                 ),
               ),
               slot(
@@ -1549,11 +1473,13 @@ class _SelectionModalState extends State<SelectionModal> {
                   color: colorScheme.primary,
                   tooltip: tr('deselectAll'),
                   icon: const Icon(Icons.deselect),
-                  onPressed: () {
-                    setState(() {
-                      selectAll(deselect: true);
-                    });
-                  },
+                  onPressed: _isSubmitting
+                      ? null
+                      : () {
+                          setState(() {
+                            selectAll(deselect: true);
+                          });
+                        },
                 ),
               ),
               slot(
@@ -1563,9 +1489,11 @@ class _SelectionModalState extends State<SelectionModal> {
                   color: colorScheme.primary,
                   tooltip: tr('cancel'),
                   icon: const Icon(Icons.close),
-                  onPressed: () {
-                    Navigator.of(context).pop();
-                  },
+                  onPressed: _isSubmitting
+                      ? null
+                      : () {
+                          Navigator.of(context).pop();
+                        },
                 ),
               ),
               slot(
@@ -1573,9 +1501,28 @@ class _SelectionModalState extends State<SelectionModal> {
                   visualDensity: VisualDensity.compact,
                   iconSize: 24,
                   color: colorScheme.primary,
-                  tooltip: tr('search'),
-                  icon: const Icon(Icons.search),
-                  onPressed: hasSelection ? popWithSelectedKeys : null,
+                  tooltip: widget.onSubmitSelection == null
+                      ? tr(
+                          'selectX',
+                          args: [selectionCount.toString()],
+                        )
+                      : tr('save'),
+                  icon: _isSubmitting
+                      ? ExpressiveLoadingIndicator(
+                          color: colorScheme.primary,
+                          constraints: const BoxConstraints.tightFor(
+                            width: 24,
+                            height: 24,
+                          ),
+                        )
+                      : Icon(
+                          widget.onSubmitSelection == null
+                              ? Icons.check_rounded
+                              : Icons.save_rounded,
+                        ),
+                  onPressed: hasSelection && !_isSubmitting
+                      ? () => unawaited(submitSelectedKeys())
+                      : null,
                 ),
               ),
             ],

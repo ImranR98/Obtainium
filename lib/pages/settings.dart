@@ -263,14 +263,28 @@ class SettingsPageState extends State<SettingsPage> {
           child: child,
           builder: (context, expandedState, child) {
             final bool expanded = _sectionExpanded(expandedState, key);
-            return ClipRect(
-              clipper: _SettingsSectionShadowClipper(expanded: expanded),
-              child: AnimatedAlign(
-                duration: const Duration(milliseconds: 360),
-                curve: Curves.easeInOutCubicEmphasized,
-                alignment: Alignment.topCenter,
-                heightFactor: expanded ? 1.0 : 0.0,
-                child: child,
+            return AnimatedPadding(
+              duration: const Duration(milliseconds: 360),
+              curve: Curves.easeInOutCubicEmphasized,
+              padding: EdgeInsets.only(
+                bottom: expanded
+                    ? SettingsProvider.collapsedHeaderGap
+                    : 0,
+              ),
+              child: ClipRect(
+                clipper: _SettingsSectionShadowClipper(expanded: expanded),
+                child: AnimatedAlign(
+                  duration: const Duration(milliseconds: 360),
+                  curve: Curves.easeInOutCubicEmphasized,
+                  alignment: Alignment.topCenter,
+                  heightFactor: expanded ? 1.0 : 0.0,
+                  child: AnimatedOpacity(
+                    duration: const Duration(milliseconds: 180),
+                    curve: Curves.easeInOutCubicEmphasized,
+                    opacity: expanded ? 1.0 : 0.0,
+                    child: child!,
+                  ),
+                ),
               ),
             );
           },
@@ -281,11 +295,7 @@ class SettingsPageState extends State<SettingsPage> {
     Widget sectionHeader(String title, IconData icon, String key) {
       const Duration headerTransitionDuration = Duration(milliseconds: 300);
       const Curve headerTransitionCurve = Curves.easeInOutCubicEmphasized;
-      final Color collapsedHeaderColor = Color.lerp(
-        cs.secondaryContainer,
-        cs.primaryContainer,
-        0.30,
-      )!;
+      final Color collapsedHeaderColor = m3eCollapsedGroupHeaderFill(cs);
       final Color collapsedHeaderContentColor = cs.onSecondaryContainer;
 
       // RepaintBoundary: see settingsCard above for why each section is its own
@@ -310,10 +320,10 @@ class SettingsPageState extends State<SettingsPage> {
                   ),
                 );
 
-            return AnimatedPadding(
-              duration: headerTransitionDuration,
-              curve: headerTransitionCurve,
-              padding: EdgeInsets.fromLTRB(0, expanded ? 20 : 16, 0, 8),
+            return Padding(
+              padding: const EdgeInsets.only(
+                top: SettingsProvider.collapsedHeaderGap,
+              ),
               child: AnimatedContainer(
                 duration: headerTransitionDuration,
                 curve: headerTransitionCurve,
@@ -338,9 +348,7 @@ class SettingsPageState extends State<SettingsPage> {
                     highlightColor: Colors.transparent,
                     hoverColor: Colors.transparent,
                     child: SizedBox(
-                      height: expanded
-                          ? null
-                          : SettingsProvider.collapsedHeaderHeight,
+                      height: SettingsProvider.collapsedHeaderHeight,
                       child: AnimatedPadding(
                         duration: headerTransitionDuration,
                         curve: headerTransitionCurve,
@@ -987,14 +995,11 @@ class _SettingsSectionShadowClipper extends CustomClipper<Rect> {
 
   @override
   Rect getClip(Size size) {
-    if (!expanded) {
-      return Offset.zero & size;
-    }
     return Rect.fromLTRB(
       -shadowPaintAllowance,
       -shadowPaintAllowance,
       size.width + shadowPaintAllowance,
-      size.height + shadowPaintAllowance,
+      size.height + (expanded ? shadowPaintAllowance : 0),
     );
   }
 

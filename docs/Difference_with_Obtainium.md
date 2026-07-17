@@ -113,6 +113,7 @@ ObtainX's filters provide tri-state options (include/exclude/not part of filter)
 | Page colors drawn from the app's icon | ✗ | ✓ |
 | Grouped info cards | Yes (from Jul 2026) | Yes (from Mar 2026) |
 | Version verdict | Binary (update / up-to-date) | ✓ 6 states |
+| Security features | Shows certificate hash | • Shows certificate hash<br>• Verified build status<br>• VirusTotal scan status<br>• Block installation on security flag
 | Verified other-store links | ✗ | ✓ Play Store / F-Droid / APKPure / APKMirror |
 | Signing certificate hash | ✓ (from the start) | ✓ (from July 2026) |
 | Categories shown | All categories - assigned and not assigned | Shows only assigned categories, keeping the page clean|
