@@ -702,6 +702,18 @@ class SettingsProvider with ChangeNotifier {
     notifyListeners();
   }
 
+  String? get autoExportFileName => getSettingString('autoExportFileName');
+
+  set autoExportFileName(String? val) {
+    final cleaned = val?.replaceAll(RegExp(r'[/\\:*?"<>|]'), '').trim();
+    if (cleaned == null || cleaned.isEmpty) {
+      prefs?.remove('autoExportFileName');
+    } else {
+      prefs?.setString('autoExportFileName', cleaned);
+    }
+    notifyListeners();
+  }
+
   bool get onlyCheckInstalledOrTrackOnlyApps {
     return _getBool('onlyCheckInstalledOrTrackOnlyApps') ?? false;
   }
