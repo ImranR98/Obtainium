@@ -165,7 +165,6 @@
     "fdroidThirdPartyRepo": "Repositório de terceiros do F-Droid",
     "fileDeletionError": "Falha ao excluir o arquivo (tente excluí-lo manualmente e tente novamente): \"{}\"",
     "filter": "Filtro",
-    "filterAPKsByRegEx": "Filtrar APKs por expressão regular",
     "filterApps": "Filtrar apps",
     "filterByLinkText": "Filtrar links por texto do link",
     "filterReleaseNotesByRegEx": "Filtrar notas de lançamento por expressão regular",

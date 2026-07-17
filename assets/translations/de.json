@@ -165,7 +165,6 @@
     "fdroidThirdPartyRepo": "F-Droid-Drittanbieter-Repo",
     "fileDeletionError": "Die Datei konnte nicht gelöscht werden (versuchen Sie, sie manuell zu löschen und versuchen Sie es dann erneut): \"{}\"",
     "filter": "Filter",
-    "filterAPKsByRegEx": "APKs nach regulärem Ausdruck filtern",
     "filterApps": "Apps filtern",
     "filterByLinkText": "Links durch Linktext filtern",
     "filterReleaseNotesByRegEx": "Versionshinweise nach regulärem Ausdruck\nfiltern",

@@ -573,24 +573,6 @@ class SettingsProvider with ChangeNotifier {
     notifyListeners();
   }
 
-  bool get disablePageTransitions {
-    return _getBool('disablePageTransitions') ?? false;
-  }
-
-  set disablePageTransitions(bool value) {
-    prefs?.setBool('disablePageTransitions', value);
-    notifyListeners();
-  }
-
-  bool get reversePageTransitions {
-    return _getBool('reversePageTransitions') ?? false;
-  }
-
-  set reversePageTransitions(bool value) {
-    prefs?.setBool('reversePageTransitions', value);
-    notifyListeners();
-  }
-
   bool get enableBackgroundUpdates {
     return _getBool('enableBackgroundUpdates') ?? true;
   }

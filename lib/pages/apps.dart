@@ -285,7 +285,6 @@ class AppsPageState extends State<AppsPage> {
           additionalWidgets: [
             const SizedBox(height: 16),
             ConnectedCard(
-              padding: null,
               child: Padding(
                 padding: const EdgeInsets.all(16),
                 child: CategorySelector(
@@ -893,27 +892,29 @@ class AppsPageState extends State<AppsPage> {
     if (mode == ActionBannerMode.none) {
       return const SliverToBoxAdapter(child: SizedBox(width: double.infinity));
     }
-    final hasOnlyUpdates = existingUpdateIdsAllOrSelected.isNotEmpty &&
+    final hasOnlyUpdates =
+        existingUpdateIdsAllOrSelected.isNotEmpty &&
         newInstallIdsAllOrSelected.isEmpty &&
         trackOnlyUpdateIdsAllOrSelected.isEmpty &&
         !appsProvider.areDownloadsRunning();
-    final onObtain = mode == ActionBannerMode.updatesOnly &&
+    final onObtain =
+        mode == ActionBannerMode.updatesOnly &&
             existingUpdateIdsAllOrSelected.isEmpty
         ? null
         : hasOnlyUpdates
-            ? () {
-                settingsProvider.heavyImpact();
-                appsProvider.downloadAndInstallLatestApps(
-                  existingUpdateIdsAllOrSelected,
-                  appNavigatorKey.currentContext,
-                );
-              }
-            : massObtainCallback(
-                context,
-                existingUpdateIdsAllOrSelected,
-                newInstallIdsAllOrSelected,
-                trackOnlyUpdateIdsAllOrSelected,
-              );
+        ? () {
+            settingsProvider.heavyImpact();
+            appsProvider.downloadAndInstallLatestApps(
+              existingUpdateIdsAllOrSelected,
+              appNavigatorKey.currentContext,
+            );
+          }
+        : massObtainCallback(
+            context,
+            existingUpdateIdsAllOrSelected,
+            newInstallIdsAllOrSelected,
+            trackOnlyUpdateIdsAllOrSelected,
+          );
     final cs = Theme.of(context).colorScheme;
     return SliverToBoxAdapter(
       child: AnimatedSize(
@@ -923,10 +924,9 @@ class AppsPageState extends State<AppsPage> {
         child: onObtain == null
             ? const SizedBox(width: double.infinity)
             : Padding(
-                padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+                padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
                 child: ConnectedCard(
                   color: cs.primaryContainer,
-                  padding: null,
                   child: Padding(
                     padding: const EdgeInsets.all(16),
                     child: Row(
@@ -1098,11 +1098,11 @@ class AppsPageState extends State<AppsPage> {
       }
     } else if (groupBy == GroupByMode.source.name) {
       final sourceNames = {
-        for (final s in sourceProvider.sources)
-          s.sourceIdentifier: s.name,
+        for (final s in sourceProvider.sources) s.sourceIdentifier: s.name,
       };
       for (var i = 0; i < listedApps.length; i++) {
-        final label = sourceNames[listedApps[i].sourceType] ??
+        final label =
+            sourceNames[listedApps[i].sourceType] ??
             listedApps[i].sourceType ??
             tr('noSource');
         grouped.putIfAbsent(label, () => []).add(i);
@@ -1270,17 +1270,13 @@ class _BulkUpdateDialogState extends State<_BulkUpdateDialog> {
   @override
   void initState() {
     super.initState();
-    selectedIds = {
-      ...widget.existingUpdateIds,
-      ...widget.trackOnlyUpdateIds,
-    };
+    selectedIds = {...widget.existingUpdateIds, ...widget.trackOnlyUpdateIds};
     if (widget.existingUpdateIds.isEmpty) {
       selectedIds.addAll(widget.newInstallIds);
     }
   }
 
-  bool get allSelected =>
-      selectedIds.length == widget.totalApps;
+  bool get allSelected => selectedIds.length == widget.totalApps;
 
   void _toggleAll() {
     setState(() {
@@ -1324,7 +1320,8 @@ class _BulkUpdateDialogState extends State<_BulkUpdateDialog> {
     final aim = widget.apps[id];
     if (aim == null) return const SizedBox.shrink();
     final isNewInstall = aim.app.installedVersion == null;
-    final isUpdate = aim.app.installedVersion != null &&
+    final isUpdate =
+        aim.app.installedVersion != null &&
         aim.app.installedVersion != aim.app.latestVersion;
     final versionLabel = isUpdate
         ? '${aim.app.installedVersion} → ${aim.app.latestVersion}'
@@ -1385,8 +1382,7 @@ class _BulkUpdateDialogState extends State<_BulkUpdateDialog> {
     return AlertDialog(
       scrollable: true,
       title: Text(
-        tr('changeX',
-            args: [plural('apps', widget.totalApps).toLowerCase()]),
+        tr('changeX', args: [plural('apps', widget.totalApps).toLowerCase()]),
       ),
       content: SizedBox(
         width: double.maxFinite,
@@ -1404,7 +1400,11 @@ class _BulkUpdateDialogState extends State<_BulkUpdateDialog> {
                 ),
                 TextButton(
                   onPressed: _toggleAll,
-                  child: Text(allSelected ? tr('deselectX', args: [widget.totalApps.toString()]) : tr('selectAll')),
+                  child: Text(
+                    allSelected
+                        ? tr('deselectX', args: [widget.totalApps.toString()])
+                        : tr('selectAll'),
+                  ),
                 ),
               ],
             ),
@@ -1413,8 +1413,7 @@ class _BulkUpdateDialogState extends State<_BulkUpdateDialog> {
             _sectionHeader(tr('nonInstalledApps'), widget.newInstallIds, cs),
             ...widget.newInstallIds.map((id) => _appCheckRow(id, cs)),
             if (widget.trackOnlyUpdateIds.isNotEmpty) ...[
-              _sectionHeader(
-                  tr('trackOnly'), widget.trackOnlyUpdateIds, cs),
+              _sectionHeader(tr('trackOnly'), widget.trackOnlyUpdateIds, cs),
               ...widget.trackOnlyUpdateIds.map((id) => _appCheckRow(id, cs)),
             ],
           ],

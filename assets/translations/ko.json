@@ -165,7 +165,6 @@
     "fdroidThirdPartyRepo": "F-Droid 타사 저장소",
     "fileDeletionError": "파일을 삭제하지 못했습니다(수동으로 삭제한 후 다시 시도하세요): \"{}\"",
     "filter": "필터",
-    "filterAPKsByRegEx": "정규 표현식으로 APK 필터링",
     "filterApps": "앱 필터",
     "filterByLinkText": "링크 텍스트로 링크 필터링",
     "filterReleaseNotesByRegEx": "정규 표현식으로 릴리스 노트 필터링",

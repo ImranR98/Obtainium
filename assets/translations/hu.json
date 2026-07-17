@@ -165,7 +165,6 @@
     "fdroidThirdPartyRepo": "F-Droid-tároló (harmadik fél)",
     "fileDeletionError": "Nem sikerült törölni a fájlt (próbálja meg kézzel törölni, majd próbálja meg újra): „{}”",
     "filter": "Szűrő",
-    "filterAPKsByRegEx": "APK-k szűrése reguláris kifejezéssel",
     "filterApps": "Alkalmazások szűrése",
     "filterByLinkText": "Hivatkozások szűrése hivatkozásszöveg alapján",
     "filterReleaseNotesByRegEx": "Kiadási megjegyzések szűrése reguláris kifejezéssel",

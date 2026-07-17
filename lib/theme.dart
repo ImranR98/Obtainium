@@ -76,17 +76,28 @@ ThemeData buildObtainiumTheme(ColorScheme colorScheme, String fontFamily) {
       hoverElevation: 8,
       highlightElevation: 6,
     ),
-    inputDecorationTheme: InputDecorationThemeData(
-      contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-      border: OutlineInputBorder(borderRadius: BorderRadius.circular(28)),
+    inputDecorationTheme: const InputDecorationThemeData(
+      filled: true,
+      fillColor: null,
+      contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+      border: InputBorder.none,
+      enabledBorder: InputBorder.none,
+      focusedBorder: InputBorder.none,
+      errorBorder: InputBorder.none,
+      focusedErrorBorder: InputBorder.none,
+      disabledBorder: InputBorder.none,
     ),
     dropdownMenuTheme: DropdownMenuThemeData(
-      inputDecorationTheme: InputDecorationThemeData(
-        contentPadding: const EdgeInsets.symmetric(
-          horizontal: 20,
-          vertical: 16,
-        ),
-        border: OutlineInputBorder(borderRadius: BorderRadius.circular(28)),
+      inputDecorationTheme: const InputDecorationThemeData(
+        filled: true,
+        fillColor: null,
+        contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+        border: InputBorder.none,
+        enabledBorder: InputBorder.none,
+        focusedBorder: InputBorder.none,
+        errorBorder: InputBorder.none,
+        focusedErrorBorder: InputBorder.none,
+        disabledBorder: InputBorder.none,
       ),
       menuStyle: MenuStyle(
         shape: WidgetStatePropertyAll(

@@ -165,7 +165,6 @@
     "fdroidThirdPartyRepo": "F-Droid 第三方儲存庫",
     "fileDeletionError": "刪除檔案失敗（請嘗試手動刪除然後再試一次）：「{}」",
     "filter": "過濾",
-    "filterAPKsByRegEx": "以正規表示式過濾 APK",
     "filterApps": "過濾應用程式",
     "filterByLinkText": "依連結文字過濾連結",
     "filterReleaseNotesByRegEx": "以正規表示式過濾版本資訊",

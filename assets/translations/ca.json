@@ -165,7 +165,6 @@
     "fdroidThirdPartyRepo": "Repositori F-Droid de tercers",
     "fileDeletionError": "No s'ha pogut suprimir el fitxer (intenta suprimir-lo manualment i torna-ho a provar): \"{}\"",
     "filter": "Filtra",
-    "filterAPKsByRegEx": "Filtra les APKs per l'expressió regular",
     "filterApps": "Filtra les aplicacions",
     "filterByLinkText": "Filtra els enllaços pel text de l'enllaç",
     "filterReleaseNotesByRegEx": "Filtra les notes de la publicació de la versió per una expressió regular",

@@ -165,7 +165,6 @@
     "fdroidThirdPartyRepo": "F-Droid サードパーティリポジトリ",
     "fileDeletionError": "ファイルの削除に失敗しました（手動で削除してから再試行してください）：\"{}\"",
     "filter": "フィルター",
-    "filterAPKsByRegEx": "正規表現でAPKをフィルタリングする",
     "filterApps": "アプリをフィルタリングする",
     "filterByLinkText": "テキストでリンクをフィルタリングする",
     "filterReleaseNotesByRegEx": "正規表現でリリースノートをフィルタリングする",

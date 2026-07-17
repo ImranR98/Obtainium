@@ -7,7 +7,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:obtainium/custom_errors.dart';
 import 'package:obtainium/components/generated_form_model.dart';
-import 'package:obtainium/components/settings_widgets.dart';
+import 'package:obtainium/components/ui_widgets.dart';
 import 'package:obtainium/providers/settings_provider.dart';
 import 'package:flutter_typeahead/flutter_typeahead.dart';
 import 'package:provider/provider.dart';
@@ -191,11 +191,10 @@ class _GeneratedFormState extends State<GeneratedForm> {
     return InputDecoration(
       labelText: labelText,
       hintText: hintText,
-      filled: widget.tileMode ? false : null,
-      border: widget.tileMode ? InputBorder.none : null,
-      enabledBorder: widget.tileMode ? InputBorder.none : null,
-      focusedBorder: widget.tileMode ? InputBorder.none : null,
       suffixIcon: suffixIcon,
+      suffixIconConstraints: widget.tileMode
+          ? const BoxConstraints(minWidth: 0, minHeight: 0)
+          : null,
     );
   }
 
@@ -266,22 +265,24 @@ class _GeneratedFormState extends State<GeneratedForm> {
           decoration: _fieldDecoration(
             labelText: tr(formItem.label) + (formItem.required ? ' *' : ''),
             hintText: formItem.hint,
-            suffixIcon: _buildHelpSuffixIcon(
-              tr(formItem.label),
-              formItem.helpUrl,
-              formItem.belowWidgets,
-            ),
+            suffixIcon:
+                formItem.trailing ??
+                _buildHelpSuffixIcon(
+                  tr(formItem.label),
+                  formItem.helpUrl,
+                  formItem.belowWidgets,
+                ),
           ),
           minLines: formItem.max <= 1 ? null : formItem.max,
           maxLines: formItem.max <= 1 ? 1 : formItem.max,
           validator: (value) {
             if (formItem.required && (value == null || value.trim().isEmpty)) {
-              return '${tr(formItem.label)} ${tr('requiredInBrackets')}';
+              return '${tr(formItem.label)} ${tr('requiredInBrackets')}\n';
             }
             for (var validator in formItem.additionalValidators) {
               final String? result = validator(value);
               if (result != null) {
-                return result;
+                return '$result\n';
               }
             }
             return null;
@@ -357,11 +358,7 @@ class _GeneratedFormState extends State<GeneratedForm> {
 
   int _computeItemsHash(List<List<GeneratedFormItem>> items) {
     return Object.hashAll(
-      items.expand(
-        (row) => row.map(
-          (e) => Object.hash(e.key, e.runtimeType),
-        ),
-      ),
+      items.expand((row) => row.map((e) => Object.hash(e.key, e.runtimeType))),
     );
   }
 
@@ -586,24 +583,24 @@ class _GeneratedFormState extends State<GeneratedForm> {
       final n = inputRowWidgets.length;
       final List<Widget> rawTiles = [];
       for (var r = 0; r < n; r++) {
-        final EdgeInsets padding = isFieldRow(r)
-            ? EdgeInsets.zero
-            : const EdgeInsets.symmetric(horizontal: 20, vertical: 8);
         rawTiles.add(
-          SettingsTile(
+          ConnectedCard(
+            isFirst: r == 0,
+            isLast: r == n - 1,
             color: isFieldRow(r)
                 ? colorScheme.surfaceContainerHighest
                 : colorScheme.surfaceContainerLow,
-            padding: padding,
+            padding: isFieldRow(r)
+                ? null
+                : const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
             child: inputRowWidgets[r],
           ),
         );
       }
-      final children = shapeSettingsTiles(rawTiles);
       return Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         spacing: 3,
-        children: children,
+        children: rawTiles,
       );
     }
 
@@ -629,7 +626,7 @@ class GeneratedFormModal extends StatefulWidget {
     this.additionalWidgets = const [],
     this.singleNullReturnButton,
     this.primaryActionColour,
-    this.tileMode = false,
+    this.tileMode = true,
   });
 
   final String title;

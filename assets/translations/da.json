@@ -165,7 +165,6 @@
     "fdroidThirdPartyRepo": "F-Droid Tredjeparts-repo",
     "fileDeletionError": "Kunne ikke slette filen (prøv at slette den manuelt og prøv igen): \"{}\"",
     "filter": "Filtrer",
-    "filterAPKsByRegEx": "Filtrer APK'er efter regulært udtryk",
     "filterApps": "Filtrer Apps",
     "filterByLinkText": "Filtrer links efter linktekst",
     "filterReleaseNotesByRegEx": "Filtrer udgivelsesnoter efter regulært udtryk",

@@ -165,7 +165,6 @@
     "fdroidThirdPartyRepo": "Kho lưu trữ bên thứ ba F-Droid",
     "fileDeletionError": "Không thể xóa tệp (hãy thử xóa tệp thủ công rồi thử lại): \"{}\"",
     "filter": "Lọc",
-    "filterAPKsByRegEx": "Lọc APK theo biểu thức chính quy",
     "filterApps": "Lọc ứng dụng",
     "filterByLinkText": "Lọc liên kết theo văn bản liên kết",
     "filterReleaseNotesByRegEx": "Lọc ghi chú phát hành theo biểu thức chính quy",
