@@ -13,7 +13,7 @@ import 'package:obtainium/components/generated_form_renderer.dart';
 import 'package:obtainium/custom_errors.dart';
 import 'package:obtainium/providers/apps_provider.dart';
 import 'package:obtainium/providers/settings_provider.dart';
-import 'package:obtainium/providers/source_provider.dart';
+import 'package:obtainium/providers/source_provider.dart' show regExValidator;
 import 'package:obtainium/theme/app_dialog_theme.dart';
 import 'package:obtainium/theme/app_theme_accent.dart';
 import 'package:obtainium/theme/m3e_expressive_list.dart';
@@ -59,7 +59,6 @@ class _ImportExportPageState extends State<ImportExportPage> {
 
   @override
   Widget build(BuildContext context) {
-    final SourceProvider sourceProvider = SourceProvider();
     // [appsProvider] is intentionally a broad watch — this page lists
     // every tracked app to drive the export selection, and any add /
     // remove / rename should refresh the list. The expensive cost is
@@ -90,83 +89,6 @@ class _ImportExportPageState extends State<ImportExportPage> {
         ),
       ),
     );
-
-    void urlListImport({String? initValue, bool overrideInitValid = false}) {
-      showDialog<Map<String, dynamic>?>(
-        context: context,
-        builder: (BuildContext ctx) {
-          return GeneratedFormModal(
-            initValid: overrideInitValid,
-            title: tr('importFromURLList'),
-            items: [
-              [
-                GeneratedFormTextField(
-                  'appURLList',
-                  value: initValue ?? '',
-                  label: tr('appURLList'),
-                  max: 7,
-                  additionalValidators: [
-                    (dynamic value) {
-                      if (value != null && value.isNotEmpty) {
-                        final lines = value.trim().split('\n');
-                        for (int i = 0; i < lines.length; i++) {
-                          try {
-                            sourceProvider.getSource(lines[i]);
-                          } catch (e) {
-                            return '${tr('line')} ${i + 1}: $e';
-                          }
-                        }
-                      }
-                      return null;
-                    },
-                  ],
-                ),
-              ],
-            ],
-          );
-        },
-      ).then((values) {
-        if (values != null) {
-          final urls = (values['appURLList'] as String).split('\n');
-          setState(() {
-            importInProgress = true;
-          });
-          appsProvider
-              .addAppsByURL(urls)
-              .then((errors) {
-                if (!context.mounted) return;
-                if (errors.isEmpty) {
-                  showMessage(
-                    tr(
-                      'importedX',
-                      args: [plural('apps', urls.length).toLowerCase()],
-                    ),
-                    context,
-                  );
-                } else {
-                  showDialog(
-                    context: context,
-                    builder: (BuildContext ctx) {
-                      return ImportErrorDialog(
-                        urlsLength: urls.length,
-                        errors: errors,
-                      );
-                    },
-                  );
-                }
-              })
-              .catchError((e) {
-                if (!context.mounted) return;
-                showError(e, context);
-              })
-              .whenComplete(() {
-                setState(() {
-                  importInProgress = false;
-                });
-              });
-        }
-      });
-    }
 
     Future<void> runObtainiumExport({bool pickOnly = false}) async {
       hapticSelection();
@@ -282,107 +204,6 @@ class _ImportExportPageState extends State<ImportExportPage> {
       }
     }
 
-    Future<void> runUrlImport() async {
-      final FilePickerResult? result;
-      try {
-        result = await FilePicker.pickFiles();
-      } catch (e) {
-        if (context.mounted) {
-          showError(ObtainiumError(tr('noFilePickerAvailable')), context);
-        }
-        return;
-      }
-      if (result != null) {
-        // Async read so picking a large URL-list dump doesn't freeze the UI.
-        final String fileContents = await File(
-          result.files.single.path!,
-        ).readAsString();
-        if (!context.mounted) return;
-        urlListImport(
-          overrideInitValid: true,
-          initValue: RegExp('https?://[^"]+')
-              .allMatches(fileContents)
-              .map((e) => e.input.substring(e.start, e.end))
-              .toSet()
-              .toList()
-              .where((url) {
-                try {
-                  sourceProvider.getSource(url);
-                  return true;
-                } catch (e) {
-                  return false;
-                }
-              })
-              .join('\n'),
-        );
-      }
-    }
-
-    void runMassSourceImport(MassAppUrlSource source) {
-      () async {
-            final values = await showDialog<Map<String, dynamic>?>(
-              context: context,
-              builder: (BuildContext ctx) {
-                return GeneratedFormModal(
-                  title: tr('importX', args: [source.name]),
-                  items: source.requiredArgs
-                      .map((e) => [GeneratedFormTextField(e, label: e)])
-                      .toList(),
-                );
-              },
-            );
-            if (values != null) {
-              setState(() {
-                importInProgress = true;
-              });
-              final urlsWithDescriptions = await source.getUrlsWithDescriptions(
-                values.values.map((e) => e.toString()).toList(),
-              );
-              if (!context.mounted) return;
-              final selectedUrls = await showDialog<List<String>?>(
-                context: context,
-                builder: (BuildContext ctx) {
-                  return SelectionModal(entries: urlsWithDescriptions);
-                },
-              );
-              if (selectedUrls != null) {
-                final errors = await appsProvider.addAppsByURL(selectedUrls);
-                if (!context.mounted) return;
-                if (errors.isEmpty) {
-                  showMessage(
-                    tr(
-                      'importedX',
-                      args: [plural('apps', selectedUrls.length).toLowerCase()],
-                    ),
-                    context,
-                  );
-                } else {
-                  unawaited(
-                    showDialog(
-                      context: context,
-                      builder: (BuildContext ctx) {
-                        return ImportErrorDialog(
-                          urlsLength: selectedUrls.length,
-                          errors: errors,
-                        );
-                      },
-                    ),
-                  );
-                }
-              }
-            }
-          }()
-          .catchError((e) {
-            if (!context.mounted) return;
-            showError(e, context);
-          })
-          .whenComplete(() {
-            setState(() {
-              importInProgress = false;
-            });
-          });
-    }
-
     final ColorScheme impScheme = Theme.of(context).colorScheme;
 
     /// Folder picker rows with a title + subtitle (more vertical air).
@@ -393,7 +214,7 @@ class _ImportExportPageState extends State<ImportExportPage> {
       12,
     );
 
-    /// Other padded rows inside [importPageCard] (dropdowns, buttons, batch grid).
+    /// Other padded rows inside [importPageCard] (dropdowns and buttons).
     const EdgeInsets importPageCardRowPadding = EdgeInsets.fromLTRB(
       16,
       8,
@@ -407,7 +228,6 @@ class _ImportExportPageState extends State<ImportExportPage> {
       4,
     );
     const double importPageCardRowItemGap = 12;
-    const double importPageBatchCellGap = 4;
 
     Widget importPageCard(List<Widget> cardItems) {
       return M3eExpressiveSettingsCard(
@@ -481,50 +301,6 @@ class _ImportExportPageState extends State<ImportExportPage> {
         ),
       );
     }
-
-    final List<Widget> batchImportCells = [
-      TextButton(
-        style: outlineButtonStyle,
-        onPressed: importInProgress ? null : urlListImport,
-        child: Text(
-          tr('importFromURLList'),
-          textAlign: TextAlign.center,
-          maxLines: 2,
-          overflow: TextOverflow.ellipsis,
-          style: Theme.of(context).textTheme.labelLarge?.copyWith(fontSize: 13),
-        ),
-      ),
-      TextButton(
-        style: outlineButtonStyle,
-        onPressed: importInProgress ? null : runUrlImport,
-        child: Text(
-          tr('importFromURLsInFile'),
-          textAlign: TextAlign.center,
-          maxLines: 2,
-          overflow: TextOverflow.ellipsis,
-          style: Theme.of(context).textTheme.labelLarge?.copyWith(fontSize: 13),
-        ),
-      ),
-      ...sourceProvider.massUrlSources.map(
-        (source) => TextButton(
-          style: outlineButtonStyle,
-          onPressed: importInProgress
-              ? null
-              : () {
-                  runMassSourceImport(source);
-                },
-          child: Text(
-            tr('importX', args: [source.name]),
-            textAlign: TextAlign.center,
-            maxLines: 2,
-            overflow: TextOverflow.ellipsis,
-            style: Theme.of(
-              context,
-            ).textTheme.labelLarge?.copyWith(fontSize: 13),
-          ),
-        ),
-      ),
-    ];
 
     return Scaffold(
       backgroundColor: impScheme.surface,
@@ -882,56 +658,6 @@ class _ImportExportPageState extends State<ImportExportPage> {
                         const LinearRipplingWavyProgressIndicator(),
                         const SizedBox(height: 14),
                       ],
-                      importPageSectionTitle(
-                        tr('importExportCardBatchImports'),
-                        Icons.playlist_add_rounded,
-                      ),
-                      importPageCard([
-                        Padding(
-                          padding: importPageCardRowPadding,
-                          child: Column(
-                            mainAxisSize: MainAxisSize.min,
-                            crossAxisAlignment: CrossAxisAlignment.stretch,
-                            children: [
-                              for (
-                                int rowStart = 0;
-                                rowStart < batchImportCells.length;
-                                rowStart += 2
-                              ) ...[
-                                if (rowStart > 0)
-                                  const SizedBox(
-                                    height: importPageBatchCellGap,
-                                  ),
-                                Row(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Expanded(child: batchImportCells[rowStart]),
-                                    const SizedBox(
-                                      width: importPageBatchCellGap,
-                                    ),
-                                    Expanded(
-                                      child:
-                                          rowStart + 1 < batchImportCells.length
-                                          ? batchImportCells[rowStart + 1]
-                                          : const SizedBox.shrink(),
-                                    ),
-                                  ],
-                                ),
-                              ],
-                            ],
-                          ),
-                        ),
-                      ]),
-                      const SizedBox(height: 8),
-                      Text(
-                        tr('importedAppsIdDisclaimer'),
-                        textAlign: TextAlign.center,
-                        style: const TextStyle(
-                          fontStyle: FontStyle.italic,
-                          fontSize: 12,
-                        ),
-                      ),
-                      const SizedBox(height: 8),
                     ],
                   ),
                 ),
@@ -1344,9 +1070,15 @@ class _SelectionModalState extends State<SelectionModal> {
     if (widget.presentAsBottomSheet) {
       final ColorScheme colorScheme = Theme.of(context).colorScheme;
       final double screenHeight = MediaQuery.sizeOf(context).height;
+      final bool isLandscape =
+          MediaQuery.orientationOf(context) == Orientation.landscape;
       final EdgeInsets viewPadding = MediaQuery.paddingOf(context);
       // Max height for the sheet column — from just below the status bar.
-      final double areaBelowStatusBar = screenHeight - viewPadding.top - 16;
+      final double unconstrainedSheetHeight =
+          screenHeight - viewPadding.top - 16;
+      final double areaBelowStatusBar = unconstrainedSheetHeight > 0
+          ? unconstrainedSheetHeight
+          : 0;
 
       void popWithSelectedKeys() {
         Navigator.of(context).pop(
@@ -1411,19 +1143,35 @@ class _SelectionModalState extends State<SelectionModal> {
           .where((bool selected) => selected)
           .length;
 
-      final double sheetBottomInset = MediaQuery.paddingOf(context).bottom + 20;
+      final double sheetBarTopPadding = isLandscape ? 2 : 12;
+      final double sheetBottomInset =
+          MediaQuery.paddingOf(context).bottom + (isLandscape ? 2 : 20);
+      final double sheetActionIconSize = isLandscape ? 20 : 24;
+      final BoxConstraints? sheetActionConstraints = isLandscape
+          ? const BoxConstraints.tightFor(width: 32, height: 32)
+          : null;
+      final EdgeInsetsGeometry? sheetActionPadding = isLandscape
+          ? EdgeInsets.zero
+          : null;
 
       Widget sheetIconBar() {
         Widget slot(Widget child) => Expanded(child: Center(child: child));
         if (widget.onlyOneSelectionAllowed) {
           return Padding(
-            padding: EdgeInsets.fromLTRB(20, 12, 20, sheetBottomInset),
+            padding: EdgeInsets.fromLTRB(
+              20,
+              sheetBarTopPadding,
+              20,
+              sheetBottomInset,
+            ),
             child: Row(
               children: [
                 slot(
                   IconButton(
                     visualDensity: VisualDensity.compact,
-                    iconSize: 24,
+                    iconSize: sheetActionIconSize,
+                    constraints: sheetActionConstraints,
+                    padding: sheetActionPadding,
                     color: colorScheme.primary,
                     tooltip: tr('cancel'),
                     icon: const Icon(Icons.close),
@@ -1435,7 +1183,9 @@ class _SelectionModalState extends State<SelectionModal> {
                 slot(
                   IconButton(
                     visualDensity: VisualDensity.compact,
-                    iconSize: 24,
+                    iconSize: sheetActionIconSize,
+                    constraints: sheetActionConstraints,
+                    padding: sheetActionPadding,
                     color: colorScheme.primary,
                     tooltip: tr('continue'),
                     icon: const Icon(Icons.check),
@@ -1447,13 +1197,20 @@ class _SelectionModalState extends State<SelectionModal> {
           );
         }
         return Padding(
-          padding: EdgeInsets.fromLTRB(20, 12, 20, sheetBottomInset),
+          padding: EdgeInsets.fromLTRB(
+            20,
+            sheetBarTopPadding,
+            20,
+            sheetBottomInset,
+          ),
           child: Row(
             children: [
               slot(
                 IconButton(
                   visualDensity: VisualDensity.compact,
-                  iconSize: 24,
+                  iconSize: sheetActionIconSize,
+                  constraints: sheetActionConstraints,
+                  padding: sheetActionPadding,
                   color: colorScheme.primary,
                   tooltip: tr('selectAll'),
                   icon: const Icon(Icons.select_all_outlined),
@@ -1469,7 +1226,9 @@ class _SelectionModalState extends State<SelectionModal> {
               slot(
                 IconButton(
                   visualDensity: VisualDensity.compact,
-                  iconSize: 24,
+                  iconSize: sheetActionIconSize,
+                  constraints: sheetActionConstraints,
+                  padding: sheetActionPadding,
                   color: colorScheme.primary,
                   tooltip: tr('deselectAll'),
                   icon: const Icon(Icons.deselect),
@@ -1485,7 +1244,9 @@ class _SelectionModalState extends State<SelectionModal> {
               slot(
                 IconButton(
                   visualDensity: VisualDensity.compact,
-                  iconSize: 24,
+                  iconSize: sheetActionIconSize,
+                  constraints: sheetActionConstraints,
+                  padding: sheetActionPadding,
                   color: colorScheme.primary,
                   tooltip: tr('cancel'),
                   icon: const Icon(Icons.close),
@@ -1499,7 +1260,9 @@ class _SelectionModalState extends State<SelectionModal> {
               slot(
                 IconButton(
                   visualDensity: VisualDensity.compact,
-                  iconSize: 24,
+                  iconSize: sheetActionIconSize,
+                  constraints: sheetActionConstraints,
+                  padding: sheetActionPadding,
                   color: colorScheme.primary,
                   tooltip: widget.onSubmitSelection == null
                       ? tr(
@@ -1510,9 +1273,9 @@ class _SelectionModalState extends State<SelectionModal> {
                   icon: _isSubmitting
                       ? ExpressiveLoadingIndicator(
                           color: colorScheme.primary,
-                          constraints: const BoxConstraints.tightFor(
-                            width: 24,
-                            height: 24,
+                          constraints: BoxConstraints.tightFor(
+                            width: sheetActionIconSize,
+                            height: sheetActionIconSize,
                           ),
                         )
                       : Icon(
@@ -1530,54 +1293,64 @@ class _SelectionModalState extends State<SelectionModal> {
         );
       }
 
-      return Padding(
-        padding: EdgeInsets.only(
-          bottom: MediaQuery.viewInsetsOf(context).bottom,
-        ),
-        child: SafeArea(
-          top: false,
-          bottom: false,
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(20, 12, 20, 0),
-            child: ConstrainedBox(
-              constraints: BoxConstraints(maxHeight: areaBelowStatusBar),
+      return Align(
+        alignment: Alignment.bottomCenter,
+        child: SizedBox(
+          height: areaBelowStatusBar,
+          child: SafeArea(
+            top: false,
+            bottom: false,
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(20, 12, 20, 0),
               child: Column(
-                mainAxisSize: MainAxisSize.min,
+                mainAxisSize: MainAxisSize.max,
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  Center(
-                    child: Container(
-                      margin: const EdgeInsets.only(bottom: 12),
-                      width: 40,
-                      height: 4,
-                      decoration: BoxDecoration(
-                        color: colorScheme.outlineVariant,
-                        borderRadius: BorderRadius.circular(2),
-                      ),
-                    ),
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.only(bottom: 12),
-                    child: Text(
-                      widget.title ?? tr('pick'),
-                      style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ),
-                  if (filterFormWidget != null) ...[
-                    filterFormWidget,
-                    const SizedBox(height: 8),
-                  ],
-                  Flexible(
-                    // ListView.builder so only visible tiles are built; the
-                    // mass-import list can hold hundreds of entries and was
-                    // previously materialized in full inside a Column.
-                    child: ListView.builder(
-                      shrinkWrap: true,
-                      itemCount: filteredEntryKeys.length,
-                      itemBuilder: (context, index) =>
-                          buildEntryTile(filteredEntryKeys[index]),
+                  Expanded(
+                    child: CustomScrollView(
+                      keyboardDismissBehavior:
+                          ScrollViewKeyboardDismissBehavior.onDrag,
+                      slivers: [
+                        SliverToBoxAdapter(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.stretch,
+                            children: [
+                              Center(
+                                child: Container(
+                                  margin: const EdgeInsets.only(bottom: 12),
+                                  width: 40,
+                                  height: 4,
+                                  decoration: BoxDecoration(
+                                    color: colorScheme.outlineVariant,
+                                    borderRadius: BorderRadius.circular(2),
+                                  ),
+                                ),
+                              ),
+                              Padding(
+                                padding: const EdgeInsets.only(bottom: 12),
+                                child: Text(
+                                  widget.title ?? tr('pick'),
+                                  style: Theme.of(context)
+                                      .textTheme
+                                      .titleLarge
+                                      ?.copyWith(fontWeight: FontWeight.w600),
+                                ),
+                              ),
+                              if (filterFormWidget != null) ...[
+                                filterFormWidget,
+                                const SizedBox(height: 8),
+                              ],
+                            ],
+                          ),
+                        ),
+                        SliverList(
+                          delegate: SliverChildBuilderDelegate(
+                            (context, index) =>
+                                buildEntryTile(filteredEntryKeys[index]),
+                            childCount: filteredEntryKeys.length,
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                   const Divider(height: 1),

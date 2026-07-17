@@ -719,7 +719,7 @@
     "bulkAddChipUserApps": "User Apps",
     "bulkAddChipSystemApps": "System Apps",
     "bulkAddChipAllApps": "All Apps",
-    "storesToSearch": "Stores to search",
+    "storesToSearch": "Select sources",
     "bulkScanCacheNote": "Results are cached per app, per store. Each app is only re-fetched from a store if it wasn't scanned there before.",
     "selectAtLeastOneStore": "Select at least one store",
     "next": "Next",

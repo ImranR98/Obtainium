@@ -15,7 +15,14 @@ import 'package:provider/provider.dart';
 
 /// Obtainium-style URL-list import page, kept as a dedicated route from Add App.
 class ImportFromUrlListPage extends StatefulWidget {
-  const ImportFromUrlListPage({super.key});
+  const ImportFromUrlListPage({
+    super.key,
+    this.embedded = false,
+    this.onImportCompleted,
+  });
+
+  final bool embedded;
+  final Future<void> Function()? onImportCompleted;
 
   @override
   State<ImportFromUrlListPage> createState() =>
@@ -101,7 +108,11 @@ class _ImportFromUrlListPageState extends State<ImportFromUrlListPage> {
           ),
           context,
         );
-        Navigator.of(context).pop();
+        if (widget.embedded) {
+          await widget.onImportCompleted?.call();
+        } else {
+          Navigator.of(context).pop();
+        }
       } else {
         unawaited(
           showDialog<void>(
@@ -130,21 +141,25 @@ class _ImportFromUrlListPageState extends State<ImportFromUrlListPage> {
     final bool useGradientBackground = context.select<SettingsProvider, bool>(
       (settingsProvider) => settingsProvider.useGradientBackground,
     );
-    final double topContentInset = useGradientBackground
+    final double topContentInset = !widget.embedded && useGradientBackground
         ? MediaQuery.paddingOf(context).top + kToolbarHeight
         : 0;
 
     return Scaffold(
-      extendBodyBehindAppBar: useGradientBackground,
-      backgroundColor: colorScheme.surface,
-      appBar: AppBar(
-        title: Text(tr('importFromURLList')),
-        backgroundColor: useGradientBackground
-            ? Colors.transparent
-            : colorScheme.surface,
-        surfaceTintColor: Colors.transparent,
-        forceMaterialTransparency: useGradientBackground,
-      ),
+      extendBodyBehindAppBar: !widget.embedded && useGradientBackground,
+      backgroundColor: widget.embedded && useGradientBackground
+          ? Colors.transparent
+          : colorScheme.surface,
+      appBar: widget.embedded
+          ? null
+          : AppBar(
+              title: Text(tr('importFromURLList')),
+              backgroundColor: useGradientBackground
+                  ? Colors.transparent
+                  : colorScheme.surface,
+              surfaceTintColor: Colors.transparent,
+              forceMaterialTransparency: useGradientBackground,
+            ),
       body: Stack(
         fit: StackFit.expand,
         children: [
@@ -161,7 +176,7 @@ class _ImportFromUrlListPageState extends State<ImportFromUrlListPage> {
                   ScrollViewKeyboardDismissBehavior.onDrag,
               slivers: [
                 SliverSafeArea(
-                  top: false,
+                  top: widget.embedded,
                   sliver: SliverPadding(
                     padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
                     sliver: SliverToBoxAdapter(

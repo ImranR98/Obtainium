@@ -7,6 +7,7 @@ import 'package:flutter/rendering.dart' show ScrollCacheExtent;
 import 'package:obtainium/app_sources/github.dart';
 import 'package:obtainium/layout_breakpoints.dart';
 import 'package:obtainium/components/app_page_section_title.dart';
+import 'package:obtainium/components/bulk_add_widget.dart';
 import 'package:obtainium/components/custom_app_bar.dart';
 import 'package:obtainium/components/generated_form_renderer.dart';
 import 'package:obtainium/components/version_regex_assist_dialog.dart';
@@ -37,9 +38,6 @@ import 'package:url_launcher/url_launcher_string.dart';
 const double _appVaultFabBottomGap = 8.0;
 const double _fabHorizontalMargin = 16.0;
 const double _fabMinimumSafeBottomPadding = 16.0;
-const double _launcherControlHeight =
-    SettingsProvider.collapsedHeaderHeight - 4.0;
-
 InlineSpan _tooltipMessageWithBoldMarkdown(String message) {
   final List<String> messageParts = message.split('**');
   return TextSpan(
@@ -57,6 +55,15 @@ InlineSpan _tooltipMessageWithBoldMarkdown(String message) {
 
 enum _AddMode { launcher, byUrl, search }
 
+enum _AddAppLauncherDestination {
+  addByUrl,
+  searchSources,
+  batchSearch,
+  bulkSearch,
+  importUrlList,
+  githubStars,
+}
+
 enum _PackageIdDetectionChoice { download, trackOnly }
 
 class AddAppPage extends StatefulWidget {
@@ -64,27 +71,37 @@ class AddAppPage extends StatefulWidget {
     : _initialMode = _AddMode.launcher,
       _initialUrl = null,
       _searchAddsMultipleApps = false,
-      _onBatchSearchSaved = null;
+      _onBatchSearchSaved = null,
+      _onEmbeddedAddCompleted = null,
+      _embeddedDetail = false;
 
   const AddAppPage._flow({
+    super.key,
     required _AddMode initialMode,
     String? initialUrl,
     bool searchAddsMultipleApps = false,
     Future<void> Function()? onBatchSearchSaved,
+    VoidCallback? onEmbeddedAddCompleted,
+    bool embeddedDetail = false,
   }) : assert(
          initialMode == _AddMode.byUrl || initialMode == _AddMode.search,
        ),
        assert(!searchAddsMultipleApps || initialMode == _AddMode.search),
        assert(onBatchSearchSaved == null || searchAddsMultipleApps),
+       assert(onEmbeddedAddCompleted == null || embeddedDetail),
        _initialMode = initialMode,
        _initialUrl = initialUrl,
        _searchAddsMultipleApps = searchAddsMultipleApps,
-       _onBatchSearchSaved = onBatchSearchSaved;
+       _onBatchSearchSaved = onBatchSearchSaved,
+       _onEmbeddedAddCompleted = onEmbeddedAddCompleted,
+       _embeddedDetail = embeddedDetail;
 
   final _AddMode _initialMode;
   final String? _initialUrl;
   final bool _searchAddsMultipleApps;
   final Future<void> Function()? _onBatchSearchSaved;
+  final VoidCallback? _onEmbeddedAddCompleted;
+  final bool _embeddedDetail;
 
   @override
   State<AddAppPage> createState() => AddAppPageState();
@@ -108,9 +125,30 @@ class AddAppPageState extends State<AddAppPage> {
   final GlobalKey _urlFieldKey = GlobalKey();
   late final TextEditingController _urlFieldController;
   late final FocusNode _urlFieldFocusNode;
+  _AddAppLauncherDestination _selectedLauncherDestination =
+      _AddAppLauncherDestination.addByUrl;
+  String? _launcherDetailUrl;
+  final GlobalKey<AddAppPageState> _launcherUrlDetailKey = GlobalKey();
+  final GlobalKey<AddAppPageState> _launcherSearchDetailKey = GlobalKey();
+  final GlobalKey<AddAppPageState> _launcherBatchSearchDetailKey = GlobalKey();
+  final GlobalKey<BulkAddWidgetState> _launcherBulkDetailKey = GlobalKey();
 
-  /// Bulk add now runs on its own route, so the launcher itself never saves.
-  bool get isBulkAdding => false;
+  bool get isBulkAdding =>
+      (_launcherUrlDetailKey.currentState?.gettingAppInfo ?? false) ||
+      (_launcherSearchDetailKey.currentState?.gettingAppInfo ?? false) ||
+      (_launcherBatchSearchDetailKey.currentState?.gettingAppInfo ?? false) ||
+      (_launcherBulkDetailKey.currentState?.isAdding ?? false);
+
+  AddAppPageState? get _selectedLauncherFlowState =>
+      switch (_selectedLauncherDestination) {
+        _AddAppLauncherDestination.addByUrl =>
+          _launcherUrlDetailKey.currentState,
+        _AddAppLauncherDestination.searchSources =>
+          _launcherSearchDetailKey.currentState,
+        _AddAppLauncherDestination.batchSearch =>
+          _launcherBatchSearchDetailKey.currentState,
+        _ => null,
+      };
 
   bool get hasInlineLauncherFlow =>
       widget._initialMode == _AddMode.launcher &&
@@ -128,6 +166,22 @@ class AddAppPageState extends State<AddAppPage> {
   }
 
   Future<bool> confirmCancelBulkScanForNavigation() async {
+    if (_mode == _AddMode.launcher) {
+      final AddAppPageState? selectedFlowState =
+          _selectedLauncherFlowState;
+      if (selectedFlowState != null) {
+        return selectedFlowState.confirmCancelBulkScanForNavigation();
+      }
+      if (_selectedLauncherDestination ==
+          _AddAppLauncherDestination.bulkSearch) {
+        final BulkAddWidgetState? bulkState =
+            _launcherBulkDetailKey.currentState;
+        if (bulkState != null) {
+          return bulkState.confirmCancelScanForNavigation(context);
+        }
+      }
+    }
+
     final bool isUrlDirty = _mode == _AddMode.byUrl && _hasUnsavedFlowInput;
     final bool isSearchDirty = _mode == _AddMode.search && _hasUnsavedFlowInput;
 
@@ -197,6 +251,16 @@ class AddAppPageState extends State<AddAppPage> {
   /// Handles Search-result drill-in before the routed flow itself is closed.
   /// The launcher returns false so [HomePageState] can use normal tab back.
   bool handleBack() {
+    if (_mode == _AddMode.launcher) {
+      if (_selectedLauncherFlowState?.handleBack() ?? false) {
+        return true;
+      }
+      if (_selectedLauncherDestination ==
+              _AddAppLauncherDestination.bulkSearch &&
+          (_launcherBulkDetailKey.currentState?.handleBack() ?? false)) {
+        return true;
+      }
+    }
     if (_mode == _AddMode.byUrl && _byUrlOpenedFromSearchPick) {
       clearInputFocus();
       setState(() {
@@ -230,6 +294,7 @@ class AddAppPageState extends State<AddAppPage> {
   late final TextEditingController _searchSomeSourcesController;
   late final TextEditingController _searchResultFilterController;
   late final FocusNode _searchSomeSourcesFocusNode;
+  final GlobalKey _searchResultFilterKey = GlobalKey();
 
   void linkFn(String input) {
     try {
@@ -281,17 +346,9 @@ class AddAppPageState extends State<AddAppPage> {
   }
 
   /// Lazily initialise the store selection for the active search workflow.
-  Set<String> _getSearchSelectedStores(SettingsProvider settingsProvider) {
+  Set<String> _getSearchSelectedStores() {
     if (_searchSelectedStores == null) {
-      if (widget._searchAddsMultipleApps) {
-        _searchSelectedStores = {};
-      } else {
-        final deselected = settingsProvider.searchDeselected.toSet();
-        _searchSelectedStores = sourceProvider.sourceTemplates
-            .where((e) => e.canSearch && !deselected.contains(e.name))
-            .map((e) => e.name)
-            .toSet();
-      }
+      _searchSelectedStores = {};
     }
     return _searchSelectedStores!;
   }
@@ -403,6 +460,23 @@ class AddAppPageState extends State<AddAppPage> {
     });
   }
 
+  void _scrollEmbeddedSearchResultsToFilter() {
+    if (!widget._embeddedDetail || _searchResults.isEmpty) return;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      final BuildContext? filterContext =
+          _searchResultFilterKey.currentContext;
+      if (filterContext == null) return;
+      Scrollable.ensureVisible(
+        filterContext,
+        duration: const Duration(milliseconds: 400),
+        curve: Curves.easeInOutCubicEmphasized,
+        alignment: 0,
+        alignmentPolicy: ScrollPositionAlignmentPolicy.explicit,
+      );
+    });
+  }
+
   void _showSupportedSourcesDialog(BuildContext context) {
     showDialog<void>(
       context: context,
@@ -455,6 +529,9 @@ class AddAppPageState extends State<AddAppPage> {
     required bool submitDisabled,
     required VoidCallback onSubmit,
     bool matchLauncherButton = false,
+    bool selected = false,
+    ValueChanged<String>? onValidLauncherInput,
+    VoidCallback? onTap,
   }) {
     final bool showSupportedSourcesButton = userInput.trim().isEmpty;
     final ColorScheme colorScheme = Theme.of(context).colorScheme;
@@ -512,10 +589,12 @@ class AddAppPageState extends State<AddAppPage> {
     InputDecoration decoration = appPageOutlinedInputDecoration(
       context,
       labelText: tr('appSourceURL'),
-      borderRadius: _launcherControlHeight / 2,
+      borderRadius: SettingsProvider.collapsedHeaderHeight / 2,
     ).copyWith(
       fillColor: matchLauncherButton
-          ? m3eCollapsedGroupHeaderFill(colorScheme)
+          ? selected
+                ? colorScheme.secondaryContainer
+                : m3eCollapsedGroupHeaderFill(colorScheme)
           : null,
       labelStyle: launcherTextStyle,
       floatingLabelStyle: matchLauncherButton
@@ -551,7 +630,7 @@ class AddAppPageState extends State<AddAppPage> {
           : null,
       constraints: matchLauncherButton
           ? const BoxConstraints.tightFor(
-              height: _launcherControlHeight,
+              height: SettingsProvider.collapsedHeaderHeight,
             )
           : null,
       suffixIconConstraints: const BoxConstraints(minWidth: 0, minHeight: 0),
@@ -564,11 +643,16 @@ class AddAppPageState extends State<AddAppPage> {
       focusNode: _urlFieldFocusNode,
       style: launcherTextStyle,
       textAlignVertical: TextAlignVertical.center,
+      onTap: onTap,
       onChanged: (String text) {
         final bool valid = _isUrlInputValid(text);
         changeUserInput(text, valid, false);
         if (_mode == _AddMode.launcher && valid) {
-          linkFn(text);
+          if (onValidLauncherInput != null) {
+            onValidLauncherInput(text);
+          } else {
+            linkFn(text);
+          }
         }
       },
       keyboardType: TextInputType.url,
@@ -583,9 +667,7 @@ class AddAppPageState extends State<AddAppPage> {
     );
 
     return SizedBox(
-      height: matchLauncherButton
-          ? _launcherControlHeight
-          : SettingsProvider.collapsedHeaderHeight,
+      height: SettingsProvider.collapsedHeaderHeight,
       child: textField,
     );
   }
@@ -606,6 +688,37 @@ class AddAppPageState extends State<AddAppPage> {
         ? coveredBottomInset
         : 0.0;
 
+    final bool useTwoPaneLayout =
+        MediaQuery.sizeOf(context).width >= kLargeScreenWidthBreakpoint &&
+        !settingsProvider.alwaysUsePhoneLayout;
+    final double embeddedBottomActionPadding =
+        (bottomChromeClearance > _fabMinimumSafeBottomPadding
+            ? bottomChromeClearance
+            : _fabMinimumSafeBottomPadding) +
+        _appVaultFabBottomGap;
+
+    Future<void> switchToAppsPage() async {
+      if (homeState != null) {
+        await homeState.switchToPage(0);
+      }
+    }
+
+    void resetLauncherAfterSuccessfulAdd() {
+      if (!mounted) return;
+      clearInputFocus();
+      setState(() {
+        _selectedLauncherDestination =
+            _AddAppLauncherDestination.addByUrl;
+        _launcherDetailUrl = null;
+        _resetUrlModeInput();
+      });
+    }
+
+    Future<void> resetLauncherAndSwitchToAppsPage() async {
+      resetLauncherAfterSuccessfulAdd();
+      await switchToAppsPage();
+    }
+
     void openPage(WidgetBuilder builder) {
       clearInputFocus();
       hapticSelection();
@@ -614,19 +727,35 @@ class AddAppPageState extends State<AddAppPage> {
       );
     }
 
+    Future<void> selectLauncherDestination(
+      _AddAppLauncherDestination destination,
+    ) async {
+      if (_selectedLauncherDestination == destination) return;
+      if (!await confirmCancelBulkScanForNavigation()) return;
+      if (!mounted) return;
+      clearInputFocus();
+      hapticSelection();
+      setState(() {
+        _selectedLauncherDestination = destination;
+      });
+    }
+
     Widget launcherButton({
       required IconData icon,
       required String label,
       required VoidCallback? onPressed,
       IconData trailingIcon = Icons.chevron_right_rounded,
       double trailingIconSize = 20,
+      bool selected = false,
     }) {
       return SizedBox(
-        height: _launcherControlHeight,
+        height: SettingsProvider.collapsedHeaderHeight,
         child: FilledButton.tonal(
           onPressed: onPressed,
           style: FilledButton.styleFrom(
-            backgroundColor: m3eCollapsedGroupHeaderFill(colorScheme),
+            backgroundColor: selected
+                ? colorScheme.secondaryContainer
+                : m3eCollapsedGroupHeaderFill(colorScheme),
             foregroundColor: colorScheme.onSecondaryContainer,
             alignment: AlignmentDirectional.centerStart,
             padding: const EdgeInsetsDirectional.fromSTEB(14, 0, 12, 0),
@@ -669,70 +798,136 @@ class AddAppPageState extends State<AddAppPage> {
     }
 
     final List<Widget> actions = [
-      _buildAppSourceUrlField(
-        context: context,
-        submitDisabled: !_isUrlInputValid(userInput),
-        onSubmit: () => linkFn(userInput),
-        matchLauncherButton: true,
-      ),
+      if (useTwoPaneLayout)
+        launcherButton(
+          icon: Icons.link_rounded,
+          label: tr('appSourceURL'),
+          selected:
+              _selectedLauncherDestination ==
+              _AddAppLauncherDestination.addByUrl,
+          onPressed: () => unawaited(
+            selectLauncherDestination(
+              _AddAppLauncherDestination.addByUrl,
+            ),
+          ),
+        )
+      else
+        _buildAppSourceUrlField(
+          context: context,
+          submitDisabled: !_isUrlInputValid(userInput),
+          onSubmit: () => linkFn(userInput),
+          matchLauncherButton: true,
+        ),
       // Stable mapping: multi-source search uses manage-search; the
       // single-source batch workflow uses the plain search glyph.
       launcherButton(
         icon: Icons.manage_search_rounded,
         label: tr('searchSourcesAddApp'),
+        selected:
+            useTwoPaneLayout &&
+            _selectedLauncherDestination ==
+                _AddAppLauncherDestination.searchSources,
         onPressed: () {
-          openPage(
-            (_) => const AddAppPage._flow(initialMode: _AddMode.search),
-          );
+          if (useTwoPaneLayout) {
+            unawaited(
+              selectLauncherDestination(
+                _AddAppLauncherDestination.searchSources,
+              ),
+            );
+          } else {
+            openPage(
+              (_) => const AddAppPage._flow(initialMode: _AddMode.search),
+            );
+          }
         },
       ),
       launcherButton(
         icon: Icons.search_rounded,
         label: tr('searchSourceAddApps'),
+        selected:
+            useTwoPaneLayout &&
+            _selectedLauncherDestination ==
+                _AddAppLauncherDestination.batchSearch,
         onPressed: () {
-          openPage(
-            (_) => AddAppPage._flow(
-              initialMode: _AddMode.search,
-              searchAddsMultipleApps: true,
-              onBatchSearchSaved: () async {
-                if (homeState != null) {
-                  await homeState.switchToPage(0);
-                }
-              },
-            ),
-          );
+          if (useTwoPaneLayout) {
+            unawaited(
+              selectLauncherDestination(
+                _AddAppLauncherDestination.batchSearch,
+              ),
+            );
+          } else {
+            openPage(
+              (_) => AddAppPage._flow(
+                initialMode: _AddMode.search,
+                searchAddsMultipleApps: true,
+                onBatchSearchSaved: switchToAppsPage,
+              ),
+            );
+          }
         },
       ),
       launcherButton(
         icon: Icons.phone_android_rounded,
         label: tr('bulkSearchDeviceApps'),
+        selected:
+            useTwoPaneLayout &&
+            _selectedLauncherDestination ==
+                _AddAppLauncherDestination.bulkSearch,
         onPressed: () {
-          openPage((_) => const BulkAddAppsPage());
+          if (useTwoPaneLayout) {
+            unawaited(
+              selectLauncherDestination(
+                _AddAppLauncherDestination.bulkSearch,
+              ),
+            );
+          } else {
+            openPage((_) => const BulkAddAppsPage());
+          }
         },
       ),
       launcherButton(
         icon: Icons.playlist_add_rounded,
         label: tr('importFromURLList'),
+        selected:
+            useTwoPaneLayout &&
+            _selectedLauncherDestination ==
+                _AddAppLauncherDestination.importUrlList,
         onPressed: () {
-          openPage((_) => const ImportFromUrlListPage());
+          if (useTwoPaneLayout) {
+            unawaited(
+              selectLauncherDestination(
+                _AddAppLauncherDestination.importUrlList,
+              ),
+            );
+          } else {
+            openPage((_) => const ImportFromUrlListPage());
+          }
         },
       ),
       launcherButton(
         icon: Icons.star_rounded,
         label: tr('importGitHubStarredRepositories'),
+        selected:
+            useTwoPaneLayout &&
+            _selectedLauncherDestination ==
+                _AddAppLauncherDestination.githubStars,
         onPressed: () {
-          clearInputFocus();
-          hapticSelection();
-          unawaited(
-            showImportGitHubStarsSheet(
-              context,
-              onImportCompleted: () async {
-                if (homeState != null) {
-                  await homeState.switchToPage(0);
-                }
-              },
-            ),
-          );
+          if (useTwoPaneLayout) {
+            unawaited(
+              selectLauncherDestination(
+                _AddAppLauncherDestination.githubStars,
+              ),
+            );
+          } else {
+            clearInputFocus();
+            hapticSelection();
+            unawaited(
+              showImportGitHubStarsSheet(
+                context,
+                onImportCompleted: switchToAppsPage,
+              ),
+            );
+          }
         },
       ),
       launcherButton(
@@ -752,6 +947,158 @@ class AddAppPageState extends State<AddAppPage> {
         },
       ),
     ];
+
+    Widget actionColumn(List<Widget> paneActions) {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        spacing: SettingsProvider.collapsedHeaderGap,
+        children: paneActions,
+      );
+    }
+
+    if (useTwoPaneLayout) {
+      final Widget selectedDetail = switch (_selectedLauncherDestination) {
+        _AddAppLauncherDestination.addByUrl => AddAppPage._flow(
+          key: _launcherUrlDetailKey,
+          initialMode: _AddMode.byUrl,
+          initialUrl: _launcherDetailUrl,
+          onEmbeddedAddCompleted: resetLauncherAfterSuccessfulAdd,
+          embeddedDetail: true,
+        ),
+        _AddAppLauncherDestination.searchSources => AddAppPage._flow(
+          key: _launcherSearchDetailKey,
+          initialMode: _AddMode.search,
+          onEmbeddedAddCompleted: resetLauncherAfterSuccessfulAdd,
+          embeddedDetail: true,
+        ),
+        _AddAppLauncherDestination.batchSearch => AddAppPage._flow(
+          key: _launcherBatchSearchDetailKey,
+          initialMode: _AddMode.search,
+          searchAddsMultipleApps: true,
+          onBatchSearchSaved: resetLauncherAndSwitchToAppsPage,
+          embeddedDetail: true,
+        ),
+        _AddAppLauncherDestination.bulkSearch => BulkAddWidget(
+          key: _launcherBulkDetailKey,
+          standalone: false,
+          isLargeScreen: true,
+          bottomActionBottomPadding: embeddedBottomActionPadding,
+          onComplete: () => unawaited(
+            resetLauncherAndSwitchToAppsPage(),
+          ),
+        ),
+        _AddAppLauncherDestination.importUrlList => ImportFromUrlListPage(
+          embedded: true,
+          onImportCompleted: resetLauncherAndSwitchToAppsPage,
+        ),
+        _AddAppLauncherDestination.githubStars => ImportGitHubStarsContent(
+          embedded: true,
+          onImportCompleted: resetLauncherAndSwitchToAppsPage,
+        ),
+      };
+      return Scaffold(
+        resizeToAvoidBottomInset: false,
+        backgroundColor: colorScheme.surface,
+        body: Stack(
+          fit: StackFit.expand,
+          children: [
+            Positioned.fill(
+              child: settingsProvider.useGradientBackground
+                  ? DecoratedBox(
+                      decoration: BoxDecoration(
+                        gradient: colorScheme.schemePageBackgroundGradient,
+                      ),
+                    )
+                  : ColoredBox(color: colorScheme.surface),
+            ),
+            Row(
+              children: [
+                Expanded(
+                  flex: 3,
+                  child: Scaffold(
+                    resizeToAvoidBottomInset: false,
+                    backgroundColor: settingsProvider.useGradientBackground
+                        ? Colors.transparent
+                        : colorScheme.surface,
+                    body: Stack(
+                      fit: StackFit.expand,
+                      children: [
+                        if (settingsProvider.useGradientBackground)
+                          DecoratedBox(
+                            decoration: BoxDecoration(
+                              gradient:
+                                  colorScheme.schemePageBackgroundGradient,
+                            ),
+                          ),
+                        CustomScrollView(
+                          key: const PageStorageKey<String>(
+                            'add-app-launcher-master-scroll',
+                          ),
+                          slivers: [
+                            CustomAppBar(
+                              title: tr('addApp'),
+                              matchGradientBackground:
+                                  settingsProvider.useGradientBackground,
+                              progressiveBlurOverlayColor: colorScheme.surface
+                                  .withValues(alpha: 0.72),
+                            ),
+                            SliverPadding(
+                              padding: EdgeInsets.fromLTRB(
+                                16,
+                                8,
+                                16,
+                                112 + bottomChromeClearance,
+                              ),
+                              sliver: SliverToBoxAdapter(
+                                child: actionColumn(actions),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                VerticalDivider(
+                  width: 1,
+                  thickness: 1,
+                  color: colorScheme.outlineVariant.withAlpha(50),
+                ),
+                Expanded(
+                  flex: 4,
+                  child: Scaffold(
+                    resizeToAvoidBottomInset: false,
+                    backgroundColor: settingsProvider.useGradientBackground
+                        ? Colors.transparent
+                        : colorScheme.surface,
+                    body: Stack(
+                      fit: StackFit.expand,
+                      children: [
+                        if (settingsProvider.useGradientBackground)
+                          Positioned.fill(
+                            child: DecoratedBox(
+                              decoration: BoxDecoration(
+                                gradient:
+                                    colorScheme.schemePageBackgroundGradient,
+                              ),
+                            ),
+                          ),
+                        KeyedSubtree(
+                          key: ValueKey<_AddAppLauncherDestination>(
+                            _selectedLauncherDestination,
+                          ),
+                          child: selectedDetail,
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      );
+    }
 
     return Scaffold(
       resizeToAvoidBottomInset: false,
@@ -783,11 +1130,7 @@ class AddAppPageState extends State<AddAppPage> {
                   child: Center(
                     child: ConstrainedBox(
                       constraints: const BoxConstraints(maxWidth: 720),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
-                        spacing: SettingsProvider.collapsedHeaderGap,
-                        children: actions,
-                      ),
+                      child: actionColumn(actions),
                     ),
                   ),
                 ),
@@ -813,10 +1156,6 @@ class AddAppPageState extends State<AddAppPage> {
     // this page (categories, sort, swipe actions, etc.).
     context.select<SettingsProvider, int>(
       (s) => Object.hash(
-        // [searchDeselected] is a List<String>; hash its contents,
-        // because the getter returns a fresh list every call so reference
-        // hashing would either always re-trigger or never trigger.
-        Object.hashAll(s.searchDeselected),
         s.hideTrackOnlyWarning,
         s.useGradientBackground,
         s.progressiveBlurEnabled,
@@ -1106,6 +1445,7 @@ class AddAppPageState extends State<AddAppPage> {
           final homeState = context.findAncestorStateOfType<HomePageState>();
           if (isLargeScreen && homeState != null) {
             _resetUrlModeInput();
+            widget._onEmbeddedAddCompleted?.call();
             unawaited(homeState.switchToAppsTabAndOpenApp(app.id));
           } else {
             unawaited(
@@ -1254,7 +1594,9 @@ class AddAppPageState extends State<AddAppPage> {
       if (saveCompleted && mounted) {
         final Future<void> Function()? onBatchSearchSaved =
             widget._onBatchSearchSaved;
-        Navigator.of(context).pop();
+        if (!widget._embeddedDetail) {
+          Navigator.of(context).pop();
+        }
         if (onBatchSearchSaved != null) {
           await onBatchSearchSaved();
         }
@@ -1525,15 +1867,12 @@ class AddAppPageState extends State<AddAppPage> {
 
     // ── Search mode widgets ────────────────────────────────────────────
 
-    final Set<String> searchSelectedStores = _getSearchSelectedStores(
-      settingsProvider,
-    );
+    final Set<String> searchSelectedStores = _getSearchSelectedStores();
 
     // ── Inline search runner ───────────────────────────────────────────
 
     Future<void> runInlineSearch({
       required AppsProvider appsProvider,
-      required SettingsProvider settingsProvider,
     }) async {
       _searchSomeSourcesFocusNode.unfocus();
       FocusManager.instance.primaryFocus?.unfocus();
@@ -1563,6 +1902,7 @@ class AddAppPageState extends State<AddAppPage> {
           _searchResultFilter = '';
           searching = false;
         });
+        _scrollEmbeddedSearchResultsToFilter();
         return;
       }
 
@@ -1680,6 +2020,7 @@ class AddAppPageState extends State<AddAppPage> {
             _searchCache[cacheKey] = res;
           }
         });
+        _scrollEmbeddedSearchResultsToFilter();
       } catch (e) {
         if (!context.mounted) return;
         showError(e, context);
@@ -1733,7 +2074,6 @@ class AddAppPageState extends State<AddAppPage> {
                         hapticSelection();
                         runInlineSearch(
                           appsProvider: appsProvider,
-                          settingsProvider: settingsProvider,
                         );
                       },
                 child: SizedBox(
@@ -1766,7 +2106,6 @@ class AddAppPageState extends State<AddAppPage> {
                   hapticSelection();
                   runInlineSearch(
                     appsProvider: appsProvider,
-                    settingsProvider: settingsProvider,
                   );
                 }
               },
@@ -1849,13 +2188,6 @@ class AddAppPageState extends State<AddAppPage> {
                 } else {
                   searchSelectedStores.remove(source.name);
                 }
-                settingsProvider.searchDeselected = searchableSources
-                    .map((searchableSource) => searchableSource.name)
-                    .where(
-                      (sourceName) =>
-                          !searchSelectedStores.contains(sourceName),
-                    )
-                    .toList();
               }
             });
           }
@@ -1913,6 +2245,7 @@ class AddAppPageState extends State<AddAppPage> {
             ),
           ),
           TextField(
+            key: _searchResultFilterKey,
             controller: _searchResultFilterController,
             onChanged: (v) => setState(() => _searchResultFilter = v),
             decoration:
@@ -2055,24 +2388,19 @@ class AddAppPageState extends State<AddAppPage> {
       );
     }
 
-    return PopScope(
-      canPop:
-          widget._initialMode != _AddMode.launcher &&
-          !_byUrlOpenedFromSearchPick &&
-          !_hasUnsavedFlowInput,
-      onPopInvokedWithResult: (bool didPop, dynamic result) {
-        if (!didPop) unawaited(_requestFlowPop());
-      },
-      child: Scaffold(
-        // Don't let the keyboard resize the body (see the apps-list Scaffold): the
-        // per-frame resize repaint forces the app bar's progressive-blur
-        // BackdropFilter to re-rasterize every frame and stutters the keyboard
-        // slide. The URL / search field is at the top, so it stays visible.
-        resizeToAvoidBottomInset: false,
-        backgroundColor: addScheme.surface,
-        body: Stack(
-          fit: StackFit.expand,
-          children: [
+    final Widget flowScaffold = Scaffold(
+      // Don't let the keyboard resize the body (see the apps-list Scaffold): the
+      // per-frame resize repaint forces the app bar's progressive-blur
+      // BackdropFilter to re-rasterize every frame and stutters the keyboard
+      // slide. The URL / search field is at the top, so it stays visible.
+      resizeToAvoidBottomInset: false,
+      backgroundColor:
+          widget._embeddedDetail && settingsProvider.useGradientBackground
+          ? Colors.transparent
+          : addScheme.surface,
+      body: Stack(
+        fit: StackFit.expand,
+        children: [
             if (settingsProvider.useGradientBackground)
               buildGradientBackground(),
             CustomScrollView(
@@ -2082,57 +2410,62 @@ class AddAppPageState extends State<AddAppPage> {
                 '${widget._searchAddsMultipleApps}-scroll',
               ),
               slivers: <Widget>[
-                CustomAppBar(
-                  title: isInlineLauncherFlow
-                      ? tr('addApp')
-                      : _mode == _AddMode.byUrl
-                      ? tr('addAppUrl')
-                      : tr(
-                          widget._searchAddsMultipleApps
-                              ? 'searchSourceAddApps'
-                              : 'searchSourcesAddApp',
-                        ),
-                  searchWidget: isInlineLauncherFlow
-                      ? null
-                      : const SizedBox.shrink(),
-                  leading: IconButton(
-                    icon: const Icon(Icons.arrow_back_rounded),
-                    onPressed: () {
-                      unawaited(_requestFlowPop());
-                    },
-                  ),
-                  matchGradientBackground:
-                      settingsProvider.useGradientBackground,
-                ),
-                SliverToBoxAdapter(
-                  child: Padding(
-                    padding: EdgeInsets.fromLTRB(
-                      isInlineLauncherFlow ? 16 : 12,
-                      8,
-                      isInlineLauncherFlow ? 16 : 12,
-                      16,
+                if (!widget._embeddedDetail)
+                  CustomAppBar(
+                    title: isInlineLauncherFlow
+                        ? tr('addApp')
+                        : _mode == _AddMode.byUrl
+                        ? tr('addAppUrl')
+                        : tr(
+                            widget._searchAddsMultipleApps
+                                ? 'searchSourceAddApps'
+                                : 'searchSourcesAddApp',
+                          ),
+                    searchWidget: isInlineLauncherFlow
+                        ? null
+                        : const SizedBox.shrink(),
+                    leading: IconButton(
+                      icon: const Icon(Icons.arrow_back_rounded),
+                      onPressed: () {
+                        unawaited(_requestFlowPop());
+                      },
                     ),
-                    child: Center(
-                      child: ConstrainedBox(
-                        constraints: BoxConstraints(
-                          maxWidth: isInlineLauncherFlow ? 720 : 840,
-                        ),
-                        child: AnimatedSwitcher(
-                          duration: const Duration(milliseconds: 180),
-                          layoutBuilder: (currentChild, previousChildren) {
-                            return Stack(
-                              alignment: Alignment.topCenter,
-                              children: <Widget>[
-                                ...previousChildren,
-                                ?currentChild,
-                              ],
-                            );
-                          },
-                          child: KeyedSubtree(
-                            key: ValueKey(_mode),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.stretch,
-                              children: [
+                    matchGradientBackground:
+                        settingsProvider.useGradientBackground,
+                  ),
+                SliverSafeArea(
+                  top: widget._embeddedDetail,
+                  bottom: false,
+                  sliver: SliverToBoxAdapter(
+                    child: Padding(
+                      padding: EdgeInsets.fromLTRB(
+                        isInlineLauncherFlow ? 16 : 12,
+                        8,
+                        isInlineLauncherFlow ? 16 : 12,
+                        16,
+                      ),
+                      child: Center(
+                        child: ConstrainedBox(
+                          constraints: BoxConstraints(
+                            maxWidth: isInlineLauncherFlow ? 720 : 840,
+                          ),
+                          child: AnimatedSwitcher(
+                            duration: const Duration(milliseconds: 180),
+                            layoutBuilder: (currentChild, previousChildren) {
+                              return Stack(
+                                alignment: Alignment.topCenter,
+                                children: <Widget>[
+                                  ...previousChildren,
+                                  ?currentChild,
+                                ],
+                              );
+                            },
+                            child: KeyedSubtree(
+                              key: ValueKey(_mode),
+                              child: Column(
+                                crossAxisAlignment:
+                                    CrossAxisAlignment.stretch,
+                                children: [
                                 if (_mode == _AddMode.byUrl) ...[
                                   const SizedBox(height: 8),
                                   _buildAppSourceUrlField(
@@ -2190,7 +2523,8 @@ class AddAppPageState extends State<AddAppPage> {
                                   getSearchStoreChips(),
                                   getSearchResultsList(),
                                 ],
-                              ],
+                                ],
+                              ),
                             ),
                           ),
                         ),
@@ -2205,9 +2539,23 @@ class AddAppPageState extends State<AddAppPage> {
               ],
             ),
             buildBottomActionFabOverlay(),
-          ],
-        ),
+        ],
       ),
+    );
+
+    if (widget._embeddedDetail) {
+      return flowScaffold;
+    }
+
+    return PopScope(
+      canPop:
+          widget._initialMode != _AddMode.launcher &&
+          !_byUrlOpenedFromSearchPick &&
+          !_hasUnsavedFlowInput,
+      onPopInvokedWithResult: (bool didPop, dynamic result) {
+        if (!didPop) unawaited(_requestFlowPop());
+      },
+      child: flowScaffold,
     );
   }
 

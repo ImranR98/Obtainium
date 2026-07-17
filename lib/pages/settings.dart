@@ -551,16 +551,12 @@ class SettingsPageState extends State<SettingsPage> {
 
       final Color containerColor = selected
           ? cs.secondaryContainer
-          : cs.surfaceContainerHigh;
-      final Color contentColor = selected
-          ? cs.onSecondaryContainer
-          : cs.onSurface;
+          : m3eCollapsedGroupHeaderFill(cs);
+      final Color contentColor = cs.onSecondaryContainer;
 
-      final Color iconBoxColor = selected
-          ? cs.primary.withValues(alpha: 0.16)
-          : cs.primaryContainer.withValues(alpha: 0.48);
+      final Color iconBoxColor = cs.primary.withValues(alpha: 0.16);
 
-      final Color iconColor = selected ? cs.primary : cs.onSurfaceVariant;
+      final Color iconColor = cs.onSecondaryContainer;
 
       final Color chevronColor = cs.onSurfaceVariant;
 
@@ -569,7 +565,9 @@ class SettingsPageState extends State<SettingsPage> {
       );
 
       return Padding(
-        padding: const EdgeInsets.only(bottom: 8.0),
+        padding: const EdgeInsets.only(
+          bottom: SettingsProvider.collapsedHeaderGap,
+        ),
         child: Container(
           decoration: BoxDecoration(
             color: containerColor,
@@ -586,41 +584,49 @@ class SettingsPageState extends State<SettingsPage> {
                 }
               },
               borderRadius: BorderRadius.circular(categoryTileRadius),
-              child: Padding(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 12,
-                  vertical: 10,
-                ),
-                child: Row(
-                  children: [
-                    Container(
-                      width: 36,
-                      height: 36,
-                      decoration: BoxDecoration(
-                        color: iconBoxColor,
-                        shape: BoxShape.circle,
+              child: SizedBox(
+                height: SettingsProvider.collapsedHeaderHeight,
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 12),
+                  child: Row(
+                    children: [
+                      Container(
+                        width: 36,
+                        height: 36,
+                        decoration: BoxDecoration(
+                          color: iconBoxColor,
+                          shape: BoxShape.circle,
+                        ),
+                        child: Icon(icon, color: iconColor, size: 18),
                       ),
-                      child: Icon(icon, color: iconColor, size: 18),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Text(
-                        title,
-                        style: TextStyle(
-                          fontWeight: selected
-                              ? FontWeight.w600
-                              : FontWeight.w500,
-                          color: contentColor,
-                          fontSize: 14,
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Text(
+                          title,
+                          style: TextStyle(
+                            fontWeight: selected
+                                ? FontWeight.w600
+                                : FontWeight.w500,
+                            color: contentColor,
+                            fontSize: 14,
+                          ),
                         ),
                       ),
-                    ),
-                    Icon(
-                      Icons.chevron_right_rounded,
-                      color: chevronColor,
-                      size: 20,
-                    ),
-                  ],
+                      Container(
+                        width: 32,
+                        height: 32,
+                        decoration: BoxDecoration(
+                          color: cs.surfaceContainerHighest,
+                          shape: BoxShape.circle,
+                        ),
+                        child: Icon(
+                          Icons.chevron_right_rounded,
+                          color: chevronColor,
+                          size: 20,
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ),
             ),
