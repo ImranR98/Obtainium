@@ -357,7 +357,7 @@ class CustomAppBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return SliverAppBar.large(
+    return SliverAppBar(
       pinned: true,
       automaticallyImplyLeading: false,
       title: Text(title),

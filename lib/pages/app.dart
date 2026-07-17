@@ -314,7 +314,7 @@ class _AppPageState extends State<AppPage> {
             backgroundColor: Theme.of(context).colorScheme.surface,
             body: CustomScrollView(
               slivers: [
-                SliverAppBar.large(
+                SliverAppBar(
                   pinned: true,
                   automaticallyImplyLeading: false,
                   title: Text(

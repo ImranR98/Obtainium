@@ -619,11 +619,42 @@ class _SettingsPageState extends State<SettingsPage> {
           onChanged: (value) =>
               settingsProvider.onlyCheckInstalledOrTrackOnlyApps = value,
         ),
-        SettingsToggleRow(
-          label: tr('showActionBannerForUpdateOnly'),
-          value: settingsProvider.showActionBannerForUpdateOnly,
-          onChanged: (value) =>
-              settingsProvider.showActionBannerForUpdateOnly = value,
+        SettingsTile(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                child: Text(tr('actionBanner')),
+              ),
+              SizedBox(
+                width: double.infinity,
+                child: SegmentedButton<String>(
+                  segments: [
+                    ButtonSegment(
+                      value: ActionBannerMode.all.name,
+                      label: Text(tr('all')),
+                    ),
+                    ButtonSegment(
+                      value: ActionBannerMode.updatesOnly.name,
+                      label: Text(tr('updates')),
+                    ),
+                    ButtonSegment(
+                      value: ActionBannerMode.none.name,
+                      label: Text(tr('none')),
+                    ),
+                  ],
+                  selected: {settingsProvider.actionBannerMode.name},
+                  showSelectedIcon: false,
+                  onSelectionChanged: (selection) {
+                    settingsProvider.selectionClick();
+                    settingsProvider.actionBannerMode =
+                        ActionBannerMode.values.byName(selection.first);
+                  },
+                ),
+              ),
+            ],
+          ),
         ),
         SettingsToggleRow(
           label: tr('removeOnExternalUninstall'),
@@ -1256,7 +1287,7 @@ class _LogsPageState extends State<LogsPage> {
             child: CustomScrollView(
               controller: _scrollController,
               slivers: [
-                SliverAppBar.large(pinned: true, automaticallyImplyLeading: false, title: Text(tr('appLogs'))),
+                SliverAppBar(pinned: true, automaticallyImplyLeading: false, title: Text(tr('appLogs'))),
                 if (_loading)
                   const SliverFillRemaining(
                     hasScrollBody: false,
