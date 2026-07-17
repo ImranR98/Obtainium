@@ -456,6 +456,11 @@ extension AppsProviderLifecycle on AppsProvider {
       notify();
     }
     bool dataChanged = false;
+    final appFolders = settingsProvider.appFolders;
+    final shouldMigrateFolderCriteria =
+        (settingsProvider.prefs?.getInt('folderCriteriaMigrationVersion') ?? 0) <
+        folderCriteriaMigrationVersion;
+    final folderMembershipsToPersist = <App>[];
     try {
       // Commit any deferred "remove from ObtainX" whose in-memory deferral was
       // lost (e.g. process restart) before re-reading the app JSON dir.
@@ -558,6 +563,17 @@ extension AppsProviderLifecycle on AppsProvider {
                     removedAppIds.add(correctedApp.id);
                   }
                 }
+                final folderMembershipChanged = reconcileAppFolderMemberships(
+                  app,
+                  appFolders,
+                  sourceIdentifier: sourceType,
+                  isUpToDate: appIsUpToDateForFiltering(app),
+                  migrateLegacyRules: shouldMigrateFolderCriteria,
+                );
+                if (folderMembershipChanged) {
+                  folderMembershipsToPersist.add(app);
+                  dataChanged = true;
+                }
                 final bool installedInfoChanged =
                     before?.installedInfo?.packageName !=
                         installedInfo?.packageName ||
@@ -600,6 +616,30 @@ extension AppsProviderLifecycle on AppsProvider {
       }
       if (singleId == null) {
         lastFullDiskLoadAt = diskLoadStartedAt;
+      }
+      if (folderMembershipsToPersist.isNotEmpty) {
+        await saveApps(
+          folderMembershipsToPersist,
+          updateInstalledInfo: false,
+          autoExportAfterSave: false,
+        );
+      }
+      if (shouldMigrateFolderCriteria) {
+        if (appFolders.any((folder) => folder.loadedFromLegacyRule)) {
+          settingsProvider.appFolders = appFolders
+              .map(
+                (folder) => AppFolder(
+                  id: folder.id,
+                  name: folder.name,
+                  criteria: folder.criteria,
+                ),
+              )
+              .toList();
+        }
+        await settingsProvider.prefs?.setInt(
+          'folderCriteriaMigrationVersion',
+          folderCriteriaMigrationVersion,
+        );
       }
       if (errors.isNotEmpty) {
         for (var error in errors) {
@@ -959,6 +999,8 @@ extension AppsProviderLifecycle on AppsProvider {
       }
     }
     final Directory appsDirectory = await getAppsDir();
+    final sourceProvider = SourceProvider();
+    final appFolders = settingsProvider.appFolders;
     final Map<String, PackageInfo>? effectiveInstalledInfoSnapshot =
         installedInfoSnapshot;
     const int saveChunkSize = 16;
@@ -1017,6 +1059,20 @@ extension AppsProviderLifecycle on AppsProvider {
             app = getCorrectedInstallStatusAppIfPossible(app, info) ?? app;
           }
           app = normalizeSkippedLatestVersion(app);
+          final sourceIdentifier =
+              cached?.sourceType ??
+              sourceProvider
+                  .getSourceTemplate(
+                    app.url,
+                    overrideSource: app.overrideSource,
+                  )
+                  .sourceIdentifier;
+          reconcileAppFolderMemberships(
+            app,
+            appFolders,
+            sourceIdentifier: sourceIdentifier,
+            isUpToDate: appIsUpToDateForFiltering(app),
+          );
           if (!onlyIfExists || this.apps.containsKey(app.id)) {
             final String filePath = '${appsDirectory.path}/${app.id}.json';
             await File(
@@ -1402,26 +1458,19 @@ extension AppsProviderLifecycle on AppsProvider {
     await saveApps([updatedApp], onlyIfExists: false);
   }
 
-  /// After a new app is in [apps], adds it to every folder whose rule matches
-  /// and saves again if anything changed. Prefer the live [App] from [apps] so
-  /// post-save corrections apply to rule matching.
+  /// Reconciles a newly added app with all smart folders. Prefer the live [App]
+  /// from [apps] so post-save corrections apply to criteria matching.
   Future<void> assignMatchingFoldersToAppIfNeeded(App app) async {
     final sourceProvider = SourceProvider();
-    final resolvedSource = sourceProvider
+    final sourceIdentifier = sourceProvider
         .getSourceTemplate(app.url, overrideSource: app.overrideSource)
-        .runtimeType
-        .toString();
-    bool changed = false;
-    for (final folder in settingsProvider.appFolders) {
-      if (folder.rule == null) continue;
-      if (excludedFolderIdsForApp(app).contains(folder.id)) continue;
-      if (folder.rule!.matches(app, resolvedSource: resolvedSource)) {
-        addAppToFolder(app, folder.id, folder.name);
-        changed = true;
-      }
-    }
-    if (changed) {
-      await saveApps([app]);
-    }
+        .sourceIdentifier;
+    final changed = reconcileAppFolderMemberships(
+      app,
+      settingsProvider.appFolders,
+      sourceIdentifier: sourceIdentifier,
+      isUpToDate: appIsUpToDateForFiltering(app),
+    );
+    if (changed) await saveApps([app]);
   }
 }

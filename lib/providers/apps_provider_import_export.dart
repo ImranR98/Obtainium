@@ -269,11 +269,28 @@ extension AppsProviderImportExport on AppsProvider {
       settingsProvider.appFolders = existingFolders;
     }
 
+    // Resolve a backup folder ID to its target ID, or null if it maps to no
+    // known folder (drop the reference in that case).
+    String? resolveId(String id) {
+      final targetId = backupIdToTargetId[id];
+      if (targetId != null) return targetId;
+      if (existingFolders.any((f) => f.id == id)) return id;
+      return null;
+    }
+
     // Remap each app's folder references onto a fresh additionalSettings map.
     return importedApps.map((app) {
       final folderIds = folderIdsForApp(app);
-      final excludedIds = excludedFolderIdsForApp(app);
-      if (folderIds.isEmpty && excludedIds.isEmpty) {
+      // Read the legacy exclusion list raw (not the merged view) so remapping
+      // doesn't duplicate override-derived excludes into it — overrides are
+      // remapped separately below.
+      final rawExcluded = app.additionalSettings['excludedFolderIds'];
+      final excludedIds = rawExcluded is List
+          ? List<String>.from(rawExcluded)
+          : const <String>[];
+      final overridesRaw = app.additionalSettings['folderOverrides'];
+      final hasOverrides = overridesRaw is Map && overridesRaw.isNotEmpty;
+      if (folderIds.isEmpty && excludedIds.isEmpty && !hasOverrides) {
         return app;
       }
       final Map<String, dynamic> updated = Map<String, dynamic>.from(
@@ -283,33 +300,35 @@ extension AppsProviderImportExport on AppsProvider {
       if (folderIds.isNotEmpty) {
         final List<String> updatedFolderIds = [];
         for (final id in folderIds) {
-          final String? targetId = backupIdToTargetId[id];
-          if (targetId != null) {
-            updatedFolderIds.add(targetId);
-            final String? folderName = backupFolderIdToName[id];
-            if (folderName != null) {
-              updatedFolderNames[targetId] = folderName;
-            }
-          } else if (existingFolders.any((f) => f.id == id)) {
-            updatedFolderIds.add(id);
-            updatedFolderNames[id] = existingFolders
-                .firstWhere((f) => f.id == id)
-                .name;
-          }
+          final String? targetId = resolveId(id);
+          if (targetId == null) continue;
+          updatedFolderIds.add(targetId);
+          final String folderName =
+              backupFolderIdToName[id] ??
+              existingFolders
+                  .firstWhere((f) => f.id == targetId)
+                  .name;
+          updatedFolderNames[targetId] = folderName;
         }
         updated['folderIds'] = updatedFolderIds;
       }
       if (excludedIds.isNotEmpty) {
         final List<String> updatedExcludedIds = [];
         for (final id in excludedIds) {
-          final String? targetId = backupIdToTargetId[id];
-          if (targetId != null) {
-            updatedExcludedIds.add(targetId);
-          } else if (existingFolders.any((f) => f.id == id)) {
-            updatedExcludedIds.add(id);
-          }
+          final String? targetId = resolveId(id);
+          if (targetId != null) updatedExcludedIds.add(targetId);
         }
         updated['excludedFolderIds'] = updatedExcludedIds;
+      }
+      // Remap the membership overrides (Always include / Always exclude) so
+      // they survive folder-ID remapping instead of being silently lost.
+      if (hasOverrides) {
+        final Map<String, dynamic> updatedOverrides = {};
+        overridesRaw.forEach((key, value) {
+          final String? targetId = resolveId(key.toString());
+          if (targetId != null) updatedOverrides[targetId] = value;
+        });
+        updated['folderOverrides'] = updatedOverrides;
       }
       updated['folderNames'] = updatedFolderNames;
       return app.copyWith(additionalSettings: updated);

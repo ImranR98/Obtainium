@@ -99,16 +99,7 @@ bool appIsTrackOnlyForFilter(App app) =>
     app.additionalSettings['trackOnly'] == true;
 
 bool appIsUpToDateForFilter(App app) {
-  final installed = app.installedVersion;
-  final latest = app.latestVersion;
-  if (installed == null) {
-    return false;
-  }
-  return isSkipActiveForCurrentLatest(app) ||
-      installed == latest ||
-      versionsEffectivelyEqual(installed, latest) ||
-      (installedVersionIsNewerOrEqual(installed, latest) &&
-          !versionOrderIsUnclear(installed, latest));
+  return appIsUpToDateForFiltering(app);
 }
 
 bool appMatchesTriStateAttributeFilter({
@@ -2478,12 +2469,10 @@ class AppsPageState extends State<AppsPage> {
       return true;
     }
     final sp = context.read<SettingsProvider>();
-    final isFilterActive =
-        !filter.isIdenticalTo(neutralFilter, sp) || _searchField != 'appName';
+    final isFilterActive = !filter.isIdenticalTo(neutralFilter, sp);
     if (isFilterActive) {
       setState(() {
         filter = AppsFilter();
-        _searchField = 'appName';
         _searchController.clear();
       });
       return true;
@@ -2568,26 +2557,12 @@ class AppsPageState extends State<AppsPage> {
   // ── Inline search ─────────────────────────────────────────────────────────
   late final TextEditingController _searchController;
 
-  /// Which field the search bar is currently filtering on.
-  /// One of: 'appName' | 'author' | 'appId'.
-  String _searchField = 'appName';
-
-  /// Guards against the listener re-firing when we programmatically change
-  /// the controller text during a field switch.
-  bool _changingSearchField = false;
-
   /// Whether the search bar is currently expanded.
   bool _searchExpanded = false;
 
   /// The currently selected app's ID for split-pane layout.
   String? selectedAppId;
   final FocusNode _searchFocusNode = FocusNode();
-
-  String _searchFieldValue(String field) => switch (field) {
-    'author' => filter.authorFilter,
-    'appId' => filter.idFilter,
-    _ => filter.nameFilter,
-  };
 
   // ── Effective view-setting helpers ─────────────────────────────────────────
   // When in a folder view, these return the folder's stored override or fall
@@ -2644,36 +2619,6 @@ class AppsPageState extends State<AppsPage> {
         : sp.groupUpdatesSeparately;
   }
 
-  void _applySearchText(String field, String text) {
-    switch (field) {
-      case 'author':
-        filter.authorFilter = text;
-        break;
-      case 'appId':
-        filter.idFilter = text;
-        break;
-      default:
-        filter.nameFilter = text;
-    }
-  }
-
-  /// Switches the active search field, moving the current search text to the
-  /// new field and clearing the old one.
-  void _changeSearchField(String newField) {
-    if (newField == _searchField) return;
-    _changingSearchField = true;
-    setState(() {
-      final text = _searchController.text;
-      // Clear the old field so the text isn't applied to two fields at once.
-      _applySearchText(_searchField, '');
-      _searchField = newField;
-      // Move the current text to the new field.
-      _applySearchText(newField, text);
-      // Controller already has the text; no change needed.
-    });
-    _changingSearchField = false;
-  }
-
   void _saveCollapsedGroups(List<String> keys, {required bool add}) {
     final sp = context.read<SettingsProvider>();
     final current = sp.prefs?.getStringList('collapsedGroups')?.toSet() ?? {};
@@ -2695,10 +2640,9 @@ class AppsPageState extends State<AppsPage> {
     scrollController = ScrollController();
     _searchController = TextEditingController();
     _searchController.addListener(() {
-      if (_changingSearchField) return;
       final text = _searchController.text;
-      if (text != _searchFieldValue(_searchField)) {
-        setState(() => _applySearchText(_searchField, text));
+      if (text != filter.nameFilter) {
+        setState(() => filter.nameFilter = text);
       }
     });
     _searchFocusNode.addListener(() {
@@ -2723,9 +2667,8 @@ class AppsPageState extends State<AppsPage> {
 
   /// Builds the compact search bar that lives inline with the "Apps" title.
   ///
-  /// The right-hand chip shows the currently-active search field. Tapping it
-  /// opens the full filter sheet. When any filter is active (or the field is
-  /// not the default) the chip uses a primary-container colour as a visual cue.
+  /// The search bar filters by app name. Its right-hand chip opens the full
+  /// filter sheet and uses a primary-container colour when any filter is active.
   Widget _buildSearchBar({
     required ColorScheme colorScheme,
     required VoidCallback showFilterSheet,
@@ -2733,15 +2676,10 @@ class AppsPageState extends State<AppsPage> {
     required SettingsProvider settingsProvider,
     required FocusNode focusNode,
   }) {
-    final bool anyFilterActive =
-        !filter.isIdenticalTo(neutralFilter, settingsProvider) ||
-        _searchField != 'appName';
-
-    final String fieldLabel = switch (_searchField) {
-      'author' => tr('author'),
-      'appId' => tr('appId'),
-      _ => tr('appName'),
-    };
+    final bool anyFilterActive = !filter.isIdenticalTo(
+      neutralFilter,
+      settingsProvider,
+    );
 
     return TextField(
       controller: _searchController,
@@ -2786,7 +2724,7 @@ class AppsPageState extends State<AppsPage> {
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         Text(
-                          fieldLabel,
+                          tr('appName'),
                           style: TextStyle(
                             fontSize: 11,
                             fontWeight: FontWeight.w500,
@@ -3070,18 +3008,15 @@ class AppsPageState extends State<AppsPage> {
         // [AppsProvider.updateAppIcon] with `ignoreCache: true` from the
         // app-detail page, which bypasses this map.
       });
-      // Manual refresh always checks every app visible on this surface. An
-      // explicit ID list bypasses the background freshness interval while
-      // [checkUpdates] still applies the installed/track-only preference.
+      // Manual refresh checks exactly the apps currently visible on this
+      // surface — the filtered/listed set, not every app in the folder/main
+      // list. [_listedAppsCache] already has all active filters (search,
+      // category, source, state) plus the folder / on-demand boundary applied
+      // by the last build. An explicit ID list bypasses the background
+      // freshness interval while [checkUpdates] still applies the
+      // installed/track-only preference.
       final Future<List<App>> refreshFuture = appsProvider.checkUpdates(
-        specificIds: appIdsForManualRefresh(
-          apps: appsProvider.apps.values.map((a) => a.app),
-          onDemandOnlyList: widget.onDemandOnlyList,
-          folderId: widget.folderId,
-          showFolderedAppsOnMainPage:
-              settingsProvider.showFolderedAppsOnMainPage,
-          existingFolderIds: existingFolderIds,
-        ),
+        specificIds: _listedAppsCache.map((a) => a.app.id).toList(),
       );
       return refreshFuture
           .catchError((e) {
@@ -3709,6 +3644,10 @@ class AppsPageState extends State<AppsPage> {
         _appTypeGroupListedIndices = const {};
       }
 
+      // Group membership is a strict hierarchy — each app lands in at most one
+      // of these groups: Updates > Track-only > Not-installed. An app with an
+      // actionable update therefore never also shows under Track-only or
+      // Not-installed, and a track-only app never doubles as Not-installed.
       final nonInstalled = <int>[];
       final trackOnlyList = <int>[];
       for (
@@ -3716,17 +3655,19 @@ class AppsPageState extends State<AppsPage> {
         listingIndex < listedApps.length;
         listingIndex++
       ) {
-        final isTrackOnly =
-            listedApps[listingIndex].app.additionalSettings['trackOnly'] ==
-            true;
+        final AppInMemory row = listedApps[listingIndex];
+        // Updates has the highest priority (isInUpdatesGroup already accounts
+        // for whether updates grouping is enabled).
+        if (isInUpdatesGroup(row)) continue;
+        final isTrackOnly = row.app.additionalSettings['trackOnly'] == true;
         if (isTrackOnly) {
           if (segregateTrackOnly) {
             trackOnlyList.add(listingIndex);
-          } else if (listedApps[listingIndex].app.installedVersion == null) {
+          } else if (row.app.installedVersion == null) {
             nonInstalled.add(listingIndex);
           }
         } else {
-          if (listedApps[listingIndex].app.installedVersion == null) {
+          if (row.app.installedVersion == null) {
             nonInstalled.add(listingIndex);
           }
         }
@@ -4658,8 +4599,8 @@ class AppsPageState extends State<AppsPage> {
 
     // ── Filter bottom sheet ──────────────────────────────────────────────────
     // Shows all filter/search options in a modal bottom sheet.
-    // Changes to toggles and dropdown are applied live; the sheet is dismissed
-    // by dragging down or tapping outside.
+    // Changes to text fields, toggles, and the dropdown are applied live; the
+    // sheet is dismissed by dragging down or tapping outside.
     void showFilterSheet() {
       showAppModalSheet<void>(
         context: context,
@@ -4671,21 +4612,6 @@ class AppsPageState extends State<AppsPage> {
                 fn();
                 setState(() {});
                 setSheetState(() {});
-              }
-
-              // ── Search field selector ─────────────────────────────────────
-              Widget fieldChip(String field, String label) {
-                final selected = _searchField == field;
-                return ChoiceChip(
-                  label: Text(label),
-                  selected: selected,
-                  showCheckmark: false,
-                  onSelected: (v) {
-                    if (v) {
-                      update(() => _changeSearchField(field));
-                    }
-                  },
-                );
               }
 
               // ── Source items ──────────────────────────────────────────────
@@ -4715,7 +4641,6 @@ class AppsPageState extends State<AppsPage> {
                           onPressed: () {
                             update(() {
                               filter = AppsFilter();
-                              _searchField = 'appName';
                               _searchController.clear();
                             });
                             Navigator.of(sheetCtx).pop();
@@ -4726,22 +4651,65 @@ class AppsPageState extends State<AppsPage> {
                     ),
                   ),
 
-                  // ── Search field selector ─────────────────────────────
+                  // ── Text filters ──────────────────────────────────────────
                   Padding(
-                    padding: const EdgeInsets.fromLTRB(20, 0, 20, 4),
-                    child: Text(
-                      tr('search'),
-                      style: Theme.of(context).textTheme.labelMedium,
-                    ),
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(20, 4, 20, 16),
-                    child: Wrap(
-                      spacing: 8,
+                    padding: const EdgeInsets.fromLTRB(20, 0, 20, 16),
+                    child: Column(
                       children: [
-                        fieldChip('appName', tr('appName')),
-                        fieldChip('author', tr('author')),
-                        fieldChip('appId', tr('appId')),
+                        TextFormField(
+                          initialValue: filter.nameFilter,
+                          textInputAction: TextInputAction.next,
+                          decoration:
+                              appPageOutlinedInputDecoration(
+                                sheetCtx,
+                                labelText: tr('appName'),
+                                isDense: true,
+                              ).copyWith(
+                                prefixIcon: const Icon(Icons.search_rounded),
+                              ),
+                          onChanged: (value) {
+                            update(() {
+                              filter.nameFilter = value;
+                              if (_searchController.text != value) {
+                                _searchController.text = value;
+                              }
+                            });
+                          },
+                        ),
+                        const SizedBox(height: 12),
+                        TextFormField(
+                          initialValue: filter.authorFilter,
+                          textInputAction: TextInputAction.next,
+                          decoration:
+                              appPageOutlinedInputDecoration(
+                                sheetCtx,
+                                labelText: tr('author'),
+                                isDense: true,
+                              ).copyWith(
+                                prefixIcon: const Icon(Icons.search_rounded),
+                              ),
+                          onChanged: (value) {
+                            update(() => filter.authorFilter = value);
+                          },
+                        ),
+                        const SizedBox(height: 12),
+                        TextFormField(
+                          initialValue: filter.idFilter,
+                          textInputAction: TextInputAction.done,
+                          autocorrect: false,
+                          enableSuggestions: false,
+                          decoration:
+                              appPageOutlinedInputDecoration(
+                                sheetCtx,
+                                labelText: tr('appId'),
+                                isDense: true,
+                              ).copyWith(
+                                prefixIcon: const Icon(Icons.search_rounded),
+                              ),
+                          onChanged: (value) {
+                            update(() => filter.idFilter = value);
+                          },
+                        ),
                       ],
                     ),
                   ),
@@ -4885,15 +4853,17 @@ class AppsPageState extends State<AppsPage> {
                   // ── Save as Folder ────────────────────────────────────
                   Padding(
                     padding: const EdgeInsets.fromLTRB(20, 12, 20, 20),
-                    child: OutlinedButton.icon(
-                      icon: const Icon(
-                        Icons.create_new_folder_outlined,
-                        size: 18,
-                      ),
-                      label: Text(tr('saveAsFolder')),
-                      onPressed: () {
+                    child: _SaveAsFolderRow(
+                      onSave: (name) {
                         Navigator.of(sheetCtx).pop();
-                        _saveFilterAsFolder(context, filter);
+                        // Defer creation until the sheet is fully torn down so
+                        // the provider mutations don't race its disposal.
+                        WidgetsBinding.instance.addPostFrameCallback((_) {
+                          if (!mounted) return;
+                          unawaited(
+                            _createFolderFromCurrentFilter(filter, name),
+                          );
+                        });
                       },
                     ),
                   ),
@@ -5233,9 +5203,10 @@ class AppsPageState extends State<AppsPage> {
     // 2. Search expanded → collapse search bar
     // 3. Filter active → reset filter
     // 4. Otherwise → normal pop (exit / go up)
-    final bool isFilterActive =
-        !filter.isIdenticalTo(neutralFilter, settingsProvider) ||
-        _searchField != 'appName';
+    final bool isFilterActive = !filter.isIdenticalTo(
+      neutralFilter,
+      settingsProvider,
+    );
     final bool shouldInterceptBack =
         selectedAppIds.isNotEmpty || _searchExpanded || isFilterActive;
 
@@ -5256,7 +5227,6 @@ class AppsPageState extends State<AppsPage> {
         } else if (isFilterActive) {
           setState(() {
             filter = AppsFilter();
-            _searchField = 'appName';
             _searchController.clear();
           });
         }
@@ -6245,28 +6215,49 @@ class AppsPageState extends State<AppsPage> {
 
   // ── Folder helpers ──────────────────────────────────────────────────────────
 
-  /// Applies [folder]'s rule to every app, skipping excluded apps.
-  Future<void> _applyFolderRuleToAllApps(AppFolder folder) async {
-    if (folder.rule == null) return;
+  /// Reconciles [folder]'s criteria against every app, including removals.
+  ///
+  /// When [preserveExistingMembers] is set (a manual folder that just gained
+  /// criteria), any app that was hand-added to the folder and has no explicit
+  /// override is promoted to an Always-include override first, so it isn't
+  /// silently dropped just because it doesn't match the brand-new criteria.
+  Future<void> _applyFolderCriteriaToAllApps(
+    AppFolder folder, {
+    bool preserveExistingMembers = false,
+  }) async {
+    if (!folder.isSmart) return;
     final appsProvider = context.read<AppsProvider>();
+    final folders = context.read<SettingsProvider>().appFolders;
     final sourceProvider = SourceProvider();
     final changed = <App>[];
     for (final appInMem in appsProvider.apps.values) {
       final app = appInMem.app;
-      if (excludedFolderIdsForApp(app).contains(folder.id)) continue;
-      final resolvedSource = sourceProvider
+      var mutated = false;
+      if (preserveExistingMembers &&
+          folderIdsForApp(app).contains(folder.id) &&
+          folderOverrideForApp(app, folder.id) ==
+              FolderMembershipOverride.automatic) {
+        setFolderMembershipOverride(
+          app,
+          folder.id,
+          FolderMembershipOverride.include,
+          folder.name,
+        );
+        mutated = true;
+      }
+      final sourceIdentifier = sourceProvider
           .getSourceTemplate(app.url, overrideSource: app.overrideSource)
-          .runtimeType
-          .toString();
-      if (folder.rule!.matches(app, resolvedSource: resolvedSource)) {
-        final before = List<String>.from(
-          app.additionalSettings['folderIds'] as List? ?? [],
-        );
-        addAppToFolder(app, folder.id, folder.name);
-        final after = List<String>.from(
-          app.additionalSettings['folderIds'] as List? ?? [],
-        );
-        if (before.length != after.length) changed.add(app);
+          .sourceIdentifier;
+      final reconciled = reconcileAppFolderMemberships(
+        app,
+        folders,
+        sourceIdentifier: sourceIdentifier,
+        isUpToDate: appIsUpToDateForFiltering(app),
+      );
+      // reconcile() snapshots state after our promotion, so flag the app
+      // explicitly when we mutated it — otherwise the override wouldn't persist.
+      if (reconciled || mutated) {
+        changed.add(app);
       }
     }
     if (changed.isNotEmpty) {
@@ -6293,21 +6284,6 @@ class AppsPageState extends State<AppsPage> {
     }
   }
 
-  String _folderRuleFieldLabel(FolderRuleField field) {
-    switch (field) {
-      case FolderRuleField.name:
-        return tr('folderRuleFieldName');
-      case FolderRuleField.author:
-        return tr('folderRuleFieldAuthor');
-      case FolderRuleField.id:
-        return tr('folderRuleFieldId');
-      case FolderRuleField.category:
-        return tr('folderRuleFieldCategory');
-      case FolderRuleField.source:
-        return tr('folderRuleFieldSource');
-    }
-  }
-
   String _folderRuleMatchLabel(FolderRuleMatchType match) {
     switch (match) {
       case FolderRuleMatchType.contains:
@@ -6319,48 +6295,63 @@ class AppsPageState extends State<AppsPage> {
     }
   }
 
+  /// Compact list of the concrete values an active [FolderCriteria] filters on,
+  /// e.g. ["firefox", "GitHub", "System", "Not Up-to-date"]. Rendered as the
+  /// single-line folder subtitle in the Manage Folders sheet.
+  List<String> _folderCriteriaValues(
+    FolderCriteria criteria,
+    Map<String, String> sourceNames,
+  ) {
+    final values = <String>[];
+    String not(String label) =>
+        tr('folderConditionNot', namedArgs: {'label': label});
+    void addText(FolderTextCriterion? text) {
+      if (text != null && !text.isEmpty) values.add(text.query);
+    }
+
+    void addState(FolderConditionIntent intent, String label) {
+      if (intent == FolderConditionIntent.include) values.add(label);
+      if (intent == FolderConditionIntent.exclude) values.add(not(label));
+    }
+
+    addText(criteria.name);
+    addText(criteria.author);
+    addText(criteria.id);
+    if (criteria.source != null && !criteria.source!.isEmpty) {
+      final id = criteria.source!.query;
+      values.add(sourceNames[id] ?? id);
+    }
+    values.addAll(criteria.includedCategories);
+    values.addAll(criteria.excludedCategories.map(not));
+    addState(criteria.installedIntent, tr('visibilityFilterInstalled'));
+    addState(criteria.upToDateIntent, tr('visibilityFilterUpToDate'));
+    addState(criteria.trackOnlyIntent, tr('trackOnly'));
+    return values;
+  }
+
   // ── Save filter as folder ───────────────────────────────────────────────────
 
-  void _saveFilterAsFolder(BuildContext context, AppsFilter currentFilter) {
-    // Determine which filter fields are active.
-    final activeFields = <FolderRuleField, String>{};
-    if (currentFilter.nameFilter.isNotEmpty) {
-      activeFields[FolderRuleField.name] = currentFilter.nameFilter;
-    }
-    if (currentFilter.authorFilter.isNotEmpty) {
-      activeFields[FolderRuleField.author] = currentFilter.authorFilter;
-    }
-    if (currentFilter.idFilter.isNotEmpty) {
-      activeFields[FolderRuleField.id] = currentFilter.idFilter;
-    }
-    if (currentFilter.includedCategoryFilter.length == 1 &&
-        currentFilter.excludedCategoryFilter.isEmpty) {
-      activeFields[FolderRuleField.category] =
-          currentFilter.includedCategoryFilter.first;
-    }
-    if (currentFilter.sourceFilter.isNotEmpty) {
-      activeFields[FolderRuleField.source] = currentFilter.sourceFilter;
-    }
-
-    FolderRule? derivedRule;
-    if (activeFields.length == 1) {
-      // Exactly one active field — derive rule automatically.
-      final entry = activeFields.entries.first;
-      derivedRule = FolderRule(
-        field: entry.key,
-        matchType: FolderRuleMatchType.contains,
-        value: entry.value,
-      );
-    }
-    // Multiple fields or no fields open an empty editor; the user can configure
-    // the rule manually in the same Manage Folders sheet.
-    unawaited(
-      _showFolderManageSheet(
-        context,
-        createNewFolder: true,
-        prefillRule: derivedRule,
-      ),
+  /// Captures every condition configured in the Apps filter sheet as a
+  /// [FolderCriteria] and creates a folder with the given [name], then
+  /// reconciles matching apps. An empty filter yields a manual folder. The
+  /// active filter is left untouched. Called after the filter sheet is popped
+  /// (see the inline save-as-folder row), so provider mutations don't race the
+  /// sheet's teardown.
+  Future<void> _createFolderFromCurrentFilter(
+    AppsFilter currentFilter,
+    String name,
+  ) async {
+    if (name.isEmpty) return;
+    final criteria = currentFilter.toFolderCriteria();
+    final settingsProvider = context.read<SettingsProvider>();
+    final folder = AppFolder(
+      id: AppFolder.generateId(),
+      name: name,
+      criteria: criteria.isEmpty ? null : criteria,
     );
+    settingsProvider.appFolders = [...settingsProvider.appFolders, folder];
+    hapticSelection();
+    await _applyFolderCriteriaToAllApps(folder);
   }
 
   // ── Folder assign dialog ────────────────────────────────────────────────────
@@ -6508,12 +6499,37 @@ class AppsPageState extends State<AppsPage> {
                   final appsProvider = context.read<AppsProvider>();
                   final bool setOnDemand = selected.contains(onDemandKey);
                   for (final app in apps) {
-                    // Add to newly-checked folders, remove from unchecked ones.
+                    // Apply only checkbox states the user actually toggled, so
+                    // untouched automatic smart-folder memberships stay
+                    // automatic. For smart folders a manual toggle becomes an
+                    // Always include / Always exclude override so it survives
+                    // reconciliation; manual folders use plain membership.
                     for (final f in folders) {
-                      if (selected.contains(f.id)) {
-                        addAppToFolder(app, f.id, f.name);
-                      } else if (commonFolderIds.contains(f.id)) {
-                        removeAppFromFolder(app, f.id);
+                      final wasMember = commonFolderIds.contains(f.id);
+                      final nowMember = selected.contains(f.id);
+                      if (wasMember == nowMember) continue;
+                      if (nowMember) {
+                        if (f.isSmart) {
+                          setFolderMembershipOverride(
+                            app,
+                            f.id,
+                            FolderMembershipOverride.include,
+                            f.name,
+                          );
+                        } else {
+                          addAppToFolder(app, f.id, f.name);
+                        }
+                      } else {
+                        if (f.isSmart) {
+                          setFolderMembershipOverride(
+                            app,
+                            f.id,
+                            FolderMembershipOverride.exclude,
+                            f.name,
+                          );
+                        } else {
+                          removeAppFromFolder(app, f.id);
+                        }
                       }
                     }
                     // On-Demand Only: toggle setting when state changed.
@@ -6546,27 +6562,38 @@ class AppsPageState extends State<AppsPage> {
   Future<void> _showFolderManageSheet(
     BuildContext context, {
     bool createNewFolder = false,
-    FolderRule? prefillRule,
+    FolderCriteria? prefillCriteria,
   }) async {
     var creatingFolder = createNewFolder;
-    var newFolderInitialRule = prefillRule;
+    var newFolderInitialCriteria = prefillCriteria;
     AppFolder? editingFolder;
     AppFolder? folderPendingDelete;
     final appsProvider = context.read<AppsProvider>();
     final sourceProvider = SourceProvider();
+    final sourceItems = [
+      MapEntry('', tr('none')),
+      ...sourceProvider.sourceTemplates.map(
+        (e) => MapEntry(e.sourceIdentifier, e.name),
+      ),
+    ];
+    final sourceNames = {for (final item in sourceItems) item.key: item.value};
 
-    int countRuleMatches(FolderRule rule) {
+    int countCriteriaMatches(FolderCriteria criteria) {
+      if (criteria.isEmpty) return 0;
       return appsProvider.apps.values
           .where((app) => app.app.additionalSettings['onDemandOnly'] != true)
           .where((app) {
-            final resolvedSource = sourceProvider
+            final sourceIdentifier = sourceProvider
                 .getSourceTemplate(
                   app.app.url,
                   overrideSource: app.app.overrideSource,
                 )
-                .runtimeType
-                .toString();
-            return rule.matches(app.app, resolvedSource: resolvedSource);
+                .sourceIdentifier;
+            return criteria.matches(
+              app.app,
+              sourceIdentifier: sourceIdentifier,
+              isUpToDate: appIsUpToDateForFiltering(app.app),
+            );
           })
           .length;
     }
@@ -6581,7 +6608,7 @@ class AppsPageState extends State<AppsPage> {
           Future<void> saveFolder(
             AppFolder? existing,
             String name,
-            FolderRule? rule,
+            FolderCriteria? criteria,
           ) async {
             hapticSelection();
             final updatedFolders = List<AppFolder>.from(
@@ -6592,14 +6619,14 @@ class AppsPageState extends State<AppsPage> {
               savedFolder = AppFolder(
                 id: AppFolder.generateId(),
                 name: name,
-                rule: rule,
+                criteria: criteria,
               );
               updatedFolders.add(savedFolder);
             } else {
               savedFolder = existing.copyWith(
                 name: name,
-                rule: rule,
-                clearRule: rule == null,
+                criteria: criteria,
+                clearCriteria: criteria == null,
               );
               final folderIndex = updatedFolders.indexWhere(
                 (folder) => folder.id == existing.id,
@@ -6608,14 +6635,21 @@ class AppsPageState extends State<AppsPage> {
                 updatedFolders[folderIndex] = savedFolder;
               }
             }
+            // Manual folder gaining criteria: keep its hand-added members
+            // instead of dropping those that don't match the new criteria.
+            final becameSmart =
+                existing != null && !existing.isSmart && savedFolder.isSmart;
             settingsProvider.appFolders = updatedFolders;
             FocusScope.of(sheetCtx).unfocus();
             setSheetState(() {
               creatingFolder = false;
-              newFolderInitialRule = null;
+              newFolderInitialCriteria = null;
               editingFolder = null;
             });
-            await _applyFolderRuleToAllApps(savedFolder);
+            await _applyFolderCriteriaToAllApps(
+              savedFolder,
+              preserveExistingMembers: becameSmart,
+            );
           }
 
           Future<void> deleteFolder(AppFolder folder) async {
@@ -6663,21 +6697,31 @@ class AppsPageState extends State<AppsPage> {
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         ListTile(
+                          contentPadding: const EdgeInsets.only(
+                            left: 16,
+                            right: 4,
+                          ),
                           leading: const Icon(Icons.folder_outlined),
                           title: Text(folder.name),
-                          subtitle: folder.rule != null
-                              ? Text(
-                                  '${_folderRuleFieldLabel(folder.rule!.field)}'
-                                  ' ${_folderRuleMatchLabel(folder.rule!.matchType).toLowerCase()}'
-                                  ' "${folder.rule!.value}"',
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
+                          subtitle: folder.isSmart
+                              ? _FolderSummaryLine(
+                                  values: _folderCriteriaValues(
+                                    folder.criteria!,
+                                    sourceNames,
+                                  ),
                                 )
                               : null,
                           trailing: Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
                               IconButton(
+                                visualDensity: VisualDensity.compact,
+                                padding: EdgeInsets.zero,
+                                constraints: const BoxConstraints(
+                                  minWidth: 36,
+                                  minHeight: 36,
+                                ),
+                                iconSize: 22,
                                 icon: Icon(
                                   isEditing
                                       ? Icons.expand_less
@@ -6690,12 +6734,19 @@ class AppsPageState extends State<AppsPage> {
                                   setSheetState(() {
                                     editingFolder = isEditing ? null : folder;
                                     creatingFolder = false;
-                                    newFolderInitialRule = null;
+                                    newFolderInitialCriteria = null;
                                     folderPendingDelete = null;
                                   });
                                 },
                               ),
                               IconButton(
+                                visualDensity: VisualDensity.compact,
+                                padding: EdgeInsets.zero,
+                                constraints: const BoxConstraints(
+                                  minWidth: 36,
+                                  minHeight: 36,
+                                ),
+                                iconSize: 22,
                                 icon: const Icon(Icons.delete_outlined),
                                 tooltip: tr('deleteFolder'),
                                 onPressed: () {
@@ -6707,7 +6758,7 @@ class AppsPageState extends State<AppsPage> {
                                         : folder;
                                     editingFolder = null;
                                     creatingFolder = false;
-                                    newFolderInitialRule = null;
+                                    newFolderInitialCriteria = null;
                                   });
                                 },
                               ),
@@ -6731,9 +6782,9 @@ class AppsPageState extends State<AppsPage> {
                                     child: _InlineFolderEditor(
                                       key: ValueKey('edit-${folder.id}'),
                                       existing: folder,
-                                      countRuleMatches: countRuleMatches,
-                                      folderRuleFieldLabel:
-                                          _folderRuleFieldLabel,
+                                      categoryColors: settingsProvider.categories,
+                                      sourceItems: sourceItems,
+                                      countCriteriaMatches: countCriteriaMatches,
                                       folderRuleMatchLabel:
                                           _folderRuleMatchLabel,
                                       onCancel: () {
@@ -6742,8 +6793,8 @@ class AppsPageState extends State<AppsPage> {
                                           editingFolder = null;
                                         });
                                       },
-                                      onSave: (name, rule) =>
-                                          saveFolder(folder, name, rule),
+                                      onSave: (name, criteria) =>
+                                          saveFolder(folder, name, criteria),
                                     ),
                                   )
                                 : isPendingDelete
@@ -6815,7 +6866,7 @@ class AppsPageState extends State<AppsPage> {
                     FocusScope.of(sheetCtx).unfocus();
                     setSheetState(() {
                       creatingFolder = shouldExpand;
-                      newFolderInitialRule = null;
+                      newFolderInitialCriteria = null;
                       editingFolder = null;
                       folderPendingDelete = null;
                     });
@@ -6839,19 +6890,20 @@ class AppsPageState extends State<AppsPage> {
                           padding: const EdgeInsets.only(top: 12),
                           child: _InlineFolderEditor(
                             key: const ValueKey('new-folder'),
-                            initialRule: newFolderInitialRule,
-                            countRuleMatches: countRuleMatches,
-                            folderRuleFieldLabel: _folderRuleFieldLabel,
+                            initialCriteria: newFolderInitialCriteria,
+                            categoryColors: settingsProvider.categories,
+                            sourceItems: sourceItems,
+                            countCriteriaMatches: countCriteriaMatches,
                             folderRuleMatchLabel: _folderRuleMatchLabel,
                             onCancel: () {
                               FocusScope.of(sheetCtx).unfocus();
                               setSheetState(() {
                                 creatingFolder = false;
-                                newFolderInitialRule = null;
+                                newFolderInitialCriteria = null;
                               });
                             },
-                            onSave: (name, rule) =>
-                                saveFolder(null, name, rule),
+                            onSave: (name, criteria) =>
+                                saveFolder(null, name, criteria),
                           ),
                         )
                       : const SizedBox.shrink(),
@@ -6865,25 +6917,159 @@ class AppsPageState extends State<AppsPage> {
   }
 }
 
+/// Inline "save as folder" control for the Apps filter sheet: a folder-name
+/// field with a Save button on the same row. Save is enabled only once a name
+/// is entered. Manages its own controller so it survives sheet rebuilds.
+class _SaveAsFolderRow extends StatefulWidget {
+  const _SaveAsFolderRow({required this.onSave});
+
+  final ValueChanged<String> onSave;
+
+  @override
+  State<_SaveAsFolderRow> createState() => _SaveAsFolderRowState();
+}
+
+class _SaveAsFolderRowState extends State<_SaveAsFolderRow> {
+  final TextEditingController _controller = TextEditingController();
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  void _submit() {
+    final name = _controller.text.trim();
+    if (name.isEmpty) return;
+    widget.onSave(name);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final canSave = _controller.text.trim().isNotEmpty;
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.center,
+      children: [
+        Expanded(
+          child: TextField(
+            controller: _controller,
+            maxLength: _maxFolderNameLength,
+            textCapitalization: TextCapitalization.words,
+            textInputAction: TextInputAction.done,
+            onChanged: (_) => setState(() {}),
+            onSubmitted: (_) => _submit(),
+            decoration:
+                appPageOutlinedInputDecoration(
+                  context,
+                  labelText: tr('saveAsFolder'),
+                  isDense: true,
+                ).copyWith(
+                  prefixIcon: const Icon(Icons.create_new_folder_outlined),
+                  counterText: '',
+                ),
+          ),
+        ),
+        const SizedBox(width: 8),
+        FilledButton(
+          onPressed: canSave ? _submit : null,
+          child: Text(tr('save')),
+        ),
+      ],
+    );
+  }
+}
+
+/// Renders [values] as a single line of comma-separated text, showing as many
+/// as fit and collapsing the remainder into a trailing "+n". Used as the smart
+/// folder subtitle in the Manage Folders sheet.
+class _FolderSummaryLine extends StatelessWidget {
+  const _FolderSummaryLine({required this.values});
+
+  final List<String> values;
+
+  @override
+  Widget build(BuildContext context) {
+    if (values.isEmpty) return const SizedBox.shrink();
+    final theme = Theme.of(context);
+    final style =
+        theme.textTheme.bodySmall?.copyWith(
+          color: theme.colorScheme.onSurfaceVariant,
+        ) ??
+        const TextStyle();
+    final direction = Directionality.of(context);
+
+    double textWidth(String text) {
+      final painter = TextPainter(
+        text: TextSpan(text: text, style: style),
+        textDirection: direction,
+        maxLines: 1,
+      )..layout();
+      return painter.width;
+    }
+
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final maxWidth = constraints.maxWidth;
+        var fit = 0;
+        for (var i = 0; i < values.length; i++) {
+          final shown = values.take(i + 1).join(', ');
+          final remaining = values.length - i - 1;
+          final reserve = remaining > 0 ? textWidth('  +$remaining') : 0.0;
+          if (textWidth(shown) + reserve <= maxWidth) {
+            fit = i + 1;
+          } else {
+            break;
+          }
+        }
+        // Always show at least one value (ellipsized if it can't fully fit).
+        final shownCount = fit == 0 ? 1 : fit;
+        final overflow = values.length - shownCount;
+        return Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Flexible(
+              child: Text(
+                values.take(shownCount).join(', '),
+                style: style,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                softWrap: false,
+              ),
+            ),
+            if (overflow > 0)
+              Text('  +$overflow', style: style, maxLines: 1),
+          ],
+        );
+      },
+    );
+  }
+}
+
+/// Full filter-style editor for a smart folder's [FolderCriteria]. Mirrors the
+/// Apps filter sheet: text fields with match-type operators, source, tri-state
+/// visibility conditions, and the shared category selector. Leaving every
+/// condition empty produces a manual folder (criteria == null).
 class _InlineFolderEditor extends StatefulWidget {
   const _InlineFolderEditor({
     super.key,
-    required this.countRuleMatches,
-    required this.folderRuleFieldLabel,
+    required this.categoryColors,
+    required this.sourceItems,
+    required this.countCriteriaMatches,
     required this.folderRuleMatchLabel,
     required this.onCancel,
     required this.onSave,
     this.existing,
-    this.initialRule,
+    this.initialCriteria,
   });
 
   final AppFolder? existing;
-  final FolderRule? initialRule;
-  final int Function(FolderRule rule) countRuleMatches;
-  final String Function(FolderRuleField field) folderRuleFieldLabel;
+  final FolderCriteria? initialCriteria;
+  final Map<String, int> categoryColors;
+  final List<MapEntry<String, String>> sourceItems;
+  final int Function(FolderCriteria criteria) countCriteriaMatches;
   final String Function(FolderRuleMatchType match) folderRuleMatchLabel;
   final VoidCallback onCancel;
-  final Future<void> Function(String name, FolderRule? rule) onSave;
+  final Future<void> Function(String name, FolderCriteria? criteria) onSave;
 
   @override
   State<_InlineFolderEditor> createState() => _InlineFolderEditorState();
@@ -6891,48 +7077,234 @@ class _InlineFolderEditor extends StatefulWidget {
 
 class _InlineFolderEditorState extends State<_InlineFolderEditor> {
   late final TextEditingController _nameController;
-  late final TextEditingController _ruleValueController;
-  late bool _ruleEnabled;
-  late FolderRuleField _ruleField;
-  late FolderRuleMatchType _ruleMatch;
+  late final TextEditingController _nameQuery;
+  late final TextEditingController _authorQuery;
+  late final TextEditingController _idQuery;
+  late FolderRuleMatchType _nameOp;
+  late FolderRuleMatchType _authorOp;
+  late FolderRuleMatchType _idOp;
+  late Set<String> _includedCategories;
+  late Set<String> _excludedCategories;
+  late FolderCategoryMatchMode _categoryMatchMode;
+  late String _sourceId;
+  late FolderConditionIntent _installedIntent;
+  late FolderConditionIntent _upToDateIntent;
+  late FolderConditionIntent _trackOnlyIntent;
+
+  late final String _initialName;
+  late final FolderCriteria? _initialCriteria;
 
   @override
   void initState() {
     super.initState();
-    final initialRule = widget.existing?.rule ?? widget.initialRule;
+    final c = widget.existing?.criteria ?? widget.initialCriteria;
+    _initialName = (widget.existing?.name ?? '').trim();
+    _initialCriteria = (c == null || c.isEmpty) ? null : c;
     _nameController = TextEditingController(text: widget.existing?.name ?? '');
-    _ruleValueController = TextEditingController(
-      text: initialRule?.value ?? '',
-    );
-    _ruleEnabled = initialRule != null;
-    _ruleField = initialRule?.field ?? FolderRuleField.name;
-    _ruleMatch = initialRule?.matchType ?? FolderRuleMatchType.contains;
+    _nameQuery = TextEditingController(text: c?.name?.query ?? '');
+    _authorQuery = TextEditingController(text: c?.author?.query ?? '');
+    _idQuery = TextEditingController(text: c?.id?.query ?? '');
+    _nameOp = c?.name?.matchType ?? FolderRuleMatchType.contains;
+    _authorOp = c?.author?.matchType ?? FolderRuleMatchType.contains;
+    _idOp = c?.id?.matchType ?? FolderRuleMatchType.contains;
+    _includedCategories = {...?c?.includedCategories};
+    _excludedCategories = {...?c?.excludedCategories};
+    _categoryMatchMode = c?.categoryMatchMode ?? FolderCategoryMatchMode.any;
+    _sourceId = c?.source?.query ?? '';
+    _installedIntent = c?.installedIntent ?? FolderConditionIntent.neutral;
+    _upToDateIntent = c?.upToDateIntent ?? FolderConditionIntent.neutral;
+    _trackOnlyIntent = c?.trackOnlyIntent ?? FolderConditionIntent.neutral;
   }
 
   @override
   void dispose() {
     _nameController.dispose();
-    _ruleValueController.dispose();
+    _nameQuery.dispose();
+    _authorQuery.dispose();
+    _idQuery.dispose();
     super.dispose();
   }
 
-  FolderRule? get _folderRule {
-    final value = _ruleValueController.text.trim();
-    if (!_ruleEnabled || value.isEmpty) return null;
-    return FolderRule(field: _ruleField, matchType: _ruleMatch, value: value);
+  FolderTextCriterion? _text(
+    TextEditingController controller,
+    FolderRuleMatchType op, {
+    required bool tokenize,
+    required bool caseSensitive,
+  }) {
+    final query = controller.text.trim();
+    if (query.isEmpty) return null;
+    return FolderTextCriterion(
+      query: query,
+      matchType: op,
+      // Whitespace-tokenized "contains" mirrors the Apps filter search fields.
+      tokenizeContains: tokenize,
+      caseSensitive: caseSensitive,
+    );
   }
 
-  Future<void> _saveFolder() async {
+  FolderCriteria _buildCriteria() => FolderCriteria(
+    name: _text(_nameQuery, _nameOp, tokenize: true, caseSensitive: false),
+    author: _text(_authorQuery, _authorOp, tokenize: true, caseSensitive: false),
+    id: _text(_idQuery, _idOp, tokenize: false, caseSensitive: true),
+    includedCategories: _includedCategories,
+    excludedCategories: _excludedCategories,
+    categoryMatchMode: _categoryMatchMode,
+    source: _sourceId.trim().isEmpty
+        ? null
+        : FolderTextCriterion(
+            query: _sourceId.trim(),
+            matchType: FolderRuleMatchType.equals,
+            caseSensitive: true,
+          ),
+    installedIntent: _installedIntent,
+    upToDateIntent: _upToDateIntent,
+    trackOnlyIntent: _trackOnlyIntent,
+  );
+
+  Future<void> _save() async {
     final name = _nameController.text.trim();
     if (name.isEmpty) return;
-    await widget.onSave(name, _folderRule);
+    final criteria = _buildCriteria();
+    await widget.onSave(name, criteria.isEmpty ? null : criteria);
+  }
+
+  /// Whether the current form differs from the folder it was opened with.
+  /// Enables Save only when there is something to persist.
+  bool get _isDirty {
+    if (_nameController.text.trim() != _initialName) return true;
+    final current = _buildCriteria();
+    return !_criteriaEquals(current.isEmpty ? null : current, _initialCriteria);
+  }
+
+  bool _setEq(Set<String> a, Set<String> b) =>
+      a.length == b.length && a.containsAll(b);
+
+  bool _textEq(FolderTextCriterion? a, FolderTextCriterion? b) {
+    final aEmpty = a == null || a.isEmpty;
+    final bEmpty = b == null || b.isEmpty;
+    if (aEmpty && bEmpty) return true;
+    if (aEmpty || bEmpty) return false;
+    return a.query.trim() == b.query.trim() && a.matchType == b.matchType;
+  }
+
+  bool _criteriaEquals(FolderCriteria? a, FolderCriteria? b) {
+    if (a == null && b == null) return true;
+    if (a == null || b == null) return false;
+    return _textEq(a.name, b.name) &&
+        _textEq(a.author, b.author) &&
+        _textEq(a.id, b.id) &&
+        _setEq(a.includedCategories, b.includedCategories) &&
+        _setEq(a.excludedCategories, b.excludedCategories) &&
+        a.categoryMatchMode == b.categoryMatchMode &&
+        _textEq(a.source, b.source) &&
+        a.installedIntent == b.installedIntent &&
+        a.upToDateIntent == b.upToDateIntent &&
+        a.trackOnlyIntent == b.trackOnlyIntent;
+  }
+
+  CategoryFilterIntent _toCat(FolderConditionIntent intent) => switch (intent) {
+    FolderConditionIntent.neutral => CategoryFilterIntent.neutral,
+    FolderConditionIntent.include => CategoryFilterIntent.include,
+    FolderConditionIntent.exclude => CategoryFilterIntent.exclude,
+  };
+
+  FolderConditionIntent _fromCat(CategoryFilterIntent intent) =>
+      switch (intent) {
+        CategoryFilterIntent.neutral => FolderConditionIntent.neutral,
+        CategoryFilterIntent.include => FolderConditionIntent.include,
+        CategoryFilterIntent.exclude => FolderConditionIntent.exclude,
+      };
+
+  Widget _opSelector(
+    FolderRuleMatchType value,
+    ValueChanged<FolderRuleMatchType> onChanged,
+  ) {
+    return PopupMenuButton<FolderRuleMatchType>(
+      initialValue: value,
+      onSelected: (selected) => setState(() => onChanged(selected)),
+      itemBuilder: (_) => FolderRuleMatchType.values
+          .map(
+            (match) => PopupMenuItem(
+              value: match,
+              child: Text(widget.folderRuleMatchLabel(match)),
+            ),
+          )
+          .toList(),
+      child: InputDecorator(
+        decoration:
+            appPageOutlinedInputDecoration(
+              context,
+              labelText: tr('folderRuleMatch'),
+              isDense: true,
+            ).copyWith(
+              suffixIcon: const Icon(Icons.arrow_drop_down),
+              contentPadding: const EdgeInsets.fromLTRB(12, 12, 0, 12),
+            ),
+        child: Text(
+          widget.folderRuleMatchLabel(value),
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+        ),
+      ),
+    );
+  }
+
+  Widget _textCriterion({
+    required TextEditingController controller,
+    required String label,
+    required FolderRuleMatchType op,
+    required ValueChanged<FolderRuleMatchType> onOp,
+    bool caseSensitive = false,
+  }) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Expanded(
+          child: TextField(
+            controller: controller,
+            autocorrect: !caseSensitive,
+            enableSuggestions: !caseSensitive,
+            decoration:
+                appPageOutlinedInputDecoration(
+                  context,
+                  labelText: label,
+                  isDense: true,
+                ).copyWith(prefixIcon: const Icon(Icons.search_rounded)),
+            onChanged: (_) => setState(() {}),
+          ),
+        ),
+        const SizedBox(width: 8),
+        SizedBox(width: 132, child: _opSelector(op, onOp)),
+      ],
+    );
+  }
+
+  Widget _stateChip(
+    String label,
+    FolderConditionIntent intent,
+    ValueChanged<FolderConditionIntent> onChanged,
+  ) {
+    return _TriStateCategoryFilterChip(
+      category: label,
+      color: Theme.of(context).colorScheme.primary,
+      intent: _toCat(intent),
+      onCycle: () => setState(
+        () => onChanged(_fromCat(nextCategoryFilterIntent(_toCat(intent)))),
+      ),
+      onClear: intent == FolderConditionIntent.neutral
+          ? null
+          : () => setState(() => onChanged(FolderConditionIntent.neutral)),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
-    final rule = _folderRule;
-    final matchCount = rule == null ? null : widget.countRuleMatches(rule);
-    final canSave = _nameController.text.trim().isNotEmpty;
+    final theme = Theme.of(context);
+    final criteria = _buildCriteria();
+    final matchCount = criteria.isEmpty
+        ? null
+        : widget.countCriteriaMatches(criteria);
+    final canSave = _nameController.text.trim().isNotEmpty && _isDirty;
     return Column(
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -6940,7 +7312,6 @@ class _InlineFolderEditorState extends State<_InlineFolderEditor> {
         TextField(
           controller: _nameController,
           maxLength: _maxFolderNameLength,
-          autofocus: true,
           textCapitalization: TextCapitalization.words,
           decoration: appPageOutlinedInputDecoration(
             context,
@@ -6948,100 +7319,112 @@ class _InlineFolderEditorState extends State<_InlineFolderEditor> {
           ),
           onChanged: (_) => setState(() {}),
         ),
+        const SizedBox(height: 4),
+        Text(tr('folderConditions'), style: theme.textTheme.titleSmall),
+        const SizedBox(height: 4),
+        Text(
+          tr('folderConditionsHint'),
+          style: theme.textTheme.bodySmall?.copyWith(
+            color: theme.colorScheme.onSurfaceVariant,
+          ),
+        ),
+        const SizedBox(height: 12),
+        _textCriterion(
+          controller: _nameQuery,
+          label: tr('appName'),
+          op: _nameOp,
+          onOp: (v) => _nameOp = v,
+        ),
+        const SizedBox(height: 12),
+        _textCriterion(
+          controller: _authorQuery,
+          label: tr('author'),
+          op: _authorOp,
+          onOp: (v) => _authorOp = v,
+        ),
+        const SizedBox(height: 12),
+        _textCriterion(
+          controller: _idQuery,
+          label: tr('appId'),
+          op: _idOp,
+          onOp: (v) => _idOp = v,
+          caseSensitive: true,
+        ),
+        const SizedBox(height: 16),
+        appDropdownField<String>(
+          key: ValueKey(_sourceId),
+          context: context,
+          value: _sourceId,
+          labelText: tr('appSource'),
+          menuWidth: appDropdownMenuWidth(
+            context,
+            widget.sourceItems.map((sourceItem) => sourceItem.value),
+          ),
+          items: widget.sourceItems
+              .map(
+                (sourceItem) => DropdownMenuItem(
+                  value: sourceItem.key,
+                  child: Text(sourceItem.value),
+                ),
+              )
+              .toList(),
+          onChanged: (value) => setState(() => _sourceId = value ?? ''),
+        ),
+        const SizedBox(height: 16),
+        Text(
+          tr('visibilityFilterCycleHint'),
+          style: theme.textTheme.bodySmall?.copyWith(
+            color: theme.colorScheme.onSurfaceVariant,
+          ),
+        ),
         const SizedBox(height: 8),
-        Row(
+        CategoryActionChipGroup(
           children: [
-            Expanded(
-              child: Text(
-                tr('folderRule'),
-                style: Theme.of(context).textTheme.titleSmall,
-              ),
+            _stateChip(
+              tr('visibilityFilterInstalled'),
+              _installedIntent,
+              (v) => _installedIntent = v,
             ),
-            Switch(
-              value: _ruleEnabled,
-              onChanged: (value) {
-                setState(() {
-                  _ruleEnabled = value;
-                });
-              },
+            _stateChip(
+              tr('visibilityFilterUpToDate'),
+              _upToDateIntent,
+              (v) => _upToDateIntent = v,
+            ),
+            _stateChip(
+              tr('trackOnly'),
+              _trackOnlyIntent,
+              (v) => _trackOnlyIntent = v,
             ),
           ],
         ),
-        if (_ruleEnabled) ...[
-          const SizedBox(height: 8),
-          PopupMenuButton<FolderRuleField>(
-            initialValue: _ruleField,
-            onSelected: (value) {
-              setState(() {
-                _ruleField = value;
-              });
-            },
-            itemBuilder: (_) => FolderRuleField.values
-                .map(
-                  (field) => PopupMenuItem(
-                    value: field,
-                    child: Text(widget.folderRuleFieldLabel(field)),
-                  ),
-                )
-                .toList(),
-            child: InputDecorator(
-              decoration:
-                  appPageOutlinedInputDecoration(
-                    context,
-                    labelText: tr('folderRuleField'),
-                  ).copyWith(
-                    suffixIcon: const Icon(Icons.arrow_drop_down),
-                    contentPadding: const EdgeInsets.fromLTRB(12, 16, 4, 16),
-                  ),
-              child: Text(widget.folderRuleFieldLabel(_ruleField)),
+        const SizedBox(height: 16),
+        _TriStateCategoryFilterSelector(
+          categoryColors: widget.categoryColors,
+          includedCategories: _includedCategories,
+          excludedCategories: _excludedCategories,
+          matchMode: switch (_categoryMatchMode) {
+            FolderCategoryMatchMode.any => CategoryFilterMatchMode.any,
+            FolderCategoryMatchMode.all => CategoryFilterMatchMode.all,
+          },
+          onChanged: (included, excluded) => setState(() {
+            _includedCategories = included;
+            _excludedCategories = excluded;
+          }),
+          onMatchModeChanged: (mode) => setState(() {
+            _categoryMatchMode = switch (mode) {
+              CategoryFilterMatchMode.any => FolderCategoryMatchMode.any,
+              CategoryFilterMatchMode.all => FolderCategoryMatchMode.all,
+            };
+          }),
+        ),
+        const SizedBox(height: 12),
+        if (matchCount != null)
+          Text(
+            tr('ruleMatchesXApps', namedArgs: {'count': '$matchCount'}),
+            style: theme.textTheme.bodySmall?.copyWith(
+              color: theme.colorScheme.onSurfaceVariant,
             ),
           ),
-          const SizedBox(height: 8),
-          PopupMenuButton<FolderRuleMatchType>(
-            initialValue: _ruleMatch,
-            onSelected: (value) {
-              setState(() {
-                _ruleMatch = value;
-              });
-            },
-            itemBuilder: (_) => FolderRuleMatchType.values
-                .map(
-                  (match) => PopupMenuItem(
-                    value: match,
-                    child: Text(widget.folderRuleMatchLabel(match)),
-                  ),
-                )
-                .toList(),
-            child: InputDecorator(
-              decoration:
-                  appPageOutlinedInputDecoration(
-                    context,
-                    labelText: tr('folderRuleMatch'),
-                  ).copyWith(
-                    suffixIcon: const Icon(Icons.arrow_drop_down),
-                    contentPadding: const EdgeInsets.fromLTRB(12, 16, 4, 16),
-                  ),
-              child: Text(widget.folderRuleMatchLabel(_ruleMatch)),
-            ),
-          ),
-          const SizedBox(height: 8),
-          TextField(
-            controller: _ruleValueController,
-            decoration:
-                appPageOutlinedInputDecoration(
-                  context,
-                  labelText: tr('folderRuleValue'),
-                ).copyWith(
-                  helperText: matchCount == null
-                      ? null
-                      : tr(
-                          'ruleMatchesXApps',
-                          namedArgs: {'count': '$matchCount'},
-                        ),
-                ),
-            onChanged: (_) => setState(() {}),
-          ),
-        ],
         const SizedBox(height: 12),
         OverflowBar(
           alignment: MainAxisAlignment.end,
@@ -7049,11 +7432,7 @@ class _InlineFolderEditorState extends State<_InlineFolderEditor> {
           children: [
             TextButton(onPressed: widget.onCancel, child: Text(tr('cancel'))),
             FilledButton.icon(
-              onPressed: canSave
-                  ? () {
-                      unawaited(_saveFolder());
-                    }
-                  : null,
+              onPressed: canSave ? () => unawaited(_save()) : null,
               icon: const Icon(Icons.save_outlined),
               label: Text(tr('save')),
             ),
@@ -7279,6 +7658,64 @@ class AppsFilter {
       'trackOnlyFilterIntent': trackOnlyFilterIntent.name,
       'sourceFilter': sourceFilter,
     };
+  }
+
+  FolderCriteria toFolderCriteria() {
+    FolderConditionIntent folderIntent(CategoryFilterIntent intent) {
+      return switch (intent) {
+        CategoryFilterIntent.neutral => FolderConditionIntent.neutral,
+        CategoryFilterIntent.include => FolderConditionIntent.include,
+        CategoryFilterIntent.exclude => FolderConditionIntent.exclude,
+      };
+    }
+
+    FolderTextCriterion? textCriterion(
+      String query, {
+      required bool tokenizeContains,
+      required bool caseSensitive,
+    }) {
+      final trimmed = query.trim();
+      if (trimmed.isEmpty) return null;
+      return FolderTextCriterion(
+        query: trimmed,
+        tokenizeContains: tokenizeContains,
+        caseSensitive: caseSensitive,
+      );
+    }
+
+    return FolderCriteria(
+      name: textCriterion(
+        nameFilter,
+        tokenizeContains: true,
+        caseSensitive: false,
+      ),
+      author: textCriterion(
+        authorFilter,
+        tokenizeContains: true,
+        caseSensitive: false,
+      ),
+      id: textCriterion(
+        idFilter,
+        tokenizeContains: false,
+        caseSensitive: true,
+      ),
+      includedCategories: includedCategoryFilter,
+      excludedCategories: excludedCategoryFilter,
+      categoryMatchMode: switch (categoryMatchMode) {
+        CategoryFilterMatchMode.any => FolderCategoryMatchMode.any,
+        CategoryFilterMatchMode.all => FolderCategoryMatchMode.all,
+      },
+      source: sourceFilter.trim().isEmpty
+          ? null
+          : FolderTextCriterion(
+              query: sourceFilter.trim(),
+              matchType: FolderRuleMatchType.equals,
+              caseSensitive: true,
+            ),
+      installedIntent: folderIntent(installedFilterIntent),
+      upToDateIntent: folderIntent(upToDateFilterIntent),
+      trackOnlyIntent: folderIntent(trackOnlyFilterIntent),
+    );
   }
 
   CategoryFilterIntent _intentFromLegacyUpdateStatus(String name) {

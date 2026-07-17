@@ -308,6 +308,17 @@ bool isSkipActiveForCurrentLatest(App app) {
   return skipped == app.latestVersion;
 }
 
+bool appIsUpToDateForFiltering(App app) {
+  final installed = app.installedVersion;
+  final latest = app.latestVersion;
+  if (installed == null) return false;
+  return isSkipActiveForCurrentLatest(app) ||
+      installed == latest ||
+      versionsEffectivelyEqual(installed, latest) ||
+      (installedVersionIsNewerOrEqual(installed, latest) &&
+          !versionOrderIsUnclear(installed, latest));
+}
+
 /// Removes a saved skip once it is stale or the installed app is already at
 /// or ahead of the skipped release.
 App normalizeSkippedLatestVersion(App app) {
