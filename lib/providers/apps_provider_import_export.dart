@@ -56,6 +56,8 @@ extension AppsProviderImportExport on AppsProvider {
     SettingsProvider? sp,
   }) async {
     final SettingsProvider settingsProvider = sp ?? this.settingsProvider;
+    final customName = settingsProvider.autoExportFileName;
+    final hasCustomName = customName != null && customName.isNotEmpty;
     var exportDir = await settingsProvider.getExportDir();
     if (isAuto) {
       if (!settingsProvider.autoExportOnChanges) {
@@ -66,7 +68,11 @@ extension AppsProviderImportExport on AppsProvider {
       }
       final files = await saf
           .listFiles(exportDir, columns: [saf.DocumentFileColumn.id])
-          .where((f) => f.uri.pathSegments.last.endsWith('-auto.json'))
+          .where((f) {
+            final name = f.uri.pathSegments.last;
+            return name.endsWith('-auto.json') ||
+                (hasCustomName && name == '$customName.json');
+          })
           .toList();
       if (files.isNotEmpty) {
         for (var f in files) {
@@ -85,11 +91,10 @@ extension AppsProviderImportExport on AppsProvider {
     if (!pickOnly) {
       const encoder = JsonEncoder.withIndent('    ');
       final Map<String, dynamic> finalExport = generateExportJSON();
-      final customName = settingsProvider.autoExportFileName;
-      // A custom name keeps the auto-export file name fixed so it's overwritten
-      // each time instead of accumulating timestamped copies.
-      final displayName = (isAuto && customName != null && customName.isNotEmpty)
-          ? '$customName-auto.json'
+      // In auto mode a custom name gives a fixed file that's overwritten each
+      // time, instead of a new timestamped file per change.
+      final displayName = (isAuto && hasCustomName)
+          ? '$customName.json'
           : '${tr('obtainiumExportHyphenatedLowercase')}-${DateTime.now().toIso8601String().replaceAll(':', '-')}${isAuto ? '-auto' : ''}.json';
       final result = await saf.createFile(
         exportDir,
