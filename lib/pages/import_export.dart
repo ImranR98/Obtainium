@@ -1105,7 +1105,7 @@ class _SelectionModalState extends State<SelectionModal> {
             )
             .toList();
         final Future<bool> Function(List<String>, VoidCallback)?
-            onSubmitSelection = widget.onSubmitSelection;
+        onSubmitSelection = widget.onSubmitSelection;
         if (onSubmitSelection == null) {
           Navigator.of(context).pop(selectedKeys);
           return;
@@ -1126,7 +1126,7 @@ class _SelectionModalState extends State<SelectionModal> {
           selectedKeys,
           stopSubmitting,
         );
-        if (!mounted) return;
+        if (!context.mounted) return;
         if (closeSheet) {
           Navigator.of(context).pop(selectedKeys);
         } else {
@@ -1265,10 +1265,7 @@ class _SelectionModalState extends State<SelectionModal> {
                   padding: sheetActionPadding,
                   color: colorScheme.primary,
                   tooltip: widget.onSubmitSelection == null
-                      ? tr(
-                          'selectX',
-                          args: [selectionCount.toString()],
-                        )
+                      ? tr('selectX', args: [selectionCount.toString()])
                       : tr('save'),
                   icon: _isSubmitting
                       ? ExpressiveLoadingIndicator(
@@ -1330,9 +1327,7 @@ class _SelectionModalState extends State<SelectionModal> {
                                 padding: const EdgeInsets.only(bottom: 12),
                                 child: Text(
                                   widget.title ?? tr('pick'),
-                                  style: Theme.of(context)
-                                      .textTheme
-                                      .titleLarge
+                                  style: Theme.of(context).textTheme.titleLarge
                                       ?.copyWith(fontWeight: FontWeight.w600),
                                 ),
                               ),

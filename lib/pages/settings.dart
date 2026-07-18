@@ -267,9 +267,7 @@ class SettingsPageState extends State<SettingsPage> {
               duration: const Duration(milliseconds: 360),
               curve: Curves.easeInOutCubicEmphasized,
               padding: EdgeInsets.only(
-                bottom: expanded
-                    ? SettingsProvider.collapsedHeaderGap
-                    : 0,
+                bottom: expanded ? SettingsProvider.collapsedHeaderGap : 0,
               ),
               child: ClipRect(
                 clipper: _SettingsSectionShadowClipper(expanded: expanded),

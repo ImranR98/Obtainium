@@ -25,8 +25,7 @@ class ImportFromUrlListPage extends StatefulWidget {
   final Future<void> Function()? onImportCompleted;
 
   @override
-  State<ImportFromUrlListPage> createState() =>
-      _ImportFromUrlListPageState();
+  State<ImportFromUrlListPage> createState() => _ImportFromUrlListPageState();
 }
 
 class _ImportFromUrlListPageState extends State<ImportFromUrlListPage> {
@@ -102,10 +101,7 @@ class _ImportFromUrlListPageState extends State<ImportFromUrlListPage> {
       if (!mounted) return;
       if (errors.isEmpty) {
         showMessage(
-          tr(
-            'importedX',
-            args: [plural('apps', urls.length).toLowerCase()],
-          ),
+          tr('importedX', args: [plural('apps', urls.length).toLowerCase()]),
           context,
         );
         if (widget.embedded) {
@@ -117,10 +113,8 @@ class _ImportFromUrlListPageState extends State<ImportFromUrlListPage> {
         unawaited(
           showDialog<void>(
             context: context,
-            builder: (_) => ImportErrorDialog(
-              urlsLength: urls.length,
-              errors: errors,
-            ),
+            builder: (_) =>
+                ImportErrorDialog(urlsLength: urls.length, errors: errors),
           ),
         );
       }
@@ -172,8 +166,7 @@ class _ImportFromUrlListPageState extends State<ImportFromUrlListPage> {
           Padding(
             padding: EdgeInsets.only(top: topContentInset),
             child: CustomScrollView(
-              keyboardDismissBehavior:
-                  ScrollViewKeyboardDismissBehavior.onDrag,
+              keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
               slivers: [
                 SliverSafeArea(
                   top: widget.embedded,
@@ -236,9 +229,7 @@ class _ImportFromUrlListPageState extends State<ImportFromUrlListPage> {
                                     tr('importedAppsIdDisclaimer'),
                                     textAlign: TextAlign.center,
                                     style: Theme.of(context).textTheme.bodySmall
-                                        ?.copyWith(
-                                          fontStyle: FontStyle.italic,
-                                        ),
+                                        ?.copyWith(fontStyle: FontStyle.italic),
                                   ),
                                 ),
                               ),

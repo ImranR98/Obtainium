@@ -25,7 +25,10 @@ class FaviconCache {
   static Future<File> _fileFor(String cacheKey) async {
     final base = await getApplicationCacheDirectory();
     final dir = Directory('${base.path}/favicons');
-    if (!dir.existsSync()) dir.createSync(recursive: true);
+    // Async existence/creation: this runs on the UI isolate (called from a
+    // widget's async icon load), so the blocking existsSync/createSync used
+    // before stalled the frame the first time each host scrolled in.
+    if (!await dir.exists()) await dir.create(recursive: true);
     return File('${dir.path}/${_fileName(cacheKey)}');
   }
 
@@ -63,8 +66,10 @@ class FaviconCache {
     if (_mem.containsKey(cacheKey)) return _mem[cacheKey];
 
     final file = await _fileFor(cacheKey);
-    if (file.existsSync()) {
-      final bytes = file.readAsBytesSync();
+    // Async read (was readAsBytesSync) — see [_fileFor]; keeps the disk hit
+    // off the UI thread so scrolling in a cached-favicon row doesn't hitch.
+    if (await file.exists()) {
+      final bytes = await file.readAsBytes();
       _mem[cacheKey] = bytes;
       return bytes;
     }

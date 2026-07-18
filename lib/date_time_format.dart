@@ -18,9 +18,7 @@ String formatDeviceOrderedNumericDate(
       monthPosition < 0 || dayPosition < 0 || monthPosition < dayPosition;
   final String month = local.month.toString().padLeft(2, '0');
   final String day = local.day.toString().padLeft(2, '0');
-  final String monthAndDay = monthComesFirst
-      ? '$month-$day'
-      : '$day-$month';
+  final String monthAndDay = monthComesFirst ? '$month-$day' : '$day-$month';
   return local.year == localNow.year
       ? monthAndDay
       : '${local.year}-$monthAndDay';

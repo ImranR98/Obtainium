@@ -1968,12 +1968,12 @@ class _AppPageState extends State<AppPage> with WidgetsBindingObserver {
   }
 
   static const double _storeSourceIconSize = 32;
+  static const double _storeSourceButtonSize = 48;
 
   Widget _buildStoreSourceLaunchIcon({
     required BuildContext iconContext,
     required String url,
     String? assetPath,
-    AlignmentGeometry iconAlignment = Alignment.center,
   }) {
     final ColorScheme colorScheme = Theme.of(iconContext).colorScheme;
     final Widget picture = assetPath != null
@@ -1997,8 +1997,13 @@ class _AppPageState extends State<AppPage> with WidgetsBindingObserver {
         },
         borderRadius: BorderRadius.circular(12),
         child: SizedBox.square(
-          dimension: 48,
-          child: Align(alignment: iconAlignment, child: picture),
+          dimension: _storeSourceButtonSize,
+          child: Center(
+            child: SizedBox.square(
+              dimension: _storeSourceIconSize,
+              child: Center(child: picture),
+            ),
+          ),
         ),
       ),
     );
@@ -3097,9 +3102,7 @@ class _AppPageState extends State<AppPage> with WidgetsBindingObserver {
                       : null,
                   contentColor: githubAttestationCantCheck
                       ? Colors.orange.shade800
-                      : Theme.of(
-                          pageThemeContext,
-                        ).colorScheme.onSurfaceVariant,
+                      : Theme.of(pageThemeContext).colorScheme.onSurfaceVariant,
                   icon: githubAttestationCantCheck
                       ? Icons.warning_amber_rounded
                       : Icons.shield_outlined,
@@ -3112,10 +3115,9 @@ class _AppPageState extends State<AppPage> with WidgetsBindingObserver {
               if (malwareScanHasStatus)
                 statusBadge(
                   backgroundColor: malwareScanFlagged
-                      ? Theme.of(pageThemeContext)
-                            .colorScheme
-                            .errorContainer
-                            .withValues(alpha: 0.55)
+                      ? Theme.of(
+                          pageThemeContext,
+                        ).colorScheme.errorContainer.withValues(alpha: 0.55)
                       : malwareScanError
                       ? Colors.orange.withValues(alpha: 0.16)
                       : Colors.green.withValues(alpha: 0.15),
@@ -3127,9 +3129,7 @@ class _AppPageState extends State<AppPage> with WidgetsBindingObserver {
                       ? Colors.orange.withValues(alpha: 0.55)
                       : Colors.green.withValues(alpha: 0.5),
                   contentColor: malwareScanFlagged
-                      ? Theme.of(
-                          pageThemeContext,
-                        ).colorScheme.onErrorContainer
+                      ? Theme.of(pageThemeContext).colorScheme.onErrorContainer
                       : malwareScanError
                       ? Colors.orange.shade800
                       : Colors.green,
@@ -3269,8 +3269,7 @@ class _AppPageState extends State<AppPage> with WidgetsBindingObserver {
                         child: SizedBox.square(
                           dimension: 18,
                           child: InkResponse(
-                            onTap: () =>
-                                unawaited(copyCertificateHash(hash)),
+                            onTap: () => unawaited(copyCertificateHash(hash)),
                             radius: 10,
                             child: const Icon(Icons.copy_rounded, size: 14),
                           ),
@@ -3471,7 +3470,8 @@ class _AppPageState extends State<AppPage> with WidgetsBindingObserver {
         if (alternateStoresTrackedUrl != null &&
             alternateStoresTrackedUrl.isNotEmpty)
           FutureBuilder<Map<String, String>?>(
-            future: alternateStoresPackageId == null ||
+            future:
+                alternateStoresPackageId == null ||
                     alternateStoresPackageId.isEmpty
                 ? null
                 : _storeAvailabilityCacheFuture,
@@ -3505,10 +3505,7 @@ class _AppPageState extends State<AppPage> with WidgetsBindingObserver {
                   storeData: storeData,
                   storeName: 'APKPure',
                   fallbackUrl: null,
-                  alreadyTracked: _trackedUrlIsFromHost(
-                    trackedUrl,
-                    'apkpure.',
-                  ),
+                  alreadyTracked: _trackedUrlIsFromHost(trackedUrl, 'apkpure.'),
                 );
                 final apkmirrorUrl = _resolveStoreUrl(
                   storeData: storeData,
@@ -3564,7 +3561,9 @@ class _AppPageState extends State<AppPage> with WidgetsBindingObserver {
                   crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
                     SizedBox(
-                      width: 100,
+                      width:
+                          100 -
+                          (_storeSourceButtonSize - _storeSourceIconSize) / 2,
                       child: Text(
                         tr('sources'),
                         style: pageTheme.textTheme.bodySmall?.copyWith(
@@ -3584,7 +3583,6 @@ class _AppPageState extends State<AppPage> with WidgetsBindingObserver {
                               iconContext: pageThemeContext,
                               url: trackedUrl,
                               assetPath: storeSourceAssetPathForUrl(trackedUrl),
-                              iconAlignment: AlignmentDirectional.centerStart,
                             ),
                             if (alternateSourceIcons.isNotEmpty)
                               Container(

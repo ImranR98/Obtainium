@@ -305,9 +305,7 @@ extension AppsProviderImportExport on AppsProvider {
           updatedFolderIds.add(targetId);
           final String folderName =
               backupFolderIdToName[id] ??
-              existingFolders
-                  .firstWhere((f) => f.id == targetId)
-                  .name;
+              existingFolders.firstWhere((f) => f.id == targetId).name;
           updatedFolderNames[targetId] = folderName;
         }
         updated['folderIds'] = updatedFolderIds;

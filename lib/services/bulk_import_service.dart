@@ -131,10 +131,14 @@ class BulkImportService {
 
     final List<dynamic> rawSignatures =
         certificateData['signatures'] as List<dynamic>? ?? const <dynamic>[];
-    final signatures = rawSignatures.map((rawSignature) {
-      if (rawSignature is Uint8List) return rawSignature;
-      return Uint8List.fromList(List<int>.from(rawSignature as List<dynamic>));
-    }).toList(growable: false);
+    final signatures = rawSignatures
+        .map((rawSignature) {
+          if (rawSignature is Uint8List) return rawSignature;
+          return Uint8List.fromList(
+            List<int>.from(rawSignature as List<dynamic>),
+          );
+        })
+        .toList(growable: false);
     return SigningCertificateInfo(
       signatures: signatures,
       hasMultipleSigners:

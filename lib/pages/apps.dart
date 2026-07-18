@@ -323,8 +323,7 @@ class _RenderZOrderSliverMainAxisGroup extends RenderSliverMainAxisGroup {
           first.parentData! as SliverPhysicalParentData;
       // Visual top of the header card within the group's coordinate space.
       headerTop =
-          firstParentData.paintOffset.dy +
-          SettingsProvider.collapsedHeaderGap;
+          firstParentData.paintOffset.dy + SettingsProvider.collapsedHeaderGap;
     }
 
     // Paint all content slivers first (from index 1 to N-1)
@@ -384,8 +383,7 @@ class _AnimatedAppsGroupBody extends StatefulWidget {
   final _AnimatedAppsGroupItemBuilder itemBuilder;
 
   @override
-  State<_AnimatedAppsGroupBody> createState() =>
-      _AnimatedAppsGroupBodyState();
+  State<_AnimatedAppsGroupBody> createState() => _AnimatedAppsGroupBodyState();
 }
 
 class _AnimatedAppsGroupBodyState extends State<_AnimatedAppsGroupBody>
@@ -3304,6 +3302,10 @@ class AppsPageState extends State<AppsPage> {
         screenWidth >= kLargeScreenWidthBreakpoint &&
         !context.read<SettingsProvider>().isTV &&
         !settingsProvider.alwaysUsePhoneLayout;
+    // Row-invariant for this frame: compute once here instead of in the
+    // per-row builder ([getSingleAppHorizTile]), which otherwise re-ran this
+    // O(n) scan for every materialized row during a fling.
+    final bool downloadsRunning = appsProvider.areDownloadsRunning();
 
     // The two-panel layout needs an effective selection, but mutating
     // [selectedAppId] during build is a Flutter anti-pattern. Derive it locally
@@ -3792,9 +3794,7 @@ class AppsPageState extends State<AppsPage> {
                     );
                   },
                 )
-              : SliverFillRemaining(
-                  child: Center(child: emptyStateText),
-                ),
+              : SliverFillRemaining(child: Center(child: emptyStateText)),
         // Initial empty-library loading uses the centered M3E indicator above.
         // Keep this compact bar for explicit user-initiated refreshes only.
         if (refreshingSince != null)
@@ -3858,7 +3858,6 @@ class AppsPageState extends State<AppsPage> {
       final hasUpdate = installed != null && appHasActionableUpdate(app.app);
       final hasUncertainUpdate =
           installed != null && versionOrderUncertainUpdate(app.app);
-      final downloadsRunning = appsProvider.areDownloadsRunning();
       final sourceHost = sourceProvider
           .getSourceTemplate(
             app.app.url,
@@ -3889,11 +3888,9 @@ class AppsPageState extends State<AppsPage> {
             )
           : null;
 
-      final double screenWidth = MediaQuery.sizeOf(context).width;
-      final bool isLargeScreen =
-          screenWidth >= kLargeScreenWidthBreakpoint &&
-          !context.read<SettingsProvider>().isTV &&
-          !settingsProvider.alwaysUsePhoneLayout;
+      // [isLargeScreen] is computed once per frame in the enclosing build
+      // scope; the per-row recomputation (and its MediaQuery.sizeOf dependency,
+      // which made every row rebuild on any metrics change) was redundant.
 
       // Builds the row visual given the callback that should fire when the
       // user taps a non-selected row. Used by both the OpenContainer path
@@ -5426,7 +5423,8 @@ class AppsPageState extends State<AppsPage> {
                                                   return Stack(
                                                     clipBehavior: Clip.none,
                                                     alignment:
-                                                        AlignmentDirectional.centerStart,
+                                                        AlignmentDirectional
+                                                            .centerStart,
                                                     children: [
                                                       const Row(
                                                         mainAxisSize:
@@ -5438,7 +5436,8 @@ class AppsPageState extends State<AppsPage> {
                                                           ),
                                                           SizedBox(width: 6),
                                                           Icon(
-                                                            Icons.folder_outlined,
+                                                            Icons
+                                                                .folder_outlined,
                                                           ),
                                                         ],
                                                       ),
@@ -6782,9 +6781,11 @@ class AppsPageState extends State<AppsPage> {
                                     child: _InlineFolderEditor(
                                       key: ValueKey('edit-${folder.id}'),
                                       existing: folder,
-                                      categoryColors: settingsProvider.categories,
+                                      categoryColors:
+                                          settingsProvider.categories,
                                       sourceItems: sourceItems,
-                                      countCriteriaMatches: countCriteriaMatches,
+                                      countCriteriaMatches:
+                                          countCriteriaMatches,
                                       folderRuleMatchLabel:
                                           _folderRuleMatchLabel,
                                       onCancel: () {
@@ -6830,9 +6831,7 @@ class AppsPageState extends State<AppsPage> {
                                             ),
                                             FilledButton(
                                               onPressed: () {
-                                                unawaited(
-                                                  deleteFolder(folder),
-                                                );
+                                                unawaited(deleteFolder(folder));
                                               },
                                               style: FilledButton.styleFrom(
                                                 backgroundColor: Theme.of(
@@ -7036,8 +7035,7 @@ class _FolderSummaryLine extends StatelessWidget {
                 softWrap: false,
               ),
             ),
-            if (overflow > 0)
-              Text('  +$overflow', style: style, maxLines: 1),
+            if (overflow > 0) Text('  +$overflow', style: style, maxLines: 1),
           ],
         );
       },
@@ -7144,7 +7142,12 @@ class _InlineFolderEditorState extends State<_InlineFolderEditor> {
 
   FolderCriteria _buildCriteria() => FolderCriteria(
     name: _text(_nameQuery, _nameOp, tokenize: true, caseSensitive: false),
-    author: _text(_authorQuery, _authorOp, tokenize: true, caseSensitive: false),
+    author: _text(
+      _authorQuery,
+      _authorOp,
+      tokenize: true,
+      caseSensitive: false,
+    ),
     id: _text(_idQuery, _idOp, tokenize: false, caseSensitive: true),
     includedCategories: _includedCategories,
     excludedCategories: _excludedCategories,
@@ -7264,12 +7267,11 @@ class _InlineFolderEditorState extends State<_InlineFolderEditor> {
             controller: controller,
             autocorrect: !caseSensitive,
             enableSuggestions: !caseSensitive,
-            decoration:
-                appPageOutlinedInputDecoration(
-                  context,
-                  labelText: label,
-                  isDense: true,
-                ).copyWith(prefixIcon: const Icon(Icons.search_rounded)),
+            decoration: appPageOutlinedInputDecoration(
+              context,
+              labelText: label,
+              isDense: true,
+            ).copyWith(prefixIcon: const Icon(Icons.search_rounded)),
             onChanged: (_) => setState(() {}),
           ),
         ),
@@ -7694,11 +7696,7 @@ class AppsFilter {
         tokenizeContains: true,
         caseSensitive: false,
       ),
-      id: textCriterion(
-        idFilter,
-        tokenizeContains: false,
-        caseSensitive: true,
-      ),
+      id: textCriterion(idFilter, tokenizeContains: false, caseSensitive: true),
       includedCategories: includedCategoryFilter,
       excludedCategories: excludedCategoryFilter,
       categoryMatchMode: switch (categoryMatchMode) {

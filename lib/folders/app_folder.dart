@@ -32,7 +32,9 @@ class FolderTextCriterion {
   bool matches(String target) {
     if (isEmpty) return true;
     final normalizedTarget = caseSensitive ? target : target.toLowerCase();
-    final normalizedQuery = caseSensitive ? query.trim() : query.trim().toLowerCase();
+    final normalizedQuery = caseSensitive
+        ? query.trim()
+        : query.trim().toLowerCase();
     final values = tokenizeContains && matchType == FolderRuleMatchType.contains
         ? normalizedQuery
               .split(RegExp(r'\s+'))
@@ -166,14 +168,12 @@ class FolderCriteria {
 
     return switch (categoryMatchMode) {
       FolderCategoryMatchMode.any => includedCategories.any(
-        (query) => categories.any(
-          (category) => categoryMatches(category, query),
-        ),
+        (query) =>
+            categories.any((category) => categoryMatches(category, query)),
       ),
       FolderCategoryMatchMode.all => includedCategories.every(
-        (query) => categories.any(
-          (category) => categoryMatches(category, query),
-        ),
+        (query) =>
+            categories.any((category) => categoryMatches(category, query)),
       ),
     };
   }
@@ -421,12 +421,7 @@ bool reconcileAppFolderMemberships(
       FolderMembershipOverride.include => true,
       FolderMembershipOverride.exclude => false,
     };
-    setAppFolderMembership(
-      app,
-      folder.id,
-      folder.name,
-      belongs: shouldBelong,
-    );
+    setAppFolderMembership(app, folder.id, folder.name, belongs: shouldBelong);
   }
 
   if (migrateLegacyRules) {
@@ -470,9 +465,7 @@ List<String> folderIdsForApp(App app) {
 Map<String, String> folderOverridesForApp(App app) {
   final raw = app.additionalSettings['folderOverrides'];
   if (raw is! Map) return {};
-  return raw.map(
-    (key, value) => MapEntry(key.toString(), value.toString()),
-  );
+  return raw.map((key, value) => MapEntry(key.toString(), value.toString()));
 }
 
 FolderMembershipOverride folderOverrideForApp(App app, String folderId) {
@@ -494,7 +487,9 @@ List<String> excludedFolderIdsForApp(App app) {
       .where((entry) => entry.value == FolderMembershipOverride.exclude.name)
       .map((entry) => entry.key);
   final raw = app.additionalSettings['excludedFolderIds'];
-  final legacyIds = raw == null ? const <String>[] : List<String>.from(raw as List);
+  final legacyIds = raw == null
+      ? const <String>[]
+      : List<String>.from(raw as List);
   return {...overrideIds, ...legacyIds}.toList();
 }
 

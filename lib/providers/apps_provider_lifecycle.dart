@@ -458,7 +458,8 @@ extension AppsProviderLifecycle on AppsProvider {
     bool dataChanged = false;
     final appFolders = settingsProvider.appFolders;
     final shouldMigrateFolderCriteria =
-        (settingsProvider.prefs?.getInt('folderCriteriaMigrationVersion') ?? 0) <
+        (settingsProvider.prefs?.getInt('folderCriteriaMigrationVersion') ??
+            0) <
         folderCriteriaMigrationVersion;
     final folderMembershipsToPersist = <App>[];
     try {

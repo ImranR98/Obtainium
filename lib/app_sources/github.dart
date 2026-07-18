@@ -720,17 +720,11 @@ class GitHub extends AppSource {
       if (isDateOnly) {
         final dateA = dates.putIfAbsent(
           a,
-          () => _getReleaseDateFromRelease(
-            a,
-            useLatestAssetDateAsReleaseDate,
-          ),
+          () => _getReleaseDateFromRelease(a, useLatestAssetDateAsReleaseDate),
         );
         final dateB = dates.putIfAbsent(
           b,
-          () => _getReleaseDateFromRelease(
-            b,
-            useLatestAssetDateAsReleaseDate,
-          ),
+          () => _getReleaseDateFromRelease(b, useLatestAssetDateAsReleaseDate),
         );
         return (dateA ?? DateTime(1)).compareTo(dateB ?? DateTime(0));
       }

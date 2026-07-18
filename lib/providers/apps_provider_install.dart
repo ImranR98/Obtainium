@@ -1127,7 +1127,8 @@ extension AppsProviderInstall on AppsProvider {
     // If the App has more than one APK, the user should pick one (if context provided)
     MapEntry<String, String>? appFileUrl;
     if (urlsToSelectFrom.isNotEmpty) {
-      final int selectedApkIndex = app.preferredApkIndex >= 0 &&
+      final int selectedApkIndex =
+          app.preferredApkIndex >= 0 &&
               app.preferredApkIndex < urlsToSelectFrom.length
           ? app.preferredApkIndex
           : 0;

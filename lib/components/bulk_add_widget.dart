@@ -275,8 +275,7 @@ class BulkAddWidgetState extends State<BulkAddWidget> {
   }
 
   void _removeEntranceAnimationListener() {
-    final AnimationStatusListener? listener =
-        _entranceAnimationStatusListener;
+    final AnimationStatusListener? listener = _entranceAnimationStatusListener;
     if (listener != null) {
       _entranceAnimation?.removeStatusListener(listener);
     }
@@ -2572,10 +2571,9 @@ class BulkAddWidgetState extends State<BulkAddWidget> {
   Widget build(BuildContext context) {
     if (widget.standalone) {
       final ColorScheme colorScheme = Theme.of(context).colorScheme;
-      final bool useGradientBackground = context
-          .select<SettingsProvider, bool>(
-            (settingsProvider) => settingsProvider.useGradientBackground,
-          );
+      final bool useGradientBackground = context.select<SettingsProvider, bool>(
+        (settingsProvider) => settingsProvider.useGradientBackground,
+      );
       final double topContentInset = useGradientBackground
           ? MediaQuery.paddingOf(context).top + kToolbarHeight
           : 0;

@@ -79,10 +79,7 @@ class _StoreSourceChipAvatarState extends State<StoreSourceChipAvatar> {
 
     final String? localAsset = storeSourceAssetPathForHost(widget.host);
     if (localAsset != null) {
-      return StoreSourceIconImage(
-        assetPath: localAsset,
-        size: widget.size,
-      );
+      return StoreSourceIconImage(assetPath: localAsset, size: widget.size);
     }
 
     return FutureBuilder<Uint8List?>(
@@ -321,8 +318,7 @@ class StoreSourceIconImage extends StatelessWidget {
       );
     }
 
-    final int cachePx =
-        (size * MediaQuery.devicePixelRatioOf(context)).round();
+    final int cachePx = (size * MediaQuery.devicePixelRatioOf(context)).round();
     final Widget image = Image.asset(
       assetPath,
       fit: BoxFit.contain,
@@ -339,11 +335,7 @@ class StoreSourceIconImage extends StatelessWidget {
 
     return ClipRRect(
       borderRadius: BorderRadius.circular(size * 0.22),
-      child: SizedBox(
-        width: size,
-        height: size,
-        child: image,
-      ),
+      child: SizedBox(width: size, height: size, child: image),
     );
   }
 
@@ -392,10 +384,7 @@ class _StoreSourceIconForUrlState extends State<StoreSourceIconForUrl> {
   Widget build(BuildContext context) {
     final String? localAsset = storeSourceAssetPathForHost(_host);
     if (localAsset != null) {
-      return StoreSourceIconImage(
-        assetPath: localAsset,
-        size: widget.size,
-      );
+      return StoreSourceIconImage(assetPath: localAsset, size: widget.size);
     }
     return FutureBuilder<Uint8List?>(
       future: _iconFuture,

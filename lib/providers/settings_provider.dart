@@ -92,6 +92,14 @@ List<SwipeAction> swipeActionsSortedByLocalizedLabel() {
 class SettingsProvider with ChangeNotifier {
   SharedPreferences? prefs;
   String? defaultAppDir;
+  // One-time-init guard. [initializeSettings] runs schema migrations plus two
+  // native round-trips (DeviceInfoPlugin.androidInfo, getAppStorageDir) that
+  // never change for the process lifetime, yet it is called more than once on
+  // the same instance during cold start (from main() and again from the
+  // AppsProvider constructor). Re-running that work needlessly delayed the
+  // first frame; subsequent calls now just refresh the (cached) prefs handle
+  // and notify, skipping the expensive one-time work.
+  bool _settingsInitialized = false;
   bool justStarted = true;
   bool isTV = false;
 
@@ -120,6 +128,12 @@ class SettingsProvider with ChangeNotifier {
   // Not done in constructor as we want to be able to await it
   Future<void> initializeSettings() async {
     prefs = await SharedPreferences.getInstance();
+    if (_settingsInitialized) {
+      // Already fully initialized on this instance — the migrations and native
+      // lookups below are one-time work. Just notify so late listeners rebuild.
+      notifyListeners();
+      return;
+    }
     _categoriesMemory = null;
     _appFoldersMemory = null;
     _folderViewCache.clear();
@@ -137,6 +151,7 @@ class SettingsProvider with ChangeNotifier {
         info.systemFeatures.contains('android.hardware.type.television') ||
         info.systemFeatures.contains('android.software.leanback');
     _tactileFeedbackEnabled = prefs?.getBool('tactileFeedbackEnabled') ?? true;
+    _settingsInitialized = true;
     notifyListeners();
   }
 

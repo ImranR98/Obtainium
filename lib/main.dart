@@ -225,14 +225,21 @@ void main() async {
     unawaited(SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge));
   }
   final SettingsProvider settingsProvider = SettingsProvider();
-  await settingsProvider.initializeSettings();
-  if (settingsProvider.useSystemFont) {
-    await NativeFeatures.loadSystemFont();
-  }
   final np = NotificationsProvider();
-  await np.initialize();
+  // These three native initializations are independent of one another, so run
+  // their platform-channel round-trips concurrently instead of serially to
+  // shorten time-to-first-frame. Only settings must complete before runApp
+  // (the theme reads it); np/WorkManager are awaited here too but overlap.
+  await Future.wait([
+    settingsProvider.initializeSettings(),
+    np.initialize(),
+    Workmanager().initialize(callbackDispatcher),
+  ]);
+  // The system font (when enabled) is loaded lazily after the first frame in
+  // [_ObtainiumState.build] rather than blocking here: reading the font file
+  // from disk on the startup path delayed first paint, and FontLoader.load()
+  // triggers a repaint of the affected text automatically once it completes.
   FlutterForegroundTask.initCommunicationPort();
-  await Workmanager().initialize(callbackDispatcher);
   runApp(
     MultiProvider(
       providers: [
@@ -264,6 +271,12 @@ class Obtainium extends StatefulWidget {
 
 class _ObtainiumState extends State<Obtainium> {
   var existingUpdateInterval = -1;
+
+  // Guards the lazy, one-shot system-font load kicked off from [build] the
+  // first time [SettingsProvider.useSystemFont] is seen enabled. Loading it
+  // here (instead of blocking main()) keeps it off the cold-start critical
+  // path; FontLoader repaints the affected text once the load finishes.
+  bool _systemFontLoadStarted = false;
 
   // Cache for the expensive boosted light/dark [ColorScheme]s.
   // [ColorScheme.fromSeed] runs HCT colour-space math and the boost*
@@ -517,6 +530,13 @@ class _ObtainiumState extends State<Obtainium> {
       ),
     );
     final SettingsProvider settingsProvider = context.read<SettingsProvider>();
+    // Lazily load the system font off the startup critical path (see
+    // [_systemFontLoadStarted]). NativeFeatures.loadSystemFont has its own
+    // idempotency guard, but the flag avoids re-issuing the future each build.
+    if (settingsProvider.useSystemFont && !_systemFontLoadStarted) {
+      _systemFontLoadStarted = true;
+      unawaited(NativeFeatures.loadSystemFont());
+    }
     final AppsProvider appsProvider = context.read<AppsProvider>();
     final LogsProvider logs = context.read<LogsProvider>();
     final NotificationsProvider notifs = context.read<NotificationsProvider>();
