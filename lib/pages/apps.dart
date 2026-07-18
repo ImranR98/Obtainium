@@ -815,14 +815,15 @@ class _AppListItem extends StatelessWidget {
 
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
-    final double screenWidth = MediaQuery.sizeOf(context).width;
+    final Size screenSize = MediaQuery.sizeOf(context);
+    final double screenWidth = screenSize.width;
     final bool isLargeScreen =
         screenWidth >= kLargeScreenWidthBreakpoint &&
         !context.read<SettingsProvider>().isTV &&
         !context.read<SettingsProvider>().alwaysUsePhoneLayout;
     final bool hideVersionAndChangelog =
-        isLargeScreen ||
-        MediaQuery.orientationOf(context) == Orientation.landscape;
+        MediaQuery.orientationOf(context) == Orientation.landscape &&
+        screenSize.shortestSide < kTabletShortestSideBreakpoint;
 
     final showChangesFn = getChangeLogFn(context, app.app);
     final installed = app.app.installedVersion;
@@ -2763,6 +2764,8 @@ class AppsPageState extends State<AppsPage> {
     return InputChip(
       label: Text(label, style: const TextStyle(fontSize: 12)),
       onDeleted: onDelete,
+      shape: const StadiumBorder(),
+      clipBehavior: Clip.antiAlias,
       materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
       visualDensity: VisualDensity.compact,
       padding: const EdgeInsets.symmetric(horizontal: 2),
@@ -4116,9 +4119,6 @@ class AppsPageState extends State<AppsPage> {
                         top: tileIndex == 0
                             ? kM3eHeaderToFirstCardGap
                             : kM3eItemGap,
-                        bottom: tileIndex == matchingIndices.length - 1
-                            ? SettingsProvider.collapsedHeaderGap
-                            : 0,
                       ),
                       child: getSingleAppHorizTile(
                         matchingIndices[tileIndex],

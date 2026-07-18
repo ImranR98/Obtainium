@@ -1,6 +1,7 @@
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
+import 'package:obtainium/components/app_smooth_surface.dart';
 
 enum CategoryActionChipState {
   selected,
@@ -149,40 +150,35 @@ class CategoryActionChip extends StatelessWidget {
 
     return Padding(
       padding: outerPadding,
-      child: onPressed == null
-          ? Chip(
-              avatar: avatar,
-              label: Text(
-                label,
-                style: theme.textTheme.labelMedium?.copyWith(
-                  color: foregroundColor,
-                  decoration: decoration,
-                  fontWeight: fontWeight,
-                ),
+      child: AppSmoothRoundedSurface(
+        backgroundColor: containerColor,
+        borderColor: borderSide.style == BorderStyle.none
+            ? null
+            : borderSide.color,
+        borderWidth: borderSide.width,
+        borderRadius: 999,
+        padding: EdgeInsetsDirectional.fromSTEB(
+          avatar == null ? 12 : 9,
+          6,
+          12,
+          6,
+        ),
+        onTap: onPressed,
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            if (avatar != null) ...[avatar, const SizedBox(width: 6)],
+            Text(
+              label,
+              style: theme.textTheme.labelMedium?.copyWith(
+                color: foregroundColor,
+                decoration: decoration,
+                fontWeight: fontWeight,
               ),
-              backgroundColor: containerColor,
-              shape: const StadiumBorder(),
-              side: borderSide,
-              visualDensity: VisualDensity.compact,
-              materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-            )
-          : RawChip(
-              onPressed: onPressed,
-              avatar: avatar,
-              label: Text(
-                label,
-                style: theme.textTheme.labelMedium?.copyWith(
-                  color: foregroundColor,
-                  decoration: decoration,
-                  fontWeight: fontWeight,
-                ),
-              ),
-              backgroundColor: containerColor,
-              shape: const StadiumBorder(),
-              side: borderSide,
-              visualDensity: VisualDensity.compact,
-              materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
             ),
+          ],
+        ),
+      ),
     );
   }
 }

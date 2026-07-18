@@ -8,6 +8,10 @@ const double kLargeScreenWidthBreakpoint = 720;
 /// In landscape, large-screen layouts kick in at this lower width.
 const double kLargeScreenLandscapeWidthBreakpoint = 600;
 
+/// Shortest-side boundary used when behavior must distinguish a phone from a
+/// tablet independently of the current orientation.
+const double kTabletShortestSideBreakpoint = 600;
+
 /// Large-screen when wide enough in portrait, or somewhat narrower in landscape.
 ///
 /// Used by the add-app and bulk-add pages, which intentionally opt into the
