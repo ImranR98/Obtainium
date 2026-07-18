@@ -19,6 +19,18 @@ const int _flagUpdatedSystemApp =
     128; // ApplicationInfo.FLAG_UPDATED_SYSTEM_APP = 0x80
 const _deviceAppsChannel = MethodChannel('dev.imranr.obtainium/device_apps');
 
+typedef _ApkMirrorAvailability = ({bool exists, String? link, String? iconUrl});
+
+@visibleForTesting
+String? apkMirrorIconUrlFromAvailabilityItem(dynamic item) {
+  if (item is! Map) return null;
+  final dynamic app = item['app'];
+  if (app is! Map) return null;
+  final dynamic iconUrl = app['icon_url'];
+  if (iconUrl is! String || iconUrl.trim().isEmpty) return null;
+  return iconUrl.trim();
+}
+
 class InstalledAppInfo {
   final String packageName;
   final String name;
@@ -305,10 +317,13 @@ class BulkImportService {
   /// Checks APKMirror for a list of package names.
   /// Returns a map of packageName -> apkmirror URL (null if not found).
   /// Uses APKMirror's REST API with batch requests of 100 apps.
+  /// When supplied, [resolvedIconUrls] is populated from the same response;
+  /// resolving these URLs does not issue another metadata request.
   static Future<Map<String, String?>> checkApkMirror(
     List<String> packageNames, {
     void Function(int done, int total)? onProgress,
     Map<String, String?>? alreadyKnown,
+    Map<String, String>? resolvedIconUrls,
     bool Function()? shouldAbort,
   }) async {
     final result = <String, String?>{};
@@ -386,13 +401,14 @@ class BulkImportService {
           final data = jsonDecode(response.body) as Map<String, dynamic>;
           final dataList = data['data'] as List? ?? [];
 
-          final Map<String, ({bool exists, String? link})> batchResults = {};
+          final Map<String, _ApkMirrorAvailability> batchResults = {};
           for (final item in dataList) {
             final pname = item['pname'] as String?;
             if (pname != null) {
               batchResults[pname] = (
                 exists: item['exists'] as bool? ?? false,
                 link: item['app']?['link'] as String?,
+                iconUrl: apkMirrorIconUrlFromAvailabilityItem(item),
               );
             }
           }
@@ -409,6 +425,10 @@ class BulkImportService {
                   result[original] =
                       _apkMirrorPreferredPackageUrls[candidate] ??
                       'https://www.apkmirror.com$appLink';
+                  final String? iconUrl = res?.iconUrl;
+                  if (iconUrl != null) {
+                    resolvedIconUrls?[original] = iconUrl;
+                  }
                 }
               }
               pendingCandidates[original]?.remove(candidate);

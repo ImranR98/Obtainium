@@ -1766,28 +1766,34 @@ class _AppPageState extends State<AppPage> with WidgetsBindingObserver {
   }
 
   /// After a pull-to-refresh, checks all 4 stores (APKMirror, F-Droid, APKPure,
-  /// Play Store) for this single app concurrently, skipping any store already
-  /// cached or already tracked from that source. Caches results and triggers a
+  /// Play Store) for this single app concurrently. Cached stores are skipped,
+  /// except that APKMirror is rechecked when its existing availability response
+  /// can also fill a missing app icon. Caches results and triggers a
   /// FutureBuilder rebuild so the Other Sources row updates in place.
   Future<void> _maybeCheckAndCacheAllStores(String appId) async {
     if (appId.isEmpty) return;
 
-    final trackedUrl = Provider.of<AppsProvider>(
-      context,
-      listen: false,
-    ).apps[appId]?.app.url;
+    final appsProvider = Provider.of<AppsProvider>(context, listen: false);
+    final AppInMemory? appBeforeStoreCheck = appsProvider.apps[appId];
+    final trackedUrl = appBeforeStoreCheck?.app.url;
+    final shouldResolveMissingIcon =
+        appBeforeStoreCheck != null &&
+        appBeforeStoreCheck.icon == null &&
+        appBeforeStoreCheck.app.iconUrl?.isNotEmpty != true;
 
     final cache = await BulkScanCache.load();
     final storeData = cache[appId] ?? {};
+    final apkMirrorIconUrls = <String, String>{};
 
     final futures = <Future<MapEntry<String, String?>>>[];
 
     if (!_trackedUrlIsFromHost(trackedUrl, 'apkmirror.com') &&
-        (storeData['APKMirror'] ?? '').isEmpty) {
+        ((storeData['APKMirror'] ?? '').isEmpty || shouldResolveMissingIcon)) {
       futures.add(
-        BulkImportService.checkApkMirror([
-          appId,
-        ]).then((result) => MapEntry('APKMirror', result[appId])),
+        BulkImportService.checkApkMirror(
+          [appId],
+          resolvedIconUrls: apkMirrorIconUrls,
+        ).then((result) => MapEntry('APKMirror', result[appId])),
       );
     }
     if (!_trackedUrlIsFromHost(trackedUrl, 'f-droid.org') &&
@@ -1821,9 +1827,24 @@ class _AppPageState extends State<AppPage> with WidgetsBindingObserver {
 
     final entry = cache.putIfAbsent(appId, () => {});
     for (final result in results) {
-      entry[result.key] = result.value ?? '';
+      if (result.value != null || (entry[result.key] ?? '').isEmpty) {
+        entry[result.key] = result.value ?? '';
+      }
     }
     await BulkScanCache.save(cache);
+
+    final String? apkMirrorIconUrl = apkMirrorIconUrls[appId];
+    final AppInMemory? currentApp = appsProvider.apps[appId];
+    if (apkMirrorIconUrl != null &&
+        currentApp != null &&
+        currentApp.icon == null &&
+        currentApp.app.iconUrl?.isNotEmpty != true &&
+        currentApp.app.url == trackedUrl) {
+      await appsProvider.saveApps([
+        currentApp.app.copyWith(iconUrl: apkMirrorIconUrl),
+      ], updateInstalledInfo: false);
+      await appsProvider.updateAppIcon(appId);
+    }
 
     if (mounted && widget.appId == appId) {
       setState(() {
