@@ -322,15 +322,6 @@ class SettingsProvider with ChangeNotifier {
     prefs?.remove('legacyInstallerActivity');
   }
 
-  bool get useSystemFont {
-    return prefs?.getBool('useSystemFont') ?? false;
-  }
-
-  set useSystemFont(bool useSystemFont) {
-    prefs?.setBool('useSystemFont', useSystemFont);
-    notifyListeners();
-  }
-
   // ── App UI scale ────────────────────────────────────────────────────────
   // User-tunable multiplier applied to the effective text scale used by the
   // top-level MediaQuery override in main.dart. The system scaler is capped at

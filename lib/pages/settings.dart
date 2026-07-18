@@ -519,7 +519,7 @@ class SettingsPageState extends State<SettingsPage> {
         key: 'appearance',
         title: tr('appearance'),
         icon: Icons.tune_rounded,
-        widget: _AppearanceSection(androidInfo: _androidInfo),
+        widget: const _AppearanceSection(),
       ),
       _SettingsCategory(
         key: 'interaction',
@@ -932,7 +932,7 @@ class SettingsPageState extends State<SettingsPage> {
                               ),
                               collapsibleCard(
                                 'appearance',
-                                _AppearanceSection(androidInfo: _androidInfo),
+                                const _AppearanceSection(),
                               ),
                               // ── Interaction ──────────────────────────────
                               sectionHeader(
@@ -1745,13 +1745,10 @@ class _ThemesSettingsSection extends StatelessWidget {
 
 /// Appearance section — locale, UI scale slider, card-corner slider, toggles.
 class _AppearanceSection extends StatelessWidget {
-  const _AppearanceSection({required this.androidInfo});
-
-  final Future<AndroidDeviceInfo> androidInfo;
+  const _AppearanceSection();
 
   static int _appearanceSettingsHash(SettingsProvider sp) => Object.hash(
     sp.forcedLocale?.toLanguageTag(),
-    sp.useSystemFont,
     sp.appUiScale,
     sp.cardCornerScale,
     sp.showAppWebpage,
@@ -1773,26 +1770,6 @@ class _AppearanceSection extends StatelessWidget {
         Padding(
           padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
           child: _LocaleMenu(sp: sp),
-        ),
-        FutureBuilder(
-          builder: (ctx, val) {
-            return (val.data?.version.sdkInt ?? 0) >= 29
-                ? SwitchListTile(
-                    title: Text(tr('useSystemFont')),
-                    value: sp.useSystemFont,
-                    onChanged: (useSystemFont) {
-                      if (useSystemFont) {
-                        NativeFeatures.loadSystemFont().then((_) {
-                          sp.useSystemFont = true;
-                        });
-                      } else {
-                        sp.useSystemFont = false;
-                      }
-                    },
-                  )
-                : const SizedBox.shrink();
-          },
-          future: androidInfo,
         ),
         const _UiScaleSlider(),
         const _CardCornerScaleSlider(),

@@ -27,15 +27,6 @@ packages:
       url: "https://github.com/ImranR98/android_package_manager"
     source: git
     version: "0.7.1"
-  android_system_font:
-    dependency: "direct main"
-    description:
-      path: "."
-      ref: "077e15d7d0acb82283b89dfd82f4984b27b28f95"
-      resolved-ref: "077e15d7d0acb82283b89dfd82f4984b27b28f95"
-      url: "https://github.com/re7gog/android_system_font"
-    source: git
-    version: "1.1.0"
   animations:
     dependency: "direct main"
     description:

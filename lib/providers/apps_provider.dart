@@ -8,7 +8,6 @@ import 'dart:io';
 import 'dart:math';
 import 'dart:typed_data';
 
-import 'package:android_system_font/android_system_font.dart';
 import 'package:android_package_manager/android_package_manager.dart';
 import 'package:battery_plus/battery_plus.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
@@ -1747,7 +1746,18 @@ class NativeFeatures {
   static const MethodChannel _diagnosticsChannel = MethodChannel(
     'dev.imranr.obtainium/diagnostics',
   );
-  static bool _systemFontLoaded = false;
+  static const MethodChannel _deviceAppsChannel = MethodChannel(
+    'dev.imranr.obtainium/device_apps',
+  );
+  static bool _systemFontLoadAttempted = false;
+  // True once a real multi-weight 'SystemFont' family has been registered and
+  // should be used in place of Flutter's default. See [loadSystemFont].
+  static bool _systemFontApplied = false;
+
+  /// Whether the app should render with the explicitly-loaded system font
+  /// family ('SystemFont') instead of Flutter's default. False until (and
+  /// unless) [loadSystemFont] adopts a multi-weight device font.
+  static bool get systemFontApplied => _systemFontApplied;
   static bool _downloadCancelHandlerRegistered = false;
 
   static void registerDownloadCancelHandler(
@@ -1792,13 +1802,34 @@ class NativeFeatures {
     return ByteData.view(bytes.buffer);
   }
 
+  /// Registers the device's default font family (all weight/style files) under
+  /// the Flutter family name 'SystemFont', so the app can follow a user-picked
+  /// OEM font with real bold/medium weights.
+  ///
+  /// Deliberately adopts 'SystemFont' ONLY when the device provides two or more
+  /// weight files. A lone file means a modern variable font: Flutter's default
+  /// (fontFamily: null) already derives real weights from its variation axis,
+  /// whereas registering the single file ourselves would give faux-synthesized
+  /// bold. So in that case we do nothing and stay on the default — which is the
+  /// same system font anyway. Idempotent; safe to call more than once.
   static Future<void> loadSystemFont() async {
-    if (_systemFontLoaded) return;
-    final fontLoader = FontLoader('SystemFont');
-    final fontFilePath = await AndroidSystemFont().getFilePath();
-    fontLoader.addFont(_readFileBytes(fontFilePath!));
-    await fontLoader.load();
-    _systemFontLoaded = true;
+    if (_systemFontLoadAttempted) return;
+    _systemFontLoadAttempted = true;
+    try {
+      final List<String>? files = await _deviceAppsChannel
+          .invokeListMethod<String>('getSystemFontFiles');
+      if (files == null || files.length < 2) return;
+      final fontLoader = FontLoader('SystemFont');
+      for (final String path in files) {
+        fontLoader.addFont(_readFileBytes(path));
+      }
+      await fontLoader.load();
+      _systemFontApplied = true;
+    } on MissingPluginException {
+      // Non-Android build or background engine: keep the default font.
+    } catch (_) {
+      // Any font read / registration failure: keep the default font.
+    }
   }
 
   static Future<String?> consumeNativeCrashLog() async {

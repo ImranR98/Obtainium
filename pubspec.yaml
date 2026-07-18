@@ -74,10 +74,6 @@ dependencies:
   bcrypt: ^1.2.0
   app_links: ^7.2.1
   equations: ^6.0.0
-  android_system_font: # TODO: Forked dependency; watch upstream for releases
-    git:
-      url: https://github.com/re7gog/android_system_font
-      ref: 077e15d7d0acb82283b89dfd82f4984b27b28f95
   shizuku_apk_installer: # TODO: Forked dependency; watch upstream for releases
     git:
       url: https://github.com/re7gog/shizuku_apk_installer
@@ -157,8 +153,6 @@ flutter:
   #
   # For details regarding fonts from package dependencies,
   # see https://flutter.dev/to/font-from-package
-
-  fonts:
-      - family: Montserrat
-        fonts:
-          - asset: assets/fonts/Montserrat-Regular.ttf
+  #
+  # No bundled font: the app uses the device's OS system font (see
+  # NativeFeatures.loadSystemFont / fontFamily handling in main.dart).

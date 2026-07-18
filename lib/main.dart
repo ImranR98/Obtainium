@@ -272,10 +272,10 @@ class Obtainium extends StatefulWidget {
 class _ObtainiumState extends State<Obtainium> {
   var existingUpdateInterval = -1;
 
-  // Guards the lazy, one-shot system-font load kicked off from [build] the
-  // first time [SettingsProvider.useSystemFont] is seen enabled. Loading it
-  // here (instead of blocking main()) keeps it off the cold-start critical
-  // path; FontLoader repaints the affected text once the load finishes.
+  // Guards the lazy, one-shot attempt to adopt the device's explicit system
+  // font family. Kicked off from [build] off the cold-start critical path; the
+  // app renders with the OS default font (fontFamily: null) until/unless it
+  // applies, at which point we rebuild once to switch to it.
   bool _systemFontLoadStarted = false;
 
   // Cache for the expensive boosted light/dark [ColorScheme]s.
@@ -524,18 +524,24 @@ class _ObtainiumState extends State<Obtainium> {
         s.useBlackTheme,
         s.useGradientBackground,
         s.shadingIntensity,
-        s.useSystemFont,
         s.theme,
         s.appUiScale,
       ),
     );
     final SettingsProvider settingsProvider = context.read<SettingsProvider>();
-    // Lazily load the system font off the startup critical path (see
-    // [_systemFontLoadStarted]). NativeFeatures.loadSystemFont has its own
-    // idempotency guard, but the flag avoids re-issuing the future each build.
-    if (settingsProvider.useSystemFont && !_systemFontLoadStarted) {
+    // The app renders with the OS system font by default (fontFamily: null),
+    // which paints immediately with real weights. Off the startup critical
+    // path we then try to adopt the device's exact font family explicitly (see
+    // [NativeFeatures.loadSystemFont]); if it applies a multi-weight family we
+    // rebuild once so the theme switches null -> 'SystemFont'. On a modern
+    // single-variable-font device this is a no-op and we stay on the default.
+    if (!_systemFontLoadStarted) {
       _systemFontLoadStarted = true;
-      unawaited(NativeFeatures.loadSystemFont());
+      NativeFeatures.loadSystemFont().then((_) {
+        if (mounted && NativeFeatures.systemFontApplied) {
+          setState(() {});
+        }
+      });
     }
     final AppsProvider appsProvider = context.read<AppsProvider>();
     final LogsProvider logs = context.read<LogsProvider>();
@@ -666,7 +672,7 @@ class _ObtainiumState extends State<Obtainium> {
             TextTheme appTextTheme,
           ) {
             // Use the app theme's labelMedium so nav labels keep both the M3
-            // sizing and ObtainX's active Montserrat/SystemFont family.
+            // sizing and the app's active font family.
             final TextStyle navLabelBase = appTextTheme.labelMedium!;
             return NavigationBarThemeData(
               backgroundColor: scheme.surface,
@@ -706,13 +712,20 @@ class _ObtainiumState extends State<Obtainium> {
           // this, isEnglish() is stuck false and English strings never get
           // lowercased — parity with fork main.
           setAppLocale(context.locale);
+          // Default to the OS system font (null lets Flutter resolve the
+          // platform font with real weights). Once an explicit multi-weight
+          // device family is loaded, switch to it so a user-picked OEM font is
+          // honoured. Montserrat is no longer bundled.
+          final String? appFontFamily = NativeFeatures.systemFontApplied
+              ? 'SystemFont'
+              : null;
           final ThemeData lightBaseTheme = buildObtainiumTheme(
             themeColorScheme,
-            settingsProvider.useSystemFont ? 'SystemFont' : 'Montserrat',
+            appFontFamily,
           );
           final ThemeData darkBaseTheme = buildObtainiumTheme(
             darkThemeColorScheme,
-            settingsProvider.useSystemFont ? 'SystemFont' : 'Montserrat',
+            appFontFamily,
           );
           return MaterialApp(
             title: 'ObtainX',

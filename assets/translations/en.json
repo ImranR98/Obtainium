@@ -53,7 +53,7 @@
     "alreadyUpToDateQuestion": "App already up to date?",
     "addApp": "Add app",
     "addAppUrl": "Add app URL",
-    "bulkSearchDeviceApps": "Bulk search device apps",
+    "bulkSearchDeviceApps": "Bulk import device apps",
     "importGitHubStarredRepositories": "Import GitHub starred repositories",
     "appSourceURL": "App source URL",
     "error": "Error",
