@@ -912,13 +912,18 @@ class _VersionLabel extends StatelessWidget {
         children: [
           Container(
             constraints: BoxConstraints(maxWidth: maxWidth),
-            child: Text(
-              installedVersionText(app),
-              overflow: TextOverflow.ellipsis,
-              textAlign: TextAlign.end,
-              style: isVersionPseudo(app)
-                  ? TextStyle(fontStyle: FontStyle.italic, color: updateColor)
-                  : TextStyle(color: updateColor),
+            child: DefaultTextStyle.merge(
+              style: const TextStyle(fontSize: 14),
+              child: Text(
+                installedVersionText(app),
+                overflow: TextOverflow.ellipsis,
+                textAlign: TextAlign.end,
+                style: TextStyle(
+                  fontStyle:
+                      isVersionPseudo(app) ? FontStyle.italic : null,
+                  color: updateColor,
+                ),
+              ),
             ),
           ),
           Text(
@@ -926,6 +931,7 @@ class _VersionLabel extends StatelessWidget {
             style: TextStyle(
               fontStyle: FontStyle.italic,
               color: updateColor,
+              fontSize: 13,
               decoration: showChangesFn == null
                   ? TextDecoration.none
                   : TextDecoration.underline,
