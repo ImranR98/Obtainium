@@ -83,13 +83,18 @@ class _AppPageState extends State<AppPage> {
           app.app.url,
           overrideSource: app.app.overrideSource,
         );
+        final resolvedUrl = await source.assetUrlPrefetchModifier(
+          url,
+          app.app.url,
+          app.app.additionalSettings,
+        );
         final headers = await source.getRequestHeaders(
           app.app.additionalSettings,
-          url,
+          resolvedUrl,
           forAPKDownload: true,
         );
         final size = await getDownloadSize(
-          url,
+          resolvedUrl,
           headers: headers,
           allowInsecure: app.app.settings.getBool('allowInsecure'),
         );
