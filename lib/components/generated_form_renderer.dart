@@ -652,7 +652,7 @@ class GeneratedFormModal extends StatefulWidget {
     this.additionalWidgets = const [],
     this.singleNullReturnButton,
     this.primaryActionColour,
-    this.tileMode = true,
+    this.tileMode = false,
   });
 
   final String title;
