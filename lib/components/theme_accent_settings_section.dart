@@ -177,7 +177,7 @@ String _sliderSeedHexForSettings(
   return colorToCanonicalHex(seed ?? scheme.primary);
 }
 
-const double _kCustomHexChipWidth = 84;
+const double _kCustomHexChipWidth = 96;
 const Duration _kCustomHexDebounce = Duration(milliseconds: 450);
 
 class CustomColorSliderPanel extends StatefulWidget {
@@ -417,6 +417,8 @@ class _CustomColorSliderPanelState extends State<CustomColorSliderPanel> {
       );
     }
 
+    final double lineHeight = (textStyle.fontSize ?? 14) * 1.25;
+
     return TapRegion(
       groupId: _hexTapRegionGroup,
       onTapOutside: (_) => _finishHexEditing(),
@@ -427,29 +429,35 @@ class _CustomColorSliderPanelState extends State<CustomColorSliderPanel> {
           decoration: decoration,
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 8),
-            child: Center(
-              child: TextField(
-                controller: _hexController,
-                focusNode: _hexFocusNode,
-                inputFormatters: [
-                  _HexInputFormatter(onReject: _rejectHexInput),
-                ],
-                maxLines: 1,
-                autofocus: true,
-                autocorrect: false,
-                enableSuggestions: false,
-                textCapitalization: TextCapitalization.characters,
-                keyboardType: TextInputType.text,
-                textInputAction: TextInputAction.done,
-                textAlign: TextAlign.center,
-                style: textStyle,
-                decoration: const InputDecoration(
-                  border: InputBorder.none,
-                  counterText: '',
-                  isCollapsed: true,
+            child: Align(
+              alignment: Alignment.center,
+              child: SizedBox(
+                height: lineHeight,
+                child: TextField(
+                  controller: _hexController,
+                  focusNode: _hexFocusNode,
+                  inputFormatters: [
+                    _HexInputFormatter(onReject: _rejectHexInput),
+                  ],
+                  maxLines: 1,
+                  autofocus: true,
+                  autocorrect: false,
+                  enableSuggestions: false,
+                  textCapitalization: TextCapitalization.characters,
+                  keyboardType: TextInputType.text,
+                  textInputAction: TextInputAction.done,
+                  textAlign: TextAlign.center,
+                  textAlignVertical: TextAlignVertical.center,
+                  style: textStyle.copyWith(height: 1.0),
+                  decoration: const InputDecoration(
+                    border: InputBorder.none,
+                    counterText: '',
+                    isCollapsed: true,
+                    contentPadding: EdgeInsets.zero,
+                  ),
+                  onChanged: (_) => _scheduleHexPreview(),
+                  onEditingComplete: _finishHexEditing,
                 ),
-                onChanged: (_) => _scheduleHexPreview(),
-                onEditingComplete: _finishHexEditing,
               ),
             ),
           ),
