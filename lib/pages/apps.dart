@@ -1842,6 +1842,14 @@ void showChangeLogDialog(
 ) {
   String? processedChangeLog = changeLog;
   if (changeLog != null && appSource.changeLogIfAnyIsMarkDown) {
+    // Release notes from some stores (APKMirror, Google apps) separate lines
+    // with literal <br> tags on a single line. flutter_markdown ignores raw
+    // HTML, so those render as visible "<br>" text — convert them to Markdown
+    // hard line breaks first.
+    processedChangeLog = processedChangeLog!.replaceAll(
+      RegExp(r'<br\s*/?>', caseSensitive: false),
+      '  \n',
+    );
     final htmlImgRegex = RegExp(r'<img\s+([^>]+)\/?>', caseSensitive: false);
     final srcRegex = RegExp("src=[\"']([^\"']+)[\"']", caseSensitive: false);
     final altRegex = RegExp("alt=[\"']([^\"']+)[\"']", caseSensitive: false);
@@ -1874,7 +1882,7 @@ void showChangeLogDialog(
       }
     }
 
-    processedChangeLog = processedChangeLog!.replaceAllMapped(htmlImgRegex, (
+    processedChangeLog = processedChangeLog.replaceAllMapped(htmlImgRegex, (
       match,
     ) {
       final attrs = match.group(1) ?? '';
@@ -1897,6 +1905,21 @@ void showChangeLogDialog(
       final absoluteSrc = resolveUrl(src);
       return '![$alt]($absoluteSrc)';
     });
+
+    // GitHub/GitLab release notes routinely wrap screenshots in HTML layout
+    // tags (<table>/<tr>/<td>, <picture>, <div align="center">, …). CommonMark
+    // treats everything inside such an HTML block as raw HTML, so the images
+    // just converted to Markdown above would never be parsed or shown. Strip
+    // the structural wrapper tags (the images survive) so each screenshot
+    // renders — stacked vertically rather than in columns, since
+    // flutter_markdown can't lay out HTML tables.
+    processedChangeLog = processedChangeLog.replaceAll(
+      RegExp(
+        r'</?(?:table|thead|tbody|tfoot|tr|td|th|picture|source|div|center|p)\b[^>]*>',
+        caseSensitive: false,
+      ),
+      '\n\n',
+    );
   }
   final Future<String>? linkedChangeLogFuture =
       changeLog == null && changesUrl != null
@@ -1989,7 +2012,7 @@ void showChangeLogDialog(
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       Text(
-                        tr('changes'),
+                        app.name,
                         style: textTheme.titleMedium?.copyWith(
                           fontWeight: FontWeight.w600,
                         ),
@@ -2004,9 +2027,10 @@ void showChangeLogDialog(
                     ],
                   ),
                 ),
-                TextButton(
+                IconButton.filledTonal(
                   onPressed: () => Navigator.of(sheetContext).pop(),
-                  child: Text(tr('close')),
+                  tooltip: tr('close'),
+                  icon: const Icon(Icons.close_rounded),
                 ),
               ],
             ),
@@ -2056,9 +2080,21 @@ Null Function()? getChangeLogFn(BuildContext context, App app) {
   );
   String? changesUrl = appSource.changeLogPageFromStandardUrl(app.url);
   String? changeLog = app.changeLog;
-  if (changeLog?.split('\n').length == 1) {
-    if (_changeLogUrlRegExp.hasMatch(changeLog!)) {
-      changesUrl = appSource is APKMirror ? changeLog : changesUrl ?? changeLog;
+  // Only treat the changelog as a link when the *entire* trimmed text is a
+  // single URL. The previous "one line + contains a URL" check misfired on
+  // release notes that pack everything onto one line with literal <br>
+  // separators (APKMirror/Google apps) and embed a link: it shoved the whole
+  // changelog into Uri.parse as if it were a URL, throwing a FormatException
+  // ("Scheme not starting with alphabetic character"). Require a full match.
+  final String trimmedChangeLog = changeLog?.trim() ?? '';
+  if (trimmedChangeLog.isNotEmpty) {
+    final Match? urlMatch = _changeLogUrlRegExp.firstMatch(trimmedChangeLog);
+    if (urlMatch != null &&
+        urlMatch.start == 0 &&
+        urlMatch.end == trimmedChangeLog.length) {
+      changesUrl = appSource is APKMirror
+          ? trimmedChangeLog
+          : (changesUrl ?? trimmedChangeLog);
       changeLog = null;
     }
   }

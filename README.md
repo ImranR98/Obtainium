@@ -22,7 +22,7 @@ ObtainX is a modern and supercharged fork of Obtainium. Re-engineered with a stu
 
 If you want to try out **ObtainX** without losing your current setup, you can bring your existing app list over in seconds:
 
-- In Obtainium: Go to the `Import/Export` tab, click Export, and save the resulting .json file.
+- In Obtainium: Open **Settings** and find the **Obtainium export** section, tap Export, and save the resulting .json file. (Older Obtainium versions kept this on a dedicated *Import/Export* tab.)
 - In ObtainX: Go to the `Backup` tab, select Import, and choose that exact .json file.
 - Continue where you left off: All your tracked apps and settings will be instantly populated.
 
@@ -32,7 +32,7 @@ These are built from the ground up and are exclusive in ObtainX.
 
 ### 🛡️ Security & Integrity
 
-- **🛡️ Build Verification Checks** — Runs automated cryptographic checks (F-Droid/Izzy reproducible builds, GitHub Release Attestations) on apps you add to flag tampered binaries before install. For total integrity, ObtainX's own updates are secured with GitHub Release Attestations as well. Learn more in the [Build Verification Guide](docs/build-verification-guide.md).
+- **🛡️ Build Verification Checks** — Runs automated cryptographic checks (F-Droid/Izzy reproducible builds, GitHub Release Attestations) on apps you add to flag tampered binaries before install. For total integrity, ObtainX's own updates are reproducible (F-Droid) and attested (GitHub). Learn more in the [Build Verification Guide](docs/build-verification-guide.md).
 
 - **🦠 VirusTotal APK scanning** — Optionally scan downloaded APKs with VirusTotal before installation. You are in control - flagged or failed scans ask you what to do during installs.
 
@@ -41,7 +41,7 @@ These are built from the ground up and are exclusive in ObtainX.
 - **📥 Bulk Import from Device** — Select any apps already on your phone and ObtainX automatically finds their sources on stores you choose. No URL hunting one by one.
 - **🗂️ Dynamic Folders** — Group apps into folders manually or via automatic routing rules (by name, author, category, source etc.). Each folder retains its own layouts.
 - **🕐 On-Demand Only mode** — Mark rarely updated apps so they're hidden from the main list and aren't checked during global update scans. Query them only on-demand.
-- **👆 Configurable two-way swipe gestures** — Left and right swipe actions are independently configurable per row. Choose from Update, Install, Pin, Edit, Delete, Open, App Info, or None. A color-coded icon hint appears during the drag so you always know what will happen.
+- **👆 Configurable two-way swipe gestures** — Left and right swipe actions are independently configurable per row. Choose from Update, Install, Pin, Edit, Delete, Open, App Info, or None.
 - **↩️ Undo after delete** — Revert accidental app removals instantly via a 5-second toast notification.
 - **🖼️ Custom app icons** — Not happy with an app's icon or a blank placeholder? Tap the icon on any app's detail page to set your own — pick from your gallery or grab one from the web.
 - **🔍 Verified "also available on" store links** — Each app detail page shows a list of other stores (beside the one you are tracking) where the app is available. Only confirmed-present stores are shown. 
@@ -166,13 +166,13 @@ Optimizations made to legacy Obtainium features.
 <table>
 <tr>
 <td width="33%" align="center" valign="top">
-<video src="https://github.com/user-attachments/assets/de3c59fe-fae3-4177-bb09-473d16065384" width="300" controls muted></video>
+<video src="https://github.com/user-attachments/assets/59d5570b-64f7-4e2e-90f4-9ec8a8a921a6" width="300" controls muted></video>
 </td>
 <td width="33%" align="center" valign="top">
-<video src="https://github.com/user-attachments/assets/24e726cc-b8cf-40c2-a9fc-b5b0e024300b" width="320" controls muted></video>
+<video src="https://github.com/user-attachments/assets/e9aaaa0a-9fac-4a0f-a9d9-2bf10f3bb627" width="300" controls muted></video>
 </td>
 <td width="33%" align="center" valign="top">
-<video src="https://github.com/user-attachments/assets/3fb396db-0bd3-40e4-a1e9-a250a2c39aa6" width="320" controls muted></video>
+<video src="https://github.com/user-attachments/assets/3fb396db-0bd3-40e4-a1e9-a250a2c39aa6" width="300" controls muted></video>
 </td>
 </tr>
 </table>
