@@ -3,6 +3,11 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:progress_indicator_m3e/progress_indicator_m3e.dart';
 
+// Re-export the size enum so callers can pick a thickness (s = 4px track,
+// m = 8px) without importing the underlying package directly.
+export 'package:progress_indicator_m3e/progress_indicator_m3e.dart'
+    show LinearProgressM3ESize;
+
 /// A linear progress bar with a wavy pattern. Wraps
 /// [LinearProgressIndicatorM3E] and adds phase animation
 /// and smooth value transitions.
@@ -11,6 +16,9 @@ class LinearRipplingWavyProgressIndicator extends StatefulWidget {
   static const defaultDragDuration = Duration(milliseconds: 500);
 
   final double? value;
+
+  /// Track thickness. Defaults to the small M3E size (4px track) app-wide;
+  /// the package's medium (8px) reads as too thick for our lists.
   final LinearProgressM3ESize size;
   final Color? activeColor;
   final Color? trackColor;
@@ -28,7 +36,7 @@ class LinearRipplingWavyProgressIndicator extends StatefulWidget {
   const LinearRipplingWavyProgressIndicator({
     super.key,
     this.value,
-    this.size = LinearProgressM3ESize.m,
+    this.size = LinearProgressM3ESize.s,
     this.activeColor,
     this.trackColor,
     this.inset = 10.0,

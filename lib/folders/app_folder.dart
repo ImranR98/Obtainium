@@ -2,7 +2,7 @@ import 'dart:math';
 
 import 'package:obtainium/providers/source_provider.dart';
 
-enum FolderRuleField { name, author, id, category, source }
+enum FolderRuleField { name, author, category, source }
 
 enum FolderRuleMatchType { contains, equals, startsWith }
 
@@ -73,7 +73,6 @@ class FolderTextCriterion {
 class FolderCriteria {
   final FolderTextCriterion? name;
   final FolderTextCriterion? author;
-  final FolderTextCriterion? id;
   final Set<String> includedCategories;
   final Set<String> excludedCategories;
   final FolderCategoryMatchMode categoryMatchMode;
@@ -87,7 +86,6 @@ class FolderCriteria {
   FolderCriteria({
     this.name,
     this.author,
-    this.id,
     Set<String> includedCategories = const {},
     Set<String> excludedCategories = const {},
     this.categoryMatchMode = FolderCategoryMatchMode.any,
@@ -103,7 +101,6 @@ class FolderCriteria {
   bool get isEmpty =>
       (name == null || name!.isEmpty) &&
       (author == null || author!.isEmpty) &&
-      (id == null || id!.isEmpty) &&
       includedCategories.isEmpty &&
       excludedCategories.isEmpty &&
       (source == null || source!.isEmpty) &&
@@ -115,7 +112,6 @@ class FolderCriteria {
     var count = 0;
     if (name != null && !name!.isEmpty) count++;
     if (author != null && !author!.isEmpty) count++;
-    if (id != null && !id!.isEmpty) count++;
     if (includedCategories.isNotEmpty || excludedCategories.isNotEmpty) count++;
     if (source != null && !source!.isEmpty) count++;
     if (installedIntent != FolderConditionIntent.neutral) count++;
@@ -132,7 +128,6 @@ class FolderCriteria {
     if (isEmpty) return false;
     if (name != null && !name!.matches(app.finalName)) return false;
     if (author != null && !author!.matches(app.finalAuthor)) return false;
-    if (id != null && !id!.matches(app.id)) return false;
     if (source != null && !source!.matches(sourceIdentifier)) return false;
     if (!_categoriesMatch(app.categories)) return false;
     if (!_intentMatches(app.installedVersion != null, installedIntent)) {
@@ -189,7 +184,6 @@ class FolderCriteria {
   Map<String, dynamic> toJson() => {
     if (name != null && !name!.isEmpty) 'name': name!.toJson(),
     if (author != null && !author!.isEmpty) 'author': author!.toJson(),
-    if (id != null && !id!.isEmpty) 'id': id!.toJson(),
     if (includedCategories.isNotEmpty)
       'includedCategories': includedCategories.toList(),
     if (excludedCategories.isNotEmpty)
@@ -228,7 +222,6 @@ class FolderCriteria {
     return FolderCriteria(
       name: textCriterion('name'),
       author: textCriterion('author'),
-      id: textCriterion('id'),
       includedCategories: Set<String>.from(
         json['includedCategories'] as List? ?? const [],
       ),
@@ -259,7 +252,6 @@ class FolderCriteria {
     return switch (rule.field) {
       FolderRuleField.name => FolderCriteria(name: textCriterion),
       FolderRuleField.author => FolderCriteria(author: textCriterion),
-      FolderRuleField.id => FolderCriteria(id: textCriterion),
       FolderRuleField.category => FolderCriteria(
         includedCategories: {rule.value},
         categoryMatchType: rule.matchType,
@@ -567,4 +559,21 @@ void clearFolderFromApp(App app, String folderId) {
   app.additionalSettings['excludedFolderIds'] = excluded.toList();
   final overrides = folderOverridesForApp(app)..remove(folderId);
   app.additionalSettings['folderOverrides'] = overrides;
+}
+
+/// Removes every folder association from [app] — memberships, names, overrides,
+/// and the legacy excluded list.
+///
+/// Enforces the invariant that an On-Demand Only app belongs to no folder:
+/// on-demand and folders are mutually exclusive everywhere in the UI (folder
+/// views/counts skip on-demand apps, and smart-folder reconciliation forces
+/// them out), so an on-demand app must never carry stale, hidden memberships.
+/// Call this whenever an app is marked on-demand. Clearing overrides too gives
+/// a clean slate: if the app later leaves on-demand, smart folders re-evaluate
+/// from scratch rather than resurrecting a pre-on-demand membership.
+void clearAllFoldersFromApp(App app) {
+  app.additionalSettings.remove('folderIds');
+  app.additionalSettings.remove('folderNames');
+  app.additionalSettings.remove('folderOverrides');
+  app.additionalSettings.remove('excludedFolderIds');
 }

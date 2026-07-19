@@ -38,7 +38,8 @@ class CircularRipplingWavyProgressIndicator extends StatefulWidget {
     this.trackColor,
     this.dragDuration = LinearRipplingWavyProgressIndicator.defaultDragDuration,
     this.waveSpeed = 1.0,
-    this.strokeWidth = 4.0,
+    // Thinner ring app-wide (was 4.0) to match the slimmer linear track.
+    this.strokeWidth = 3.0,
     this.gapWidth = 1.0,
     this.amplitude = 1.0,
     this.wavelength = 15.0,

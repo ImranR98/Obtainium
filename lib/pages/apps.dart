@@ -208,7 +208,16 @@ class _AppsGroupHeaderDelegate extends SliverPersistentHeaderDelegate {
         shadowColor: colorScheme.shadow.withAlpha(100),
         surfaceTintColor: colorScheme.surfaceTint,
         shape: shape,
-        color: m3eCollapsedGroupHeaderFill(colorScheme),
+        // Apps-tab group headers get a subtly lifted fill in the pure-black
+        // theme so they read as distinct headers against the black page
+        // (scoped here rather than in the shared helper, which settings and
+        // add-app also use).
+        color: colorScheme.usesPureBlackBackgrounds
+            ? Color.alphaBlend(
+                colorScheme.onSurface.withValues(alpha: 0.14),
+                Colors.black,
+              )
+            : m3eCollapsedGroupHeaderFill(colorScheme),
         clipBehavior: Clip.antiAlias,
         child: InkWell(
           onTap: onTap,
@@ -783,6 +792,7 @@ class _AppListItem extends StatelessWidget {
     required this.showCheckmark,
     this.sourceHost,
     this.itemBorderRadius,
+    this.isSplitPaneActive = false,
   });
 
   final String appId;
@@ -799,6 +809,11 @@ class _AppListItem extends StatelessWidget {
   final String? sourceHost;
   final BorderRadius? itemBorderRadius;
   final bool showCheckmark;
+
+  /// The current app in the landscape two-pane layout (its detail is shown in
+  /// the side pane). Communicated with a tinted fill + deeper shadow rather
+  /// than the multi-select outline, so it doesn't look like a selected row.
+  final bool isSplitPaneActive;
 
   @override
   Widget build(BuildContext context) {
@@ -1156,19 +1171,30 @@ class _AppListItem extends StatelessWidget {
       ],
     );
 
+    // The landscape two-pane active card is shown WITHOUT an outline (that
+    // reads as a multi-select row). Instead it gets a primary-tinted fill and a
+    // deeper shadow so it stands out as "the one open in the side pane".
+    final Color effectiveFillColor = isSplitPaneActive
+        ? Color.alphaBlend(
+            colorScheme.primary.withValues(alpha: 0.18),
+            rowFillColor,
+          )
+        : rowFillColor;
+
     final Widget tile = Container(
       decoration: BoxDecoration(
-        color: rowFillColor,
+        color: effectiveFillColor,
         // Match the per-row corner radius the parent grouped-list ClipRRect
         // applies. Without this, the outline below paints to the
         // rectangular bounds and gets clipped at the rounded edge.
         borderRadius: itemBorderRadius,
-        // Outline-only treatment for SELECTED rows. [Border.all] paints
+        // Outline-only treatment for multi-SELECTED rows. [Border.all] paints
         // inside the box bounds so the outline doesn't push neighbours
         // around. ~0.7 alpha so the line reads as "framed" without
         // looking as loud as a button. Pinned uses fill, so the two
         // signals never collide — a selected pinned card cleanly shows
-        // tonal fill (pinned) plus outline (selected).
+        // tonal fill (pinned) plus outline (selected). The two-pane active
+        // card intentionally has no outline (see [effectiveFillColor]).
         border: isSelected
             ? Border.all(
                 color: colorScheme.primary.withValues(alpha: 0.7),
@@ -1177,14 +1203,16 @@ class _AppListItem extends StatelessWidget {
             : showBlackThemeOutline
             ? Border.fromBorderSide(m3ePureBlackOutlineSide(colorScheme))
             : null,
-        // Subtle 1dp lift on selected rows. M3 elevation as a "this row
-        // is currently the action target" cue.
-        boxShadow: isSelected
+        // Subtle lift on selected rows and a deeper lift on the two-pane
+        // active card. M3 elevation as a "this row is the current target" cue.
+        boxShadow: (isSelected || isSplitPaneActive)
             ? [
                 BoxShadow(
-                  color: colorScheme.shadow.withValues(alpha: 0.06),
-                  offset: const Offset(0, 1),
-                  blurRadius: 2,
+                  color: colorScheme.shadow.withValues(
+                    alpha: isSplitPaneActive ? 0.12 : 0.06,
+                  ),
+                  offset: Offset(0, isSplitPaneActive ? 2 : 1),
+                  blurRadius: isSplitPaneActive ? 5 : 2,
                 ),
               ]
             : null,
@@ -1275,17 +1303,28 @@ class _AppListItem extends StatelessWidget {
               ),
               if (showCategoriesBadge && app.app.categories.isNotEmpty)
                 GestureDetector(
+                  // Opaque so the whole row (padding and gaps between chips)
+                  // is tappable, not just the pixels covering a chip — the
+                  // default deferToChild left most of this row dead to taps.
+                  behavior: HitTestBehavior.opaque,
                   onTap: onTap,
                   onLongPress: onLongPress,
-                  child: Padding(
-                    padding: EdgeInsets.only(
-                      left: isLargeScreen ? 12 : 16,
-                      right: isLargeScreen ? 12 : 16,
-                      bottom: 8,
-                    ),
-                    child: _CategoryChipsRow(
-                      categories: app.app.categories,
-                      categoryColors: categoryColors,
+                  // Full-width child: the parent Column is start-aligned, so a
+                  // content-sized child would leave the space to the right of
+                  // the last chip a dead zone. Stretch to the card edge so the
+                  // entire row is tappable, left to right.
+                  child: SizedBox(
+                    width: double.infinity,
+                    child: Padding(
+                      padding: EdgeInsets.only(
+                        left: isLargeScreen ? 12 : 16,
+                        right: isLargeScreen ? 12 : 16,
+                        bottom: 8,
+                      ),
+                      child: _CategoryChipsRow(
+                        categories: app.app.categories,
+                        categoryColors: categoryColors,
+                      ),
                     ),
                   ),
                 ),
@@ -1298,7 +1337,7 @@ class _AppListItem extends StatelessWidget {
     if (itemBorderRadius != null) {
       return RepaintBoundary(
         child: Material(
-          color: rowFillColor,
+          color: effectiveFillColor,
           shape: RoundedRectangleBorder(borderRadius: itemBorderRadius!),
           clipBehavior: Clip.antiAlias,
           child: tile,
@@ -1375,8 +1414,36 @@ class _SwipeableListItem extends StatefulWidget {
 }
 
 class _SwipeableListItemState extends State<_SwipeableListItem>
-    with AutomaticKeepAliveClientMixin {
+    with AutomaticKeepAliveClientMixin, SingleTickerProviderStateMixin {
   double _dragOffset = 0;
+
+  // Eases [_dragOffset] back to 0 on release so the revealed action (icon +
+  // label) slides and fades out smoothly instead of snapping — mirroring
+  // Remember's swipe-reveal behaviour.
+  late final AnimationController _settleController = AnimationController(
+    vsync: this,
+    duration: const Duration(milliseconds: 250),
+  );
+  Animation<double>? _settleAnimation;
+
+  @override
+  void dispose() {
+    _settleController.dispose();
+    super.dispose();
+  }
+
+  void _settleToZero() {
+    _settleController.stop();
+    _settleAnimation =
+        Tween<double>(begin: _dragOffset, end: 0.0).animate(
+          CurvedAnimation(parent: _settleController, curve: Curves.easeOut),
+        )..addListener(() {
+          setState(() => _dragOffset = _settleAnimation!.value);
+        });
+    _settleController
+      ..reset()
+      ..forward();
+  }
 
   @override
   bool get wantKeepAlive => widget.keepAlive;
@@ -1398,6 +1465,21 @@ class _SwipeableListItemState extends State<_SwipeableListItem>
         return false;
       default:
         return true;
+    }
+  }
+
+  /// Swipe-reveal label reflecting the card's current state: "Update" vs
+  /// "Install" depending on whether the app is installed, and "Pin" vs "Unpin"
+  /// depending on whether it's already pinned. Other actions use their generic
+  /// [SwipeAction] label.
+  String _actionLabel(SwipeAction action) {
+    switch (action) {
+      case SwipeAction.update:
+        return widget.isInstalled ? tr('update') : tr('install');
+      case SwipeAction.pin:
+        return widget.isPinned ? tr('unpin') : tr('pin');
+      default:
+        return tr('swipeAction_${action.name}');
     }
   }
 
@@ -1548,6 +1630,10 @@ class _SwipeableListItemState extends State<_SwipeableListItem>
     IconData bgIcon;
     Alignment bgAlign;
     Color iconColor;
+    String bgLabel = '';
+    // Icon leads the label when swiping right (aligned to the leading edge);
+    // the label leads when swiping left (aligned to the trailing edge).
+    bool bgIconLeading = true;
 
     if (_dragOffset > 0 && canSwipeRight) {
       final (icon, color) = _actionVisuals(widget.rightAction, context);
@@ -1555,12 +1641,16 @@ class _SwipeableListItemState extends State<_SwipeableListItem>
       bgIcon = icon;
       bgAlign = Alignment.centerLeft;
       iconColor = color;
+      bgLabel = _actionLabel(widget.rightAction);
+      bgIconLeading = true;
     } else if (_dragOffset < 0 && canSwipeLeft) {
       final (icon, color) = _actionVisuals(widget.leftAction, context);
       bgColor = color.withValues(alpha: 0.20);
       bgIcon = icon;
       bgAlign = Alignment.centerRight;
       iconColor = color;
+      bgLabel = _actionLabel(widget.leftAction);
+      bgIconLeading = false;
     } else {
       bgColor = Colors.transparent;
       bgIcon = Icons.circle;
@@ -1568,8 +1658,19 @@ class _SwipeableListItemState extends State<_SwipeableListItem>
       iconColor = Colors.transparent;
     }
 
+    // Fade + subtle scale-in of the revealed action, tracking swipe progress
+    // up to the commit threshold — matches Remember's fade in / out.
+    final double revealProgress = (_dragOffset.abs() / swipeThreshold).clamp(
+      0.0,
+      1.0,
+    );
+    final TextStyle? labelStyle = Theme.of(context).textTheme.labelLarge
+        ?.copyWith(color: iconColor, fontWeight: FontWeight.w600);
+
     return GestureDetector(
+      onHorizontalDragStart: (_) => _settleController.stop(),
       onHorizontalDragUpdate: (details) {
+        _settleController.stop();
         setState(() {
           _dragOffset += details.delta.dx;
           _dragOffset = _dragOffset.clamp(
@@ -1581,12 +1682,15 @@ class _SwipeableListItemState extends State<_SwipeableListItem>
       onHorizontalDragEnd: (_) {
         if (_dragOffset > swipeThreshold && canSwipeRight) {
           _executeAction(widget.rightAction, context);
+          setState(() => _dragOffset = 0);
         } else if (_dragOffset < -swipeThreshold && canSwipeLeft) {
           _executeAction(widget.leftAction, context);
+          setState(() => _dragOffset = 0);
+        } else {
+          _settleToZero();
         }
-        setState(() => _dragOffset = 0);
       },
-      onHorizontalDragCancel: () => setState(() => _dragOffset = 0),
+      onHorizontalDragCancel: _settleToZero,
       child: ClipRect(
         child: Stack(
           children: [
@@ -1595,7 +1699,26 @@ class _SwipeableListItemState extends State<_SwipeableListItem>
                 color: bgColor,
                 alignment: bgAlign,
                 padding: const EdgeInsets.symmetric(horizontal: 16),
-                child: Icon(bgIcon, color: iconColor),
+                child: Opacity(
+                  opacity: revealProgress,
+                  child: Transform.scale(
+                    scale: 0.88 + 0.12 * revealProgress,
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: bgIconLeading
+                          ? [
+                              Icon(bgIcon, color: iconColor),
+                              const SizedBox(width: 8),
+                              Text(bgLabel, style: labelStyle),
+                            ]
+                          : [
+                              Text(bgLabel, style: labelStyle),
+                              const SizedBox(width: 8),
+                              Icon(bgIcon, color: iconColor),
+                            ],
+                    ),
+                  ),
+                ),
               ),
             ),
             Transform.translate(
@@ -2509,6 +2632,14 @@ class AppsPageState extends State<AppsPage> {
   // row selection or the refresh-indicator doesn't need a new sort).
   int? _lastListBuildToken;
   List<AppInMemory> _listedAppsCache = const [];
+  // Search matches that live inside folders, surfaced under a divider on the
+  // main page so a search isn't dead-ended by folder membership (mirrors how
+  // Remember's search reveals archived/trashed notes). One entry per folder
+  // that has at least one match, in folder-settings order. Stays empty unless
+  // a text search is active on the main page with foldered apps hidden.
+  // A null folderId marks the "On-Demand Only" bucket rather than a folder.
+  List<({String? folderId, String folderName, List<AppInMemory> apps})>
+  _crossFolderMatchesCache = const [];
   List<String> _existingUpdatesCache = const [];
   List<String> _newInstallsCache = const [];
   List<String> _listedSourcesCache = const [];
@@ -2684,6 +2815,14 @@ class AppsPageState extends State<AppsPage> {
       controller: _searchController,
       focusNode: focusNode,
       autofocus: true,
+      // Any tap outside the field drops focus (the default on touch platforms
+      // keeps it, so the field held focus and the keyboard kept popping back up
+      // after tapping a result, header, or anywhere else). onTapOutside fires on
+      // raw pointer-down regardless of whether a child consumes the tap, so it
+      // covers list rows, folder headers, filter chips — every interaction.
+      onTapOutside: (_) {
+        if (focusNode.hasFocus) focusNode.unfocus();
+      },
       decoration:
           appPageOutlinedInputDecoration(
             context,
@@ -2764,19 +2903,54 @@ class AppsPageState extends State<AppsPage> {
     return InputChip(
       label: Text(label, style: const TextStyle(fontSize: 12)),
       onDeleted: onDelete,
+      deleteIcon: const Icon(Icons.close, size: 16),
+      // The default delete-icon box reserves a large tap target that reads as
+      // oversized horizontal padding around the ✕. Shrink the box to the icon
+      // and drop the label→icon gap so the ✕ sits snug against the text.
+      deleteIconBoxConstraints: const BoxConstraints.tightFor(
+        width: 18,
+        height: 18,
+      ),
+      labelPadding: const EdgeInsets.only(left: 6, right: 2),
       shape: const StadiumBorder(),
       clipBehavior: Clip.antiAlias,
       materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
       visualDensity: VisualDensity.compact,
-      padding: const EdgeInsets.symmetric(horizontal: 2),
+      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
     );
   }
 
   /// Builds a pinned row of dismissible filter chips for every active
   /// non-text filter. Returns [null] when no non-text filters are active
   /// (which causes [CustomAppBar] to omit the bottom bar entirely).
-  PreferredSizeWidget? _buildFilterChipsRow() {
+  PreferredSizeWidget? _buildFilterChipsRow(VoidCallback onOpenFilterSheet) {
     final chips = <Widget>[];
+
+    // ── Text filters ────────────────────────────────────────────────────────
+    // Author and app-ID have no other on-page indicator (they can only be set
+    // from the filter sheet), so always surface them as chips. The name filter
+    // normally lives in the search bar, but it can also be set from the sheet —
+    // in which case the search bar stays collapsed and shows nothing — so add a
+    // name chip only while the search bar is collapsed, to avoid duplicating the
+    // visible search field.
+    if (filter.nameFilter.trim().isNotEmpty && !_searchExpanded) {
+      chips.add(
+        _filterChip('${tr('appName')}: ${filter.nameFilter.trim()}', () {
+          setState(() {
+            filter.nameFilter = '';
+            _searchController.clear();
+          });
+        }),
+      );
+    }
+    if (filter.authorFilter.trim().isNotEmpty) {
+      chips.add(
+        _filterChip(
+          '${tr('author')}: ${filter.authorFilter.trim()}',
+          () => setState(() => filter.authorFilter = ''),
+        ),
+      );
+    }
 
     void addVisibilityFilterChip(
       String label,
@@ -2859,14 +3033,40 @@ class AppsPageState extends State<AppsPage> {
 
     if (chips.isEmpty) return null;
 
+    // A leading filter icon that reopens the filter sheet, shown whenever the
+    // row is present (i.e. whenever a filter is active). Fixed 32-px slot with
+    // a 20-px glyph, so it centers with a 6-px trailing gap to the first chip —
+    // matching the 6-px inter-chip gap. (No visualDensity: it would shrink the
+    // slot below 32 px and throw off both the gap and the centering balance.)
+    const double iconSlot = 32;
+    final Widget filterIcon = IconButton(
+      icon: const Icon(Icons.filter_alt_rounded),
+      iconSize: 20,
+      onPressed: onOpenFilterSheet,
+      tooltip: tr('filterApps'),
+      padding: EdgeInsets.zero,
+      constraints: const BoxConstraints(minWidth: iconSlot, minHeight: iconSlot),
+    );
+
     return PreferredSize(
       preferredSize: const Size.fromHeight(44),
       child: SingleChildScrollView(
         scrollDirection: Axis.horizontal,
         padding: const EdgeInsets.fromLTRB(12, 4, 12, 8),
         child: Row(
-          children: chips.expand((c) => [c, const SizedBox(width: 6)]).toList()
-            ..removeLast(),
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            filterIcon,
+            ...chips.expand((c) => [c, const SizedBox(width: 6)]).toList()
+              ..removeLast(),
+            // The app bar centers this row's content when it fits. A leading
+            // icon would drag that centering right, off-centering the chips; a
+            // trailing spacer equal to the icon's slot re-balances it so the
+            // CHIPS (not the icon+chips group) are what's centered, with the
+            // icon hanging in the left gap next to the first chip. Harmless
+            // extra scroll space once the row overflows.
+            const SizedBox(width: iconSlot),
+          ],
         ),
       ),
     );
@@ -3083,7 +3283,6 @@ class AppsPageState extends State<AppsPage> {
       settingsProvider.showFolderedAppsOnMainPage,
       filter.nameFilter,
       filter.authorFilter,
-      filter.idFilter,
       filter.upToDateFilterIntent.index,
       filter.installedFilterIntent.index,
       filter.trackOnlyFilterIntent.index,
@@ -3141,7 +3340,10 @@ class AppsPageState extends State<AppsPage> {
             .toList();
       }
 
-      workingList = workingList.where((app) {
+      // Single source of truth for "does this app pass the active filters".
+      // Reused below to compute cross-folder search matches so the two lists
+      // never drift apart.
+      bool appMatchesFilters(AppInMemory app) {
         if (!appMatchesUpToDateFilter(app.app, filter.upToDateFilterIntent)) {
           return false;
         }
@@ -3171,11 +3373,6 @@ class AppsPageState extends State<AppsPage> {
             }
           }
         }
-        if (filter.idFilter.isNotEmpty) {
-          if (!app.app.id.contains(filter.idFilter)) {
-            return false;
-          }
-        }
         if (!appCategoriesMatchFilter(
           app.app.categories,
           includedCategories: filter.includedCategoryFilter,
@@ -3195,7 +3392,9 @@ class AppsPageState extends State<AppsPage> {
           return false;
         }
         return true;
-      }).toList();
+      }
+
+      workingList = workingList.where(appMatchesFilters).toList();
 
       final sortCol = _effectiveSortColumn(settingsProvider);
       final sortOrd = _effectiveSortOrder(settingsProvider);
@@ -3296,6 +3495,82 @@ class AppsPageState extends State<AppsPage> {
         }
       }
       _listedAppsCache = [...tempPinned, ...tempNotPinned];
+
+      // ── Cross-folder search matches ─────────────────────────────────────
+      // On the main page, apps that live inside a folder — or in the On-Demand
+      // Only bucket — are hidden from the list, so a plain search would
+      // dead-end on them. When a text search is active we gather those hidden
+      // matches here and render them below the results under per-bucket
+      // headers. In a folder / on-demand view the user deliberately narrowed
+      // scope, so search stays scoped there and this stays empty.
+      _crossFolderMatchesCache = const [];
+      final bool crossFolderSearchActive =
+          !widget.onDemandOnlyList &&
+          widget.folderId == null &&
+          (filter.nameFilter.trim().isNotEmpty ||
+              filter.authorFilter.trim().isNotEmpty);
+      if (crossFolderSearchActive) {
+        final Set<String> mainListedIds = {
+          for (final a in _listedAppsCache) a.app.id,
+        };
+        // Folder id → its position in settings order, for picking a single
+        // home folder when an app belongs to several (avoids listing — and
+        // Hero-tagging — the same app more than once in this section).
+        final Map<String, int> folderOrder = {
+          for (int i = 0; i < settingsProvider.appFolders.length; i++)
+            settingsProvider.appFolders[i].id: i,
+        };
+        final Map<String, List<AppInMemory>> matchesByFolder = {};
+        final List<AppInMemory> onDemandMatches = [];
+        for (final appInMem in appsProvider.apps.values) {
+          if (mainListedIds.contains(appInMem.app.id)) {
+            continue; // already shown in the main results — no duplicate
+          }
+          if (!appMatchesFilters(appInMem)) continue;
+          // On-demand apps are their own exclusive bucket (never in folders on
+          // the main page), so route them there and don't also fold-group them.
+          if (appInMem.app.additionalSettings['onDemandOnly'] == true) {
+            onDemandMatches.add(appInMem);
+            continue;
+          }
+          final List<String> folderIds = folderIdsForApp(
+            appInMem.app,
+          ).where(existingFolderIds.contains).toList();
+          if (folderIds.isEmpty) continue; // not filed into any live folder
+          // Home folder = the earliest one in settings order.
+          folderIds.sort(
+            (a, b) => (folderOrder[a] ?? 1 << 30).compareTo(
+              folderOrder[b] ?? 1 << 30,
+            ),
+          );
+          (matchesByFolder[folderIds.first] ??= <AppInMemory>[]).add(appInMem);
+        }
+        int byName(AppInMemory a, AppInMemory b) => (a.name + a.author)
+            .toLowerCase()
+            .compareTo((b.name + b.author).toLowerCase());
+        final matches =
+            <({String? folderId, String folderName, List<AppInMemory> apps})>[];
+        // Folders first, in their configured order, for a stable listing.
+        for (final folder in settingsProvider.appFolders) {
+          final List<AppInMemory>? apps = matchesByFolder[folder.id];
+          if (apps == null || apps.isEmpty) continue;
+          apps.sort(byName);
+          matches.add((
+            folderId: folder.id,
+            folderName: folder.name,
+            apps: apps,
+          ));
+        }
+        // On-Demand Only last, mirroring its position in the folder-button
+        // list. A null folderId marks it as the on-demand bucket.
+        if (onDemandMatches.isNotEmpty) {
+          onDemandMatches.sort(byName);
+          matches.add((folderId: null, folderName: '', apps: onDemandMatches));
+        }
+        if (matches.isNotEmpty) {
+          _crossFolderMatchesCache = matches;
+        }
+      }
     }
     // ── Use cached results ──────────────────────────────────────────────────
     var listedApps = _listedAppsCache;
@@ -3314,12 +3589,18 @@ class AppsPageState extends State<AppsPage> {
     // [selectedAppId] during build is a Flutter anti-pattern. Derive it locally
     // for this frame, then reconcile the persisted field after the frame so
     // taps and later reads stay consistent.
+    // A cross-folder search result is a valid two-pane selection too, even
+    // though it isn't in [listedApps] — otherwise tapping one would be reset
+    // to the first main-list app on the next frame.
+    bool isSelectableAppId(String id) =>
+        listedApps.any((sa) => sa.app.id == id) ||
+        _crossFolderMatchesCache.any((g) => g.apps.any((a) => a.app.id == id));
     String? effectiveSelectedAppId = selectedAppId;
     if (isLargeScreen) {
       if (effectiveSelectedAppId == null && listedApps.isNotEmpty) {
         effectiveSelectedAppId = listedApps.first.app.id;
       } else if (effectiveSelectedAppId != null &&
-          !listedApps.any((sa) => sa.app.id == effectiveSelectedAppId)) {
+          !isSelectableAppId(effectiveSelectedAppId)) {
         effectiveSelectedAppId = listedApps.isNotEmpty
             ? listedApps.first.app.id
             : null;
@@ -3739,10 +4020,15 @@ class AppsPageState extends State<AppsPage> {
         activeGroupKeys.isNotEmpty &&
         activeGroupKeys.every((key) => !_collapsedGroups.contains(key));
 
-    final Set<App> selectedApps = listedApps
-        .map((e) => e.app)
-        .where((a) => selectedAppIds.contains(a.id))
-        .toSet();
+    // Resolve selected apps from the authoritative app map, not [listedApps]:
+    // cross-folder / on-demand search results are selectable but are NOT in
+    // [listedApps], so scoping to it would yield an empty set for those (which
+    // made bulk actions no-op and made `apps.every(...)` checks vacuously true
+    // — e.g. every folder pre-checked in the add-to-folder dialog).
+    final Set<App> selectedApps = {
+      for (final id in selectedAppIds)
+        if (appsProvider.apps[id] != null) appsProvider.apps[id]!.app,
+    };
 
     List<Widget> getLoadingWidgets() {
       if (appsProvider.loadingApps && appsProvider.apps.isEmpty) {
@@ -3770,7 +4056,9 @@ class AppsPageState extends State<AppsPage> {
         textAlign: TextAlign.center,
       );
       return [
-        if (listedApps.isEmpty)
+        // Don't show the empty-state message when the only matches live in
+        // folders — the "Found in your folders" section below carries them.
+        if (listedApps.isEmpty && _crossFolderMatchesCache.isEmpty)
           isMainAppsPage
               ? SliverLayoutBuilder(
                   builder: (context, constraints) {
@@ -3813,8 +4101,8 @@ class AppsPageState extends State<AppsPage> {
       ];
     }
 
-    GestureDetector getAppIcon(int appIndex) {
-      final String rowAppId = listedApps[appIndex].app.id;
+    GestureDetector getAppIcon(int appIndex, {AppInMemory? appOverride}) {
+      final String rowAppId = (appOverride ?? listedApps[appIndex]).app.id;
       // Kick off icon loading once; putIfAbsent prevents duplicate loads.
       // _AppIconWidget independently watches the icon bytes via context.select,
       // so only that widget rebuilds when the icon arrives — not the full page.
@@ -3854,8 +4142,9 @@ class AppsPageState extends State<AppsPage> {
       int index, {
       M3eListGroupPosition? groupPosition,
       bool flatListBody = false,
+      AppInMemory? appOverride,
     }) {
-      final app = listedApps[index];
+      final app = appOverride ?? listedApps[index];
       final appId = app.app.id;
       final installed = app.app.installedVersion;
       final hasUpdate = installed != null && appHasActionableUpdate(app.app);
@@ -3912,14 +4201,14 @@ class AppsPageState extends State<AppsPage> {
         appsListHeroFolderId: widget.folderId,
         child: _AppListItem(
           appId: appId,
-          isSelected:
-              selectedAppIds.contains(appId) ||
-              (isLargeScreen &&
-                  effectiveSelectedAppId == appId &&
-                  selectedAppIds.isEmpty),
+          isSelected: selectedAppIds.contains(appId),
+          isSplitPaneActive:
+              isLargeScreen &&
+              effectiveSelectedAppId == appId &&
+              selectedAppIds.isEmpty,
           showCheckmark: selectedAppIds.contains(appId),
           areDownloadsRunning: downloadsRunning,
-          iconWidget: getAppIcon(index),
+          iconWidget: getAppIcon(index, appOverride: appOverride),
           sourceHost: sourceHost,
           showAppTypeBadge: settingsProvider.showAppTypeBadge,
           showTrackedStoreBadge: settingsProvider.showTrackedStoreBadge,
@@ -4094,20 +4383,11 @@ class AppsPageState extends State<AppsPage> {
                   borderRadius: BorderRadius.vertical(
                     bottom: Radius.circular(appsListGroupCardRadius),
                   ),
-                  border: Border(
-                    left: m3ePureBlackOutlineSide(
-                      theme.colorScheme,
-                      alpha: 0.22,
-                    ),
-                    right: m3ePureBlackOutlineSide(
-                      theme.colorScheme,
-                      alpha: 0.22,
-                    ),
-                    bottom: m3ePureBlackOutlineSide(
-                      theme.colorScheme,
-                      alpha: 0.22,
-                    ),
-                  ),
+                  // No group-frame border: each card already draws its own
+                  // outline, and a frame at the same edge doubled it into a
+                  // thick continuous rail down both sides that made the cards
+                  // look connected. Dropping the frame leaves each card's own
+                  // (thinner) outline, so they read as independent cards.
                 ),
                 sliver: _AnimatedAppsGroupBody(
                   key: ValueKey('${groupKey}_body'),
@@ -4613,7 +4893,7 @@ class AppsPageState extends State<AppsPage> {
 
               // ── Source items ──────────────────────────────────────────────
               final sourceItems = [
-                MapEntry('', tr('none')),
+                MapEntry('', tr('sourceAny')),
                 ...sourceProvider.sourceTemplates.map(
                   (e) => MapEntry(e.sourceIdentifier, e.name),
                 ),
@@ -4676,7 +4956,7 @@ class AppsPageState extends State<AppsPage> {
                         const SizedBox(height: 12),
                         TextFormField(
                           initialValue: filter.authorFilter,
-                          textInputAction: TextInputAction.next,
+                          textInputAction: TextInputAction.done,
                           decoration:
                               appPageOutlinedInputDecoration(
                                 sheetCtx,
@@ -4687,24 +4967,6 @@ class AppsPageState extends State<AppsPage> {
                               ),
                           onChanged: (value) {
                             update(() => filter.authorFilter = value);
-                          },
-                        ),
-                        const SizedBox(height: 12),
-                        TextFormField(
-                          initialValue: filter.idFilter,
-                          textInputAction: TextInputAction.done,
-                          autocorrect: false,
-                          enableSuggestions: false,
-                          decoration:
-                              appPageOutlinedInputDecoration(
-                                sheetCtx,
-                                labelText: tr('appId'),
-                                isDense: true,
-                              ).copyWith(
-                                prefixIcon: const Icon(Icons.search_rounded),
-                              ),
-                          onChanged: (value) {
-                            update(() => filter.idFilter = value);
                           },
                         ),
                       ],
@@ -5195,6 +5457,137 @@ class AppsPageState extends State<AppsPage> {
       ];
     }
 
+    // One cross-folder search result, styled as a flat-list M3E card (same
+    // look as [flatListAppRow]) but driven by an explicit app rather than an
+    // index into [listedApps].
+    Widget crossFolderAppRow(AppInMemory app, int indexInRun, int runLength) {
+      return Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 12),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            if (indexInRun > 0) const SizedBox(height: kM3eItemGap),
+            if (indexInRun == 0) const SizedBox(height: 6),
+            getSingleAppHorizTile(
+              -1,
+              appOverride: app,
+              flatListBody: true,
+              groupPosition: runLength == 1
+                  ? M3eListGroupPosition.only
+                  : indexInRun == 0
+                  ? M3eListGroupPosition.first
+                  : indexInRun == runLength - 1
+                  ? M3eListGroupPosition.last
+                  : M3eListGroupPosition.middle,
+            ),
+            if (indexInRun == runLength - 1) const SizedBox(height: 6),
+          ],
+        ),
+      );
+    }
+
+    // The "Found in your folders" section: a labelled divider, then one
+    // tappable folder sub-header + its matching rows per folder. Empty unless
+    // [_crossFolderMatchesCache] was populated (main page + active text search).
+    List<Widget> getCrossFolderMatchesSlivers() {
+      final matches = _crossFolderMatchesCache;
+      if (matches.isEmpty) return const [];
+      final ThemeData theme = Theme.of(context);
+      final slivers = <Widget>[
+        SliverToBoxAdapter(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(16, 20, 16, 0),
+            child: Row(
+              children: [
+                Expanded(
+                  child: Divider(color: theme.colorScheme.outlineVariant),
+                ),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 12),
+                  child: Text(
+                    tr('appsInFoldersHeader'),
+                    style: theme.textTheme.labelMedium?.copyWith(
+                      color: theme.colorScheme.onSurfaceVariant,
+                    ),
+                  ),
+                ),
+                Expanded(
+                  child: Divider(color: theme.colorScheme.outlineVariant),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ];
+      for (final group in matches) {
+        // A null folderId is the On-Demand Only bucket; anything else is a
+        // real folder. Each opens its own page.
+        final bool isOnDemand = group.folderId == null;
+        final String label = isOnDemand ? tr('onDemandOnly') : group.folderName;
+        slivers.add(
+          SliverToBoxAdapter(
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(16, 10, 16, 2),
+              child: InkWell(
+                borderRadius: BorderRadius.circular(12),
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    slideUpPageRoute(
+                      (_) => isOnDemand
+                          ? const AppsPage(onDemandOnlyList: true)
+                          : AppsPage(folderId: group.folderId),
+                    ),
+                  );
+                },
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(
+                    vertical: 6,
+                    horizontal: 4,
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(
+                        isOnDemand
+                            ? Icons.folder_special_outlined
+                            : Icons.folder_outlined,
+                        size: 18,
+                        color: theme.colorScheme.onSurfaceVariant,
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          '$label (${group.apps.length})',
+                          style: theme.textTheme.titleSmall,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                      Icon(
+                        Icons.chevron_right,
+                        size: 18,
+                        color: theme.colorScheme.onSurfaceVariant,
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ),
+        );
+        final apps = group.apps;
+        slivers.add(
+          SliverList(
+            delegate: SliverChildBuilderDelegate(
+              (context, i) => crossFolderAppRow(apps[i], i, apps.length),
+              childCount: apps.length,
+            ),
+          ),
+        );
+      }
+      return slivers;
+    }
+
     // Back intercept priority:
     // 1. Multi-select active → deselect all
     // 2. Search expanded → collapse search bar
@@ -5207,7 +5600,9 @@ class AppsPageState extends State<AppsPage> {
     final bool shouldInterceptBack =
         selectedAppIds.isNotEmpty || _searchExpanded || isFilterActive;
 
-    final PreferredSizeWidget? filterChipsBar = _buildFilterChipsRow();
+    final PreferredSizeWidget? filterChipsBar = _buildFilterChipsRow(
+      showFilterSheet,
+    );
 
     return PopScope(
       canPop: !shouldInterceptBack,
@@ -5361,6 +5756,7 @@ class AppsPageState extends State<AppsPage> {
                             ),
                             ...getLoadingWidgets(),
                             ...getDisplayedList(),
+                            ...getCrossFolderMatchesSlivers(),
                             // Extra bottom space for folder / on-demand pages so the
                             // last item isn't clipped by the phone's rounded corners.
                             if (widget.onDemandOnlyList ||
@@ -6315,7 +6711,6 @@ class AppsPageState extends State<AppsPage> {
 
     addText(criteria.name);
     addText(criteria.author);
-    addText(criteria.id);
     if (criteria.source != null && !criteria.source!.isEmpty) {
       final id = criteria.source!.query;
       values.add(sourceNames[id] ?? id);
@@ -6534,6 +6929,11 @@ class AppsPageState extends State<AppsPage> {
                     // On-Demand Only: toggle setting when state changed.
                     if (setOnDemand) {
                       app.additionalSettings['onDemandOnly'] = true;
+                      // On-demand and folders are mutually exclusive — drop any
+                      // folder association so the app can't carry stale, hidden
+                      // memberships (the checkbox UI already clears folder
+                      // selections; this enforces it at the data layer).
+                      clearAllFoldersFromApp(app);
                     } else if (allOnDemand) {
                       // Was checked for all, now unchecked — clear it.
                       app.additionalSettings['onDemandOnly'] = false;
@@ -6570,7 +6970,7 @@ class AppsPageState extends State<AppsPage> {
     final appsProvider = context.read<AppsProvider>();
     final sourceProvider = SourceProvider();
     final sourceItems = [
-      MapEntry('', tr('none')),
+      MapEntry('', tr('sourceAny')),
       ...sourceProvider.sourceTemplates.map(
         (e) => MapEntry(e.sourceIdentifier, e.name),
       ),
@@ -7077,10 +7477,8 @@ class _InlineFolderEditorState extends State<_InlineFolderEditor> {
   late final TextEditingController _nameController;
   late final TextEditingController _nameQuery;
   late final TextEditingController _authorQuery;
-  late final TextEditingController _idQuery;
   late FolderRuleMatchType _nameOp;
   late FolderRuleMatchType _authorOp;
-  late FolderRuleMatchType _idOp;
   late Set<String> _includedCategories;
   late Set<String> _excludedCategories;
   late FolderCategoryMatchMode _categoryMatchMode;
@@ -7101,10 +7499,8 @@ class _InlineFolderEditorState extends State<_InlineFolderEditor> {
     _nameController = TextEditingController(text: widget.existing?.name ?? '');
     _nameQuery = TextEditingController(text: c?.name?.query ?? '');
     _authorQuery = TextEditingController(text: c?.author?.query ?? '');
-    _idQuery = TextEditingController(text: c?.id?.query ?? '');
     _nameOp = c?.name?.matchType ?? FolderRuleMatchType.contains;
     _authorOp = c?.author?.matchType ?? FolderRuleMatchType.contains;
-    _idOp = c?.id?.matchType ?? FolderRuleMatchType.contains;
     _includedCategories = {...?c?.includedCategories};
     _excludedCategories = {...?c?.excludedCategories};
     _categoryMatchMode = c?.categoryMatchMode ?? FolderCategoryMatchMode.any;
@@ -7119,7 +7515,6 @@ class _InlineFolderEditorState extends State<_InlineFolderEditor> {
     _nameController.dispose();
     _nameQuery.dispose();
     _authorQuery.dispose();
-    _idQuery.dispose();
     super.dispose();
   }
 
@@ -7148,7 +7543,6 @@ class _InlineFolderEditorState extends State<_InlineFolderEditor> {
       tokenize: true,
       caseSensitive: false,
     ),
-    id: _text(_idQuery, _idOp, tokenize: false, caseSensitive: true),
     includedCategories: _includedCategories,
     excludedCategories: _excludedCategories,
     categoryMatchMode: _categoryMatchMode,
@@ -7195,7 +7589,6 @@ class _InlineFolderEditorState extends State<_InlineFolderEditor> {
     if (a == null || b == null) return false;
     return _textEq(a.name, b.name) &&
         _textEq(a.author, b.author) &&
-        _textEq(a.id, b.id) &&
         _setEq(a.includedCategories, b.includedCategories) &&
         _setEq(a.excludedCategories, b.excludedCategories) &&
         a.categoryMatchMode == b.categoryMatchMode &&
@@ -7322,13 +7715,11 @@ class _InlineFolderEditorState extends State<_InlineFolderEditor> {
           onChanged: (_) => setState(() {}),
         ),
         const SizedBox(height: 4),
-        Text(tr('folderConditions'), style: theme.textTheme.titleSmall),
-        const SizedBox(height: 4),
-        Text(
-          tr('folderConditionsHint'),
-          style: theme.textTheme.bodySmall?.copyWith(
-            color: theme.colorScheme.onSurfaceVariant,
-          ),
+        Row(
+          children: [
+            Text(tr('folderConditions'), style: theme.textTheme.titleSmall),
+            HelpHintIcon(message: tr('folderConditionsHint')),
+          ],
         ),
         const SizedBox(height: 12),
         _textCriterion(
@@ -7343,14 +7734,6 @@ class _InlineFolderEditorState extends State<_InlineFolderEditor> {
           label: tr('author'),
           op: _authorOp,
           onOp: (v) => _authorOp = v,
-        ),
-        const SizedBox(height: 12),
-        _textCriterion(
-          controller: _idQuery,
-          label: tr('appId'),
-          op: _idOp,
-          onOp: (v) => _idOp = v,
-          caseSensitive: true,
         ),
         const SizedBox(height: 16),
         appDropdownField<String>(
@@ -7626,7 +8009,6 @@ class _TriStateCategoryFilterChip extends StatelessWidget {
 class AppsFilter {
   String nameFilter;
   String authorFilter;
-  String idFilter;
   CategoryFilterIntent upToDateFilterIntent;
   CategoryFilterIntent installedFilterIntent;
   CategoryFilterIntent trackOnlyFilterIntent;
@@ -7638,7 +8020,6 @@ class AppsFilter {
   AppsFilter({
     this.nameFilter = '',
     this.authorFilter = '',
-    this.idFilter = '',
     this.upToDateFilterIntent = CategoryFilterIntent.neutral,
     this.installedFilterIntent = CategoryFilterIntent.neutral,
     this.trackOnlyFilterIntent = CategoryFilterIntent.neutral,
@@ -7654,7 +8035,6 @@ class AppsFilter {
     return {
       'appName': nameFilter,
       'author': authorFilter,
-      'appId': idFilter,
       'upToDateFilterIntent': upToDateFilterIntent.name,
       'installedFilterIntent': installedFilterIntent.name,
       'trackOnlyFilterIntent': trackOnlyFilterIntent.name,
@@ -7696,7 +8076,6 @@ class AppsFilter {
         tokenizeContains: true,
         caseSensitive: false,
       ),
-      id: textCriterion(idFilter, tokenizeContains: false, caseSensitive: true),
       includedCategories: includedCategoryFilter,
       excludedCategories: excludedCategoryFilter,
       categoryMatchMode: switch (categoryMatchMode) {
@@ -7743,7 +8122,6 @@ class AppsFilter {
   void setFormValuesFromMap(Map<String, dynamic> values) {
     nameFilter = values['appName']!;
     authorFilter = values['author']!;
-    idFilter = values['appId']!;
     if (values.containsKey('upToDateFilterIntent')) {
       upToDateFilterIntent = CategoryFilterIntent.values.byName(
         values['upToDateFilterIntent'] as String,
@@ -7787,7 +8165,6 @@ class AppsFilter {
   bool isIdenticalTo(AppsFilter other, SettingsProvider settingsProvider) =>
       authorFilter.trim() == other.authorFilter.trim() &&
       nameFilter.trim() == other.nameFilter.trim() &&
-      idFilter.trim() == other.idFilter.trim() &&
       upToDateFilterIntent == other.upToDateFilterIntent &&
       installedFilterIntent == other.installedFilterIntent &&
       trackOnlyFilterIntent == other.trackOnlyFilterIntent &&

@@ -178,6 +178,9 @@ class BulkAddWidgetState extends State<BulkAddWidget> {
   bool _scanCancelRequested = false;
   bool _addCancelRequested = false;
   bool _githubRateLimited = false;
+  // Whether a PAT was already applied when the rate limit was hit — drives which
+  // banner to show (don't tell the user to add a PAT they've already added).
+  bool _githubRateLimitedHadToken = false;
   late final TapGestureRecognizer _githubPatTapRecognizer;
 
   /// Live maps while a bulk scan runs; used to show partial results as soon as
@@ -1120,6 +1123,7 @@ class BulkAddWidgetState extends State<BulkAddWidget> {
       _step = BulkStep.scanning;
       _scanStatus = '';
       _githubRateLimited = false;
+      _githubRateLimitedHadToken = false;
       _apkMirrorDone = 0;
       _apkMirrorTotal = 0;
       _apkPureDone = 0;
@@ -1377,10 +1381,11 @@ class BulkAddWidgetState extends State<BulkAddWidget> {
                     });
                   }
                 },
-                onRateLimit: () {
+                onRateLimit: (bool hadToken) {
                   if (mounted) {
                     setState(() {
                       _githubRateLimited = true;
+                      _githubRateLimitedHadToken = hadToken;
                     });
                   }
                 },
@@ -1449,6 +1454,32 @@ class BulkAddWidgetState extends State<BulkAddWidget> {
             _buildStoreCard('IzzyOnDroid', _izzyOnDroidDone, _izzyOnDroidTotal),
           if (_selectedStores.contains('GitHub'))
             _buildStoreCard('GitHub', _githubDone, _githubTotal),
+          // Pacing note beneath the GitHub card, hidden once GitHub finishes.
+          // ~2s/app with a PAT, ~6s without (see BulkImportService.checkGitHub).
+          if (_selectedStores.contains('GitHub') &&
+              !(_githubTotal > 0 && _githubDone >= _githubTotal))
+            Padding(
+              padding: const EdgeInsets.only(left: 8, right: 8, bottom: 12),
+              child: Text(
+                tr(
+                  'githubScanRatePace',
+                  args: <String>[
+                    (context.read<SettingsProvider>().getSettingString(
+                                  GitHub.githubCredsKey,
+                                ) ??
+                                '')
+                            .trim()
+                            .isNotEmpty
+                        ? '2'
+                        : '6',
+                  ],
+                ),
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                  fontStyle: FontStyle.italic,
+                ),
+              ),
+            ),
           const SizedBox(height: 24),
           OutlinedButton.icon(
             onPressed: () {
@@ -1946,30 +1977,40 @@ class BulkAddWidgetState extends State<BulkAddWidget> {
                 horizontal: 8.0,
                 vertical: 4.0,
               ),
-              child: RichText(
-                textAlign: TextAlign.center,
-                text: TextSpan(
-                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: colorScheme.onSecondaryContainer,
-                  ),
-                  children: [
-                    TextSpan(text: tr('githubRateLimitWarningText')),
-                    TextSpan(
-                      text: tr('githubRateLimitWarningLink'),
-                      style: TextStyle(
-                        color: colorScheme.primary,
-                        decoration: TextDecoration.underline,
-                        fontWeight: FontWeight.bold,
+              // A PAT is already applied → don't tell the user to add one; just
+              // explain the limit was hit. Otherwise, offer the PAT link.
+              child: _githubRateLimitedHadToken
+                  ? Text(
+                      tr('githubRateLimitWithTokenText'),
+                      textAlign: TextAlign.center,
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        color: colorScheme.onSecondaryContainer,
                       ),
-                      recognizer: TapGestureRecognizer()
-                        ..onTap = () {
-                          _showPatBottomSheet(context);
-                        },
+                    )
+                  : RichText(
+                      textAlign: TextAlign.center,
+                      text: TextSpan(
+                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                          color: colorScheme.onSecondaryContainer,
+                        ),
+                        children: [
+                          TextSpan(text: tr('githubRateLimitWarningText')),
+                          TextSpan(
+                            text: tr('githubRateLimitWarningLink'),
+                            style: TextStyle(
+                              color: colorScheme.primary,
+                              decoration: TextDecoration.underline,
+                              fontWeight: FontWeight.bold,
+                            ),
+                            recognizer: TapGestureRecognizer()
+                              ..onTap = () {
+                                _showPatBottomSheet(context);
+                              },
+                          ),
+                          TextSpan(text: tr('githubRateLimitWarningTextEnd')),
+                        ],
+                      ),
                     ),
-                    TextSpan(text: tr('githubRateLimitWarningTextEnd')),
-                  ],
-                ),
-              ),
             ),
           ],
         ],

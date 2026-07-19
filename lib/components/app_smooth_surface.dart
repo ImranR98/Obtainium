@@ -63,7 +63,9 @@ class AppSmoothRoundedSurface extends StatelessWidget {
     // (foregroundPainter), so a full-bleed child such as a header stripe does
     // not paint over the border — the border still frames the whole surface.
     final bool hasBorder =
-        borderColor != null && borderColor != Colors.transparent && borderWidth > 0;
+        borderColor != null &&
+        borderColor != Colors.transparent &&
+        borderWidth > 0;
     Widget current = CustomPaint(
       painter: _SmoothRoundedFillPainter(
         backgroundColor: backgroundColor,

@@ -876,7 +876,7 @@ class BulkImportService {
     void Function(int done, int total)? onProgress,
     Map<String, String?>? alreadyKnown,
     bool Function()? shouldAbort,
-    void Function()? onRateLimit,
+    void Function(bool hadToken)? onRateLimit,
   }) async {
     final Map<String, String?> result = <String, String?>{};
     if (alreadyKnown != null) {
@@ -919,10 +919,25 @@ class BulkImportService {
         headers.containsKey('Authorization') ||
         headers.containsKey('authorization');
 
+    // GitHub's search API has a low primary limit and aggressive secondary/
+    // burst limits (code search especially). Pace requests well apart so we
+    // don't trip the limit: authenticated search is ~30/min (→ ~2s spacing),
+    // unauthenticated ~10/min (→ ~6s). The old 120ms/850ms pacing fired a burst
+    // that tripped the secondary limit after a handful of apps.
+    final Duration baseDelay = hasAuthToken
+        ? const Duration(milliseconds: 2000)
+        : const Duration(milliseconds: 6000);
+    // Cap how long a single throttle wait may be before we give up, and how
+    // many consecutive throttles to ride out per package.
+    const Duration maxBackoff = Duration(seconds: 90);
+    const int maxRateLimitRetries = 5;
+
     for (final String pkg in toQuery) {
       if (shouldAbort?.call() == true) {
         return result;
       }
+      bool aborted = false;
+      Duration pacing = baseDelay;
       try {
         final String searchPkg = _cleanPackageNameForSearch(pkg);
         // Quoted id reduces unrelated matches; "in:file" scopes to file contents.
@@ -935,9 +950,34 @@ class BulkImportService {
             'per_page': '15',
           },
         );
-        final http.Response response = await http
+        http.Response response = await http
             .get(uri, headers: headers)
             .timeout(const Duration(seconds: 25));
+        // On a throttle (403/429), honour Retry-After / X-RateLimit-Reset and
+        // retry the SAME package instead of aborting the scan on the first hit.
+        int rateLimitRetries = 0;
+        while (response.statusCode == 403 || response.statusCode == 429) {
+          final Duration wait = _githubRateLimitWait(response);
+          if (rateLimitRetries >= maxRateLimitRetries || wait > maxBackoff) {
+            debugPrint('GitHub search rate limit exceeded; stopping scan');
+            onRateLimit?.call(hasAuthToken);
+            aborted = true;
+            break;
+          }
+          rateLimitRetries++;
+          debugPrint(
+            'GitHub search rate-limited for $pkg; waiting '
+            '${wait.inSeconds}s (retry $rateLimitRetries)',
+          );
+          await Future<void>.delayed(wait + const Duration(milliseconds: 500));
+          if (shouldAbort?.call() == true) {
+            return result;
+          }
+          response = await http
+              .get(uri, headers: headers)
+              .timeout(const Duration(seconds: 25));
+        }
+        if (aborted) break;
         if (response.statusCode == 200) {
           final Object? decoded = jsonDecode(response.body);
           if (decoded is Map<String, dynamic>) {
@@ -1029,29 +1069,78 @@ class BulkImportService {
           } else {
             result[pkg] = null;
           }
+          // If the search budget is nearly spent, wait for the window to reset
+          // before the next request rather than plowing into the limit.
+          pacing = _githubPacingDelay(response, baseDelay);
+        } else if (response.statusCode == 401) {
+          // Auth failure — the token is missing or invalid, NOT a rate limit.
+          debugPrint('GitHub search auth failed for $pkg (401)');
+          onRateLimit?.call(hasAuthToken);
+          break;
         } else {
           debugPrint(
-            'GitHub search failed for $pkg: status ${response.statusCode}, body: ${response.body}',
+            'GitHub search failed for $pkg: status ${response.statusCode}',
           );
-          if (response.statusCode == 401 ||
-              response.statusCode == 403 ||
-              response.statusCode == 429) {
-            onRateLimit?.call();
-            break;
-          }
+          // Non-rate-limit failure — leave uncached so it retries next scan.
         }
       } catch (e, s) {
         debugPrint('GitHub search exception for $pkg: $e\n$s');
         // Network error or timeout — don't cache; retry next scan.
       }
       reportProgress();
-      if (!hasAuthToken) {
-        await Future.delayed(const Duration(milliseconds: 850));
-      } else {
-        await Future.delayed(const Duration(milliseconds: 120));
-      }
+      await Future<void>.delayed(pacing);
     }
     return result;
+  }
+
+  /// How long to wait after a 403/429 from GitHub's search API, derived from
+  /// the `Retry-After` (secondary limit) or `X-RateLimit-Reset` (primary limit)
+  /// headers, falling back to a fixed cooldown when neither is present.
+  static Duration _githubRateLimitWait(http.Response response) {
+    final int? retryAfter = int.tryParse(response.headers['retry-after'] ?? '');
+    if (retryAfter != null && retryAfter > 0) {
+      return Duration(seconds: retryAfter);
+    }
+    final int? reset = int.tryParse(
+      response.headers['x-ratelimit-reset'] ?? '',
+    );
+    if (reset != null) {
+      final DateTime resetAt = DateTime.fromMillisecondsSinceEpoch(
+        reset * 1000,
+      );
+      final Duration remaining = resetAt.difference(DateTime.now());
+      if (remaining > Duration.zero) {
+        return remaining;
+      }
+    }
+    return const Duration(seconds: 30);
+  }
+
+  /// Pacing after a successful search: normally [baseDelay], but if the search
+  /// budget is nearly spent (`X-RateLimit-Remaining` ≤ 1), wait until the window
+  /// resets so the next request doesn't hit the primary limit.
+  static Duration _githubPacingDelay(
+    http.Response response,
+    Duration baseDelay,
+  ) {
+    final int? remaining = int.tryParse(
+      response.headers['x-ratelimit-remaining'] ?? '',
+    );
+    if (remaining != null && remaining <= 1) {
+      final int? reset = int.tryParse(
+        response.headers['x-ratelimit-reset'] ?? '',
+      );
+      if (reset != null) {
+        final DateTime resetAt = DateTime.fromMillisecondsSinceEpoch(
+          reset * 1000,
+        );
+        final Duration untilReset = resetAt.difference(DateTime.now());
+        if (untilReset > Duration.zero) {
+          return untilReset + const Duration(milliseconds: 500);
+        }
+      }
+    }
+    return baseDelay;
   }
 
   static String _slugify(String label) {

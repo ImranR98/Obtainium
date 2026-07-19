@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:obtainium/theme/app_theme_accent.dart';
 
 const EdgeInsetsGeometry appDropdownFieldContentPadding = EdgeInsets.symmetric(
   horizontal: 12,
@@ -15,10 +16,20 @@ InputDecoration appPageOutlinedInputDecoration(
   bool showOutline = false,
 }) {
   final ColorScheme scheme = Theme.of(context).colorScheme;
+  // AMOLED/pure-black theme forces every surface container to #000000, so the
+  // usual primary-tinted fill blend stays imperceptibly dark on-device (it
+  // reads as pure background). Lift the fill with a neutral overlay so fields
+  // read as distinct boxes (no outline needed — the fill alone is enough).
+  final bool pureBlack = scheme.usesPureBlackBackgrounds;
   final BorderRadius radius = BorderRadius.circular(borderRadius);
   final Color fieldFillColor = scheme.brightness == Brightness.light
       ? Color.alphaBlend(
           scheme.onSurface.withValues(alpha: 0.075),
+          scheme.surfaceContainerHighest,
+        )
+      : pureBlack
+      ? Color.alphaBlend(
+          scheme.onSurface.withValues(alpha: 0.10),
           scheme.surfaceContainerHighest,
         )
       : Color.alphaBlend(
