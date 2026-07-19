@@ -324,7 +324,10 @@ class _GeneratedFormState extends State<GeneratedForm> {
 
   int _computeItemsHash(List<List<GeneratedFormItem>> items) {
     return Object.hashAll(
-      items.expand((row) => row.map((e) => Object.hash(e.key, e.runtimeType))),
+      items.expand((row) => row.map((e) {
+        return Object.hash(e.key, e.runtimeType,
+            e is GeneratedFormTextField ? e.trailingKey : null);
+      })),
     );
   }
 

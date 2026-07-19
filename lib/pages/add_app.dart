@@ -703,76 +703,86 @@ class AddAppPageState extends State<AddAppPage> {
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  GeneratedForm(
-                    tileMode: true,
-                    items: [
-                      [
-                        GeneratedFormTextField(
-                          'appSourceURL',
-                          label: tr('appSourceURL'),
-                          value: userInput,
-                          required: false,
-                          additionalValidators: [
-                            (value) {
-                              if (value == null || value.trim().isEmpty) {
-                                return null;
-                              }
-                              try {
-                                sourceProvider
-                                    .getSource(
-                                      value,
-                                      overrideSource: pickedSourceOverride,
-                                    )
-                                    .standardizeUrl(value);
-                              } catch (e) {
-                                return e is String
-                                    ? e
-                                    : e is ObtainiumError
-                                    ? e.toString()
-                                    : tr('error');
-                              }
-                              return null;
-                            },
+                  Row(
+                    children: [
+                      Expanded(
+                        child: GeneratedForm(
+                          key: Key('url-$urlInputKey'),
+                          tileMode: true,
+                          items: [
+                            [
+                              GeneratedFormTextField(
+                                'appSourceURL',
+                                label: tr('appSourceURL'),
+                                value: userInput,
+                                required: false,
+                                additionalValidators: [
+                                  (value) {
+                                    if (value == null ||
+                                        value.trim().isEmpty) {
+                                      return null;
+                                    }
+                                    try {
+                                      sourceProvider
+                                          .getSource(
+                                            value,
+                                            overrideSource:
+                                                pickedSourceOverride,
+                                          )
+                                          .standardizeUrl(value);
+                                    } catch (e) {
+                                      return e is String
+                                          ? e
+                                          : e is ObtainiumError
+                                          ? e.toString()
+                                          : tr('error');
+                                    }
+                                    return null;
+                                  },
+                                ],
+                              ),
+                            ],
                           ],
-                          trailing: gettingAppInfo
-                              ? const Padding(
-                                  padding: EdgeInsets.all(12),
-                                  child: SizedBox(
-                                    width: 20,
-                                    height: 20,
-                                    child: CircularProgressIndicator(
-                                      strokeWidth: 2,
-                                    ),
-                                  ),
-                                )
-                              : IconButton(
-                                  icon: const Icon(Icons.add_rounded),
-                                  tooltip: tr('add'),
-                                  onPressed:
-                                      doingSomething ||
+                          onValueChanges: (values, valid, isBuilding) {
+                            changeUserInput(
+                              values['appSourceURL']!,
+                              valid,
+                              isBuilding,
+                            );
+                          },
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      gettingAppInfo
+                          ? const Padding(
+                              padding: EdgeInsets.all(12),
+                              child: SizedBox(
+                                width: 20,
+                                height: 20,
+                                child: CircularProgressIndicator(
+                                    strokeWidth: 2),
+                              ),
+                            )
+                          : IconButton(
+                              icon: const Icon(Icons.add_rounded),
+                              visualDensity: VisualDensity.compact,
+                              tooltip: tr('add'),
+                              onPressed:
+                                  doingSomething ||
                                           pickedSource == null ||
                                           !_urlValid ||
                                           userInput.trim().isEmpty ||
                                           (pickedSource!
-                                                  .combinedAppSpecificSettingFormItems
-                                                  .isNotEmpty &&
-                                              !additionalSettingsValid)
+                                                      .combinedAppSpecificSettingFormItems
+                                                      .isNotEmpty &&
+                                                  !additionalSettingsValid)
                                       ? null
                                       : () {
                                           settingsProvider.selectionClick();
                                           addApp(context);
                                         },
-                                ),
-                        ),
-                      ],
+                            ),
                     ],
-                    onValueChanges: (values, valid, isBuilding) {
-                      changeUserInput(
-                        values['appSourceURL']!,
-                        valid,
-                        isBuilding,
-                      );
-                    },
                   ),
                   if (pickedSource != null) ...[
                     const SizedBox(height: 13),
@@ -812,42 +822,54 @@ class AddAppPageState extends State<AddAppPage> {
                   ],
                   if (shouldShowSearchBar) ...[
                     const SizedBox(height: 13),
-                    GeneratedForm(
-                      tileMode: true,
-                      items: [
-                        [
-                          GeneratedFormTextField(
-                            'searchSomeSources',
-                            label: tr('searchSomeSourcesLabel'),
-                            required: false,
-                            trailing: searching
-                                ? const Padding(
-                                    padding: EdgeInsets.all(12),
-                                    child: SizedBox(
-                                      width: 20,
-                                      height: 20,
-                                      child: CircularProgressIndicator(
-                                        strokeWidth: 2,
-                                      ),
-                                    ),
-                                  )
-                                : IconButton(
-                                    icon: const Icon(Icons.search_rounded),
-                                    tooltip: tr('search'),
-                                    onPressed: doingSomething
-                                        ? null
-                                        : () => runSearch(context),
-                                  ),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: GeneratedForm(
+                            tileMode: true,
+                            items: [
+                              [
+                                GeneratedFormTextField(
+                                  'searchSomeSources',
+                                  label: tr('searchSomeSourcesLabel'),
+                                  required: false,
+                                ),
+                              ],
+                            ],
+                            onValueChanges: (values, valid, isBuilding) {
+                              if (values.isNotEmpty &&
+                                  valid &&
+                                  !isBuilding) {
+                                setState(() {
+                                  searchQuery =
+                                      values['searchSomeSources']!.trim();
+                                });
+                              }
+                            },
                           ),
-                        ],
+                        ),
+                        const SizedBox(width: 8),
+                        searching
+                            ? const Padding(
+                                padding: EdgeInsets.all(12),
+                                child: SizedBox(
+                                  width: 20,
+                                  height: 20,
+                                  child: CircularProgressIndicator(
+                                      strokeWidth: 2),
+                                ),
+                              )
+                            : IconButton(
+                                icon: const Icon(
+                                    Icons.search_rounded),
+                                visualDensity:
+                                    VisualDensity.compact,
+                                tooltip: tr('search'),
+                                onPressed: doingSomething
+                                    ? null
+                                    : () => runSearch(context),
+                              ),
                       ],
-                      onValueChanges: (values, valid, isBuilding) {
-                        if (values.isNotEmpty && valid && !isBuilding) {
-                          setState(() {
-                            searchQuery = values['searchSomeSources']!.trim();
-                          });
-                        }
-                      },
                     ),
                   ],
                   if (pickedSource == null && userInput.isEmpty) ...[

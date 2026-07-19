@@ -198,6 +198,7 @@ class GeneratedFormTextField extends GeneratedFormItem {
   final List<String>? autoCompleteOptions;
   final String? helpUrl;
   final Widget? trailing;
+  final String? trailingKey;
 
   GeneratedFormTextField(
     super.key, {
@@ -213,6 +214,7 @@ class GeneratedFormTextField extends GeneratedFormItem {
     this.autoCompleteOptions,
     this.helpUrl,
     this.trailing,
+    this.trailingKey,
   });
 
   @override
@@ -236,6 +238,7 @@ class GeneratedFormTextField extends GeneratedFormItem {
       autoCompleteOptions: autoCompleteOptions,
       helpUrl: helpUrl,
       trailing: trailing,
+      trailingKey: trailingKey,
     );
   }
 }
