@@ -272,23 +272,6 @@ class AppListTile extends StatelessWidget {
     );
   }
 
-  String _versionText() {
-    final installed = _app.installedVersion;
-    final latest = _app.latestVersion;
-    if (installed != null && installed != latest) {
-      return '$installed → $latest';
-    }
-    return installed ?? tr('notInstalled');
-  }
-
-  String _changesLabel(bool hasChangeLogFn) {
-    return _app.releaseDate == null
-        ? hasChangeLogFn
-              ? tr('changes')
-              : ''
-        : DateFormat('yyyy-MM-dd').format(_app.releaseDate!.toLocal());
-  }
-
   Widget _authorText() {
     return Text(
       tr('byX', args: [appInMemory.author]),
@@ -334,60 +317,17 @@ class AppListTile extends StatelessWidget {
     final hasUpdate =
         _app.installedVersion != null &&
         _app.installedVersion != _app.latestVersion;
-    final updateColor = hasUpdate
-        ? Theme.of(context).colorScheme.primary
-        : Theme.of(context).colorScheme.onSurfaceVariant;
     final Widget trailingRow = LayoutBuilder(
       builder: (context, constraints) => Row(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           if (hasUpdate) ...[_updateButton(context), const SizedBox(width: 8)],
-          HighlightableButton(
-            highlight: settingsProvider.highlightTouchTargets,
-            onPressed: showChangesFn,
-            label: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              crossAxisAlignment: CrossAxisAlignment.end,
-              children: [
-                Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Container(
-                      constraints: BoxConstraints(
-                        maxWidth: math.min(constraints.maxWidth / 3, 200),
-                      ),
-                      child: Text(
-                        _versionText(),
-                        overflow: TextOverflow.ellipsis,
-                        textAlign: TextAlign.end,
-                        style: isVersionPseudo(_app)
-                            ? TextStyle(
-                                fontStyle: FontStyle.italic,
-                                color: updateColor,
-                              )
-                            : TextStyle(color: updateColor),
-                      ),
-                    ),
-                  ],
-                ),
-                Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(
-                      _changesLabel(showChangesFn != null),
-                      style: TextStyle(
-                        fontStyle: FontStyle.italic,
-                        color: updateColor,
-                        decoration: showChangesFn == null
-                            ? TextDecoration.none
-                            : TextDecoration.underline,
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
+          _VersionLabel(
+            appInMemory: appInMemory,
+            settingsProvider: settingsProvider,
+            maxWidth: math.min(constraints.maxWidth / 3, 200),
+            showChangesFn: showChangesFn,
           ),
         ],
       ),
@@ -937,5 +877,100 @@ class AppListBuilder {
     apps = [...tempRenamed, ...tempPinned, ...tempNotPinned];
 
     return apps;
+  }
+}
+
+class _VersionLabel extends StatelessWidget {
+  final AppInMemory appInMemory;
+  final SettingsProvider settingsProvider;
+  final double maxWidth;
+  final VoidCallback? showChangesFn;
+
+  const _VersionLabel({
+    required this.appInMemory,
+    required this.settingsProvider,
+    required this.maxWidth,
+    required this.showChangesFn,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final app = appInMemory.app;
+    final hasUpdate =
+        app.installedVersion != null &&
+        app.installedVersion != app.latestVersion;
+    final updateColor = hasUpdate
+        ? Theme.of(context).colorScheme.primary
+        : Theme.of(context).colorScheme.onSurfaceVariant;
+    final highlight = settingsProvider.highlightTouchTargets;
+
+    Widget content = Padding(
+      padding: const EdgeInsets.all(4),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.end,
+        children: [
+          Container(
+            constraints: BoxConstraints(maxWidth: maxWidth),
+            child: Text(
+              installedVersionText(app),
+              overflow: TextOverflow.ellipsis,
+              textAlign: TextAlign.end,
+              style: isVersionPseudo(app)
+                  ? TextStyle(fontStyle: FontStyle.italic, color: updateColor)
+                  : TextStyle(color: updateColor),
+            ),
+          ),
+          Text(
+            changesLabel(app, showChangesFn != null),
+            style: TextStyle(
+              fontStyle: FontStyle.italic,
+              color: updateColor,
+              decoration: showChangesFn == null
+                  ? TextDecoration.none
+                  : TextDecoration.underline,
+            ),
+          ),
+        ],
+      ),
+    );
+
+    if (showChangesFn == null) return content;
+
+    if (highlight) {
+      content = DecoratedBox(
+        decoration: BoxDecoration(
+          color: Theme.of(context).colorScheme.surfaceContainerHighest,
+          borderRadius: BorderRadius.circular(10),
+        ),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 6),
+          child: content,
+        ),
+      );
+    }
+
+    return InkWell(
+      borderRadius: BorderRadius.circular(10),
+      onTap: showChangesFn,
+      child: content,
+    );
+  }
+
+  String installedVersionText(App app) {
+    final installed = app.installedVersion;
+    final latest = app.latestVersion;
+    if (installed != null && installed != latest) {
+      return '$installed → $latest';
+    }
+    return installed ?? tr('notInstalled');
+  }
+
+  String changesLabel(App app, bool hasChangeLogFn) {
+    return app.releaseDate == null
+        ? hasChangeLogFn
+            ? tr('changes')
+            : ''
+        : DateFormat('yyyy-MM-dd').format(app.releaseDate!.toLocal());
   }
 }
