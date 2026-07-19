@@ -13,8 +13,10 @@ import 'package:obtainium/pages/apps.dart';
 import 'package:obtainium/pages/settings.dart';
 import 'package:obtainium/providers/apps_provider.dart';
 import 'package:obtainium/providers/logs_provider.dart';
+import 'package:obtainium/providers/notifications_provider.dart';
 import 'package:obtainium/providers/settings_provider.dart';
 import 'package:obtainium/providers/source_provider.dart';
+import 'package:obtainium/main.dart';
 import 'package:provider/provider.dart';
 
 class HomePage extends StatefulWidget {
@@ -179,6 +181,181 @@ class _HomePageState extends State<HomePage> {
       appsPageKey.currentState?.openAppById(appId);
     }
 
+    Future<void> maybeExit(Uri uri) async {
+      final headless = uri.queryParameters['headless'] == 'true' ||
+          uri.queryParameters['exit'] == 'true';
+      if (headless && mounted) {
+        await Future.delayed(const Duration(milliseconds: 500));
+        if (mounted) {
+          SystemNavigator.pop();
+        }
+      }
+    }
+
+    Future<void> handleUpdateLink(Uri uri) async {
+      final path = uri.path.toLowerCase();
+      final isAll = path == '/all' || path == '/update';
+      final forceAll = uri.queryParameters['forceAll'] != 'false';
+      final autoInstall =
+          uri.queryParameters['autoInstall'] == 'true' || isAll;
+      final headless = uri.queryParameters['headless'] == 'true' ||
+          (isAll && uri.queryParameters['headless'] != 'false');
+      final silentOnly = uri.queryParameters['silentOnly'] == 'true' ||
+          uri.queryParameters['silent'] == 'true';
+      final specificIds =
+          uri.queryParameters['appId']?.split(',').where((s) => s.isNotEmpty).toList();
+
+      await waitUntil(
+        () => !appsProvider.loadingApps,
+        interval: const Duration(milliseconds: 10),
+        maxAttempts: 500,
+      );
+
+      Future<List<String>> _filterSilent(List<String> ids) async {
+        if (!silentOnly) return ids;
+        final results = await Future.wait(ids.map((id) async {
+          final appInMem = appsProvider.apps[id];
+          if (appInMem == null) return null;
+          final silent = await appsProvider.canInstallSilentlyInBackground(
+              appInMem.app);
+          if (!silent) {
+            unawaited(
+              LogsProvider().add(
+                'Skipping ${appInMem.app.name}: cannot install silently',
+                level: LogLevel.warning,
+              ),
+            );
+          }
+          return silent ? id : null;
+        }));
+        return results.whereType<String>().toList();
+      }
+
+      final bool hasSpecificIds =
+          !isAll && specificIds != null && specificIds.isNotEmpty;
+
+      final updates = hasSpecificIds
+          ? await appsProvider
+              .checkUpdates(specificIds: specificIds, forceAll: forceAll)
+              .catchError((e) {
+                unawaited(
+                  LogsProvider().add(
+                    'Deep-link update check failed: $e',
+                    level: LogLevel.error,
+                  ),
+                );
+                return <App>[];
+              })
+          : await appsProvider.checkUpdates(forceAll: forceAll).catchError((e) {
+              unawaited(
+                LogsProvider().add(
+                  'Deep-link update check failed: $e',
+                  level: LogLevel.error,
+                ),
+              );
+              return <App>[];
+            });
+
+      if (autoInstall) {
+        var ids = hasSpecificIds
+            ? updates.map((a) => a.id).toList()
+            : appsProvider.findAppIdsWithPendingUpdates(installedOnly: true);
+        ids = await _filterSilent(ids);
+        if (ids.isNotEmpty) {
+          unawaited(
+            appsProvider
+                .downloadAndInstallLatestApps(
+                  ids,
+                  appNavigatorKey.currentContext,
+                  notificationsProvider: context.read<NotificationsProvider>(),
+                )
+                .catchError((e) {
+                  unawaited(
+                    LogsProvider().add(
+                      'Deep-link install failed: $e',
+                      level: LogLevel.error,
+                    ),
+                  );
+                  return <String>[];
+                }),
+          );
+        }
+      }
+
+      if (mounted) {
+        showMessage(
+          updates.isNotEmpty
+              ? '${tr('updatesAvailable')}: ${updates.length}'
+              : tr('noNewUpdates'),
+          context,
+        );
+      }
+
+      if (headless) {
+        await maybeExit(uri);
+      }
+    }
+
+    Future<void> handleSettingsLink(Uri uri) async {
+      final path = uri.path.toLowerCase();
+      final segments = path.split('/').where((s) => s.isNotEmpty).toList();
+      if (segments.isEmpty) {
+        throw ObtainiumError(tr('unknown'));
+      }
+      final setting = segments[0];
+
+      if (setting == 'installer' || setting == 'installmethod') {
+        final mode = uri.queryParameters['mode'];
+        if (mode != null &&
+            InstallerMode.values.any((m) => m.name == mode)) {
+          settingsProvider.installerMode = mode;
+          if (mounted) {
+            showMessage(
+              tr('installMethod') + ': ' + mode,
+              context,
+            );
+          }
+        } else {
+          throw ObtainiumError(tr('invalidInput'));
+        }
+      } else if (setting == 'background') {
+        final enabled = uri.queryParameters['enabled'];
+        final wifiOnly = uri.queryParameters['wifiOnly'];
+        final chargingOnly = uri.queryParameters['chargingOnly'];
+        if (enabled != null) {
+          settingsProvider.enableBackgroundUpdates = enabled == 'true';
+        }
+        if (wifiOnly != null) {
+          settingsProvider.bgUpdatesOnWiFiOnly = wifiOnly == 'true';
+        }
+        if (chargingOnly != null) {
+          settingsProvider.bgUpdatesWhileChargingOnly = chargingOnly == 'true';
+        }
+        if (mounted) {
+          showMessage(tr('saved'), context);
+        }
+      } else if (setting == 'updates') {
+        final interval = uri.queryParameters['interval'];
+        final checkOnStart = uri.queryParameters['checkOnStart'];
+        final parallel = uri.queryParameters['parallel'];
+        if (interval != null) {
+          settingsProvider.updateInterval = int.tryParse(interval) ?? 360;
+        }
+        if (checkOnStart != null) {
+          settingsProvider.checkOnStart = checkOnStart == 'true';
+        }
+        if (parallel != null) {
+          settingsProvider.parallelDownloads = parallel == 'true';
+        }
+        if (mounted) {
+          showMessage(tr('saved'), context);
+        }
+      } else {
+        throw ObtainiumError(tr('unknown'));
+      }
+      await maybeExit(uri);
+    }
+
     Future<void> interpretLink(Uri uri) async {
       final action = uri.host;
       final data =
@@ -216,62 +393,80 @@ class _HomePageState extends State<HomePage> {
           }
         } else if (action == 'app' || action == 'apps') {
           final dataStr = Uri.decodeComponent(data);
-          if (!context.mounted) return;
-          if (await showDialog(
-                context: context,
-                builder: (BuildContext ctx) {
-                  return GeneratedFormModal(
-                    title: tr(
-                      'importX',
-                      args: [
-                        (action == 'app' ? tr('app') : tr('appsString'))
-                            .toLowerCase(),
-                      ],
-                    ),
-                    items: const [],
-                    additionalWidgets: [
-                      ExpansionTile(
-                        title: Text(tr('rawJson')),
-                        children: [
-                          Text(
-                            dataStr,
-                            style: const TextStyle(fontFamily: 'monospace'),
-                          ),
+          // confirm=true only works when the intent came from a trusted caller
+          // (adb shell / system), marked by confirmedBy=system in MainActivity.kt
+          final autoConfirm = uri.queryParameters['confirm'] == 'true' &&
+              uri.queryParameters['confirmedBy'] == 'system';
+          final importHeadless = uri.queryParameters['headless'] == 'true' ||
+              uri.queryParameters['exit'] == 'true';
+
+          if (!autoConfirm) {
+            if (!context.mounted) return;
+            if (await showDialog(
+                  context: context,
+                  builder: (BuildContext ctx) {
+                    return GeneratedFormModal(
+                      title: tr(
+                        'importX',
+                        args: [
+                          (action == 'app' ? tr('app') : tr('appsString'))
+                              .toLowerCase(),
                         ],
                       ),
-                    ],
-                  );
-                },
-              ) !=
-              null) {
-            if (!context.mounted) return;
-            final ap = appsProvider;
-            dynamic parsedData;
-            try {
-              parsedData = jsonDecode(dataStr);
-            } catch (e) {
-              unawaited(
-                LogsProvider().add(
-                  'Failed to decode deep-link JSON: $e',
-                  level: LogLevel.error,
-                ),
-              );
-              throw ObtainiumError(tr('invalidInput'));
-            }
-            final importPayload = jsonEncode(<String, dynamic>{
-              'apps': action == 'app' ? <dynamic>[parsedData] : parsedData,
-            });
-            final result = await ap.import(importPayload);
-            if (mounted) {
-              showMessage(
-                tr(
-                  'importedX',
-                  args: [plural('apps', result.key.length).toLowerCase()],
-                ),
-                context,
-              );
+                      items: const [],
+                      additionalWidgets: [
+                        ExpansionTile(
+                          title: Text(tr('rawJson')),
+                          children: [
+                            Text(
+                              dataStr,
+                              style: const TextStyle(fontFamily: 'monospace'),
+                            ),
+                          ],
+                        ),
+                      ],
+                    );
+                  },
+                ) ==
+                null) {
+              return;
             }
           }
+
+          if (!context.mounted) return;
+          final ap = appsProvider;
+          dynamic parsedData;
+          try {
+            parsedData = jsonDecode(dataStr);
+          } catch (e) {
+            unawaited(
+              LogsProvider().add(
+                'Failed to decode deep-link JSON: $e',
+                level: LogLevel.error,
+              ),
+            );
+            throw ObtainiumError(tr('invalidInput'));
+          }
+          final importPayload = jsonEncode(<String, dynamic>{
+            'apps': action == 'app' ? <dynamic>[parsedData] : parsedData,
+          });
+          final result = await ap.import(importPayload);
+          if (mounted) {
+            showMessage(
+              tr(
+                'importedX',
+                args: [plural('apps', result.key.length).toLowerCase()],
+              ),
+              context,
+            );
+          }
+          if (importHeadless) {
+            await maybeExit(uri);
+          }
+        } else if (action == 'update') {
+          await handleUpdateLink(uri);
+        } else if (action == 'settings') {
+          await handleSettingsLink(uri);
         } else {
           throw ObtainiumError(tr('unknown'));
         }
