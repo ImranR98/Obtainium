@@ -140,6 +140,7 @@ class _ImportFromURLListPageState extends State<ImportFromURLListPage> {
                         ConnectedCard(
                           isFirst: true,
                           isLast: true,
+                          padding: const EdgeInsets.all(16),
                           child: Text(
                             tr('importedAppsIdDisclaimer'),
                             textAlign: TextAlign.center,

@@ -552,12 +552,22 @@ class _AppPageState extends State<AppPage> {
             ? Icons.download_outlined
             : Icons.system_update_alt_rounded,
       ),
-      label: Text(
-        installed == null
-            ? (!trackOnly ? tr('install') : tr('markInstalled'))
-            : !trackOnly
-            ? tr('update')
-            : tr('markUpdated'),
+      label: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(
+            installed == null
+                ? (!trackOnly ? tr('install') : tr('markInstalled'))
+                : !trackOnly
+                ? tr('update')
+                : tr('markUpdated'),
+          ),
+          if (_probedDownloadSize != null)
+            Text(
+              formatBytes(_probedDownloadSize!),
+              style: const TextStyle(fontSize: 12),
+            ),
+        ],
       ),
     );
   }
@@ -656,6 +666,7 @@ class _AppPageState extends State<AppPage> {
     bool isFirst,
     bool isLast, {
     required List<Widget> children,
+    EdgeInsetsGeometry? padding,
   }) {
     return SliverToBoxAdapter(
       child: Padding(
@@ -663,6 +674,7 @@ class _AppPageState extends State<AppPage> {
         child: ConnectedCard(
           isFirst: isFirst,
           isLast: isLast,
+          padding: padding ?? const EdgeInsets.all(16),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             mainAxisSize: MainAxisSize.min,
@@ -1043,6 +1055,7 @@ class _AppPageState extends State<AppPage> {
         _buildSection(
           false,
           true,
+          padding: const EdgeInsets.symmetric(horizontal: 0, vertical: 0),
           children: [
             Center(
               child: HighlightableButton(
@@ -1109,17 +1122,6 @@ class _AppPageState extends State<AppPage> {
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisSize: MainAxisSize.min,
       children: [
-        if (app?.downloadProgress == null && _probedDownloadSize != null)
-          Padding(
-            padding: const EdgeInsets.only(bottom: 4),
-            child: Align(
-              alignment: Alignment.centerRight,
-              child: Text(
-                '${tr('downloadSize')}: ${formatBytes(_probedDownloadSize!)}',
-                style: Theme.of(context).textTheme.bodySmall,
-              ),
-            ),
-          ),
         if (app?.downloadProgress != null)
           Padding(
             padding: const EdgeInsets.only(bottom: 8),
@@ -1209,7 +1211,13 @@ class _AppPageState extends State<AppPage> {
     final AppInMemory? app = cachedApp(
       context.select<AppsProvider, AppInMemory?>((p) => p.apps[widget.appId]),
     );
-    if (app != null && app.downloadProgress == null) {
+    final installed = app?.app.installedVersion;
+    final latest = app?.app.latestVersion;
+    if (app != null &&
+        app.downloadProgress == null &&
+        !updating &&
+        !areDownloadsRunning &&
+        (installed == null || installed != latest)) {
       _maybeProbeDownloadSize(app);
     }
     final source = this.source;

@@ -886,6 +886,7 @@ class AddAppPageState extends State<AddAppPage> {
                             child: ConnectedCard(
                               isFirst: true,
                               isLast: true,
+                              padding: const EdgeInsets.all(16),
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
