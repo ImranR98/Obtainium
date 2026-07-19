@@ -243,15 +243,17 @@ class _CategoryEditorSheetState extends State<_CategoryEditorSheet> {
             style: textTheme.titleLarge,
           ),
           const SizedBox(height: 16),
-          TextField(
-            controller: _nameCtrl,
-            autofocus: !_isEditing,
-            textCapitalization: TextCapitalization.sentences,
-            decoration: InputDecoration(labelText: tr('categoryName')),
-            onChanged: (value) => _nameNotifier.value = value,
-            onSubmitted: (_) {
-              if (_nameCtrl.text.trim().isNotEmpty) _save();
-            },
+          ConnectedCard(
+            child: TextField(
+              controller: _nameCtrl,
+              autofocus: !_isEditing,
+              textCapitalization: TextCapitalization.sentences,
+              decoration: InputDecoration(labelText: tr('categoryName')),
+              onChanged: (value) => _nameNotifier.value = value,
+              onSubmitted: (_) {
+                if (_nameCtrl.text.trim().isNotEmpty) _save();
+              },
+            ),
           ),
           const SizedBox(height: 20),
           Text(tr('colour'), style: textTheme.titleSmall),

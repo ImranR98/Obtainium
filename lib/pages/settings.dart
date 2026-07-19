@@ -9,7 +9,6 @@ import 'package:obtainium/components/category_editor.dart';
 import 'package:flutter/material.dart';
 import 'package:obtainium/components/ui_widgets.dart';
 import 'package:obtainium/components/generated_form_renderer.dart';
-import 'package:obtainium/components/settings_widgets.dart';
 import 'package:obtainium/custom_errors.dart';
 import 'package:obtainium/main.dart';
 import 'package:obtainium/pages/import_export.dart';
@@ -212,26 +211,9 @@ class _SettingsPageState extends State<SettingsPage> {
     child: Text(text, style: Theme.of(context).textTheme.labelSmall),
   );
 
-  Widget _fieldTile(BuildContext context, Widget field) => SettingsTile(
+  Widget _fieldTile(BuildContext context, Widget field) => ConnectedCard(
     color: Theme.of(context).colorScheme.surfaceContainerHighest,
-    padding: EdgeInsets.zero,
-    child: DropdownMenuTheme(
-      data: DropdownMenuThemeData(
-        inputDecorationTheme: const InputDecorationThemeData(
-          filled: false,
-          border: InputBorder.none,
-          enabledBorder: InputBorder.none,
-          focusedBorder: InputBorder.none,
-          contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-        ),
-        menuStyle: MenuStyle(
-          shape: WidgetStatePropertyAll(
-            RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-          ),
-        ),
-      ),
-      child: field,
-    ),
+    child: field,
   );
 
   Widget _buildFooter(BuildContext context) => SliverToBoxAdapter(
@@ -294,7 +276,7 @@ class _SettingsPageState extends State<SettingsPage> {
     final sourceProvider = context.read<SourceProvider>();
     final sdk = androidSdkInt ?? 0;
 
-    final colorPicker = SettingsTile(
+    final colorPicker = CardTile(
       child: ListTile(
         contentPadding: EdgeInsets.zero,
         shape: RoundedRectangleBorder(
@@ -326,7 +308,7 @@ class _SettingsPageState extends State<SettingsPage> {
       ),
     );
 
-    final themeModeControl = SettingsTile(
+    final themeModeControl = CardTile(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -391,7 +373,7 @@ class _SettingsPageState extends State<SettingsPage> {
       },
     );
 
-    final orderControl = SettingsTile(
+    final orderControl = CardTile(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -513,7 +495,7 @@ class _SettingsPageState extends State<SettingsPage> {
         slivers: <Widget>[
           CustomAppBar(title: tr('settings')),
           SliverPadding(
-            padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+            padding: const EdgeInsets.fromLTRB(16, 0, 16, 0),
             sliver: SliverToBoxAdapter(
               child: settingsProvider.prefs == null
                   ? const Padding(
@@ -524,13 +506,13 @@ class _SettingsPageState extends State<SettingsPage> {
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       spacing: 20,
                       children: [
-                        SettingsGroup(
+                        Section(
                           title: tr('obtainiumExport'),
                           children: const [ExportSection()],
                         ),
                         _buildUpdatesSection(context, showBgSection, sdk),
                         if (sourceSpecificForm != null)
-                          SettingsGroup(
+                          Section(
                             title: tr('sourceSpecific'),
                             children: [sourceSpecificForm],
                           ),
@@ -543,10 +525,10 @@ class _SettingsPageState extends State<SettingsPage> {
                           localeDropdown,
                           colourSchemeDropdown,
                         ),
-                        SettingsGroup(
+                        Section(
                           title: tr('categories'),
                           children: const [
-                            SettingsTile(
+                            CardTile(
                               padding: EdgeInsets.all(12),
                               child: CategoryManager(),
                             ),
@@ -568,15 +550,15 @@ class _SettingsPageState extends State<SettingsPage> {
     int sdk,
   ) {
     final settingsProvider = context.read<SettingsProvider>();
-    return SettingsGroup(
+    return Section(
       title: tr('updates'),
       children: [
-        const SettingsTile(
+        const CardTile(
           padding: EdgeInsets.fromLTRB(16, 8, 16, 8),
           child: _UpdateIntervalSliderTile(),
         ),
         if (showBgSection) ...[
-          SettingsToggleRow(
+          ToggleTile(
             label: tr('enableBackgroundUpdates'),
             value: settingsProvider.enableBackgroundUpdates,
             onChanged: (value) =>
@@ -588,71 +570,77 @@ class _SettingsPageState extends State<SettingsPage> {
             ],
           ),
           if (settingsProvider.enableBackgroundUpdates)
-            SettingsToggleRow(
+            ToggleTile(
               label: tr('bgUpdatesOnWiFiOnly'),
               value: settingsProvider.bgUpdatesOnWiFiOnly,
               onChanged: (value) =>
                   settingsProvider.bgUpdatesOnWiFiOnly = value,
             ),
           if (settingsProvider.enableBackgroundUpdates)
-            SettingsToggleRow(
+            ToggleTile(
               label: tr('bgUpdatesWhileChargingOnly'),
               value: settingsProvider.bgUpdatesWhileChargingOnly,
               onChanged: (value) =>
                   settingsProvider.bgUpdatesWhileChargingOnly = value,
             ),
+          if (settingsProvider.enableBackgroundUpdates)
+            CardTile(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+              child: SizedBox(
+                width: double.infinity,
+                child: FilledButton.tonal(
+                  onPressed: _isRunningBgCheck ? null : _triggerManualBgCheck,
+                  child: _isRunningBgCheck
+                      ? const SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      : Text(tr('runBgCheckNow')),
+                ),
+              ),
+            ),
         ],
-        SettingsToggleRow(
+        ToggleTile(
           label: tr('checkOnStart'),
           value: settingsProvider.checkOnStart,
           onChanged: (value) => settingsProvider.checkOnStart = value,
         ),
-        SettingsToggleRow(
+        ToggleTile(
           label: tr('checkUpdateOnDetailPage'),
           value: settingsProvider.checkUpdateOnDetailPage,
           onChanged: (value) =>
               settingsProvider.checkUpdateOnDetailPage = value,
         ),
-        SettingsToggleRow(
+        ToggleTile(
           label: tr('onlyCheckInstalledOrTrackOnlyApps'),
           value: settingsProvider.onlyCheckInstalledOrTrackOnlyApps,
           onChanged: (value) =>
               settingsProvider.onlyCheckInstalledOrTrackOnlyApps = value,
         ),
-        SettingsToggleRow(
-          label: tr('showActionBannerForUpdateOnly'),
-          value: settingsProvider.showActionBannerForUpdateOnly,
-          onChanged: (value) =>
-              settingsProvider.showActionBannerForUpdateOnly = value,
-        ),
-        SettingsToggleRow(
+        ToggleTile(
           label: tr('removeOnExternalUninstall'),
           value: settingsProvider.removeOnExternalUninstall,
           onChanged: (value) =>
               settingsProvider.removeOnExternalUninstall = value,
         ),
-        SettingsToggleRow(
+        ToggleTile(
           label: tr('includePrereleasesByDefault'),
           value: settingsProvider.includePrereleasesByDefault,
           onChanged: (value) =>
               settingsProvider.includePrereleasesByDefault = value,
         ),
-        SettingsToggleRow(
-          label: tr('tactileFeedbackEnabled'),
-          value: settingsProvider.tactileFeedbackEnabled,
-          onChanged: (value) => settingsProvider.tactileFeedbackEnabled = value,
-        ),
-        SettingsToggleRow(
+        ToggleTile(
           label: tr('showAppDowngradeError'),
           value: settingsProvider.showAppDowngradeError,
           onChanged: (value) => settingsProvider.showAppDowngradeError = value,
         ),
-        SettingsToggleRow(
+        ToggleTile(
           label: tr('parallelDownloads'),
           value: settingsProvider.parallelDownloads,
           onChanged: (value) => settingsProvider.parallelDownloads = value,
         ),
-        SettingsToggleRow(
+        ToggleTile(
           label: tr('beforeNewInstallsShareToAppVerifier'),
           value: settingsProvider.beforeNewInstallsShareToAppVerifier,
           onChanged: (value) =>
@@ -663,69 +651,46 @@ class _SettingsPageState extends State<SettingsPage> {
             style: const TextStyle(fontSize: 12),
           ),
         ),
-        SettingsTile(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                child: Text(tr('installMethod')),
+        _fieldTile(
+          context,
+          DropdownMenu<String>(
+            expandedInsets: EdgeInsets.zero,
+            label: Text(tr('installMethod')),
+            initialSelection: settingsProvider.installerMode,
+            dropdownMenuEntries: [
+              DropdownMenuEntry(
+                value: InstallerMode.system.name,
+                label: tr('installMethodSystem'),
               ),
-              SizedBox(
-                width: double.infinity,
-                child: SegmentedButton<String>(
-                  segments: [
-                    ButtonSegment(
-                      value: InstallerMode.system.name,
-                      label: Text(tr('installMethodSystem')),
-                    ),
-                    ButtonSegment(
-                      value: InstallerMode.shizuku.name,
-                      label: Text(tr('installMethodShizuku')),
-                    ),
-                    ButtonSegment(
-                      value: InstallerMode.external.name,
-                      label: Text(tr('installMethodExternal')),
-                    ),
-                  ],
-                  selected: {settingsProvider.installerMode},
-                  showSelectedIcon: false,
-                  onSelectionChanged: (selection) => handleInstallerModeChange(
-                    settingsProvider,
-                    selection.first,
-                    _installerCheckSeq,
-                  ),
-                ),
+              DropdownMenuEntry(
+                value: InstallerMode.shizuku.name,
+                label: tr('installMethodShizuku'),
+              ),
+              DropdownMenuEntry(
+                value: InstallerMode.external.name,
+                label: tr('installMethodExternal'),
               ),
             ],
+            onSelected: (value) {
+              if (value != null) {
+                handleInstallerModeChange(
+                  settingsProvider,
+                  value,
+                  _installerCheckSeq,
+                );
+              }
+            },
           ),
         ),
         if (settingsProvider.installerMode == InstallerMode.shizuku.name)
-          SettingsToggleRow(
+          ToggleTile(
             label: tr('shizukuPretendToBeGooglePlay'),
             value: settingsProvider.shizukuPretendToBeGooglePlay,
             onChanged: (value) =>
                 settingsProvider.shizukuPretendToBeGooglePlay = value,
           ),
         if (settingsProvider.installerMode == InstallerMode.external.name)
-          const SettingsTile(child: _ExternalInstallerTile()),
-        if (showBgSection && settingsProvider.enableBackgroundUpdates)
-          SettingsTile(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-            child: SizedBox(
-              width: double.infinity,
-              child: FilledButton.tonal(
-                onPressed: _isRunningBgCheck ? null : _triggerManualBgCheck,
-                child: _isRunningBgCheck
-                    ? const SizedBox(
-                        width: 20,
-                        height: 20,
-                        child: CircularProgressIndicator(strokeWidth: 2),
-                      )
-                    : Text(tr('runBgCheckNow')),
-              ),
-            ),
-          ),
+          const CardTile(child: _ExternalInstallerTile()),
       ],
     );
   }
@@ -741,7 +706,7 @@ class _SettingsPageState extends State<SettingsPage> {
   ) {
     final settingsProvider = context.read<SettingsProvider>();
     final sdk = androidSdkInt ?? 0;
-    return SettingsGroup(
+    return Section(
       title: tr('appearance'),
       children: [
         themeModeControl,
@@ -749,7 +714,7 @@ class _SettingsPageState extends State<SettingsPage> {
             (androidSdkInt ?? 30) < 29)
           _caption(context, tr('followSystemThemeExplanation')),
         if (settingsProvider.theme != ThemeSettings.light)
-          SettingsToggleRow(
+          ToggleTile(
             label: tr('useBlackTheme'),
             value: settingsProvider.useBlackTheme,
             onChanged: (value) => settingsProvider.useBlackTheme = value,
@@ -761,7 +726,7 @@ class _SettingsPageState extends State<SettingsPage> {
         orderControl,
         _fieldTile(context, localeDropdown),
         if (sdk >= 29)
-          SettingsToggleRow(
+          ToggleTile(
             label: tr('useSystemFont'),
             value: settingsProvider.useSystemFont,
             onChanged: (useSystemFont) {
@@ -782,93 +747,101 @@ class _SettingsPageState extends State<SettingsPage> {
               }
             },
           ),
-        SettingsToggleRow(
+        ToggleTile(
           label: tr('showWebInAppView'),
           value: settingsProvider.showAppWebpage,
           onChanged: (value) => settingsProvider.showAppWebpage = value,
         ),
-        SettingsToggleRow(
+        ToggleTile(
           label: tr('pinUpdates'),
           value: settingsProvider.pinUpdates,
           onChanged: (value) => settingsProvider.pinUpdates = value,
         ),
-        SettingsToggleRow(
+        ToggleTile(
           label: tr('moveNonInstalledAppsToBottom'),
           value: settingsProvider.buryNonInstalled,
           onChanged: (value) => settingsProvider.buryNonInstalled = value,
         ),
-        SettingsTile(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                child: Text(tr('groupBy')),
+        _fieldTile(
+          context,
+          DropdownMenu<String>(
+            expandedInsets: EdgeInsets.zero,
+            label: Text(tr('groupBy')),
+            initialSelection: settingsProvider.groupBy,
+            dropdownMenuEntries: [
+              DropdownMenuEntry(
+                value: GroupByMode.none.name,
+                label: tr('none'),
               ),
-              SizedBox(
-                width: double.infinity,
-                child: SegmentedButton<String>(
-                  segments: [
-                    ButtonSegment(
-                      value: GroupByMode.none.name,
-                      label: Text(tr('none')),
-                    ),
-                    ButtonSegment(
-                      value: GroupByMode.category.name,
-                      label: Text(tr('category')),
-                    ),
-                    ButtonSegment(
-                      value: GroupByMode.source.name,
-                      label: Text(tr('source')),
-                    ),
-                  ],
-                  selected: {settingsProvider.groupBy},
-                  showSelectedIcon: false,
-                  onSelectionChanged: (selection) {
-                    settingsProvider.selectionClick();
-                    settingsProvider.groupBy = selection.first;
-                  },
-                ),
+              DropdownMenuEntry(
+                value: GroupByMode.category.name,
+                label: tr('category'),
+              ),
+              DropdownMenuEntry(
+                value: GroupByMode.source.name,
+                label: tr('source'),
               ),
             ],
+            onSelected: (value) {
+              if (value != null) {
+                settingsProvider.groupBy = value;
+              }
+            },
           ),
         ),
-        SettingsToggleRow(
+        ToggleTile(
           label: tr('dontShowTrackOnlyWarnings'),
           value: settingsProvider.hideTrackOnlyWarning,
           onChanged: (value) => settingsProvider.hideTrackOnlyWarning = value,
         ),
-        SettingsToggleRow(
+        ToggleTile(
           label: tr('dontShowAPKOriginWarnings'),
           value: settingsProvider.hideAPKOriginWarning,
           onChanged: (value) => settingsProvider.hideAPKOriginWarning = value,
         ),
-        SettingsToggleRow(
-          label: tr('disablePageTransitions'),
-          value: settingsProvider.disablePageTransitions,
-          onChanged: (value) => settingsProvider.disablePageTransitions = value,
-        ),
-        SettingsToggleRow(
-          label: tr('reversePageTransitions'),
-          value: settingsProvider.reversePageTransitions,
-          onChanged: settingsProvider.disablePageTransitions
-              ? null
-              : (value) => settingsProvider.reversePageTransitions = value,
-        ),
-        SettingsToggleRow(
+        ToggleTile(
           label: tr('highlightTouchTargets'),
           value: settingsProvider.highlightTouchTargets,
           onChanged: (value) => settingsProvider.highlightTouchTargets = value,
         ),
-        SettingsToggleRow(
+        ToggleTile(
           label: tr('disableSwipeActions'),
           value: settingsProvider.disableSwipeActions,
           onChanged: (value) => settingsProvider.disableSwipeActions = value,
         ),
-        SettingsToggleRow(
+        ToggleTile(
           label: tr('alwaysUsePhoneLayout'),
           value: settingsProvider.alwaysUsePhoneLayout,
           onChanged: (value) => settingsProvider.alwaysUsePhoneLayout = value,
+        ),
+        _fieldTile(
+          context,
+          DropdownMenu<ActionBannerMode>(
+            expandedInsets: EdgeInsets.zero,
+            label: Text(tr('actionBanner')),
+            initialSelection: settingsProvider.actionBannerMode,
+            dropdownMenuEntries: [
+              DropdownMenuEntry(value: ActionBannerMode.all, label: tr('all')),
+              DropdownMenuEntry(
+                value: ActionBannerMode.updatesOnly,
+                label: tr('updates'),
+              ),
+              DropdownMenuEntry(
+                value: ActionBannerMode.none,
+                label: tr('none'),
+              ),
+            ],
+            onSelected: (value) {
+              if (value != null) {
+                settingsProvider.actionBannerMode = value;
+              }
+            },
+          ),
+        ),
+        ToggleTile(
+          label: tr('tactileFeedbackEnabled'),
+          value: settingsProvider.tactileFeedbackEnabled,
+          onChanged: (value) => settingsProvider.tactileFeedbackEnabled = value,
         ),
       ],
     );
@@ -1256,7 +1229,11 @@ class _LogsPageState extends State<LogsPage> {
             child: CustomScrollView(
               controller: _scrollController,
               slivers: [
-                SliverAppBar.large(pinned: true, automaticallyImplyLeading: false, title: Text(tr('appLogs'))),
+                SliverAppBar(
+                  pinned: true,
+                  automaticallyImplyLeading: false,
+                  title: Text(tr('appLogs')),
+                ),
                 if (_loading)
                   const SliverFillRemaining(
                     hasScrollBody: false,
@@ -1371,7 +1348,6 @@ class _ExternalInstallerTileState extends State<_ExternalInstallerTile> {
                 ConnectedCard(
                   isFirst: true,
                   isLast: true,
-                  padding: null,
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     crossAxisAlignment: CrossAxisAlignment.stretch,

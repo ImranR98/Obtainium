@@ -86,9 +86,13 @@ class _ImportFromURLListPageState extends State<ImportFromURLListPage> {
           final controller = context.watch<ImportFromURLListController>();
           return Scaffold(
             backgroundColor: Theme.of(context).colorScheme.surface,
-            appBar: AppBar(automaticallyImplyLeading: false, title: Text(tr('importFromURLList'))),
             body: CustomScrollView(
               slivers: [
+                SliverAppBar(
+                  pinned: true,
+                  automaticallyImplyLeading: false,
+                  title: Text(tr('importFromURLList')),
+                ),
                 SliverToBoxAdapter(
                   child: Padding(
                     padding: EdgeInsets.fromLTRB(
@@ -101,18 +105,20 @@ class _ImportFromURLListPageState extends State<ImportFromURLListPage> {
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       spacing: 16,
                       children: [
-                        TextFormField(
-                          controller: controller.urlController,
-                          maxLines: null,
-                          minLines: 8,
-                          decoration: InputDecoration(
-                            labelText: tr('appURLList'),
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(24),
-                            ),
+                        ConnectedCard(
+                          color: Theme.of(context)
+                              .colorScheme
+                              .surfaceContainerHighest,
+                          child: TextFormField(
+                            controller: controller.urlController,
+                            maxLines: null,
+                            minLines: 8,
+                            decoration: InputDecoration(
+                                labelText: tr('appURLList')),
+                            validator: controller.validate,
+                            autovalidateMode:
+                                AutovalidateMode.onUserInteraction,
                           ),
-                          validator: controller.validate,
-                          autovalidateMode: AutovalidateMode.onUserInteraction,
                         ),
                         OutlinedButton.icon(
                           onPressed: controller.isImporting
@@ -134,6 +140,7 @@ class _ImportFromURLListPageState extends State<ImportFromURLListPage> {
                         ConnectedCard(
                           isFirst: true,
                           isLast: true,
+                          padding: const EdgeInsets.all(16),
                           child: Text(
                             tr('importedAppsIdDisclaimer'),
                             textAlign: TextAlign.center,
@@ -296,7 +303,6 @@ class _ImportSectionState extends State<ImportSection> {
         ConnectedCard(
           isFirst: true,
           isLast: true,
-          padding: null,
           child: ActionListTile(
             icon: Icons.download_outlined,
             label: tr('obtainiumImport'),
@@ -334,7 +340,6 @@ class _ImportSectionState extends State<ImportSection> {
                 ConnectedCard(
                   isFirst: i == 0,
                   isLast: i == tiles.length - 1,
-                  padding: null,
                   child: tiles[i],
                 ),
             ];
@@ -394,70 +399,74 @@ class _ExportSectionState extends State<ExportSection> {
     return FutureBuilder(
       future: _exportDirFuture,
       builder: (context, snapshot) {
-        return ConnectedCard(
-          isFirst: true,
-          isLast: true,
-          padding: null,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              ActionListTile(
-                icon: Icons.folder_open_outlined,
-                label: tr('pickExportDir'),
-                trailing: snapshot.data != null
-                    ? Icon(
-                        Icons.check_circle,
-                        color: Theme.of(context).colorScheme.primary,
-                      )
-                    : null,
-                onTap: () => runObtainiumExport(pickOnly: true),
-              ),
-              ActionListTile(
-                icon: Icons.upload_outlined,
-                label: tr('obtainiumExport'),
-                onTap: snapshot.data == null ? null : runObtainiumExport,
-              ),
-              if (snapshot.data != null)
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
-                  child: GeneratedForm(
-                    items: [
-                      [
-                        GeneratedFormSwitch(
-                          'autoExportOnChanges',
-                          label: tr('autoExportOnChanges'),
-                          value: settingsProvider.autoExportOnChanges,
-                        ),
-                      ],
-                      [
-                        GeneratedFormDropdown(
-                          'exportSettings',
-                          [
-                            MapEntry('0', tr('none')),
-                            MapEntry('1', tr('excludeSecrets')),
-                            MapEntry('2', tr('all')),
-                          ],
-                          label: tr('includeSettings'),
-                          value: settingsProvider.exportSettings.toString(),
-                        ),
-                      ],
-                    ],
-                    onValueChanges: (value, valid, isBuilding) {
-                      if (valid && !isBuilding) {
-                        if (value['autoExportOnChanges'] != null) {
-                          settingsProvider.autoExportOnChanges =
-                              value['autoExportOnChanges'] == true;
-                        }
-                        if (value['exportSettings'] != null) {
-                          settingsProvider.exportSettings =
-                              int.tryParse('${value['exportSettings']}') ?? 1;
-                        }
-                      }
-                    },
-                  ),
-                ),
-            ],
+        final items = <Widget>[
+          ConnectedCard(
+            isFirst: true,
+            isLast: false,
+            child: ActionListTile(
+              icon: Icons.folder_open_outlined,
+              label: tr('pickExportDir'),
+              trailing: snapshot.data != null
+                  ? Icon(
+                      Icons.check_circle,
+                      color: Theme.of(context).colorScheme.primary,
+                    )
+                  : null,
+              onTap: () => runObtainiumExport(pickOnly: true),
+            ),
           ),
+          ConnectedCard(
+            isFirst: false,
+            isLast: snapshot.data == null,
+            child: ActionListTile(
+              icon: Icons.upload_outlined,
+              label: tr('obtainiumExport'),
+              onTap: snapshot.data == null ? null : runObtainiumExport,
+            ),
+          ),
+        ];
+        if (snapshot.data != null) {
+          items.addAll([
+            ConnectedCard(
+              isFirst: false,
+              isLast: false,
+              child: ToggleTile(
+                label: tr('autoExportOnChanges'),
+                value: settingsProvider.autoExportOnChanges,
+                onChanged: (value) =>
+                    settingsProvider.autoExportOnChanges = value,
+              ),
+            ),
+            ConnectedCard(
+              isFirst: false,
+              isLast: true,
+              child: DropdownMenu<String>(
+                expandedInsets: EdgeInsets.zero,
+                label: Text(tr('includeSettings')),
+                initialSelection:
+                    settingsProvider.exportSettings.toString(),
+                dropdownMenuEntries: [
+                  DropdownMenuEntry(
+                      value: '0', label: tr('none')),
+                  DropdownMenuEntry(
+                      value: '1', label: tr('excludeSecrets')),
+                  DropdownMenuEntry(
+                      value: '2', label: tr('all')),
+                ],
+                onSelected: (value) {
+                  if (value != null) {
+                    settingsProvider.exportSettings =
+                        int.tryParse(value) ?? 1;
+                  }
+                },
+              ),
+            ),
+          ]);
+        }
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          spacing: 3,
+          children: items,
         );
       },
     );
@@ -820,6 +829,7 @@ class _SelectionModalState extends State<SelectionModal> {
         child: Column(
           children: [
             GeneratedForm(
+              tileMode: true,
               items: [
                 [
                   GeneratedFormTextField(

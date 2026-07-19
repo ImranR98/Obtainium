@@ -57,6 +57,8 @@ enum SortOrderSettings { ascending, descending }
 
 enum ColourSchemeMode { standard, vibrant, expressive, materialYou }
 
+enum ActionBannerMode { all, updatesOnly, none }
+
 class SettingsProvider with ChangeNotifier {
   SharedPreferences? prefs;
   String? defaultAppDir;
@@ -571,24 +573,6 @@ class SettingsProvider with ChangeNotifier {
     notifyListeners();
   }
 
-  bool get disablePageTransitions {
-    return _getBool('disablePageTransitions') ?? false;
-  }
-
-  set disablePageTransitions(bool value) {
-    prefs?.setBool('disablePageTransitions', value);
-    notifyListeners();
-  }
-
-  bool get reversePageTransitions {
-    return _getBool('reversePageTransitions') ?? false;
-  }
-
-  set reversePageTransitions(bool value) {
-    prefs?.setBool('reversePageTransitions', value);
-    notifyListeners();
-  }
-
   bool get enableBackgroundUpdates {
     return _getBool('enableBackgroundUpdates') ?? true;
   }
@@ -739,12 +723,23 @@ class SettingsProvider with ChangeNotifier {
     notifyListeners();
   }
 
-  bool get showActionBannerForUpdateOnly {
-    return _getBool('showActionBannerForUpdateOnly') ?? true;
+  ActionBannerMode get actionBannerMode {
+    final stored = prefs?.getString('actionBannerMode');
+    if (stored != null &&
+        ActionBannerMode.values.any((m) => m.name == stored)) {
+      return ActionBannerMode.values.byName(stored);
+    }
+    final legacyBool = _getBool('showActionBannerForUpdateOnly');
+    if (legacyBool != null) {
+      return legacyBool
+          ? ActionBannerMode.updatesOnly
+          : ActionBannerMode.all;
+    }
+    return ActionBannerMode.updatesOnly;
   }
 
-  set showActionBannerForUpdateOnly(bool val) {
-    prefs?.setBool('showActionBannerForUpdateOnly', val);
+  set actionBannerMode(ActionBannerMode mode) {
+    prefs?.setString('actionBannerMode', mode.name);
     notifyListeners();
   }
 

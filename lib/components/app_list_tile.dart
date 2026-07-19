@@ -700,7 +700,6 @@ class AppListGroupSection extends StatelessWidget {
       isFirst: i == 0,
       isLast: i == segmentCount - 1,
       color: color,
-      padding: null,
       child: child,
     );
 

@@ -1,6 +1,6 @@
 import 'dart:math';
 
-import 'package:flutter/services.dart';
+import 'package:flutter/widgets.dart';
 
 enum GeneratedFormItemType { textField, dropdown, switch_, subForm }
 
@@ -197,6 +197,8 @@ class GeneratedFormTextField extends GeneratedFormItem {
   final TextInputType? textInputType;
   final List<String>? autoCompleteOptions;
   final String? helpUrl;
+  final Widget? trailing;
+  final String? trailingKey;
 
   GeneratedFormTextField(
     super.key, {
@@ -211,6 +213,8 @@ class GeneratedFormTextField extends GeneratedFormItem {
     this.textInputType,
     this.autoCompleteOptions,
     this.helpUrl,
+    this.trailing,
+    this.trailingKey,
   });
 
   @override
@@ -233,6 +237,8 @@ class GeneratedFormTextField extends GeneratedFormItem {
       textInputType: textInputType,
       autoCompleteOptions: autoCompleteOptions,
       helpUrl: helpUrl,
+      trailing: trailing,
+      trailingKey: trailingKey,
     );
   }
 }
