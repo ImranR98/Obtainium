@@ -173,20 +173,32 @@ class HighlightableButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final style = highlight ? FilledButton.styleFrom() : TextButton.styleFrom();
+    if (highlight) {
+      if (icon != null) {
+        return FilledButton.icon(
+          onPressed: onPressed,
+          onLongPress: onLongPress,
+          icon: icon!,
+          label: label,
+        );
+      }
+      return FilledButton(
+        onPressed: onPressed,
+        onLongPress: onLongPress,
+        child: label,
+      );
+    }
     if (icon != null) {
       return TextButton.icon(
         onPressed: onPressed,
         onLongPress: onLongPress,
         icon: icon!,
         label: label,
-        style: style,
       );
     }
     return TextButton(
       onPressed: onPressed,
       onLongPress: onLongPress,
-      style: style,
       child: label,
     );
   }

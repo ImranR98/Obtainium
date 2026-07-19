@@ -1055,11 +1055,10 @@ class _AppPageState extends State<AppPage> {
         _buildSection(
           false,
           true,
-          padding: const EdgeInsets.symmetric(horizontal: 0, vertical: 0),
+          padding: const EdgeInsets.all(0),
           children: [
             Center(
-              child: HighlightableButton(
-                highlight: settingsProvider.highlightTouchTargets,
+              child: TextButton.icon(
                 onPressed: app?.app == null || updating
                     ? null
                     : () async {
