@@ -892,23 +892,10 @@ class AppsPageState extends State<AppsPage> {
     if (mode == ActionBannerMode.none) {
       return const SliverToBoxAdapter(child: SizedBox(width: double.infinity));
     }
-    final hasOnlyUpdates =
-        existingUpdateIdsAllOrSelected.isNotEmpty &&
-        newInstallIdsAllOrSelected.isEmpty &&
-        trackOnlyUpdateIdsAllOrSelected.isEmpty &&
-        !appsProvider.areDownloadsRunning();
     final onObtain =
         mode == ActionBannerMode.updatesOnly &&
             existingUpdateIdsAllOrSelected.isEmpty
         ? null
-        : hasOnlyUpdates
-        ? () {
-            settingsProvider.heavyImpact();
-            appsProvider.downloadAndInstallLatestApps(
-              existingUpdateIdsAllOrSelected,
-              appNavigatorKey.currentContext,
-            );
-          }
         : massObtainCallback(
             context,
             existingUpdateIdsAllOrSelected,
