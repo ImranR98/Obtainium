@@ -35,12 +35,14 @@ class GeneratedForm extends StatefulWidget {
     required this.items,
     required this.onValueChanges,
     this.tileMode = false,
+    this.noTilePadding = false,
   });
 
   final List<List<GeneratedFormItem>> items;
   final OnValueChanges onValueChanges;
 
   final bool tileMode;
+  final bool noTilePadding;
 
   @override
   State<GeneratedForm> createState() => _GeneratedFormState();
@@ -435,6 +437,7 @@ class _GeneratedFormState extends State<GeneratedForm> {
               ],
               GeneratedForm(
                 key: internalFormKey,
+                noTilePadding: widget.noTilePadding,
                 items: cloneFormItems(item.items)
                     .map(
                       (x) => x.map((y) {
@@ -558,6 +561,7 @@ class _GeneratedFormState extends State<GeneratedForm> {
           renderedInputs[r][e] = ToggleTile(
             label: tr(item.label),
             value: values[fieldKey] as bool,
+            noPadding: widget.noTilePadding,
             onChanged: item.disabled
                 ? null
                 : (value) {
@@ -633,7 +637,7 @@ class _GeneratedFormState extends State<GeneratedForm> {
     final List<Widget> children = [];
     for (var r = 0; r < inputRowWidgets.length; r++) {
       if (r > 0) {
-        children.add(const SizedBox(height: 24));
+        children.add(const SizedBox(height: 8));
       }
       children.add(inputRowWidgets[r]);
     }
@@ -690,6 +694,7 @@ class _GeneratedFormModalState extends State<GeneratedFormModal> {
           if (widget.message.isNotEmpty) const SizedBox(height: 16),
           GeneratedForm(
             tileMode: widget.tileMode,
+            noTilePadding: true,
             items: widget.items,
             onValueChanges: (values, valid, isBuilding) {
               // The callback fires from a post-frame callback (not during

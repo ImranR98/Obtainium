@@ -830,6 +830,7 @@ class _SelectionModalState extends State<SelectionModal> {
           children: [
             GeneratedForm(
               tileMode: true,
+              noTilePadding: true,
               items: [
                 [
                   GeneratedFormTextField(

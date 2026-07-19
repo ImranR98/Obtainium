@@ -515,6 +515,7 @@ class ToggleTile extends StatelessWidget {
   final ValueChanged<bool>? onChanged;
   final Widget? subtitle;
   final List<Widget> helpWidgets;
+  final bool noPadding;
 
   const ToggleTile({
     super.key,
@@ -523,12 +524,15 @@ class ToggleTile extends StatelessWidget {
     required this.onChanged,
     this.subtitle,
     this.helpWidgets = const [],
+    this.noPadding = false,
   });
 
   @override
   Widget build(BuildContext context) {
     return ListTile(
-      contentPadding: const EdgeInsets.symmetric(horizontal: 20),
+      contentPadding: noPadding
+          ? EdgeInsets.zero
+          : const EdgeInsets.symmetric(horizontal: 20),
       title: Text(label),
       subtitle: subtitle,
       trailing: Row(
