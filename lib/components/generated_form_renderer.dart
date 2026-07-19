@@ -1151,13 +1151,13 @@ class _GeneratedFormState extends State<GeneratedForm> {
           // (final-iteration) values by the time the closures are invoked.
           final tagInput = widget.items[r][e] as GeneratedFormTagInput;
           Future<void> onAddPressed() async {
-            // ignore: use_build_context_synchronously
+            final NavigatorState navigator = Navigator.of(context);
             final result = await showCategorySheet(
-              context,
+              navigator.context,
               initialColor: generateRandomLightColor(),
               initialName: '',
             );
-            if (!context.mounted || result == null) return;
+            if (!mounted || result == null) return;
             var temp = values[fieldKey] as Map<String, MapEntry<int, bool>>?;
             temp ??= {};
             if (temp.containsKey(result.name)) return;
@@ -1270,13 +1270,15 @@ class _GeneratedFormState extends State<GeneratedForm> {
                                 final oldEntry = temp.entries.firstWhere(
                                   (e) => e.value.value,
                                 );
-                                // ignore: use_build_context_synchronously
-                                final result = await showCategorySheet(
+                                final NavigatorState navigator = Navigator.of(
                                   context,
+                                );
+                                final result = await showCategorySheet(
+                                  navigator.context,
                                   initialColor: Color(oldEntry.value.key),
                                   initialName: oldEntry.key,
                                 );
-                                if (!context.mounted || result == null) return;
+                                if (!mounted || result == null) return;
                                 setState(() {
                                   if (result.name != oldEntry.key) {
                                     temp.remove(oldEntry.key);

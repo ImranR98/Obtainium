@@ -268,11 +268,11 @@ void main() {
       isStockInstallerDowngrade(
         installedVersionCode: 10,
         newVersionCode: 9,
-        installerModeKey: 'stock',
+        installerModeKey: 'system',
       ),
       isTrue,
     );
-    for (final String installerMode in ['shizuku', 'legacy']) {
+    for (final String installerMode in ['shizuku', 'external']) {
       expect(
         isStockInstallerDowngrade(
           installedVersionCode: 10,
@@ -286,7 +286,7 @@ void main() {
       isStockInstallerDowngrade(
         installedVersionCode: 10,
         newVersionCode: 10,
-        installerModeKey: 'stock',
+        installerModeKey: 'system',
       ),
       isFalse,
     );
@@ -294,7 +294,7 @@ void main() {
       isStockInstallerDowngrade(
         installedVersionCode: null,
         newVersionCode: 9,
-        installerModeKey: 'stock',
+        installerModeKey: 'system',
       ),
       isFalse,
     );

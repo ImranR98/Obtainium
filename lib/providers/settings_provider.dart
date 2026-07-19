@@ -65,13 +65,13 @@ enum AppsListGroupBy { none, category, source, appType }
 
 enum SwipeAction { update, pin, appOptions, delete, open, appInfo, edit, none }
 
-// Enums merged from Obtainium upstream. ObtainX's own grouping/theme models
-// ([AppsListGroupBy] above, plus the accent system in app_theme_accent.dart) are
-// kept; these upstream enums back the upstream-derived getters grafted near the
-// end of the class (see the "Settings merged from Obtainium upstream" block).
+// Installer selection, converged with upstream Obtainium: same pref key
+// (`installMethod`) and same values (these names). ObtainX drives it through the
+// string [installerMode] getter/setter; the enum defines the shared vocabulary.
+// [AppsListGroupBy] is ObtainX's grouping model — it too persists under
+// upstream's `groupBy` key (its none/category/source names match upstream), with
+// `appType` as an ObtainX-only extra that Obtainium safely ignores.
 enum InstallerMode { system, shizuku, external }
-
-enum GroupByMode { none, category, source }
 
 enum ColourSchemeMode { standard, vibrant, expressive, materialYou }
 
@@ -140,7 +140,7 @@ class SettingsProvider with ChangeNotifier {
     _removeUnusedUpstreamSettings();
     _migrateProgressiveBlurDefaultForExistingUsers();
     defaultAppDir = (await getAppStorageDir()).path;
-    _migrateShizukuSetting();
+    _migrateInstallMethodSetting();
     _migrateExternalInstallerTarget();
     _migrateSwipeActionPrefs();
     _syncSwipeActionNameStringsIfMissing();
@@ -224,18 +224,37 @@ class SettingsProvider with ChangeNotifier {
     );
   }
 
-  /// Seeds upstream's [groupBy] string pref from ObtainX's existing grouping
-  /// choice ([appsListGroupBy]) so upstream-derived UI reads the user's current
-  /// selection. Runs once; ObtainX's own grouping prefs are left untouched.
+  /// Converges grouping onto upstream Obtainium's representation: pref key
+  /// `groupBy`, value = [AppsListGroupBy] name. ObtainX's `none`/`category`/
+  /// `source` names match upstream Obtainium's groupBy names, so Obtainium reads
+  /// them directly; ObtainX's extra `appType` value is one Obtainium simply
+  /// ignores (its getter falls back to `none`). Migrates from ObtainX's older
+  /// int `appsListGroupBy` key — which is authoritative because it alone can
+  /// encode `appType` — and the even-older `groupByCategory` bool.
   void _migrateGroupBySetting() {
     if (prefs == null) return;
-    if (prefs!.getString('groupBy') != null) return;
-    final String mode = switch (appsListGroupBy) {
-      AppsListGroupBy.category => GroupByMode.category.name,
-      AppsListGroupBy.source => GroupByMode.source.name,
-      _ => GroupByMode.none.name,
-    };
-    prefs!.setString('groupBy', mode);
+    if (prefs!.containsKey('appsListGroupBy')) {
+      final int? idx = prefs!.getInt('appsListGroupBy');
+      final AppsListGroupBy mode =
+          (idx != null && idx >= 0 && idx < AppsListGroupBy.values.length)
+          ? AppsListGroupBy.values[idx]
+          : AppsListGroupBy.none;
+      prefs!.setString('groupBy', mode.name);
+      prefs!.remove('appsListGroupBy');
+      prefs!.remove('groupByCategory');
+      return;
+    }
+    final String? existing = prefs!.getString('groupBy');
+    final bool validExisting =
+        existing != null &&
+        AppsListGroupBy.values.any((AppsListGroupBy m) => m.name == existing);
+    if (!validExisting) {
+      final AppsListGroupBy mode = (prefs!.getBool('groupByCategory') == true)
+          ? AppsListGroupBy.category
+          : AppsListGroupBy.none;
+      prefs!.setString('groupBy', mode.name);
+    }
+    prefs!.remove('groupByCategory');
   }
 
   static const String _rightSwipeNameKey = 'rightSwipeActionName';
@@ -295,12 +314,29 @@ class SettingsProvider with ChangeNotifier {
     return SwipeAction.values[index.clamp(0, SwipeAction.values.length - 1)];
   }
 
-  void _migrateShizukuSetting() {
-    if (prefs?.containsKey('installerMode') == true) return;
-    if (prefs?.getBool('useShizuku') == true) {
-      prefs?.setString('installerMode', 'shizuku');
+  /// Converges the installer setting onto upstream Obtainium's representation:
+  /// key `installMethod`, values [InstallerMode] names (system/shizuku/external).
+  /// Migrates from ObtainX's older `installerMode` key (stock/shizuku/legacy) and
+  /// the even-older `useShizuku` bool. Runs once; skips if `installMethod` is set.
+  void _migrateInstallMethodSetting() {
+    if (prefs == null) return;
+    if (prefs!.containsKey('installMethod')) return;
+    final String? legacyMode = prefs!.getString('installerMode');
+    if (legacyMode != null) {
+      final String converged = switch (legacyMode) {
+        'shizuku' => InstallerMode.shizuku.name,
+        'legacy' => InstallerMode.external.name,
+        _ => InstallerMode.system.name,
+      };
+      prefs!.setString('installMethod', converged);
+      prefs!.remove('installerMode');
+      prefs!.remove('useShizuku');
+      return;
     }
-    prefs?.remove('useShizuku');
+    if (prefs!.getBool('useShizuku') == true) {
+      prefs!.setString('installMethod', InstallerMode.shizuku.name);
+    }
+    prefs!.remove('useShizuku');
   }
 
   void _migrateExternalInstallerTarget() {
@@ -374,22 +410,37 @@ class SettingsProvider with ChangeNotifier {
     return cardCornerRadiusForScale(baseRadius, cardCornerScale);
   }
 
-  // 'stock' = default Android installer, 'shizuku' = Shizuku, 'Third-Party' = third-party installer (user-chosen app; stored value unchanged for prefs compatibility)
+  // Installer selection, stored the same way upstream Obtainium stores it: pref
+  // key `installMethod`, values are [InstallerMode] names — 'system' (default
+  // Android installer), 'shizuku', or 'external' (third-party, user-chosen app).
+  // Sharing the key/values with upstream is what lets backups move cleanly
+  // between ObtainX and Obtainium without any translation.
   String get installerMode {
-    return prefs?.getString('installerMode') ?? 'stock';
+    final String? stored = prefs?.getString('installMethod');
+    if (stored != null &&
+        InstallerMode.values.any((InstallerMode m) => m.name == stored)) {
+      return stored;
+    }
+    return InstallerMode.system.name;
   }
 
   set installerMode(String mode) {
-    prefs?.setString('installerMode', mode);
+    final String resolved =
+        InstallerMode.values.any((InstallerMode m) => m.name == mode)
+        ? mode
+        : InstallerMode.system.name;
+    prefs?.setString('installMethod', resolved);
     notifyListeners();
   }
 
   bool get useShizuku {
-    return installerMode == 'shizuku';
+    return installerMode == InstallerMode.shizuku.name;
   }
 
   set useShizuku(bool useShizuku) {
-    installerMode = useShizuku ? 'shizuku' : 'stock';
+    installerMode = useShizuku
+        ? InstallerMode.shizuku.name
+        : InstallerMode.system.name;
   }
 
   ThemeSettings get theme {
@@ -827,24 +878,22 @@ class SettingsProvider with ChangeNotifier {
     notifyListeners();
   }
 
+  // Grouping is persisted under upstream Obtainium's `groupBy` key as the
+  // [AppsListGroupBy] name (see [_migrateGroupBySetting]). The enum is kept in
+  // code for type-safe grouping logic/UI; only its persisted form is shared with
+  // upstream so backups move between ObtainX and Obtainium without translation.
   AppsListGroupBy get appsListGroupBy {
-    if (prefs?.containsKey('appsListGroupBy') == true) {
-      final stored = prefs!.getInt('appsListGroupBy');
-      if (stored != null &&
-          stored >= 0 &&
-          stored < AppsListGroupBy.values.length) {
-        return AppsListGroupBy.values[stored];
+    final String? stored = prefs?.getString('groupBy');
+    if (stored != null) {
+      for (final AppsListGroupBy mode in AppsListGroupBy.values) {
+        if (mode.name == stored) return mode;
       }
-    }
-    if (prefs?.getBool('groupByCategory') == true) {
-      return AppsListGroupBy.category;
     }
     return AppsListGroupBy.none;
   }
 
   set appsListGroupBy(AppsListGroupBy mode) {
-    prefs?.setInt('appsListGroupBy', mode.index);
-    prefs?.setBool('groupByCategory', mode == AppsListGroupBy.category);
+    prefs?.setString('groupBy', mode.name);
     notifyListeners();
   }
 
@@ -1565,12 +1614,12 @@ class SettingsProvider with ChangeNotifier {
   // Settings merged from Obtainium upstream.
   //
   // ObtainX's own settings (everything above) are kept intact; these adopt
-  // upstream additions that the merged codebase now references. Where upstream
-  // and ObtainX model the same concept differently — grouping via [groupBy]/
-  // [GroupByMode] here vs [appsListGroupBy]/[AppsListGroupBy] above, or theme
-  // accents via [colourSchemeMode]/[ColourSchemeMode] here vs the accent system
-  // ([appAccentColorSource], app_theme_accent.dart) above — BOTH are kept so
-  // neither side of the merge breaks; a future pass can converge them.
+  // upstream additions that the merged codebase now references. Grouping and the
+  // installer setting have been converged onto upstream's pref keys/values (see
+  // [appsListGroupBy] and [installerMode]), so those no longer diverge. Theme
+  // accents still differ intentionally — ObtainX's accent system
+  // ([appAccentColorSource], app_theme_accent.dart) is a superset of upstream's
+  // [colourSchemeMode]/[ColourSchemeMode], so both are kept.
   // ───────────────────────────────────────────────────────────────────────────
 
   // Instance-method haptics (upstream API). ObtainX also exposes the top-level
@@ -1658,22 +1707,6 @@ class SettingsProvider with ChangeNotifier {
   set colourSchemeMode(ColourSchemeMode mode) {
     prefs?.setInt('colourSchemeMode', mode.index);
     prefs?.setBool('useMaterialYou', mode == ColourSchemeMode.materialYou);
-    notifyListeners();
-  }
-
-  String get groupBy {
-    final stored = prefs?.getString('groupBy');
-    if (stored != null && GroupByMode.values.any((m) => m.name == stored)) {
-      return stored;
-    }
-    return GroupByMode.none.name;
-  }
-
-  set groupBy(String mode) {
-    final resolved = GroupByMode.values.any((m) => m.name == mode)
-        ? mode
-        : GroupByMode.none.name;
-    prefs?.setString('groupBy', resolved);
     notifyListeners();
   }
 }

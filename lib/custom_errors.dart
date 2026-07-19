@@ -5,10 +5,10 @@ import 'package:easy_localization/easy_localization.dart';
 import 'package:android_package_installer/android_package_installer.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:obtainium/main.dart';
 import 'package:obtainium/providers/logs_provider.dart';
 import 'package:obtainium/providers/source_provider.dart';
 import 'package:obtainium/theme/app_dialog_theme.dart';
-import 'package:provider/provider.dart';
 
 class ObtainiumError {
   final String code;
@@ -326,62 +326,63 @@ String list2FriendlyString(List<String> list) {
 
 // Fork-only UI helpers: surface an error/message as a snackbar (recoverable)
 // or a copyable dialog (unexpected). Used across the fork's pages.
-void showMessage(
-  dynamic e,
-  BuildContext context, {
-  bool isError = false,
-  ThemeData? theme,
-}) {
-  Provider.of<LogsProvider>(
-    context,
-    listen: false,
-  ).add(e.toString(), level: isError ? LogLevel.error : LogLevel.info);
+void showMessage(dynamic e, {bool isError = false, ThemeData? theme}) {
+  unawaited(
+    LogsProvider().add(
+      e.toString(),
+      level: isError ? LogLevel.error : LogLevel.info,
+    ),
+  );
   if (e is String || (e is ObtainiumError && !e.unexpected)) {
-    ScaffoldMessenger.of(context).showSnackBar(
+    scaffoldMessengerKey.currentState?.showSnackBar(
       SnackBar(
         content: Text(e.toString()),
         duration: const Duration(seconds: 4),
       ),
     );
   } else {
-    showDialog(
-      context: context,
-      builder: (BuildContext ctx) {
-        final Widget dialog = AlertDialog(
-          scrollable: true,
-          contentPadding: appDialogContentPadding,
-          title: Text(
-            e is MultiAppMultiError
-                ? tr(isError ? 'someErrors' : 'updates')
-                : tr(isError ? 'unexpectedError' : 'unknown'),
-          ),
-          content: GestureDetector(
-            onLongPress: () {
-              Clipboard.setData(ClipboardData(text: e.toString()));
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text(tr('copiedToClipboard')),
-                  duration: const Duration(seconds: 4),
-                ),
-              );
-            },
-            child: Text(e.toString()),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () {
-                Navigator.of(context).pop(null);
-              },
-              child: Text(tr('ok')),
+    final NavigatorState? navigator = globalNavigatorKey.currentState;
+    if (navigator == null || !navigator.mounted) return;
+    unawaited(
+      showDialog<void>(
+        context: navigator.context,
+        builder: (BuildContext dialogContext) {
+          final Widget dialog = AlertDialog(
+            scrollable: true,
+            contentPadding: appDialogContentPadding,
+            title: Text(
+              e is MultiAppMultiError
+                  ? tr(isError ? 'someErrors' : 'updates')
+                  : tr(isError ? 'unexpectedError' : 'unknown'),
             ),
-          ],
-        );
-        return theme == null ? dialog : Theme(data: theme, child: dialog);
-      },
+            content: GestureDetector(
+              onLongPress: () {
+                unawaited(Clipboard.setData(ClipboardData(text: e.toString())));
+                scaffoldMessengerKey.currentState?.showSnackBar(
+                  SnackBar(
+                    content: Text(tr('copiedToClipboard')),
+                    duration: const Duration(seconds: 4),
+                  ),
+                );
+              },
+              child: Text(e.toString()),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () {
+                  Navigator.of(dialogContext).pop();
+                },
+                child: Text(tr('ok')),
+              ),
+            ],
+          );
+          return theme == null ? dialog : Theme(data: theme, child: dialog);
+        },
+      ),
     );
   }
 }
 
-void showError(dynamic e, BuildContext context, {ThemeData? theme}) {
-  showMessage(e, context, isError: true, theme: theme);
+void showError(dynamic e, {ThemeData? theme}) {
+  showMessage(e, isError: true, theme: theme);
 }

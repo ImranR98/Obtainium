@@ -926,7 +926,6 @@ class _AppPageState extends State<AppPage> with WidgetsBindingObserver {
         if (mounted) {
           _showPageError(
             ObtainiumError(iconErr),
-            context,
             title: tr('errorChangingIcon'),
           );
         }
@@ -960,7 +959,6 @@ class _AppPageState extends State<AppPage> with WidgetsBindingObserver {
       if (mounted) {
         _showPageError(
           ObtainiumError(tr('noFilePickerAvailable')),
-          context,
           title: tr('errorChangingIcon'),
         );
       }
@@ -975,7 +973,6 @@ class _AppPageState extends State<AppPage> with WidgetsBindingObserver {
       if (mounted) {
         _showPageError(
           ObtainiumError(tr('changeAppIconInvalidPng')),
-          context,
           title: tr('errorChangingIcon'),
         );
       }
@@ -1035,25 +1032,18 @@ class _AppPageState extends State<AppPage> with WidgetsBindingObserver {
     );
   }
 
-  void _showPageError(
-    dynamic error,
-    BuildContext hostContext, {
-    String? title,
-  }) {
-    if (!hostContext.mounted) return;
-    Provider.of<LogsProvider>(
-      hostContext,
-      listen: false,
-    ).add(error.toString(), level: LogLevel.error);
+  void _showPageError(dynamic error, {String? title}) {
+    unawaited(LogsProvider().add(error.toString(), level: LogLevel.error));
+    final BuildContext? appContext = globalNavigatorKey.currentContext;
+    if (appContext == null) return;
     Provider.of<AppsProvider>(
-      hostContext,
+      appContext,
       listen: false,
     ).setAppPageError(widget.appId, error, title: title);
   }
 
-  void _showPageMessage(dynamic message, BuildContext hostContext) {
-    if (!hostContext.mounted) return;
-    showMessage(message, hostContext, theme: _cachedPageTheme);
+  void _showPageMessage(dynamic message) {
+    showMessage(message, theme: _cachedPageTheme);
   }
 
   Widget _buildPersistentPageError(
@@ -1657,18 +1647,14 @@ class _AppPageState extends State<AppPage> with WidgetsBindingObserver {
   ) async {
     if (!context.mounted) return;
     final Brightness brightness = Theme.of(context).brightness;
+    final AppsProvider apps = context.read<AppsProvider>();
+    final SettingsProvider settings = context.read<SettingsProvider>();
     final ColorScheme? scheme = await loadColorSchemeFromAppIcon(
       iconBytes: iconBytes,
       brightness: brightness,
     );
-    if (!context.mounted) return;
-    final AppsProvider apps =
-        // ignore: use_build_context_synchronously
-        Provider.of<AppsProvider>(context, listen: false);
+    if (!mounted) return;
     if (!identical(apps.apps[widget.appId]?.icon, iconBytes)) return;
-    final SettingsProvider settings =
-        // ignore: use_build_context_synchronously
-        Provider.of<SettingsProvider>(context, listen: false);
     if (!settings.matchAppPageToIconColors) return;
     if (scheme != null) {
       setState(() {
@@ -1761,7 +1747,6 @@ class _AppPageState extends State<AppPage> with WidgetsBindingObserver {
               }
               _showPageError(
                 ObtainiumError(error.description, unexpected: true),
-                context,
                 title: tr('errorLoadingPage'),
               );
             }
@@ -1976,8 +1961,7 @@ class _AppPageState extends State<AppPage> with WidgetsBindingObserver {
       if (err is RepositoryRenamedError && context.mounted) {
         await appsProvider.updatePendingRepoRename(id, err.newUrl);
       } else if (context.mounted) {
-        // ignore: use_build_context_synchronously
-        _showPageError(err, context, title: tr('errorCheckingUpdates'));
+        _showPageError(err, title: tr('errorCheckingUpdates'));
       }
     } finally {
       if (context.mounted &&
@@ -2610,7 +2594,7 @@ class _AppPageState extends State<AppPage> with WidgetsBindingObserver {
           await appsProvider.saveApps([appToSave], updateInstalledInfo: false);
         } catch (err) {
           if (context.mounted) {
-            _showPageError(err, context);
+            _showPageError(err);
           }
         } finally {
           if (context.mounted) {
@@ -2694,7 +2678,7 @@ class _AppPageState extends State<AppPage> with WidgetsBindingObserver {
           );
         } catch (err) {
           if (context.mounted) {
-            _showPageError(err, context);
+            _showPageError(err);
           }
         } finally {
           if (context.mounted) {
@@ -2852,18 +2836,12 @@ class _AppPageState extends State<AppPage> with WidgetsBindingObserver {
                   ? null
                   : () async {
                       try {
-                        await appsProvider.downloadAppAssets(
-                          [app.app.id],
-                          context,
-                          dialogTheme: pageTheme,
-                        );
+                        await appsProvider.downloadAppAssets([
+                          app.app.id,
+                        ], dialogTheme: pageTheme);
                       } catch (e) {
                         if (!context.mounted) return;
-                        _showPageError(
-                          e,
-                          context,
-                          title: tr('errorDownloadingAssets'),
-                        );
+                        _showPageError(e, title: tr('errorDownloadingAssets'));
                       }
                     },
             ),
@@ -2919,18 +2897,12 @@ class _AppPageState extends State<AppPage> with WidgetsBindingObserver {
                   ? null
                   : () async {
                       try {
-                        await appsProvider.downloadAppAssets(
-                          [app.app.id],
-                          context,
-                          dialogTheme: pageTheme,
-                        );
+                        await appsProvider.downloadAppAssets([
+                          app.app.id,
+                        ], dialogTheme: pageTheme);
                       } catch (e) {
                         if (!context.mounted) return;
-                        _showPageError(
-                          e,
-                          context,
-                          title: tr('errorDownloadingAssets'),
-                        );
+                        _showPageError(e, title: tr('errorDownloadingAssets'));
                       }
                     },
             ),
@@ -4204,7 +4176,6 @@ class _AppPageState extends State<AppPage> with WidgetsBindingObserver {
         if (buildVerificationBlocked) {
           _showPageError(
             ObtainiumError(buildVerificationBlockedMessage!),
-            themeContext,
             title: tr('errorInstallingUpdate'),
           );
           return;
@@ -4220,11 +4191,11 @@ class _AppPageState extends State<AppPage> with WidgetsBindingObserver {
             dialogTheme: _cachedPageTheme,
           );
           if (res.isNotEmpty && !trackOnly && themeContext.mounted) {
-            _showPageMessage(successMessage, themeContext);
+            _showPageMessage(successMessage);
           }
         } catch (e) {
           if (themeContext.mounted) {
-            _showPageError(e, themeContext, title: tr('errorInstallingUpdate'));
+            _showPageError(e, title: tr('errorInstallingUpdate'));
           }
         }
       }

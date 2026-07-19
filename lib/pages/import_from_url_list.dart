@@ -84,42 +84,45 @@ class _ImportFromUrlListPageState extends State<ImportFromUrlListPage> {
       });
     } catch (error) {
       if (!mounted) return;
-      showError(error, context);
+      showError(error);
     }
   }
 
   Future<void> _import() async {
     final List<String> urls = _urls();
     if (urls.isEmpty || _validateUrls(_urlController.text) != null) return;
+    final AppsProvider appsProvider = context.read<AppsProvider>();
+    final bool embedded = widget.embedded;
+    final Future<void> Function()? onImportCompleted = widget.onImportCompleted;
+    final NavigatorState navigator = Navigator.of(context);
+    final ModalRoute<dynamic>? hostRoute = ModalRoute.of(context);
     setState(() {
       _isImporting = true;
     });
     try {
-      final List<List<String>> errors = await context
-          .read<AppsProvider>()
-          .addAppsByURL(urls);
-      if (!mounted) return;
+      final List<List<String>> errors = await appsProvider.addAppsByURL(urls);
       if (errors.isEmpty) {
         showMessage(
           tr('importedX', args: [plural('apps', urls.length).toLowerCase()]),
-          context,
         );
-        if (widget.embedded) {
-          await widget.onImportCompleted?.call();
-        } else {
-          Navigator.of(context).pop();
+        if (embedded) {
+          await onImportCompleted?.call();
+        } else if (navigator.mounted && hostRoute?.isCurrent == true) {
+          navigator.pop();
         }
       } else {
-        unawaited(
-          showDialog<void>(
-            context: context,
-            builder: (_) =>
-                ImportErrorDialog(urlsLength: urls.length, errors: errors),
-          ),
-        );
+        if (navigator.mounted) {
+          unawaited(
+            showDialog<void>(
+              context: navigator.context,
+              builder: (_) =>
+                  ImportErrorDialog(urlsLength: urls.length, errors: errors),
+            ),
+          );
+        }
       }
     } catch (error) {
-      if (mounted) showError(error, context);
+      showError(error);
     } finally {
       if (mounted) {
         setState(() {

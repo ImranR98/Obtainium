@@ -17,7 +17,7 @@ class ExternalInstaller extends Installer {
   ExternalInstaller(super.settingsProvider);
 
   @override
-  String get modeKey => 'legacy';
+  String get modeKey => 'external';
 
   @override
   bool get wantsContainerHandoff => true;

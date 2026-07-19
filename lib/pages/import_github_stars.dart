@@ -57,6 +57,13 @@ class _ImportGitHubStarsContentState extends State<ImportGitHubStarsContent> {
       return;
     }
 
+    final AppsProvider appsProvider = context.read<AppsProvider>();
+    final bool embedded = widget.embedded;
+    final Future<void> Function()? onImportCompleted = widget.onImportCompleted;
+    final NavigatorState navigator = Navigator.of(context);
+    final Route<dynamic>? usernameSheetRoute = embedded
+        ? null
+        : ModalRoute.of(context);
     setState(() {
       _isLoading = true;
       _showUsernameError = false;
@@ -71,14 +78,8 @@ class _ImportGitHubStarsContentState extends State<ImportGitHubStarsContent> {
       setState(() {
         _isLoading = false;
       });
-      final NavigatorState? usernameSheetNavigator = widget.embedded
-          ? null
-          : Navigator.of(context);
-      final Route<dynamic>? usernameSheetRoute = widget.embedded
-          ? null
-          : ModalRoute.of(context);
       await showModalBottomSheet<List<String>>(
-        context: context,
+        context: navigator.context,
         isScrollControlled: true,
         showDragHandle: false,
         builder: (_) => SelectionModal(
@@ -88,13 +89,10 @@ class _ImportGitHubStarsContentState extends State<ImportGitHubStarsContent> {
           onSubmitSelection:
               (List<String> selectedUrls, VoidCallback stopLoading) async {
                 try {
-                  final List<List<String>> errors = await context
-                      .read<AppsProvider>()
+                  final List<List<String>> errors = await appsProvider
                       .addAppsByURL(selectedUrls);
-                  if (!mounted) return false;
                   stopLoading();
                   await WidgetsBinding.instance.endOfFrame;
-                  if (!mounted) return false;
                   if (errors.isEmpty) {
                     showMessage(
                       tr(
@@ -103,40 +101,36 @@ class _ImportGitHubStarsContentState extends State<ImportGitHubStarsContent> {
                           plural('apps', selectedUrls.length).toLowerCase(),
                         ],
                       ),
-                      context,
                     );
-                  } else {
+                  } else if (navigator.mounted) {
                     await showDialog<void>(
-                      context: context,
+                      context: navigator.context,
                       builder: (_) => ImportErrorDialog(
                         urlsLength: selectedUrls.length,
                         errors: errors,
                       ),
                     );
-                    if (!mounted) return false;
                   }
-                  final Future<void> Function()? onImportCompleted =
-                      widget.onImportCompleted;
                   if (onImportCompleted != null) {
                     await onImportCompleted();
                   }
                   if (usernameSheetRoute != null &&
                       usernameSheetRoute.isActive &&
-                      usernameSheetNavigator != null) {
-                    usernameSheetNavigator.removeRoute(usernameSheetRoute);
+                      navigator.mounted) {
+                    navigator.removeRoute(usernameSheetRoute);
                   }
                   return true;
                 } catch (error) {
                   stopLoading();
                   await WidgetsBinding.instance.endOfFrame;
-                  if (mounted) showError(error, context);
+                  showError(error);
                 }
                 return false;
               },
         ),
       );
     } catch (error) {
-      if (mounted) showError(error, context);
+      showError(error);
     } finally {
       if (mounted) {
         setState(() {

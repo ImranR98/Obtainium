@@ -2614,7 +2614,7 @@ class _IntegrationsSectionState extends State<_IntegrationsSection>
                 child: AppSegmentedButton<String>(
                   segments: [
                     ButtonSegment<String>(
-                      value: 'stock',
+                      value: 'system',
                       label: AppSegmentedButtonLabel(tr('installerModeStock')),
                     ),
                     ButtonSegment<String>(
@@ -2624,7 +2624,7 @@ class _IntegrationsSectionState extends State<_IntegrationsSection>
                       ),
                     ),
                     ButtonSegment<String>(
-                      value: 'legacy',
+                      value: 'external',
                       label: AppSegmentedButtonLabel(
                         tr('installerModeThirdParty'),
                       ),
@@ -2645,23 +2645,15 @@ class _IntegrationsSectionState extends State<_IntegrationsSection>
                             case 'services_not_found':
                               showError(
                                 ObtainiumError(tr('shizukuBinderNotFound')),
-                                context,
                               );
                             case 'old_shizuku':
-                              showError(
-                                ObtainiumError(tr('shizukuOld')),
-                                context,
-                              );
+                              showError(ObtainiumError(tr('shizukuOld')));
                             case 'old_android_with_adb':
                               showError(
                                 ObtainiumError(tr('shizukuOldAndroidWithADB')),
-                                context,
                               );
                             case 'denied':
-                              showError(
-                                ObtainiumError(tr('cancelled')),
-                                context,
-                              );
+                              showError(ObtainiumError(tr('cancelled')));
                           }
                         }
                       });
@@ -2679,7 +2671,7 @@ class _IntegrationsSectionState extends State<_IntegrationsSection>
                   onChanged: (bool value) =>
                       sp.shizukuPretendToBeGooglePlay = value,
                 ),
-              if (sp.installerMode == 'legacy')
+              if (sp.installerMode == 'external')
                 const Padding(
                   padding: EdgeInsets.only(top: 8),
                   child: _ExternalInstallerTile(),
@@ -2781,7 +2773,7 @@ class AboutSectionContent extends StatelessWidget {
                     borderRadius: 18,
                     semanticLabel: tr('aboutAuthorProfile'),
                     onTap: () => _openAboutUrl(_aboutAuthorUrl),
-                    onLongPress: () => _copyAboutUrl(context, _aboutAuthorUrl),
+                    onLongPress: () => _copyAboutUrl(_aboutAuthorUrl),
                   ),
                 ],
               ),
@@ -2801,7 +2793,7 @@ class AboutSectionContent extends StatelessWidget {
                   width: double.infinity,
                   child: FilledButton.icon(
                     onPressed: () => _openAboutUrl(sp.sourceUrl),
-                    onLongPress: () => _copyAboutUrl(context, sp.sourceUrl),
+                    onLongPress: () => _copyAboutUrl(sp.sourceUrl),
                     icon: _GitHubMarkIcon(color: colorScheme.onPrimary),
                     label: Text(tr('aboutStarOnGithub')),
                   ),
@@ -2816,8 +2808,7 @@ class AboutSectionContent extends StatelessWidget {
                       child: FilledButton.tonalIcon(
                         style: _aboutSecondaryButtonStyle(colorScheme),
                         onPressed: () => _openAboutUrl(_aboutWikiUrl),
-                        onLongPress: () =>
-                            _copyAboutUrl(context, _aboutWikiUrl),
+                        onLongPress: () => _copyAboutUrl(_aboutWikiUrl),
                         icon: const Icon(Icons.open_in_new_rounded),
                         label: Text(tr('aboutOpenWiki')),
                       ),
@@ -2829,7 +2820,7 @@ class AboutSectionContent extends StatelessWidget {
                         onPressed: () =>
                             _shareAboutUrl(_aboutObtainXWebsiteUrl, 'ObtainX'),
                         onLongPress: () =>
-                            _copyAboutUrl(context, _aboutObtainXWebsiteUrl),
+                            _copyAboutUrl(_aboutObtainXWebsiteUrl),
                         icon: const Icon(Icons.share_rounded),
                         label: Text(tr('share')),
                       ),
@@ -3062,7 +3053,7 @@ class _AboutAppPromo extends StatelessWidget {
       child: InkWell(
         onTap: () =>
             appId != null ? _openPromoApp(appId!, url) : _openAboutUrl(url),
-        onLongPress: () => _copyAboutUrl(context, url),
+        onLongPress: () => _copyAboutUrl(url),
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
           child: Row(
@@ -3168,7 +3159,7 @@ class _AboutTextLink extends StatelessWidget {
   Widget build(BuildContext context) {
     return TextButton(
       onPressed: () => _openAboutUrl(url),
-      onLongPress: () => _copyAboutUrl(context, url),
+      onLongPress: () => _copyAboutUrl(url),
       style: TextButton.styleFrom(
         foregroundColor: colorScheme.primary,
         padding: const EdgeInsets.symmetric(horizontal: 8),
@@ -3213,10 +3204,9 @@ Future<void> _openPromoApp(String appId, String webUrl) async {
   }
 }
 
-Future<void> _copyAboutUrl(BuildContext context, String url) async {
+Future<void> _copyAboutUrl(String url) async {
   await Clipboard.setData(ClipboardData(text: url));
-  if (!context.mounted) return;
-  showMessage(tr('aboutLinkCopied'), context);
+  showMessage(tr('aboutLinkCopied'));
 }
 
 Future<void> _shareAboutUrl(String url, String subject) async {

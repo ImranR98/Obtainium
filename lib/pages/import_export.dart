@@ -92,25 +92,20 @@ class _ImportExportPageState extends State<ImportExportPage> {
 
     Future<void> runObtainiumExport({bool pickOnly = false}) async {
       hapticSelection();
-      unawaited(
-        appsProvider
-            .export(
-              pickOnly:
-                  pickOnly || (await settingsProvider.getExportDir()) == null,
-              sp: settingsProvider,
-            )
-            .then((String? result) {
-              if (!context.mounted) return;
-              if (result != null) {
-                showMessage(tr('exportedTo', args: [result]), context);
-              }
-              setState(() {});
-            })
-            .catchError((e) {
-              if (!context.mounted) return;
-              showError(e, context);
-            }),
-      );
+      try {
+        final String? result = await appsProvider.export(
+          pickOnly: pickOnly || (await settingsProvider.getExportDir()) == null,
+          sp: settingsProvider,
+        );
+        if (result != null) {
+          showMessage(tr('exportedTo', args: [result]));
+        }
+        if (mounted) {
+          setState(() {});
+        }
+      } catch (e) {
+        showError(e);
+      }
     }
 
     Future<void> importObtainiumBackupData(String backupData) async {
@@ -120,7 +115,6 @@ class _ImportExportPageState extends State<ImportExportPage> {
         throw ObtainiumError(tr('invalidInput'));
       }
       final importResult = await appsProvider.import(backupData);
-      if (!context.mounted) return;
       final cats = settingsProvider.categories;
       appsProvider.apps.forEach((key, appInMemory) {
         for (var category in appInMemory.app.categories) {
@@ -132,7 +126,6 @@ class _ImportExportPageState extends State<ImportExportPage> {
       appsProvider.addMissingCategories(settingsProvider);
       showMessage(
         '${tr('importedX', args: [plural('apps', importResult.key.length).toLowerCase()])}${importResult.value ? ' + ${tr('settings').toLowerCase()}' : ''}',
-        context,
       );
     }
 
@@ -193,8 +186,7 @@ class _ImportExportPageState extends State<ImportExportPage> {
           await importObtainiumBackupData(backupData);
         }
       } catch (err) {
-        if (!context.mounted) return;
-        showError(err, context);
+        showError(err);
       } finally {
         if (context.mounted && importStarted) {
           setState(() {

@@ -865,7 +865,7 @@ class _AppListItem extends StatelessWidget {
 
     void onUpdateOrOpenReleasePressed() {
       if (buildVerificationBlocked) {
-        showError(ObtainiumError(buildVerificationBlockedMessage), context);
+        showError(ObtainiumError(buildVerificationBlockedMessage));
         return;
       }
       final trackOnly = app.app.additionalSettings['trackOnly'] == true;
@@ -882,7 +882,7 @@ class _AppListItem extends StatelessWidget {
             ], globalNavigatorKey.currentContext)
             .catchError((e) {
               if (!context.mounted) return <String>[];
-              showError(e, context);
+              showError(e);
               return <String>[];
             });
       }
@@ -1534,12 +1534,7 @@ class _SwipeableListItemState extends State<_SwipeableListItem>
                       level: LogLevel.error,
                     ),
                   );
-                  final errorContext = context.mounted
-                      ? context
-                      : globalNavigatorKey.currentContext;
-                  if (errorContext != null && errorContext.mounted) {
-                    showError(e, errorContext);
-                  }
+                  showError(e);
                   return <String>[];
                 }),
           );
@@ -3081,7 +3076,10 @@ class AppsPageState extends State<AppsPage> {
       onPressed: onOpenFilterSheet,
       tooltip: tr('filterApps'),
       padding: EdgeInsets.zero,
-      constraints: const BoxConstraints(minWidth: iconSlot, minHeight: iconSlot),
+      constraints: const BoxConstraints(
+        minWidth: iconSlot,
+        minHeight: iconSlot,
+      ),
     );
 
     return PreferredSize(
@@ -3258,7 +3256,7 @@ class AppsPageState extends State<AppsPage> {
       return refreshFuture
           .catchError((e) {
             if (!context.mounted) return <App>[];
-            showError(e is Map ? e['errors'] : e, context);
+            showError(e is Map ? e['errors'] : e);
             return <App>[];
           })
           .whenComplete(() {
@@ -4662,13 +4660,13 @@ class AppsPageState extends State<AppsPage> {
                         )
                         .catchError((e) {
                           if (!context.mounted) return <String>[];
-                          showError(e, context);
+                          showError(e);
                           return <String>[];
                         })
                         .then((value) {
                           if (value.isNotEmpty && shouldInstallUpdates) {
                             if (!context.mounted) return;
-                            showMessage(tr('appsUpdated'), context);
+                            showMessage(tr('appsUpdated'));
                           }
                         }),
                   );
@@ -4718,7 +4716,7 @@ class AppsPageState extends State<AppsPage> {
           );
         } catch (err) {
           if (!context.mounted) return;
-          showError(err, context);
+          showError(err);
         }
       };
     }
@@ -4789,12 +4787,9 @@ class AppsPageState extends State<AppsPage> {
     // surface - the phone sheet pops at its own call sites; the pane stays.
     void downloadSelectedAppAssets() {
       appsProvider
-          .downloadAppAssets(
-            selectedApps.map((e) => e.id).toList(),
-            globalNavigatorKey.currentContext ?? context,
-          )
+          .downloadAppAssets(selectedApps.map((e) => e.id).toList())
           .catchError((e) {
-            showError(e, globalNavigatorKey.currentContext ?? context);
+            showError(e);
             return <String>[];
           });
     }

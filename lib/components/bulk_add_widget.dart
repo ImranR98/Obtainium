@@ -735,7 +735,7 @@ class BulkAddWidgetState extends State<BulkAddWidget> {
       } catch (e) {
         if (!mounted) return;
         setState(() => _loadingApps = false);
-        showError(e, context);
+        showError(e);
         return;
       }
     }

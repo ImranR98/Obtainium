@@ -226,8 +226,9 @@ class AddAppPageState extends State<AddAppPage> {
     if (handleBack()) return;
     clearInputFocus();
     final bool hadUnsavedInput = _hasUnsavedFlowInput;
+    final NavigatorState navigator = Navigator.of(context);
     if (!await confirmCancelBulkScanForNavigation()) return;
-    if (!mounted) return;
+    if (!mounted || !navigator.mounted) return;
     if (widget._initialMode == _AddMode.launcher) {
       if (_mode != _AddMode.launcher) {
         _resetAllInputStates();
@@ -236,10 +237,10 @@ class AddAppPageState extends State<AddAppPage> {
     }
     if (hadUnsavedInput) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (mounted) Navigator.of(context).pop();
+        if (mounted && navigator.mounted) navigator.pop();
       });
     } else {
-      Navigator.of(context).pop();
+      navigator.pop();
     }
   }
 
@@ -310,7 +311,7 @@ class AddAppPageState extends State<AddAppPage> {
       }
       changeUserInput(input, true, false, updateUrlInput: true);
     } catch (e) {
-      showError(e, context);
+      showError(e);
     }
   }
 
@@ -1150,6 +1151,11 @@ class AddAppPageState extends State<AddAppPage> {
     final SettingsProvider settingsProvider = context.read<SettingsProvider>();
     final NotificationsProvider notificationsProvider = context
         .read<NotificationsProvider>();
+    final bool useLargeScreenLayout =
+        MediaQuery.sizeOf(context).width >= kLargeScreenWidthBreakpoint &&
+        !settingsProvider.alwaysUsePhoneLayout;
+    final HomePageState? homeState = context
+        .findAncestorStateOfType<HomePageState>();
 
     final bool doingSomething = gettingAppInfo || searching;
     // The nested Scaffold inherits bottom padding from the home Scaffold when
@@ -1183,9 +1189,10 @@ class AddAppPageState extends State<AddAppPage> {
           userPickedTrackOnly || pickedSource!.enforceTrackOnly;
       if (useTrackOnly &&
           (!settingsProvider.hideTrackOnlyWarning || ignoreHideSetting)) {
-        // ignore: use_build_context_synchronously
+        final NavigatorState? navigator = globalNavigatorKey.currentState;
+        if (navigator == null || !navigator.mounted) return false;
         final values = await showDialog(
-          context: context,
+          context: navigator.context,
           builder: (BuildContext ctx) {
             return GeneratedFormModal(
               initValid: true,
@@ -1215,27 +1222,33 @@ class AddAppPageState extends State<AddAppPage> {
     Future<bool> getReleaseDateAsVersionConfirmationIfNeeded(
       bool userPickedTrackOnly,
     ) async {
-      return (!(getVersionStringSource(additionalSettings) ==
-              versionStringSourceReleaseDate &&
-          // ignore: use_build_context_synchronously
-          await showDialog(
-                context: context,
-                builder: (BuildContext ctx) {
-                  return GeneratedFormModal(
-                    title: tr('releaseDateAsVersion'),
-                    items: const [],
-                    message: tr('releaseDateAsVersionExplanation'),
-                  );
-                },
-              ) ==
-              null));
+      // No confirmation needed unless the version comes from the release date;
+      // return true (proceed) without touching the navigator in the common case.
+      if (getVersionStringSource(additionalSettings) !=
+          versionStringSourceReleaseDate) {
+        return true;
+      }
+      final NavigatorState? navigator = globalNavigatorKey.currentState;
+      if (navigator == null || !navigator.mounted) return false;
+      return await showDialog(
+            context: navigator.context,
+            builder: (BuildContext ctx) {
+              return GeneratedFormModal(
+                title: tr('releaseDateAsVersion'),
+                items: const [],
+                message: tr('releaseDateAsVersionExplanation'),
+              );
+            },
+          ) !=
+          null;
     }
 
     Future<_PackageIdDetectionChoice?>
     getPackageIdDetectionConfirmation() async {
-      if (!context.mounted) return null;
+      final NavigatorState? navigator = globalNavigatorKey.currentState;
+      if (navigator == null || !navigator.mounted) return null;
       return showDialog<_PackageIdDetectionChoice>(
-        context: context,
+        context: navigator.context,
         builder: (BuildContext dialogContext) {
           return AlertDialog(
             title: Text(tr('downloadAPKToIdentifyAppQuestion')),
@@ -1344,8 +1357,8 @@ class AddAppPageState extends State<AddAppPage> {
               if (!context.mounted) return;
               final apkUrl = await appsProvider.confirmAppFileUrl(
                 app,
-                context,
                 false,
+                allowUserInteraction: true,
               );
               if (apkUrl == null) {
                 throw ObtainiumError(tr('cancelled'));
@@ -1356,10 +1369,9 @@ class AddAppPageState extends State<AddAppPage> {
                     .toList()
                     .indexOf(apkUrl.value),
               );
-              // ignore: use_build_context_synchronously
               final downloadedArtifact = await appsProvider.downloadApp(
                 app,
-                globalNavigatorKey.currentContext,
+                allowUserInteraction: true,
                 notificationsProvider: notificationsProvider,
               );
               DownloadedApk? downloadedFile;
@@ -1419,28 +1431,26 @@ class AddAppPageState extends State<AddAppPage> {
           appWasAdded = true;
         }
         if (app != null) {
-          if (!context.mounted) return;
-          final double screenWidth = MediaQuery.sizeOf(context).width;
-          final bool isLargeScreen =
-              screenWidth >= kLargeScreenWidthBreakpoint &&
-              !settingsProvider.alwaysUsePhoneLayout;
-          final homeState = context.findAncestorStateOfType<HomePageState>();
-          if (isLargeScreen && homeState != null) {
+          if (!mounted) return;
+          if (useLargeScreenLayout && homeState != null && homeState.mounted) {
+            final VoidCallback? onEmbeddedAddCompleted =
+                widget._onEmbeddedAddCompleted;
             _resetUrlModeInput();
-            widget._onEmbeddedAddCompleted?.call();
+            onEmbeddedAddCompleted?.call();
             unawaited(homeState.switchToAppsTabAndOpenApp(app.id));
           } else {
-            unawaited(
-              Navigator.push(
-                globalNavigatorKey.currentContext ?? context,
-                heroFriendlyAppPageRoute((_) => AppPage(appId: app!.id)),
-              ),
-            );
+            final NavigatorState? navigator = globalNavigatorKey.currentState;
+            if (navigator != null && navigator.mounted) {
+              unawaited(
+                navigator.push(
+                  heroFriendlyAppPageRoute((_) => AppPage(appId: app!.id)),
+                ),
+              );
+            }
           }
         }
       } catch (e) {
-        if (!context.mounted) return;
-        showError(e, context);
+        showError(e);
       } finally {
         if (mounted) {
           setState(() {
@@ -1522,6 +1532,11 @@ class AddAppPageState extends State<AddAppPage> {
       if (selectedUrls.isEmpty) return;
 
       bool saveCompleted = false;
+      final bool embeddedDetail = widget._embeddedDetail;
+      final Future<void> Function()? onBatchSearchSaved =
+          widget._onBatchSearchSaved;
+      final NavigatorState navigator = Navigator.of(context);
+      final ModalRoute<dynamic>? hostRoute = ModalRoute.of(context);
       setState(() {
         gettingAppInfo = true;
       });
@@ -1549,23 +1564,26 @@ class AddAppPageState extends State<AddAppPage> {
               'importedX',
               args: [plural('apps', selectedUrls.length).toLowerCase()],
             ),
-            context,
           );
         } else {
-          await showDialog<void>(
-            context: context,
-            builder: (BuildContext dialogContext) {
-              return ImportErrorDialog(
-                urlsLength: selectedUrls.length,
-                errors: errors,
-              );
-            },
-          );
+          // Show the error dialog if a navigator is available, but don't abort
+          // the function if it isn't — the save already completed, so the
+          // post-save cleanup (pop + onBatchSearchSaved) must still run.
+          final NavigatorState? navigator = globalNavigatorKey.currentState;
+          if (navigator != null && navigator.mounted) {
+            await showDialog<void>(
+              context: navigator.context,
+              builder: (BuildContext dialogContext) {
+                return ImportErrorDialog(
+                  urlsLength: selectedUrls.length,
+                  errors: errors,
+                );
+              },
+            );
+          }
         }
       } catch (error) {
-        if (context.mounted) {
-          showError(error, context);
-        }
+        showError(error);
       } finally {
         if (mounted) {
           setState(() {
@@ -1573,11 +1591,11 @@ class AddAppPageState extends State<AddAppPage> {
           });
         }
       }
-      if (saveCompleted && context.mounted) {
-        final Future<void> Function()? onBatchSearchSaved =
-            widget._onBatchSearchSaved;
-        if (!widget._embeddedDetail) {
-          Navigator.of(context).pop();
+      if (saveCompleted) {
+        if (!embeddedDetail &&
+            navigator.mounted &&
+            hostRoute?.isCurrent == true) {
+          navigator.pop();
         }
         if (onBatchSearchSaved != null) {
           await onBatchSearchSaved();
@@ -1960,8 +1978,7 @@ class AddAppPageState extends State<AddAppPage> {
                     rethrow;
                   } else {
                     err.unexpected = true;
-                    if (!context.mounted) return null;
-                    showError(err, context);
+                    showError(err);
                     return null;
                   }
                 }
@@ -2000,8 +2017,7 @@ class AddAppPageState extends State<AddAppPage> {
         });
         _scrollEmbeddedSearchResultsToFilter();
       } catch (e) {
-        if (!context.mounted) return;
-        showError(e, context);
+        showError(e);
       } finally {
         if (mounted) {
           setState(() {
