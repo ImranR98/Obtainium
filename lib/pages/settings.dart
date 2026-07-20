@@ -1925,9 +1925,9 @@ class _LocaleMenu extends StatelessWidget {
                   .key;
         sp.forcedLocale = selectedLocale;
         if (selectedLocale != null) {
-          context.setLocale(selectedLocale);
+          unawaited(context.setLocale(selectedLocale));
         } else {
-          sp.resetLocaleSafe(context);
+          unawaited(sp.resetLocaleSafe(context));
         }
       },
     );
@@ -3461,6 +3461,32 @@ class _LogsDialogState extends State<LogsDialog> {
           buffer.writeln('APK Save Directory: Unknown (Error checking path)');
         }
       }
+
+      final githubPat = settingsProvider.getSettingString(
+        GitHub.githubCredsKey,
+      );
+      final hasGithubPat = githubPat != null && githubPat.isNotEmpty;
+      final githubPatValid =
+          hasGithubPat && GitHub.hasValidatedPAT(githubPat, settingsProvider);
+      buffer.writeln(
+        'GitHub PAT: ${hasGithubPat ? "Saved" : "Not Saved"}${hasGithubPat ? " (Validated: $githubPatValid)" : ""}',
+      );
+
+      final gitlabPat = settingsProvider.getSettingString('gitlab-creds');
+      final hasGitlabPat = gitlabPat != null && gitlabPat.isNotEmpty;
+      final gitlabPatValid =
+          hasGitlabPat && GitLab.hasValidatedPAT(gitlabPat, settingsProvider);
+      buffer.writeln(
+        'GitLab PAT: ${hasGitlabPat ? "Saved" : "Not Saved"}${hasGitlabPat ? " (Validated: $gitlabPatValid)" : ""}',
+      );
+
+      final vtApiKey = settingsProvider.getSettingString(virusTotalApiKeyKey);
+      final hasVtApiKey = vtApiKey != null && vtApiKey.isNotEmpty;
+      final vtApiKeyValid =
+          hasVtApiKey && hasValidatedApiKey(vtApiKey, settingsProvider);
+      buffer.writeln(
+        'VirusTotal API Key: ${hasVtApiKey ? "Saved" : "Not Saved"}${hasVtApiKey ? " (Validated: $vtApiKeyValid)" : ""}',
+      );
 
       buffer.writeln('===============================\n');
 

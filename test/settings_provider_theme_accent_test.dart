@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:obtainium/providers/settings_provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -57,6 +58,62 @@ void main() {
     settings.shadingIntensity = 0.46;
     expect(settings.shadingIntensity, 0.5);
   });
+
+  test('black theme only applies to an effectively dark theme', () async {
+    final SettingsProvider settings = await _settingsWithPrefs(<String, Object>{
+      'theme': ThemeSettings.system.index,
+      'useBlackTheme': true,
+      'useGradientBackground': true,
+      'shadingIntensity': 0.4,
+    });
+
+    settings.updatePlatformBrightness(Brightness.light);
+    expect(settings.blackThemeActive, isFalse);
+    expect(settings.useGradientBackground, isTrue);
+    expect(settings.shadingIntensity, 0.4);
+
+    settings.updatePlatformBrightness(Brightness.dark);
+    expect(settings.blackThemeActive, isTrue);
+    expect(settings.useGradientBackground, isFalse);
+    expect(settings.shadingIntensity, 1.0);
+    expect(settings.prefs?.getBool('useGradientBackground'), isTrue);
+    expect(settings.prefs?.getDouble('shadingIntensity'), 0.4);
+
+    settings.updatePlatformBrightness(Brightness.light);
+    expect(settings.blackThemeActive, isFalse);
+    expect(settings.useGradientBackground, isTrue);
+    expect(settings.shadingIntensity, 0.4);
+
+    settings.theme = ThemeSettings.light;
+    expect(settings.blackThemeActive, isFalse);
+
+    settings.theme = ThemeSettings.dark;
+    expect(settings.blackThemeActive, isTrue);
+  });
+
+  test(
+    'active black theme only overrides surface styling temporarily',
+    () async {
+      final SettingsProvider settings =
+          await _settingsWithPrefs(<String, Object>{
+            'theme': ThemeSettings.dark.index,
+            'useBlackTheme': false,
+            'useGradientBackground': true,
+            'shadingIntensity': 0.4,
+          });
+
+      settings.useBlackTheme = true;
+
+      expect(settings.useGradientBackground, isFalse);
+      expect(settings.shadingIntensity, 1.0);
+      expect(settings.prefs?.getBool('useGradientBackground'), isTrue);
+      expect(settings.prefs?.getDouble('shadingIntensity'), 0.4);
+
+      settings.useBlackTheme = false;
+      expect(settings.useGradientBackground, isTrue);
+      expect(settings.shadingIntensity, 0.4);
+    },
+  );
 
   test('card corner scale defaults, steps, and clamps', () async {
     final SettingsProvider settings = await _settingsWithPrefs(

@@ -298,6 +298,7 @@ int appPageAppsRebuildToken(AppsProvider provider, String appId) {
 int appPageSettingsRebuildToken(SettingsProvider settings) {
   return Object.hash(
     settings.matchAppPageToIconColors,
+    settings.blackThemeActive,
     settings.showAppWebpage,
     settings.checkUpdateOnDetailPage,
     settings.highlightTouchTargets,
@@ -1768,7 +1769,7 @@ class _AppPageState extends State<AppPage> with WidgetsBindingObserver {
   /// can also fill a missing app icon. Caches results and triggers a
   /// FutureBuilder rebuild so the Other Sources row updates in place.
   Future<void> _maybeCheckAndCacheAllStores(String appId) async {
-    if (appId.isEmpty) return;
+    if (appId.isEmpty || !mounted) return;
 
     final appsProvider = Provider.of<AppsProvider>(context, listen: false);
     final AppInMemory? appBeforeStoreCheck = appsProvider.apps[appId];
@@ -1866,6 +1867,7 @@ class _AppPageState extends State<AppPage> with WidgetsBindingObserver {
   /// change [App.latestVersion] and clears it when the version changes,
   /// so the cache key is effectively `(appId, latestVersion)`.
   Future<void> _maybeLazyResolveApkMirrorSize() async {
+    if (!mounted) return;
     if (_attemptedApkMirrorSizeResolution) return;
     final AppsProvider appsProvider = Provider.of<AppsProvider>(
       context,
@@ -1958,13 +1960,13 @@ class _AppPageState extends State<AppPage> with WidgetsBindingObserver {
       }
     } catch (err) {
       if (!mounted || widget.appId != id) return;
-      if (err is RepositoryRenamedError && context.mounted) {
+      if (err is RepositoryRenamedError && mounted) {
         await appsProvider.updatePendingRepoRename(id, err.newUrl);
-      } else if (context.mounted) {
+      } else if (mounted) {
         _showPageError(err, title: tr('errorCheckingUpdates'));
       }
     } finally {
-      if (context.mounted &&
+      if (mounted &&
           widget.appId == id &&
           _updateCheckRunToken == updateCheckRunToken) {
         setState(() {
@@ -2172,14 +2174,17 @@ class _AppPageState extends State<AppPage> with WidgetsBindingObserver {
         : darkenIconPageSchemeInDarkMode(
             appPageSurfacesWithVisibleAccent(_iconDerivedColorScheme!),
           );
-    final ColorScheme pageColorSchemeForPage = settingsProvider.useBlackTheme
+    final bool applyBlackPageTheme = settingsProvider.blackThemeActive;
+    final ColorScheme pageColorSchemeForPage = applyBlackPageTheme
         ? themedPageColorScheme.withPureBlackBackgrounds()
         : themedPageColorScheme;
+    final ColorScheme sharedPageBackgroundColorScheme =
+        parentThemeForPage.colorScheme;
     final Brightness pageBrightness = pageColorSchemeForPage.brightness;
     // ThemeData.copyWith() is expensive — cache it and recompute only when the
-    // icon scheme or parent brightness actually changes.
+    // icon scheme, parent brightness, or active black state actually changes.
     final String pageThemeKey =
-        '${_iconSchemeCacheKey ?? "none"}_${themeBrightness.name}_${settingsProvider.useBlackTheme ? "black" : "standard"}';
+        '${_iconSchemeCacheKey ?? "none"}_${themeBrightness.name}_${applyBlackPageTheme ? "black" : "standard"}';
     if (_cachedPageThemeKey != pageThemeKey || _cachedPageTheme == null) {
       _cachedPageThemeKey = pageThemeKey;
       _cachedPageTheme = buildAppPageThemedData(
@@ -4726,13 +4731,9 @@ class _AppPageState extends State<AppPage> with WidgetsBindingObserver {
                       ),
                     )
                   : null,
-              backgroundColor:
-                  settingsProvider.useGradientBackground && widget.isEmbedded
+              backgroundColor: settingsProvider.useGradientBackground
                   ? Colors.transparent
-                  : appPageDeeperSurfaceColor(
-                      pageColorSchemeForPage.surface,
-                      pageBrightness,
-                    ),
+                  : sharedPageBackgroundColorScheme.surface,
               floatingActionButton: _editModeFloatingActionButtons(
                 themedPageContext,
                 app,
@@ -4787,12 +4788,11 @@ class _AppPageState extends State<AppPage> with WidgetsBindingObserver {
                     : Stack(
                         fit: StackFit.expand,
                         children: [
-                          if (settingsProvider.useGradientBackground &&
-                              widget.isEmbedded)
+                          if (settingsProvider.useGradientBackground)
                             Positioned.fill(
                               child: DecoratedBox(
                                 decoration: BoxDecoration(
-                                  gradient: pageColorSchemeForPage
+                                  gradient: sharedPageBackgroundColorScheme
                                       .schemePageBackgroundGradient,
                                 ),
                               ),

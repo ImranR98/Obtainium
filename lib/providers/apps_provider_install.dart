@@ -2233,6 +2233,9 @@ extension AppsProviderInstall on AppsProvider {
         cleanupOnSkip: cleanupOnSkip,
       );
       if (!proceed) return false;
+      if (showMalwareScanDialog && scan.status != malwareScanStatusClean) {
+        await Future<void>.delayed(const Duration(milliseconds: 500));
+      }
     }
     // Scan cleared (or was skipped) and we're proceeding — hand back to the
     // installer as "Installing" so a lingering "Scanning"/"Flagged" state clears.

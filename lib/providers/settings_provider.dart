@@ -2,12 +2,14 @@
 
 import 'dart:async';
 import 'dart:convert';
+import 'dart:ui' show PlatformDispatcher;
 
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:obtainium/app_sources/github.dart';
+import 'package:obtainium/locale_resolution.dart';
 import 'package:obtainium/main.dart';
 import 'package:obtainium/providers/apps_provider.dart';
 import 'package:obtainium/folders/app_folder.dart';
@@ -102,6 +104,8 @@ class SettingsProvider with ChangeNotifier {
   bool _settingsInitialized = false;
   bool justStarted = true;
   bool isTV = false;
+  Brightness _platformBrightness =
+      PlatformDispatcher.instance.platformBrightness;
 
   static const Duration _storageAccessWarningCooldown = Duration(minutes: 5);
   DateTime? _lastExportDirAccessWarningAt;
@@ -128,6 +132,7 @@ class SettingsProvider with ChangeNotifier {
   // Not done in constructor as we want to be able to await it
   Future<void> initializeSettings() async {
     prefs = await SharedPreferences.getInstance();
+    _platformBrightness = PlatformDispatcher.instance.platformBrightness;
     if (_settingsInitialized) {
       // Already fully initialized on this instance — the migrations and native
       // lookups below are one-time work. Just notify so late listeners rebuild.
@@ -454,16 +459,6 @@ class SettingsProvider with ChangeNotifier {
     notifyListeners();
   }
 
-  void setThemeAppearance({
-    required ThemeSettings theme,
-    required bool useBlackTheme,
-  }) {
-    if (this.theme == theme && this.useBlackTheme == useBlackTheme) return;
-    prefs?.setInt('theme', theme.index);
-    prefs?.setBool('useBlackTheme', useBlackTheme);
-    notifyListeners();
-  }
-
   Color get themeColor {
     final Color? fromHex = colorFromNormalizedHex(
       normalizeCustomSeedHexOrNull(activeCustomSeedHex),
@@ -652,7 +647,7 @@ class SettingsProvider with ChangeNotifier {
   }
 
   bool get useGradientBackground {
-    if (reduceVisualEffects) return false;
+    if (reduceVisualEffects || blackThemeActive) return false;
     return prefs?.getBool('useGradientBackground') ?? true;
   }
 
@@ -662,6 +657,7 @@ class SettingsProvider with ChangeNotifier {
   }
 
   double get shadingIntensity {
+    if (blackThemeActive) return 1.0;
     return (prefs?.getDouble('shadingIntensity') ?? 1.0).clamp(0.0, 2.0);
   }
 
@@ -699,6 +695,25 @@ class SettingsProvider with ChangeNotifier {
     if (this.useBlackTheme == useBlackTheme) return;
     prefs?.setBool('useBlackTheme', useBlackTheme);
     notifyListeners();
+  }
+
+  bool _blackThemeAppliesTo(Brightness platformBrightness) {
+    if (!useBlackTheme || theme == ThemeSettings.light) return false;
+    return theme == ThemeSettings.dark || platformBrightness == Brightness.dark;
+  }
+
+  // Pure black only applies while the app is effectively using a dark theme.
+  // In System mode, the platform brightness determines that effective theme.
+  bool get blackThemeActive {
+    return _blackThemeAppliesTo(_platformBrightness);
+  }
+
+  void updatePlatformBrightness(Brightness platformBrightness) {
+    final bool brightnessChanged = _platformBrightness != platformBrightness;
+    _platformBrightness = platformBrightness;
+    if (brightnessChanged) {
+      notifyListeners();
+    }
   }
 
   bool get matchAppPageToIconColors {
@@ -1153,23 +1168,23 @@ class SettingsProvider with ChangeNotifier {
       _setFolderViewField(id, 'groupUpdatesSeparately', v);
 
   Locale? get forcedLocale {
-    final flSegs = prefs?.getString('forcedLocale')?.split('-');
-    final fl = flSegs != null && flSegs.isNotEmpty
-        ? Locale(flSegs[0], flSegs.length > 1 ? flSegs[1] : null)
-        : null;
-    final set =
-        supportedLocales.where((element) => element.key == fl).isNotEmpty
-        ? fl
-        : null;
-    return set;
+    final Locale? storedLocale = parseStoredLocaleTag(
+      prefs?.getString('forcedLocale'),
+    );
+    if (storedLocale == null) return null;
+
+    final bool isSupported = supportedLocales.any(
+      (supportedLocale) => supportedLocale.key == storedLocale,
+    );
+    return isSupported ? storedLocale : null;
   }
 
   set forcedLocale(Locale? fl) {
     if (fl == null) {
       prefs?.remove('forcedLocale');
-    } else if (supportedLocales
-        .where((element) => element.key == fl)
-        .isNotEmpty) {
+    } else if (supportedLocales.any(
+      (supportedLocale) => supportedLocale.key == fl,
+    )) {
       prefs?.setString('forcedLocale', fl.toLanguageTag());
     }
     notifyListeners();
@@ -1178,13 +1193,17 @@ class SettingsProvider with ChangeNotifier {
   bool setEqual(Set<String> a, Set<String> b) =>
       a.length == b.length && a.union(b).length == a.length;
 
-  void resetLocaleSafe(BuildContext context) {
-    if (context.supportedLocales.contains(context.deviceLocale)) {
-      context.resetLocale();
-    } else {
-      context.setLocale(context.fallbackLocale!);
-      context.deleteSaveLocale();
-    }
+  Future<void> resetLocaleSafe(BuildContext context) async {
+    final Locale bestMatch = resolveBestSupportedLocale(
+      deviceLocale: context.deviceLocale,
+      supportedLocales: context.supportedLocales,
+      fallbackLocale: context.fallbackLocale ?? fallbackLocale,
+    );
+    if (context.locale == bestMatch) return;
+
+    await context.setLocale(bestMatch);
+    if (!context.mounted) return;
+    await context.deleteSaveLocale();
   }
 
   bool get removeOnExternalUninstall {

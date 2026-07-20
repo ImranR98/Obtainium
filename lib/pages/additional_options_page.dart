@@ -500,7 +500,7 @@ class _AdditionalOptionsPageState extends State<AdditionalOptionsPage> {
     context.select<SettingsProvider, int>(
       (SettingsProvider settings) => Object.hash(
         settings.matchAppPageToIconColors,
-        settings.useBlackTheme,
+        settings.blackThemeActive,
       ),
     );
     context.select<AppsProvider, int>((AppsProvider provider) {
@@ -571,13 +571,14 @@ class _AdditionalOptionsPageState extends State<AdditionalOptionsPage> {
         : darkenIconPageSchemeInDarkMode(
             appPageSurfacesWithVisibleAccent(_iconDerivedColorScheme!),
           );
-    final ColorScheme pageColorSchemeForPage = settingsProvider.useBlackTheme
+    final bool applyBlackPageTheme = settingsProvider.blackThemeActive;
+    final ColorScheme pageColorSchemeForPage = applyBlackPageTheme
         ? themedPageColorScheme.withPureBlackBackgrounds()
         : themedPageColorScheme;
     final Brightness pageBrightness = pageColorSchemeForPage.brightness;
 
     final String pageThemeKey =
-        '${_iconSchemeCacheKey ?? "none"}_${themeBrightness.name}_${settingsProvider.useBlackTheme ? "black" : "standard"}';
+        '${_iconSchemeCacheKey ?? "none"}_${themeBrightness.name}_${applyBlackPageTheme ? "black" : "standard"}';
     if (_cachedPageThemeKey != pageThemeKey || _cachedPageTheme == null) {
       _cachedPageThemeKey = pageThemeKey;
       _cachedPageTheme = buildAppPageThemedData(

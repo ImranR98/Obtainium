@@ -13,6 +13,7 @@ class TVSliderWrapper extends StatefulWidget {
     this.divisions,
     required this.onChanged,
     this.onChangeEnd,
+    this.enabled = true,
   });
 
   final Widget child;
@@ -22,6 +23,7 @@ class TVSliderWrapper extends StatefulWidget {
   final int? divisions;
   final ValueChanged<double> onChanged;
   final ValueChanged<double>? onChangeEnd;
+  final bool enabled;
 
   @override
   State<TVSliderWrapper> createState() => _TVSliderWrapperState();
@@ -43,6 +45,7 @@ class _TVSliderWrapperState extends State<TVSliderWrapper> {
   }
 
   void _adjustValue(double delta) {
+    if (!widget.enabled) return;
     final int divs = widget.divisions ?? 20;
     final double step = (widget.max - widget.min) / divs;
     final double newValue = (widget.value + delta * step).clamp(
@@ -64,6 +67,8 @@ class _TVSliderWrapperState extends State<TVSliderWrapper> {
 
     return Focus(
       focusNode: _focusNode,
+      canRequestFocus: widget.enabled,
+      skipTraversal: !widget.enabled,
       onKeyEvent: (node, event) {
         if (event is KeyDownEvent || event is KeyRepeatEvent) {
           if (event.logicalKey == LogicalKeyboardKey.arrowLeft) {

@@ -32,7 +32,14 @@ import 'package:flutter_foreground_task/flutter_foreground_task.dart';
 
 List<MapEntry<Locale, String>> supportedLocales = const [
   MapEntry(Locale('en'), 'English'),
-  MapEntry(Locale('zh', 'Hant_TW'), '臺灣話'),
+  MapEntry(
+    Locale.fromSubtags(
+      languageCode: 'zh',
+      scriptCode: 'Hant',
+      countryCode: 'TW',
+    ),
+    '臺灣話',
+  ),
   MapEntry(Locale('zh'), '简体中文'),
   MapEntry(Locale('it'), 'Italiano'),
   MapEntry(Locale('ja'), '日本語'),
@@ -269,7 +276,7 @@ class Obtainium extends StatefulWidget {
   State<Obtainium> createState() => _ObtainiumState();
 }
 
-class _ObtainiumState extends State<Obtainium> {
+class _ObtainiumState extends State<Obtainium> with WidgetsBindingObserver {
   var existingUpdateInterval = -1;
 
   // Guards the lazy, one-shot attempt to adopt the device's explicit system
@@ -294,9 +301,18 @@ class _ObtainiumState extends State<Obtainium> {
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       requestNonOptionalPermissions();
     });
+  }
+
+  @override
+  void didChangePlatformBrightness() {
+    super.didChangePlatformBrightness();
+    context.read<SettingsProvider>().updatePlatformBrightness(
+      WidgetsBinding.instance.platformDispatcher.platformBrightness,
+    );
   }
 
   Future<void> _scheduleWorkManager() async {
@@ -426,6 +442,7 @@ class _ObtainiumState extends State<Obtainium> {
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     // Remove a callback to receive data sent from the TaskHandler.
     // FlutterForegroundTask.removeTaskDataCallback(onReceiveForegroundServiceData);
     super.dispose();
@@ -598,15 +615,13 @@ class _ObtainiumState extends State<Obtainium> {
               });
         }
       }
-      if (!supportedLocales.map((e) => e.key).contains(context.locale) ||
-          (settingsProvider.forcedLocale == null &&
-              context.deviceLocale != context.locale)) {
-        settingsProvider.resetLocaleSafe(context);
-      } else if (settingsProvider.forcedLocale != null) {
-        // #3052: re-apply a configured forced locale explicitly so it survives
-        // easy_localization's internal resolution, which can otherwise revert a
-        // country-specific locale (e.g. pt_BR) to a language-only match (pt_PT).
-        context.setLocale(settingsProvider.forcedLocale!);
+      final forcedLocale = settingsProvider.forcedLocale;
+      if (forcedLocale != null) {
+        if (context.locale != forcedLocale) {
+          unawaited(context.setLocale(forcedLocale));
+        }
+      } else {
+        unawaited(settingsProvider.resetLocaleSafe(context));
       }
     }
 
