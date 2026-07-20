@@ -1223,24 +1223,6 @@ class SettingsProvider with ChangeNotifier {
     notifyListeners();
   }
 
-  bool get disablePageTransitions {
-    return prefs?.getBool('disablePageTransitions') ?? false;
-  }
-
-  set disablePageTransitions(bool show) {
-    prefs?.setBool('disablePageTransitions', show);
-    notifyListeners();
-  }
-
-  bool get reversePageTransitions {
-    return prefs?.getBool('reversePageTransitions') ?? false;
-  }
-
-  set reversePageTransitions(bool show) {
-    prefs?.setBool('reversePageTransitions', show);
-    notifyListeners();
-  }
-
   bool get enableBackgroundUpdates {
     return prefs?.getBool('enableBackgroundUpdates') ?? true;
   }

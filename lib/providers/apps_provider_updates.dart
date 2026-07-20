@@ -582,13 +582,23 @@ extension AppsProviderUpdates on AppsProvider {
     final String url = fetchedApp.apkUrls[idx].value;
     if (url.isEmpty) return fetchedApp;
     try {
+      // Resolve the real download URL first: sources like GitLab and Uptodown
+      // rewrite the asset URL in assetUrlPrefetchModifier, so probing the
+      // unresolved URL returns a wrong or missing Content-Length. The install
+      // path already resolves before downloading; do the same here. (#3104)
+      final String resolvedUrl = await source.assetUrlPrefetchModifier(
+        url,
+        currentApp.url,
+        currentApp.additionalSettings,
+      );
+      if (resolvedUrl.isEmpty) return fetchedApp;
       final Map<String, String>? headers = await source.getRequestHeaders(
         currentApp.additionalSettings,
-        url,
+        resolvedUrl,
         forAPKDownload: true,
       );
       final int? size = await getDownloadSize(
-        url,
+        resolvedUrl,
         headers: headers,
         allowInsecure: currentApp.settings.getBool('allowInsecure'),
       );

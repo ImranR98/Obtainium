@@ -112,24 +112,21 @@ void main() {
     expect(split.settings['theme'], ThemeSettings.light.index);
   });
 
-  test('Obtainium-supported keys stay in shared settings, not the overlay', () {
-    // Both exist in upstream Obtainium (bool), so they must land in the shared
-    // block for Obtainium to restore them.
+  test('shared (non-ObtainX-only) keys stay in settings, not the overlay', () {
+    // Keys without an ObtainX-only classification go to the shared block so
+    // Obtainium restores the ones it recognizes; none leak into the overlay.
     final SplitExportSettings split = splitSettingsForExport(<String, dynamic>{
-      'disablePageTransitions': true,
-      'reversePageTransitions': true,
+      'checkUpdateOnDetailPage': true,
+      'buryNonInstalled': true,
     });
 
-    expect(split.settings['disablePageTransitions'], isTrue);
-    expect(split.settings['reversePageTransitions'], isTrue);
+    expect(split.settings['checkUpdateOnDetailPage'], isTrue);
+    expect(split.settings['buryNonInstalled'], isTrue);
     expect(
-      split.settingsObtainX?.containsKey('disablePageTransitions'),
+      split.settingsObtainX?.containsKey('checkUpdateOnDetailPage'),
       isNot(true),
     );
-    expect(
-      split.settingsObtainX?.containsKey('reversePageTransitions'),
-      isNot(true),
-    );
+    expect(split.settingsObtainX?.containsKey('buryNonInstalled'), isNot(true));
   });
 
   test('settings includes most prefs like Obtainium export', () {

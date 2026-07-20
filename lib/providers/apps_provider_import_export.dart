@@ -388,8 +388,7 @@ const String obtainXSettingsSectionPrefix = 'settingsSection_';
 ///
 /// Notably absent: grouping (`groupBy`) and the installer (`installMethod`).
 /// ObtainX now persists both under upstream's own keys/values, so they are plain
-/// shared settings — no translation, no overlay. `disablePageTransitions` /
-/// `reversePageTransitions` are likewise shared (upstream has both).
+/// shared settings — no translation, no overlay.
 const Set<String> obtainXOnlySettingKeys = {
   'appFolders',
   'appAccentColorSource',

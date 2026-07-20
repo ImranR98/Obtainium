@@ -1752,8 +1752,6 @@ class _AppearanceSection extends StatelessWidget {
     sp.appUiScale,
     sp.cardCornerScale,
     sp.showAppWebpage,
-    sp.disablePageTransitions,
-    sp.reversePageTransitions,
     sp.highlightTouchTargets,
     sp.alwaysUsePhoneLayout,
   );
@@ -1782,18 +1780,6 @@ class _AppearanceSection extends StatelessWidget {
           title: Text(tr('showWebInAppView')),
           value: sp.showAppWebpage,
           onChanged: (value) => sp.showAppWebpage = value,
-        ),
-        SwitchListTile(
-          title: Text(tr('disablePageTransitions')),
-          value: sp.disablePageTransitions,
-          onChanged: (value) => sp.disablePageTransitions = value,
-        ),
-        SwitchListTile(
-          title: Text(tr('reversePageTransitions')),
-          value: sp.reversePageTransitions,
-          onChanged: sp.disablePageTransitions
-              ? null
-              : (value) => sp.reversePageTransitions = value,
         ),
         SwitchListTile(
           title: Text(tr('highlightTouchTargets')),

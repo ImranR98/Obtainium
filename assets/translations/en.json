@@ -263,8 +263,6 @@
     "letMeDowngradeNotInstalledSnackbar": "\"Let Me Downgrade\" needs to be installed before this can be enabled",
     "pickHighestVersionCode": "Auto-select highest version code APK",
     "checkUpdateOnDetailPage": "Check for updates on opening app detail page",
-    "disablePageTransitions": "Disable page transition animations",
-    "reversePageTransitions": "Reverse page transition animations",
     "minStarCount": "Minimum star count",
     "addInfoBelow": "Add this info below.",
     "addInfoInSettings": "Add this info in the Settings.",
