@@ -3588,16 +3588,19 @@ class _LogsDialogState extends State<LogsDialog> {
                   TextButton(
                     onPressed: () async {
                       final diagnostics = await getDiagnosticsText();
+                      final logs = logString ?? '';
+                      const int maxLogChars = 100000;
+                      final String safeLogs = logs.length > maxLogChars
+                          ? '[... Truncated ${logs.length - maxLogChars} characters. Use "Share as file" for full logs ...]\n\n${logs.substring(logs.length - maxLogChars)}'
+                          : logs;
                       unawaited(
                         SharePlus.instance.share(
                           ShareParams(
-                            text: '$diagnostics${logString ?? ''}',
+                            text: '$diagnostics$safeLogs',
                             subject: tr('appLogs'),
                           ),
                         ),
                       );
-                      if (!context.mounted) return;
-                      Navigator.of(context).pop();
                     },
                     child: Text(tr('share')),
                   ),
@@ -3623,8 +3626,6 @@ class _LogsDialogState extends State<LogsDialog> {
                           subject: tr('appLogs'),
                         ),
                       );
-                      if (!context.mounted) return;
-                      Navigator.of(context).pop();
                     },
                     child: Text(tr('shareAsFile')),
                   ),
