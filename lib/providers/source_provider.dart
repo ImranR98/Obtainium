@@ -539,8 +539,7 @@ class App {
       latestReproducibleStatus: latestReproducibleStatus == _sentinel
           ? this.latestReproducibleStatus
           : latestReproducibleStatus as String?,
-      latestReproducibleVersionCode:
-          latestReproducibleVersionCode == _sentinel
+      latestReproducibleVersionCode: latestReproducibleVersionCode == _sentinel
           ? this.latestReproducibleVersionCode
           : latestReproducibleVersionCode as int?,
       latestAttestationStatus: latestAttestationStatus == _sentinel

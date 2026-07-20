@@ -11,6 +11,7 @@ import 'package:obtainium/app_sources/izzyondroid.dart';
 import 'package:obtainium/providers/source_provider.dart';
 import 'package:http/http.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 
 /// Stub source that returns a controllable [APKDetails] from
 /// [getLatestAPKDetails] without doing any network or HTML work.
@@ -323,8 +324,7 @@ Response _fdroidVerificationResponse({required bool verified}) {
           'versionCode': 31,
           'versionName': '1.9.11',
         },
-        'url':
-            'https://f-droid.org/repo/app.pwhs.universalinstaller_31.apk',
+        'url': 'https://f-droid.org/repo/app.pwhs.universalinstaller_31.apk',
         'verified': verified,
       },
     }),
@@ -398,6 +398,11 @@ class _FakeAndroidDeviceInfoPlatform extends DeviceInfoPlatform {
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
+  // The F-Droid reproducible-build error path logs via LogsProvider, which
+  // opens a sqflite DB. Initialize the ffi factory so that best-effort write
+  // succeeds in the test VM instead of throwing (matches version_order_test).
+  sqfliteFfiInit();
+  databaseFactory = databaseFactoryFfi;
   DeviceInfoPlatform.instance = _FakeAndroidDeviceInfoPlatform();
 
   setUp(() {

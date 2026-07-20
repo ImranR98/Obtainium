@@ -504,8 +504,7 @@ App? mergeFetchedUpdateWithLiveState({
     rawReleaseTitlesFromSource: fetchedApp.rawReleaseTitlesFromSource,
     latestIsReproducible: fetchedApp.latestIsReproducible,
     latestReproducibleStatus: fetchedApp.latestReproducibleStatus,
-    latestReproducibleVersionCode:
-        fetchedApp.latestReproducibleVersionCode,
+    latestReproducibleVersionCode: fetchedApp.latestReproducibleVersionCode,
     latestAttestationStatus: fetchedApp.latestAttestationStatus,
     latestMalwareScanStatus: malwareScanStillMatchesRelease
         ? liveApp.latestMalwareScanStatus

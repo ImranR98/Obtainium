@@ -1044,11 +1044,22 @@ class _UpdatesSection extends StatelessWidget {
     context.select<SettingsProvider, int>(_updateSettingsHash);
     final SettingsProvider sp = context.read<SettingsProvider>();
 
-    return FutureBuilder<AndroidDeviceInfo>(
-      future: androidInfo,
-      builder: (context, snapshot) {
-        return _buildSettingsCardContent(context, sp, cs, snapshot);
-      },
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: <Widget>[
+        // First item in the Updates section, deliberately NOT inside the
+        // settings card: a manual trigger for the full background update
+        // worker (check → download → install-if-enabled → notify, across all
+        // eligible apps), as opposed to pull-to-refresh's foreground check of
+        // only the currently visible list.
+        const _RunBgUpdateCheckNowButton(),
+        FutureBuilder<AndroidDeviceInfo>(
+          future: androidInfo,
+          builder: (context, snapshot) {
+            return _buildSettingsCardContent(context, sp, cs, snapshot);
+          },
+        ),
+      ],
     );
   }
 
@@ -1155,6 +1166,82 @@ class _UpdatesSection extends StatelessWidget {
       ),
     ]);
     return M3eExpressiveSettingsCard(colorScheme: cs, items: rows);
+  }
+}
+
+/// Manual trigger for the background update check, shown as the first item in
+/// the Updates section (intentionally outside the settings card). Unlike
+/// pull-to-refresh — a foreground check of the currently visible list — this
+/// runs the actual background worker: check → download → install (when
+/// enabled) → notifications, across all eligible apps ([forceAll]).
+class _RunBgUpdateCheckNowButton extends StatefulWidget {
+  const _RunBgUpdateCheckNowButton();
+
+  @override
+  State<_RunBgUpdateCheckNowButton> createState() =>
+      _RunBgUpdateCheckNowButtonState();
+}
+
+class _RunBgUpdateCheckNowButtonState
+    extends State<_RunBgUpdateCheckNowButton> {
+  bool _isRunning = false;
+
+  Future<void> _trigger() async {
+    if (_isRunning) return;
+    setState(() => _isRunning = true);
+    // Read the provider before the async gap so we don't touch context after.
+    final LogsProvider logs = context.read<LogsProvider>();
+    await logs.add(
+      'Manual background update check triggered from settings',
+      level: LogLevel.info,
+    );
+    try {
+      final String taskId = 'manual_${DateTime.now().millisecondsSinceEpoch}';
+      await bgUpdateCheck(taskId, null, forceAll: true);
+      await logs.add(
+        'Manual background update check completed',
+        level: LogLevel.info,
+      );
+    } catch (e) {
+      unawaited(
+        logs.add(
+          'Manual background update check failed: $e',
+          level: LogLevel.error,
+        ),
+      );
+    } finally {
+      if (mounted) setState(() => _isRunning = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      // No horizontal inset: match the full width of the settings-card rows
+      // below (they stretch edge-to-edge in the same Column). Only a small
+      // bottom gap separates this action from the toggle group.
+      padding: const EdgeInsets.only(bottom: 8),
+      child: SizedBox(
+        width: double.infinity,
+        child: FilledButton.tonal(
+          onPressed: _isRunning ? null : _trigger,
+          // Match the row titles below (ListTile default = bodyLarge, ~16sp),
+          // which are larger than the button's default labelLarge (~14sp).
+          // Only textStyle is overridden; pill shape and tonal colors still
+          // come from the theme's filledButtonTheme.
+          style: FilledButton.styleFrom(
+            textStyle: Theme.of(context).textTheme.bodyLarge,
+          ),
+          child: _isRunning
+              ? const SizedBox(
+                  width: 20,
+                  height: 20,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                )
+              : Text(tr('runBgCheckNow')),
+        ),
+      ),
+    );
   }
 }
 
