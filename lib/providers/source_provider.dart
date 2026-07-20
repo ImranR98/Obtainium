@@ -254,6 +254,9 @@ String? encodeRawAssistLines(Iterable<String> lines) {
 
 class APKDetails {
   String version;
+
+  /// Source version code associated with the preferred APK, when available.
+  final int? versionCode;
   List<MapEntry<String, String>> apkUrls;
   final AppNames names;
   final DateTime? releaseDate;
@@ -276,6 +279,7 @@ class APKDetails {
     this.version,
     this.apkUrls,
     this.names, {
+    this.versionCode,
     this.releaseDate,
     this.changeLog,
     this.allAssetUrls = const [],
@@ -366,6 +370,9 @@ class App {
 
   final bool? latestIsReproducible;
   final String? latestReproducibleStatus;
+
+  /// Version code whose exact APK verification produced the stored status.
+  final int? latestReproducibleVersionCode;
   final String? latestAttestationStatus;
   final String? latestMalwareScanStatus;
   final String? latestMalwareScanDetail;
@@ -397,6 +404,7 @@ class App {
     this.rawReleaseTitlesFromSource,
     this.latestIsReproducible,
     this.latestReproducibleStatus,
+    this.latestReproducibleVersionCode,
     this.latestAttestationStatus,
     this.latestMalwareScanStatus,
     this.latestMalwareScanDetail,
@@ -473,6 +481,7 @@ class App {
     Object? rawReleaseTitlesFromSource = _sentinel,
     Object? latestIsReproducible = _sentinel,
     Object? latestReproducibleStatus = _sentinel,
+    Object? latestReproducibleVersionCode = _sentinel,
     Object? latestAttestationStatus = _sentinel,
     Object? latestMalwareScanStatus = _sentinel,
     Object? latestMalwareScanDetail = _sentinel,
@@ -530,6 +539,9 @@ class App {
       latestReproducibleStatus: latestReproducibleStatus == _sentinel
           ? this.latestReproducibleStatus
           : latestReproducibleStatus as String?,
+      latestReproducibleVersionCode: latestReproducibleVersionCode == _sentinel
+          ? this.latestReproducibleVersionCode
+          : latestReproducibleVersionCode as int?,
       latestAttestationStatus: latestAttestationStatus == _sentinel
           ? this.latestAttestationStatus
           : latestAttestationStatus as String?,
@@ -611,6 +623,12 @@ class App {
         latestReproducibleStatus: reproducibleBuildStatusFromJsonValue(
           json['latestReproducibleStatus'] ?? json['latestIsReproducible'],
         ),
+        latestReproducibleVersionCode:
+            json['latestReproducibleVersionCode'] is num
+            ? (json['latestReproducibleVersionCode'] as num).toInt()
+            : int.tryParse(
+                json['latestReproducibleVersionCode']?.toString() ?? '',
+              ),
         latestAttestationStatus: githubAttestationStatusFromJsonValue(
           json['latestAttestationStatus'] ?? json['latestIsAttested'],
         ),
@@ -663,6 +681,8 @@ class App {
       'latestIsReproducible': latestIsReproducible,
     if (latestReproducibleStatus != null)
       'latestReproducibleStatus': latestReproducibleStatus,
+    if (latestReproducibleVersionCode != null)
+      'latestReproducibleVersionCode': latestReproducibleVersionCode,
     if (latestAttestationStatus != null)
       'latestAttestationStatus': latestAttestationStatus,
     if (latestMalwareScanStatus != null)
@@ -1762,6 +1782,7 @@ class SourceProvider {
         resolvedReproducibleStatus,
       ),
       latestReproducibleStatus: resolvedReproducibleStatus,
+      latestReproducibleVersionCode: apk.versionCode,
       latestAttestationStatus:
           apk.attestationStatus ??
           (sameVersionAsPrevious ? currentApp.latestAttestationStatus : null),

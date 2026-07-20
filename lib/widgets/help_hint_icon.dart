@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
-/// Inline tappable help-icon that pops a tooltip with the given [message].
+/// Inline tappable help-icon that pops a tooltip with [message] or
+/// [richMessage].
 ///
 /// Used inline next to a settings-row title (or any other label) when a
 /// long subtitle would crowd the row but a contextual explanation is still
@@ -28,13 +29,17 @@ import 'package:flutter/material.dart';
 class HelpHintIcon extends StatefulWidget {
   const HelpHintIcon({
     super.key,
-    required this.message,
+    this.message,
+    this.richMessage,
+    this.icon = Icons.help_outline_rounded,
     this.size = 20,
     this.padding = const EdgeInsets.only(left: 6),
     this.showDuration = const Duration(seconds: 8),
-  });
+  }) : assert((message == null) != (richMessage == null));
 
-  final String message;
+  final String? message;
+  final InlineSpan? richMessage;
+  final IconData icon;
   final double size;
   final EdgeInsetsGeometry padding;
   final Duration showDuration;
@@ -54,6 +59,7 @@ class _HelpHintIconState extends State<HelpHintIcon> {
       child: Tooltip(
         key: _tooltipKey,
         message: widget.message,
+        richMessage: widget.richMessage,
         triggerMode: TooltipTriggerMode.manual,
         waitDuration: Duration.zero,
         showDuration: widget.showDuration,
@@ -70,7 +76,7 @@ class _HelpHintIconState extends State<HelpHintIcon> {
             tapTargetSize: MaterialTapTargetSize.shrinkWrap,
             visualDensity: VisualDensity.compact,
           ),
-          icon: Icon(Icons.help_outline_rounded, size: widget.size),
+          icon: Icon(widget.icon, size: widget.size),
           onPressed: () {
             _tooltipKey.currentState?.ensureTooltipVisible();
           },

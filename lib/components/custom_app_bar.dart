@@ -228,7 +228,7 @@ class _CustomAppBarState extends State<CustomAppBar> {
   }
 }
 
-class ScrollLinkedProgressiveBlur extends StatelessWidget {
+class ScrollLinkedProgressiveBlur extends StatefulWidget {
   final Color overlayColor;
   final double blurSigma;
 
@@ -239,10 +239,31 @@ class ScrollLinkedProgressiveBlur extends StatelessWidget {
   });
 
   @override
+  State<ScrollLinkedProgressiveBlur> createState() =>
+      _ScrollLinkedProgressiveBlurState();
+}
+
+class _ScrollLinkedProgressiveBlurState
+    extends State<ScrollLinkedProgressiveBlur> {
+  // Last quantized ramp value we built a subtree for, and that subtree.
+  double _lastT = -1;
+  Widget _cached = const SizedBox.shrink();
+
+  @override
+  void didUpdateWidget(ScrollLinkedProgressiveBlur oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    // A theme change (tint) or a blur-strength change invalidates the cache.
+    if (oldWidget.overlayColor != widget.overlayColor ||
+        oldWidget.blurSigma != widget.blurSigma) {
+      _lastT = -1;
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
     final scrollPosition = Scrollable.maybeOf(context)?.position;
     if (scrollPosition == null) {
-      return _buildBlurContent(1.0);
+      return _contentFor(1.0);
     }
 
     return AnimatedBuilder(
@@ -253,9 +274,25 @@ class ScrollLinkedProgressiveBlur extends StatelessWidget {
           // Fades in over 36 pixels of scroll
           opacity = (scrollPosition.pixels / 36.0).clamp(0.0, 1.0);
         }
-        return _buildBlurContent(opacity);
+        return _contentFor(opacity);
       },
     );
+  }
+
+  /// Returns the blur subtree for ramp value [t], reusing the cached instance
+  /// when [t] is unchanged. Past the 36px fade-in ramp `t` is pinned at 1.0, so
+  /// without this the [AnimatedBuilder] rebuilt an identical BackdropFilter +
+  /// ImageFilter + LinearGradient on the UI thread every single scroll frame.
+  /// Returning the *identical* widget instance lets Flutter skip the subtree
+  /// rebuild entirely. (The backdrop blur still re-rasterizes over the moving
+  /// content on the raster thread — that is inherent to a live blur.)
+  Widget _contentFor(double t) {
+    // Quantize to 1% so sub-pixel scroll deltas don't defeat the cache.
+    final double q = (t * 100).roundToDouble() / 100;
+    if (q == _lastT) return _cached;
+    _lastT = q;
+    _cached = _buildBlurContent(q);
+    return _cached;
   }
 
   Widget _buildBlurContent(double opacity) {
@@ -276,8 +313,8 @@ class ScrollLinkedProgressiveBlur extends StatelessWidget {
             children: [
               BackdropFilter(
                 filter: ImageFilter.blur(
-                  sigmaX: blurSigma * t,
-                  sigmaY: blurSigma * t,
+                  sigmaX: widget.blurSigma * t,
+                  sigmaY: widget.blurSigma * t,
                 ),
                 child: const SizedBox.expand(),
               ),
@@ -287,8 +324,10 @@ class ScrollLinkedProgressiveBlur extends StatelessWidget {
                     begin: Alignment.topCenter,
                     end: Alignment.bottomCenter,
                     colors: [
-                      overlayColor.withValues(alpha: overlayColor.a * t),
-                      overlayColor.withValues(alpha: 0),
+                      widget.overlayColor.withValues(
+                        alpha: widget.overlayColor.a * t,
+                      ),
+                      widget.overlayColor.withValues(alpha: 0),
                     ],
                   ),
                 ),

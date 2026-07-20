@@ -212,6 +212,8 @@ class HomePageState extends State<HomePage> {
 
   Future<void> initDeepLinks() async {
     _appLinks = AppLinks();
+    final AppsProvider appsProvider = context.read<AppsProvider>();
+    final NavigatorState navigator = Navigator.of(context);
 
     Future<void> goToAddApp(String data) async {
       unawaited(switchToPage(1));
@@ -233,7 +235,6 @@ class HomePageState extends State<HomePage> {
 
     Future<void> handleAddUrl(String data) async {
       // Ensure apps are loaded
-      final AppsProvider appsProvider = context.read<AppsProvider>();
       while (appsProvider.loadingApps) {
         await Future.delayed(const Duration(milliseconds: 10));
       }
@@ -258,16 +259,13 @@ class HomePageState extends State<HomePage> {
       isLinkActivity = true;
       final String? sharedUrl = SharedUrlReceiver.extractFirstUrl(sharedText);
       if (sharedUrl == null) {
-        if (!context.mounted) return;
-        showError(UnsupportedURLError(), context);
+        showError(UnsupportedURLError());
         return;
       }
       try {
         await handleAddUrl(sharedUrl);
       } catch (e) {
-        if (!context.mounted) return;
-        // ignore: use_build_context_synchronously
-        showError(e, context);
+        showError(e);
       }
     }
 
@@ -280,9 +278,9 @@ class HomePageState extends State<HomePage> {
           await handleAddUrl(data);
         } else if (action == 'app' || action == 'apps') {
           final dataStr = Uri.decodeComponent(data);
-          if (!context.mounted) return;
+          if (!navigator.mounted) return;
           if (await showDialog(
-                context: context,
+                context: navigator.context,
                 builder: (BuildContext ctx) {
                   return GeneratedFormModal(
                     title: tr(
@@ -308,29 +306,23 @@ class HomePageState extends State<HomePage> {
                 },
               ) !=
               null) {
-            // ignore: use_build_context_synchronously
-            final appsProvider = context.read<AppsProvider>();
             final result = await appsProvider.import(
               action == 'app'
                   ? '{ "apps": [$dataStr] }'
                   : '{ "apps": $dataStr }',
             );
-            if (!context.mounted) return;
             showMessage(
               tr(
                 'importedX',
                 args: [plural('apps', result.key.length).toLowerCase()],
               ),
-              context, // ignore: use_build_context_synchronously
             );
           }
         } else {
           throw ObtainiumError(tr('unknown'));
         }
       } catch (e) {
-        if (!context.mounted) return;
-        // ignore: use_build_context_synchronously
-        showError(e, context);
+        showError(e);
       }
     }
 
@@ -390,6 +382,7 @@ class HomePageState extends State<HomePage> {
     if (!mounted) {
       return;
     }
+    FocusManager.instance.primaryFocus?.unfocus();
 
     pageSwitchRequestId += 1;
     final int currentRequestId = pageSwitchRequestId;
@@ -473,6 +466,10 @@ class HomePageState extends State<HomePage> {
         if (currentKey is GlobalKey<AddAppPageState>) {
           final AddAppPageState? addAppPageState = currentKey.currentState;
           if (addAppPageState != null) {
+            // The nested Add App PopScope owns back navigation while its
+            // launcher is showing an inline flow. Handling the same event here
+            // would open a second discard dialog and then switch tabs.
+            if (addAppPageState.hasInlineLauncherFlow) return;
             if (!await addAppPageState.confirmCancelBulkScanForNavigation()) {
               return;
             }

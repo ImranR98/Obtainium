@@ -720,17 +720,11 @@ class GitHub extends AppSource {
       if (isDateOnly) {
         final dateA = dates.putIfAbsent(
           a,
-          () => _getReleaseDateFromRelease(
-            a,
-            useLatestAssetDateAsReleaseDate,
-          ),
+          () => _getReleaseDateFromRelease(a, useLatestAssetDateAsReleaseDate),
         );
         final dateB = dates.putIfAbsent(
           b,
-          () => _getReleaseDateFromRelease(
-            b,
-            useLatestAssetDateAsReleaseDate,
-          ),
+          () => _getReleaseDateFromRelease(b, useLatestAssetDateAsReleaseDate),
         );
         return (dateA ?? DateTime(1)).compareTo(dateB ?? DateTime(0));
       }
@@ -1100,6 +1094,26 @@ class GitHub extends AppSource {
       final apkUrls =
           targetRelease['apkUrls'] as List<MapEntry<String, String>>;
 
+      // Advance download size for the preferred APK, read from the GitHub API's
+      // per-asset `size` field (no extra network request) — parity with fork
+      // main (v2.9.3). This is what shows the update size on the update button;
+      // dropping it in the sync is why GitHub (and Codeberg, which delegates
+      // here) apps stopped showing a size.
+      int? apkSizeBytes;
+      if (apkUrls.isNotEmpty) {
+        final sizeAssets =
+            (targetRelease['filteredAssets'] as List<dynamic>?) ?? [];
+        for (final asset in sizeAssets.whereType<Map<String, dynamic>>()) {
+          final assetName =
+              (asset['final_url'] as MapEntry<String, String>?)?.key;
+          if (assetName == apkUrls.last.key) {
+            final rawSize = asset['size'];
+            if (rawSize is num) apkSizeBytes = rawSize.toInt();
+            break;
+          }
+        }
+      }
+
       // ── GitHub build-attestation status (fork feature) ──────────────────
       // Compute the attestation verdict at CHECK time from the preferred
       // asset's API-provided sha256 `digest`, so the app page can show
@@ -1164,6 +1178,7 @@ class GitHub extends AppSource {
         changeLog: changeLog.isEmpty ? null : changeLog,
         allAssetUrls:
             targetRelease['allAssetUrls'] as List<MapEntry<String, String>>,
+        apkSizeBytes: apkSizeBytes,
         attestationStatus: attestationStatus,
       );
     } else {

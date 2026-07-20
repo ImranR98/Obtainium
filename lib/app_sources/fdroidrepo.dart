@@ -188,7 +188,8 @@ class FDroidRepo extends AppSource {
       throw NoReleasesError();
     }
     Future<String> releaseReproducibleStatus(dynamic release) async {
-      if (release.querySelector('binaries') != null) {
+      final String? binaries = release.querySelector('binaries')?.text.trim();
+      if (binaries?.isNotEmpty == true) {
         return reproducibleBuildStatusVerified;
       }
       final int? versionCode = int.tryParse(
@@ -308,6 +309,9 @@ class FDroidRepo extends AppSource {
       selectedVersion,
       getApkUrlsFromUrls(apkUrls),
       AppNames(authorName, appName),
+      versionCode: int.tryParse(
+        selectedReleases[0].querySelector('versioncode')?.innerHtml ?? '',
+      ),
       releaseDate: releaseDate,
       changeLog: changeLog,
       iconUrl: iconUrl,

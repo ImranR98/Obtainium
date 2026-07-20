@@ -263,14 +263,26 @@ class SettingsPageState extends State<SettingsPage> {
           child: child,
           builder: (context, expandedState, child) {
             final bool expanded = _sectionExpanded(expandedState, key);
-            return ClipRect(
-              clipper: _SettingsSectionShadowClipper(expanded: expanded),
-              child: AnimatedAlign(
-                duration: const Duration(milliseconds: 360),
-                curve: Curves.easeInOutCubicEmphasized,
-                alignment: Alignment.topCenter,
-                heightFactor: expanded ? 1.0 : 0.0,
-                child: child,
+            return AnimatedPadding(
+              duration: const Duration(milliseconds: 360),
+              curve: Curves.easeInOutCubicEmphasized,
+              padding: EdgeInsets.only(
+                bottom: expanded ? SettingsProvider.collapsedHeaderGap : 0,
+              ),
+              child: ClipRect(
+                clipper: _SettingsSectionShadowClipper(expanded: expanded),
+                child: AnimatedAlign(
+                  duration: const Duration(milliseconds: 360),
+                  curve: Curves.easeInOutCubicEmphasized,
+                  alignment: Alignment.topCenter,
+                  heightFactor: expanded ? 1.0 : 0.0,
+                  child: AnimatedOpacity(
+                    duration: const Duration(milliseconds: 180),
+                    curve: Curves.easeInOutCubicEmphasized,
+                    opacity: expanded ? 1.0 : 0.0,
+                    child: child!,
+                  ),
+                ),
               ),
             );
           },
@@ -281,11 +293,7 @@ class SettingsPageState extends State<SettingsPage> {
     Widget sectionHeader(String title, IconData icon, String key) {
       const Duration headerTransitionDuration = Duration(milliseconds: 300);
       const Curve headerTransitionCurve = Curves.easeInOutCubicEmphasized;
-      final Color collapsedHeaderColor = Color.lerp(
-        cs.secondaryContainer,
-        cs.primaryContainer,
-        0.30,
-      )!;
+      final Color collapsedHeaderColor = m3eCollapsedGroupHeaderFill(cs);
       final Color collapsedHeaderContentColor = cs.onSecondaryContainer;
 
       // RepaintBoundary: see settingsCard above for why each section is its own
@@ -310,10 +318,10 @@ class SettingsPageState extends State<SettingsPage> {
                   ),
                 );
 
-            return AnimatedPadding(
-              duration: headerTransitionDuration,
-              curve: headerTransitionCurve,
-              padding: EdgeInsets.fromLTRB(0, expanded ? 20 : 16, 0, 8),
+            return Padding(
+              padding: const EdgeInsets.only(
+                top: SettingsProvider.collapsedHeaderGap,
+              ),
               child: AnimatedContainer(
                 duration: headerTransitionDuration,
                 curve: headerTransitionCurve,
@@ -338,9 +346,7 @@ class SettingsPageState extends State<SettingsPage> {
                     highlightColor: Colors.transparent,
                     hoverColor: Colors.transparent,
                     child: SizedBox(
-                      height: expanded
-                          ? null
-                          : SettingsProvider.collapsedHeaderHeight,
+                      height: SettingsProvider.collapsedHeaderHeight,
                       child: AnimatedPadding(
                         duration: headerTransitionDuration,
                         curve: headerTransitionCurve,
@@ -513,7 +519,7 @@ class SettingsPageState extends State<SettingsPage> {
         key: 'appearance',
         title: tr('appearance'),
         icon: Icons.tune_rounded,
-        widget: _AppearanceSection(androidInfo: _androidInfo),
+        widget: const _AppearanceSection(),
       ),
       _SettingsCategory(
         key: 'interaction',
@@ -543,16 +549,12 @@ class SettingsPageState extends State<SettingsPage> {
 
       final Color containerColor = selected
           ? cs.secondaryContainer
-          : cs.surfaceContainerHigh;
-      final Color contentColor = selected
-          ? cs.onSecondaryContainer
-          : cs.onSurface;
+          : m3eCollapsedGroupHeaderFill(cs);
+      final Color contentColor = cs.onSecondaryContainer;
 
-      final Color iconBoxColor = selected
-          ? cs.primary.withValues(alpha: 0.16)
-          : cs.primaryContainer.withValues(alpha: 0.48);
+      final Color iconBoxColor = cs.primary.withValues(alpha: 0.16);
 
-      final Color iconColor = selected ? cs.primary : cs.onSurfaceVariant;
+      final Color iconColor = cs.onSecondaryContainer;
 
       final Color chevronColor = cs.onSurfaceVariant;
 
@@ -561,7 +563,9 @@ class SettingsPageState extends State<SettingsPage> {
       );
 
       return Padding(
-        padding: const EdgeInsets.only(bottom: 8.0),
+        padding: const EdgeInsets.only(
+          bottom: SettingsProvider.collapsedHeaderGap,
+        ),
         child: Container(
           decoration: BoxDecoration(
             color: containerColor,
@@ -578,41 +582,49 @@ class SettingsPageState extends State<SettingsPage> {
                 }
               },
               borderRadius: BorderRadius.circular(categoryTileRadius),
-              child: Padding(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 12,
-                  vertical: 10,
-                ),
-                child: Row(
-                  children: [
-                    Container(
-                      width: 36,
-                      height: 36,
-                      decoration: BoxDecoration(
-                        color: iconBoxColor,
-                        shape: BoxShape.circle,
+              child: SizedBox(
+                height: SettingsProvider.collapsedHeaderHeight,
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 12),
+                  child: Row(
+                    children: [
+                      Container(
+                        width: 36,
+                        height: 36,
+                        decoration: BoxDecoration(
+                          color: iconBoxColor,
+                          shape: BoxShape.circle,
+                        ),
+                        child: Icon(icon, color: iconColor, size: 18),
                       ),
-                      child: Icon(icon, color: iconColor, size: 18),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Text(
-                        title,
-                        style: TextStyle(
-                          fontWeight: selected
-                              ? FontWeight.w600
-                              : FontWeight.w500,
-                          color: contentColor,
-                          fontSize: 14,
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Text(
+                          title,
+                          style: TextStyle(
+                            fontWeight: selected
+                                ? FontWeight.w600
+                                : FontWeight.w500,
+                            color: contentColor,
+                            fontSize: 14,
+                          ),
                         ),
                       ),
-                    ),
-                    Icon(
-                      Icons.chevron_right_rounded,
-                      color: chevronColor,
-                      size: 20,
-                    ),
-                  ],
+                      Container(
+                        width: 32,
+                        height: 32,
+                        decoration: BoxDecoration(
+                          color: cs.surfaceContainerHighest,
+                          shape: BoxShape.circle,
+                        ),
+                        child: Icon(
+                          Icons.chevron_right_rounded,
+                          color: chevronColor,
+                          size: 20,
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ),
             ),
@@ -920,7 +932,7 @@ class SettingsPageState extends State<SettingsPage> {
                               ),
                               collapsibleCard(
                                 'appearance',
-                                _AppearanceSection(androidInfo: _androidInfo),
+                                const _AppearanceSection(),
                               ),
                               // ── Interaction ──────────────────────────────
                               sectionHeader(
@@ -987,14 +999,11 @@ class _SettingsSectionShadowClipper extends CustomClipper<Rect> {
 
   @override
   Rect getClip(Size size) {
-    if (!expanded) {
-      return Offset.zero & size;
-    }
     return Rect.fromLTRB(
       -shadowPaintAllowance,
       -shadowPaintAllowance,
       size.width + shadowPaintAllowance,
-      size.height + shadowPaintAllowance,
+      size.height + (expanded ? shadowPaintAllowance : 0),
     );
   }
 
@@ -1035,11 +1044,22 @@ class _UpdatesSection extends StatelessWidget {
     context.select<SettingsProvider, int>(_updateSettingsHash);
     final SettingsProvider sp = context.read<SettingsProvider>();
 
-    return FutureBuilder<AndroidDeviceInfo>(
-      future: androidInfo,
-      builder: (context, snapshot) {
-        return _buildSettingsCardContent(context, sp, cs, snapshot);
-      },
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: <Widget>[
+        // First item in the Updates section, deliberately NOT inside the
+        // settings card: a manual trigger for the full background update
+        // worker (check → download → install-if-enabled → notify, across all
+        // eligible apps), as opposed to pull-to-refresh's foreground check of
+        // only the currently visible list.
+        const _RunBgUpdateCheckNowButton(),
+        FutureBuilder<AndroidDeviceInfo>(
+          future: androidInfo,
+          builder: (context, snapshot) {
+            return _buildSettingsCardContent(context, sp, cs, snapshot);
+          },
+        ),
+      ],
     );
   }
 
@@ -1146,6 +1166,82 @@ class _UpdatesSection extends StatelessWidget {
       ),
     ]);
     return M3eExpressiveSettingsCard(colorScheme: cs, items: rows);
+  }
+}
+
+/// Manual trigger for the background update check, shown as the first item in
+/// the Updates section (intentionally outside the settings card). Unlike
+/// pull-to-refresh — a foreground check of the currently visible list — this
+/// runs the actual background worker: check → download → install (when
+/// enabled) → notifications, across all eligible apps ([forceAll]).
+class _RunBgUpdateCheckNowButton extends StatefulWidget {
+  const _RunBgUpdateCheckNowButton();
+
+  @override
+  State<_RunBgUpdateCheckNowButton> createState() =>
+      _RunBgUpdateCheckNowButtonState();
+}
+
+class _RunBgUpdateCheckNowButtonState
+    extends State<_RunBgUpdateCheckNowButton> {
+  bool _isRunning = false;
+
+  Future<void> _trigger() async {
+    if (_isRunning) return;
+    setState(() => _isRunning = true);
+    // Read the provider before the async gap so we don't touch context after.
+    final LogsProvider logs = context.read<LogsProvider>();
+    await logs.add(
+      'Manual background update check triggered from settings',
+      level: LogLevel.info,
+    );
+    try {
+      final String taskId = 'manual_${DateTime.now().millisecondsSinceEpoch}';
+      await bgUpdateCheck(taskId, null, forceAll: true);
+      await logs.add(
+        'Manual background update check completed',
+        level: LogLevel.info,
+      );
+    } catch (e) {
+      unawaited(
+        logs.add(
+          'Manual background update check failed: $e',
+          level: LogLevel.error,
+        ),
+      );
+    } finally {
+      if (mounted) setState(() => _isRunning = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      // No horizontal inset: match the full width of the settings-card rows
+      // below (they stretch edge-to-edge in the same Column). Only a small
+      // bottom gap separates this action from the toggle group.
+      padding: const EdgeInsets.only(bottom: 8),
+      child: SizedBox(
+        width: double.infinity,
+        child: FilledButton.tonal(
+          onPressed: _isRunning ? null : _trigger,
+          // Match the row titles below (ListTile default = bodyLarge, ~16sp),
+          // which are larger than the button's default labelLarge (~14sp).
+          // Only textStyle is overridden; pill shape and tonal colors still
+          // come from the theme's filledButtonTheme.
+          style: FilledButton.styleFrom(
+            textStyle: Theme.of(context).textTheme.bodyLarge,
+          ),
+          child: _isRunning
+              ? const SizedBox(
+                  width: 20,
+                  height: 20,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                )
+              : Text(tr('runBgCheckNow')),
+        ),
+      ),
+    );
   }
 }
 
@@ -1736,18 +1832,13 @@ class _ThemesSettingsSection extends StatelessWidget {
 
 /// Appearance section — locale, UI scale slider, card-corner slider, toggles.
 class _AppearanceSection extends StatelessWidget {
-  const _AppearanceSection({required this.androidInfo});
-
-  final Future<AndroidDeviceInfo> androidInfo;
+  const _AppearanceSection();
 
   static int _appearanceSettingsHash(SettingsProvider sp) => Object.hash(
     sp.forcedLocale?.toLanguageTag(),
-    sp.useSystemFont,
     sp.appUiScale,
     sp.cardCornerScale,
     sp.showAppWebpage,
-    sp.disablePageTransitions,
-    sp.reversePageTransitions,
     sp.highlightTouchTargets,
     sp.alwaysUsePhoneLayout,
   );
@@ -1765,26 +1856,6 @@ class _AppearanceSection extends StatelessWidget {
           padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
           child: _LocaleMenu(sp: sp),
         ),
-        FutureBuilder(
-          builder: (ctx, val) {
-            return (val.data?.version.sdkInt ?? 0) >= 29
-                ? SwitchListTile(
-                    title: Text(tr('useSystemFont')),
-                    value: sp.useSystemFont,
-                    onChanged: (useSystemFont) {
-                      if (useSystemFont) {
-                        NativeFeatures.loadSystemFont().then((_) {
-                          sp.useSystemFont = true;
-                        });
-                      } else {
-                        sp.useSystemFont = false;
-                      }
-                    },
-                  )
-                : const SizedBox.shrink();
-          },
-          future: androidInfo,
-        ),
         const _UiScaleSlider(),
         const _CardCornerScaleSlider(),
         SwitchListTile(
@@ -1796,18 +1867,6 @@ class _AppearanceSection extends StatelessWidget {
           title: Text(tr('showWebInAppView')),
           value: sp.showAppWebpage,
           onChanged: (value) => sp.showAppWebpage = value,
-        ),
-        SwitchListTile(
-          title: Text(tr('disablePageTransitions')),
-          value: sp.disablePageTransitions,
-          onChanged: (value) => sp.disablePageTransitions = value,
-        ),
-        SwitchListTile(
-          title: Text(tr('reversePageTransitions')),
-          value: sp.reversePageTransitions,
-          onChanged: sp.disablePageTransitions
-              ? null
-              : (value) => sp.reversePageTransitions = value,
         ),
         SwitchListTile(
           title: Text(tr('highlightTouchTargets')),
@@ -2628,7 +2687,7 @@ class _IntegrationsSectionState extends State<_IntegrationsSection>
                 child: AppSegmentedButton<String>(
                   segments: [
                     ButtonSegment<String>(
-                      value: 'stock',
+                      value: 'system',
                       label: AppSegmentedButtonLabel(tr('installerModeStock')),
                     ),
                     ButtonSegment<String>(
@@ -2638,7 +2697,7 @@ class _IntegrationsSectionState extends State<_IntegrationsSection>
                       ),
                     ),
                     ButtonSegment<String>(
-                      value: 'legacy',
+                      value: 'external',
                       label: AppSegmentedButtonLabel(
                         tr('installerModeThirdParty'),
                       ),
@@ -2659,23 +2718,15 @@ class _IntegrationsSectionState extends State<_IntegrationsSection>
                             case 'services_not_found':
                               showError(
                                 ObtainiumError(tr('shizukuBinderNotFound')),
-                                context,
                               );
                             case 'old_shizuku':
-                              showError(
-                                ObtainiumError(tr('shizukuOld')),
-                                context,
-                              );
+                              showError(ObtainiumError(tr('shizukuOld')));
                             case 'old_android_with_adb':
                               showError(
                                 ObtainiumError(tr('shizukuOldAndroidWithADB')),
-                                context,
                               );
                             case 'denied':
-                              showError(
-                                ObtainiumError(tr('cancelled')),
-                                context,
-                              );
+                              showError(ObtainiumError(tr('cancelled')));
                           }
                         }
                       });
@@ -2693,7 +2744,7 @@ class _IntegrationsSectionState extends State<_IntegrationsSection>
                   onChanged: (bool value) =>
                       sp.shizukuPretendToBeGooglePlay = value,
                 ),
-              if (sp.installerMode == 'legacy')
+              if (sp.installerMode == 'external')
                 const Padding(
                   padding: EdgeInsets.only(top: 8),
                   child: _ExternalInstallerTile(),
@@ -2795,7 +2846,7 @@ class AboutSectionContent extends StatelessWidget {
                     borderRadius: 18,
                     semanticLabel: tr('aboutAuthorProfile'),
                     onTap: () => _openAboutUrl(_aboutAuthorUrl),
-                    onLongPress: () => _copyAboutUrl(context, _aboutAuthorUrl),
+                    onLongPress: () => _copyAboutUrl(_aboutAuthorUrl),
                   ),
                 ],
               ),
@@ -2815,7 +2866,7 @@ class AboutSectionContent extends StatelessWidget {
                   width: double.infinity,
                   child: FilledButton.icon(
                     onPressed: () => _openAboutUrl(sp.sourceUrl),
-                    onLongPress: () => _copyAboutUrl(context, sp.sourceUrl),
+                    onLongPress: () => _copyAboutUrl(sp.sourceUrl),
                     icon: _GitHubMarkIcon(color: colorScheme.onPrimary),
                     label: Text(tr('aboutStarOnGithub')),
                   ),
@@ -2830,8 +2881,7 @@ class AboutSectionContent extends StatelessWidget {
                       child: FilledButton.tonalIcon(
                         style: _aboutSecondaryButtonStyle(colorScheme),
                         onPressed: () => _openAboutUrl(_aboutWikiUrl),
-                        onLongPress: () =>
-                            _copyAboutUrl(context, _aboutWikiUrl),
+                        onLongPress: () => _copyAboutUrl(_aboutWikiUrl),
                         icon: const Icon(Icons.open_in_new_rounded),
                         label: Text(tr('aboutOpenWiki')),
                       ),
@@ -2843,7 +2893,7 @@ class AboutSectionContent extends StatelessWidget {
                         onPressed: () =>
                             _shareAboutUrl(_aboutObtainXWebsiteUrl, 'ObtainX'),
                         onLongPress: () =>
-                            _copyAboutUrl(context, _aboutObtainXWebsiteUrl),
+                            _copyAboutUrl(_aboutObtainXWebsiteUrl),
                         icon: const Icon(Icons.share_rounded),
                         label: Text(tr('share')),
                       ),
@@ -3076,7 +3126,7 @@ class _AboutAppPromo extends StatelessWidget {
       child: InkWell(
         onTap: () =>
             appId != null ? _openPromoApp(appId!, url) : _openAboutUrl(url),
-        onLongPress: () => _copyAboutUrl(context, url),
+        onLongPress: () => _copyAboutUrl(url),
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
           child: Row(
@@ -3182,7 +3232,7 @@ class _AboutTextLink extends StatelessWidget {
   Widget build(BuildContext context) {
     return TextButton(
       onPressed: () => _openAboutUrl(url),
-      onLongPress: () => _copyAboutUrl(context, url),
+      onLongPress: () => _copyAboutUrl(url),
       style: TextButton.styleFrom(
         foregroundColor: colorScheme.primary,
         padding: const EdgeInsets.symmetric(horizontal: 8),
@@ -3227,10 +3277,9 @@ Future<void> _openPromoApp(String appId, String webUrl) async {
   }
 }
 
-Future<void> _copyAboutUrl(BuildContext context, String url) async {
+Future<void> _copyAboutUrl(String url) async {
   await Clipboard.setData(ClipboardData(text: url));
-  if (!context.mounted) return;
-  showMessage(tr('aboutLinkCopied'), context);
+  showMessage(tr('aboutLinkCopied'));
 }
 
 Future<void> _shareAboutUrl(String url, String subject) async {

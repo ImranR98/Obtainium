@@ -308,6 +308,17 @@ bool isSkipActiveForCurrentLatest(App app) {
   return skipped == app.latestVersion;
 }
 
+bool appIsUpToDateForFiltering(App app) {
+  final installed = app.installedVersion;
+  final latest = app.latestVersion;
+  if (installed == null) return false;
+  return isSkipActiveForCurrentLatest(app) ||
+      installed == latest ||
+      versionsEffectivelyEqual(installed, latest) ||
+      (installedVersionIsNewerOrEqual(installed, latest) &&
+          !versionOrderIsUnclear(installed, latest));
+}
+
 /// Removes a saved skip once it is stale or the installed app is already at
 /// or ahead of the skipped release.
 App normalizeSkippedLatestVersion(App app) {
@@ -493,6 +504,7 @@ App? mergeFetchedUpdateWithLiveState({
     rawReleaseTitlesFromSource: fetchedApp.rawReleaseTitlesFromSource,
     latestIsReproducible: fetchedApp.latestIsReproducible,
     latestReproducibleStatus: fetchedApp.latestReproducibleStatus,
+    latestReproducibleVersionCode: fetchedApp.latestReproducibleVersionCode,
     latestAttestationStatus: fetchedApp.latestAttestationStatus,
     latestMalwareScanStatus: malwareScanStillMatchesRelease
         ? liveApp.latestMalwareScanStatus
@@ -523,16 +535,79 @@ extension AppsProviderUpdates on AppsProvider {
       return null;
     }
     final SourceProvider sourceProvider = SourceProvider();
-    final App fetchedApp = await sourceProvider.getApp(
-      sourceProvider.getSource(
-        currentApp.url,
-        overrideSource: currentApp.overrideSource,
-      ),
+    final AppSource source = sourceProvider.getSource(
+      currentApp.url,
+      overrideSource: currentApp.overrideSource,
+    );
+    App fetchedApp = await sourceProvider.getApp(
+      source,
       currentApp.url,
       currentApp.additionalSettings,
       currentApp: currentApp,
     );
+    fetchedApp = await _fillDownloadSizeIfUpdatePending(
+      source,
+      currentApp,
+      fetchedApp,
+    );
     return (requestedApp: currentApp, fetchedApp: fetchedApp);
+  }
+
+  /// For sources that don't publish an APK size in their metadata (GitLab,
+  /// SourceForge, SourceHut, direct-APK links, HTML), probe the preferred APK's
+  /// Content-Length so the update button can still show a size — but ONLY when
+  /// an update is actually pending. GitHub/stores/F-Droid already fill
+  /// [APKDetails.apkSizeBytes], and getApp carries a known size across
+  /// same-version checks, so this adds at most one request per new release and
+  /// never fires for up-to-date or track-only apps.
+  Future<App> _fillDownloadSizeIfUpdatePending(
+    AppSource source,
+    App currentApp,
+    App fetchedApp,
+  ) async {
+    if (fetchedApp.apkSizeBytes != null) return fetchedApp;
+    if (currentApp.additionalSettings['trackOnly'] == true) return fetchedApp;
+    // Only when there's something to download: not installed, or the source's
+    // latest differs from what's installed.
+    if (currentApp.installedVersion == fetchedApp.latestVersion) {
+      return fetchedApp;
+    }
+    if (fetchedApp.apkUrls.isEmpty) return fetchedApp;
+    final int idx =
+        (fetchedApp.preferredApkIndex >= 0 &&
+            fetchedApp.preferredApkIndex < fetchedApp.apkUrls.length)
+        ? fetchedApp.preferredApkIndex
+        : 0;
+    final String url = fetchedApp.apkUrls[idx].value;
+    if (url.isEmpty) return fetchedApp;
+    try {
+      // Resolve the real download URL first: sources like GitLab and Uptodown
+      // rewrite the asset URL in assetUrlPrefetchModifier, so probing the
+      // unresolved URL returns a wrong or missing Content-Length. The install
+      // path already resolves before downloading; do the same here. (#3104)
+      final String resolvedUrl = await source.assetUrlPrefetchModifier(
+        url,
+        currentApp.url,
+        currentApp.additionalSettings,
+      );
+      if (resolvedUrl.isEmpty) return fetchedApp;
+      final Map<String, String>? headers = await source.getRequestHeaders(
+        currentApp.additionalSettings,
+        resolvedUrl,
+        forAPKDownload: true,
+      );
+      final int? size = await getDownloadSize(
+        resolvedUrl,
+        headers: headers,
+        allowInsecure: currentApp.settings.getBool('allowInsecure'),
+      );
+      if (size != null && size > 0) {
+        return fetchedApp.copyWith(apkSizeBytes: size);
+      }
+    } catch (_) {
+      // Best-effort: leave the size unknown on any failure.
+    }
+    return fetchedApp;
   }
 
   Future<App?> fetchUpdate(String appId) async {

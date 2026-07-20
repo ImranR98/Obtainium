@@ -27,8 +27,8 @@ PageRouteBuilder<T> additionalOptionsPageRoute<T>(WidgetBuilder builder) =>
 /// Merges [formValues] into the app, applies version/release-date rules, saves.
 /// Returns whether version detection was newly enabled (for follow-up refresh).
 Future<bool> persistAdditionalOptionsForm({
-  required BuildContext context,
   required AppsProvider appsProvider,
+  required SettingsProvider settingsProvider,
   required String appId,
   required Map<String, dynamic> formValues,
 }) async {
@@ -41,8 +41,6 @@ Future<bool> persistAdditionalOptionsForm({
     app.url,
     overrideSource: app.overrideSource,
   );
-  final SettingsProvider settingsProvider = context.read<SettingsProvider>();
-
   final Map<String, dynamic> originalSettings = Map<String, dynamic>.from(
     app.additionalSettings,
   );
@@ -71,9 +69,7 @@ Future<bool> persistAdditionalOptionsForm({
 
   if (source.enforceTrackOnly) {
     app.additionalSettings['trackOnly'] = true;
-    if (context.mounted) {
-      showMessage(tr('appsFromSourceAreTrackOnly'), context);
-    }
+    showMessage(tr('appsFromSourceAreTrackOnly'));
   }
 
   final bool versionDetectionPreviouslyActive =
@@ -323,18 +319,14 @@ class _AdditionalOptionsPageState extends State<AdditionalOptionsPage> {
   ) async {
     if (!context.mounted) return;
     final Brightness brightness = Theme.of(context).brightness;
+    final AppsProvider apps = context.read<AppsProvider>();
+    final SettingsProvider settings = context.read<SettingsProvider>();
     final ColorScheme? scheme = await loadColorSchemeFromAppIcon(
       iconBytes: iconBytes,
       brightness: brightness,
     );
-    if (!context.mounted) return;
-    final AppsProvider apps =
-        // ignore: use_build_context_synchronously
-        Provider.of<AppsProvider>(context, listen: false);
+    if (!mounted) return;
     if (!identical(apps.apps[widget.appId]?.icon, iconBytes)) return;
-    final SettingsProvider settings =
-        // ignore: use_build_context_synchronously
-        Provider.of<SettingsProvider>(context, listen: false);
     if (!settings.matchAppPageToIconColors) return;
     if (scheme != null) {
       setState(() {
@@ -362,16 +354,19 @@ class _AdditionalOptionsPageState extends State<AdditionalOptionsPage> {
     });
     try {
       final AppsProvider appsProvider = context.read<AppsProvider>();
+      final SettingsProvider settingsProvider = context
+          .read<SettingsProvider>();
+      final NavigatorState navigator = Navigator.of(context);
       final bool versionDetectionEnabled = await persistAdditionalOptionsForm(
-        context: context,
         appsProvider: appsProvider,
+        settingsProvider: settingsProvider,
         appId: widget.appId,
         formValues: _values,
       );
-      if (!mounted) return;
-      Navigator.of(context).pop(versionDetectionEnabled);
+      if (!mounted || !navigator.mounted) return;
+      navigator.pop(versionDetectionEnabled);
     } catch (err) {
-      if (mounted) showError(err, context);
+      showError(err);
     } finally {
       if (mounted) {
         setState(() {

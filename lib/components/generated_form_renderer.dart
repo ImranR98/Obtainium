@@ -475,7 +475,7 @@ class _EditableCategoryHexChipState extends State<_EditableCategoryHexChip> {
         if (_editing) _commitEditing();
       },
       child: SizedBox(
-        width: 104,
+        width: 118,
         height: 48,
         child: Material(
           color: widget.color,
@@ -486,29 +486,35 @@ class _EditableCategoryHexChipState extends State<_EditableCategoryHexChip> {
             customBorder: const StadiumBorder(),
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 12),
-              child: Center(
+              child: Align(
+                alignment: Alignment.center,
                 child: _editing
-                    ? TextField(
-                        controller: _controller,
-                        focusNode: _focusNode,
-                        inputFormatters: [_CategoryHexInputFormatter()],
-                        maxLines: 1,
-                        autofocus: true,
-                        autocorrect: false,
-                        enableSuggestions: false,
-                        textCapitalization: TextCapitalization.characters,
-                        keyboardType: TextInputType.text,
-                        textInputAction: TextInputAction.done,
-                        textAlign: TextAlign.center,
-                        cursorColor: foreground,
-                        style: textStyle,
-                        decoration: const InputDecoration(
-                          border: InputBorder.none,
-                          counterText: '',
-                          isCollapsed: true,
+                    ? SizedBox(
+                        height: (textStyle?.fontSize ?? 14) * 1.25,
+                        child: TextField(
+                          controller: _controller,
+                          focusNode: _focusNode,
+                          inputFormatters: [_CategoryHexInputFormatter()],
+                          maxLines: 1,
+                          autofocus: true,
+                          autocorrect: false,
+                          enableSuggestions: false,
+                          textCapitalization: TextCapitalization.characters,
+                          keyboardType: TextInputType.text,
+                          textInputAction: TextInputAction.done,
+                          textAlign: TextAlign.center,
+                          textAlignVertical: TextAlignVertical.center,
+                          cursorColor: foreground,
+                          style: textStyle?.copyWith(height: 1.0),
+                          decoration: const InputDecoration(
+                            border: InputBorder.none,
+                            counterText: '',
+                            isCollapsed: true,
+                            contentPadding: EdgeInsets.zero,
+                          ),
+                          onChanged: _handleHexChanged,
+                          onEditingComplete: _commitEditing,
                         ),
-                        onChanged: _handleHexChanged,
-                        onEditingComplete: _commitEditing,
                       )
                     : Text(widget.hex, maxLines: 1, style: textStyle),
               ),
@@ -1145,13 +1151,13 @@ class _GeneratedFormState extends State<GeneratedForm> {
           // (final-iteration) values by the time the closures are invoked.
           final tagInput = widget.items[r][e] as GeneratedFormTagInput;
           Future<void> onAddPressed() async {
-            // ignore: use_build_context_synchronously
+            final NavigatorState navigator = Navigator.of(context);
             final result = await showCategorySheet(
-              context,
+              navigator.context,
               initialColor: generateRandomLightColor(),
               initialName: '',
             );
-            if (!context.mounted || result == null) return;
+            if (!mounted || result == null) return;
             var temp = values[fieldKey] as Map<String, MapEntry<int, bool>>?;
             temp ??= {};
             if (temp.containsKey(result.name)) return;
@@ -1264,13 +1270,15 @@ class _GeneratedFormState extends State<GeneratedForm> {
                                 final oldEntry = temp.entries.firstWhere(
                                   (e) => e.value.value,
                                 );
-                                // ignore: use_build_context_synchronously
-                                final result = await showCategorySheet(
+                                final NavigatorState navigator = Navigator.of(
                                   context,
+                                );
+                                final result = await showCategorySheet(
+                                  navigator.context,
                                   initialColor: Color(oldEntry.value.key),
                                   initialName: oldEntry.key,
                                 );
-                                if (!context.mounted || result == null) return;
+                                if (!mounted || result == null) return;
                                 setState(() {
                                   if (result.name != oldEntry.key) {
                                     temp.remove(oldEntry.key);

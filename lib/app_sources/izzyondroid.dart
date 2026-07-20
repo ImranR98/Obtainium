@@ -33,12 +33,17 @@ class IzzyOnDroid extends AppSource {
       fd.additionalSourceAppSpecificSettingFormItems;
 
   static Map<String, dynamic>? _rbtLogByApkHash;
+  static DateTime? _rbtLogFetchedAt;
+  static const Duration _rbtLogCacheDuration = Duration(minutes: 1);
 
   Future<Map<String, dynamic>> _loadRbtLog(
     Map<String, dynamic> additionalSettings,
   ) async {
     final Map<String, dynamic>? cached = _rbtLogByApkHash;
-    if (cached != null) {
+    final DateTime? fetchedAt = _rbtLogFetchedAt;
+    if (cached != null &&
+        fetchedAt != null &&
+        DateTime.now().difference(fetchedAt) < _rbtLogCacheDuration) {
       return cached;
     }
     final Response response = await sourceRequest(
@@ -53,6 +58,7 @@ class IzzyOnDroid extends AppSource {
       return <String, dynamic>{};
     }
     _rbtLogByApkHash = decoded;
+    _rbtLogFetchedAt = DateTime.now();
     return decoded;
   }
 

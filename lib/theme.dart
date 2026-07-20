@@ -6,7 +6,7 @@ import 'package:flutter/material.dart';
 /// [colorScheme]. Expressive character lives here (large rounded shapes,
 /// emphasized motion, updated M3 component looks) so it propagates to every
 /// screen without per-widget styling.
-ThemeData buildObtainiumTheme(ColorScheme colorScheme, String fontFamily) {
+ThemeData buildObtainiumTheme(ColorScheme colorScheme, String? fontFamily) {
   final cardShape = RoundedSuperellipseBorder(
     borderRadius: BorderRadius.circular(24),
   );

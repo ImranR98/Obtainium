@@ -225,14 +225,21 @@ void main() async {
     unawaited(SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge));
   }
   final SettingsProvider settingsProvider = SettingsProvider();
-  await settingsProvider.initializeSettings();
-  if (settingsProvider.useSystemFont) {
-    await NativeFeatures.loadSystemFont();
-  }
   final np = NotificationsProvider();
-  await np.initialize();
+  // These three native initializations are independent of one another, so run
+  // their platform-channel round-trips concurrently instead of serially to
+  // shorten time-to-first-frame. Only settings must complete before runApp
+  // (the theme reads it); np/WorkManager are awaited here too but overlap.
+  await Future.wait([
+    settingsProvider.initializeSettings(),
+    np.initialize(),
+    Workmanager().initialize(callbackDispatcher),
+  ]);
+  // The system font (when enabled) is loaded lazily after the first frame in
+  // [_ObtainiumState.build] rather than blocking here: reading the font file
+  // from disk on the startup path delayed first paint, and FontLoader.load()
+  // triggers a repaint of the affected text automatically once it completes.
   FlutterForegroundTask.initCommunicationPort();
-  await Workmanager().initialize(callbackDispatcher);
   runApp(
     MultiProvider(
       providers: [
@@ -264,6 +271,12 @@ class Obtainium extends StatefulWidget {
 
 class _ObtainiumState extends State<Obtainium> {
   var existingUpdateInterval = -1;
+
+  // Guards the lazy, one-shot attempt to adopt the device's explicit system
+  // font family. Kicked off from [build] off the cold-start critical path; the
+  // app renders with the OS default font (fontFamily: null) until/unless it
+  // applies, at which point we rebuild once to switch to it.
+  bool _systemFontLoadStarted = false;
 
   // Cache for the expensive boosted light/dark [ColorScheme]s.
   // [ColorScheme.fromSeed] runs HCT colour-space math and the boost*
@@ -511,12 +524,25 @@ class _ObtainiumState extends State<Obtainium> {
         s.useBlackTheme,
         s.useGradientBackground,
         s.shadingIntensity,
-        s.useSystemFont,
         s.theme,
         s.appUiScale,
       ),
     );
     final SettingsProvider settingsProvider = context.read<SettingsProvider>();
+    // The app renders with the OS system font by default (fontFamily: null),
+    // which paints immediately with real weights. Off the startup critical
+    // path we then try to adopt the device's exact font family explicitly (see
+    // [NativeFeatures.loadSystemFont]); if it applies a multi-weight family we
+    // rebuild once so the theme switches null -> 'SystemFont'. On a modern
+    // single-variable-font device this is a no-op and we stay on the default.
+    if (!_systemFontLoadStarted) {
+      _systemFontLoadStarted = true;
+      NativeFeatures.loadSystemFont().then((_) {
+        if (mounted && NativeFeatures.systemFontApplied) {
+          setState(() {});
+        }
+      });
+    }
     final AppsProvider appsProvider = context.read<AppsProvider>();
     final LogsProvider logs = context.read<LogsProvider>();
     final NotificationsProvider notifs = context.read<NotificationsProvider>();
@@ -641,11 +667,13 @@ class _ObtainiumState extends State<Obtainium> {
             );
           }
 
-          NavigationBarThemeData navigationBarThemeFor(ColorScheme scheme) {
-            // Use labelMedium as base so nav labels keep M3 size (bare color-only TextStyle inherits body scale and can wrap).
-            final TextStyle navLabelBase = Theme.of(
-              context,
-            ).textTheme.labelMedium!;
+          NavigationBarThemeData navigationBarThemeFor(
+            ColorScheme scheme,
+            TextTheme appTextTheme,
+          ) {
+            // Use the app theme's labelMedium so nav labels keep both the M3
+            // sizing and the app's active font family.
+            final TextStyle navLabelBase = appTextTheme.labelMedium!;
             return NavigationBarThemeData(
               backgroundColor: scheme.surface,
               surfaceTintColor: Colors.transparent,
@@ -684,13 +712,20 @@ class _ObtainiumState extends State<Obtainium> {
           // this, isEnglish() is stuck false and English strings never get
           // lowercased — parity with fork main.
           setAppLocale(context.locale);
+          // Default to the OS system font (null lets Flutter resolve the
+          // platform font with real weights). Once an explicit multi-weight
+          // device family is loaded, switch to it so a user-picked OEM font is
+          // honoured. Montserrat is no longer bundled.
+          final String? appFontFamily = NativeFeatures.systemFontApplied
+              ? 'SystemFont'
+              : null;
           final ThemeData lightBaseTheme = buildObtainiumTheme(
             themeColorScheme,
-            settingsProvider.useSystemFont ? 'SystemFont' : 'Montserrat',
+            appFontFamily,
           );
           final ThemeData darkBaseTheme = buildObtainiumTheme(
             darkThemeColorScheme,
-            settingsProvider.useSystemFont ? 'SystemFont' : 'Montserrat',
+            appFontFamily,
           );
           return MaterialApp(
             title: 'ObtainX',
@@ -730,7 +765,10 @@ class _ObtainiumState extends State<Obtainium> {
               canvasColor: themeColorScheme.surface,
               cardColor: themeColorScheme.surfaceContainer,
               focusColor: themeColorScheme.primary.withValues(alpha: 0.12),
-              navigationBarTheme: navigationBarThemeFor(themeColorScheme),
+              navigationBarTheme: navigationBarThemeFor(
+                themeColorScheme,
+                lightBaseTheme.textTheme,
+              ),
               segmentedButtonTheme: appSegmentedButtonTheme(themeColorScheme),
               switchTheme: appSwitchTheme(themeColorScheme),
               tooltipTheme: tooltipThemeFor(themeColorScheme),
@@ -751,7 +789,10 @@ class _ObtainiumState extends State<Obtainium> {
               canvasColor: darkThemeColorScheme.surface,
               cardColor: darkThemeColorScheme.surfaceContainer,
               focusColor: darkThemeColorScheme.primary.withValues(alpha: 0.24),
-              navigationBarTheme: navigationBarThemeFor(darkThemeColorScheme),
+              navigationBarTheme: navigationBarThemeFor(
+                darkThemeColorScheme,
+                darkBaseTheme.textTheme,
+              ),
               segmentedButtonTheme: appSegmentedButtonTheme(
                 darkThemeColorScheme,
               ),

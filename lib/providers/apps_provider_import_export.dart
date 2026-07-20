@@ -69,17 +69,26 @@ extension AppsProviderImportExport on AppsProvider {
       shouldExportSettings = overrideExportSettings;
     }
     Map<String, dynamic>? settingsMap;
+    Map<String, dynamic>? settingsObtainXMap;
     if (shouldExportSettings > 0) {
       final settingsValueKeys = settingsProvider.prefs?.getKeys().toSet();
       if (shouldExportSettings < 2) {
         settingsValueKeys?.removeWhere(isSecretSettingKey);
       }
-      settingsMap = Map<String, Object?>.fromEntries(
-        (settingsValueKeys
-                ?.map((key) => MapEntry(key, settingsProvider.prefs?.get(key)))
-                .toList()) ??
-            [],
+      final Map<String, dynamic> fullSettings =
+          Map<String, dynamic>.fromEntries(
+            (settingsValueKeys
+                    ?.map(
+                      (key) => MapEntry(key, settingsProvider.prefs?.get(key)),
+                    )
+                    .toList()) ??
+                [],
+          );
+      final SplitExportSettings splitSettings = splitSettingsForExport(
+        fullSettings,
       );
+      settingsMap = splitSettings.settings;
+      settingsObtainXMap = splitSettings.settingsObtainX;
     }
     final schema = ExportSchema(
       schemaVersion: currentExportSchemaVersion,
@@ -87,6 +96,7 @@ extension AppsProviderImportExport on AppsProvider {
       appVersion: kPackageVersion,
       apps: appList,
       settings: settingsMap,
+      settingsObtainX: settingsObtainXMap,
     );
     return schema.toJson();
   }
@@ -174,12 +184,21 @@ extension AppsProviderImportExport on AppsProvider {
     } catch (e) {
       throw ObtainiumError('${tr('failedToImport')}: ${e.toString()}');
     }
-    // Resolve the settings map (schema wrapper or legacy top-level 'settings').
-    final Map<String, dynamic>? settingsMap = hasSchemaVersion
+    // Resolve settings: shared block plus optional ObtainX overlay.
+    final Map<String, dynamic>? sharedSettings = hasSchemaVersion
         ? schema!.settings
         : (decodedJSON is Map
               ? decodedJSON['settings'] as Map<String, dynamic>?
               : null);
+    final Map<String, dynamic>? settingsObtainXOverlay = hasSchemaVersion
+        ? schema!.settingsObtainX
+        : (decodedJSON is Map
+              ? decodedJSON['settingsObtainX'] as Map<String, dynamic>?
+              : null);
+    final Map<String, dynamic>? settingsMap = mergeImportedSettingsMaps(
+      sharedSettings,
+      settingsObtainXOverlay,
+    );
 
     // Merge backed-up folders into existing ones (by name) and remap each app's
     // folder references to the resolved IDs before saving.
@@ -269,11 +288,28 @@ extension AppsProviderImportExport on AppsProvider {
       settingsProvider.appFolders = existingFolders;
     }
 
+    // Resolve a backup folder ID to its target ID, or null if it maps to no
+    // known folder (drop the reference in that case).
+    String? resolveId(String id) {
+      final targetId = backupIdToTargetId[id];
+      if (targetId != null) return targetId;
+      if (existingFolders.any((f) => f.id == id)) return id;
+      return null;
+    }
+
     // Remap each app's folder references onto a fresh additionalSettings map.
     return importedApps.map((app) {
       final folderIds = folderIdsForApp(app);
-      final excludedIds = excludedFolderIdsForApp(app);
-      if (folderIds.isEmpty && excludedIds.isEmpty) {
+      // Read the legacy exclusion list raw (not the merged view) so remapping
+      // doesn't duplicate override-derived excludes into it — overrides are
+      // remapped separately below.
+      final rawExcluded = app.additionalSettings['excludedFolderIds'];
+      final excludedIds = rawExcluded is List
+          ? List<String>.from(rawExcluded)
+          : const <String>[];
+      final overridesRaw = app.additionalSettings['folderOverrides'];
+      final hasOverrides = overridesRaw is Map && overridesRaw.isNotEmpty;
+      if (folderIds.isEmpty && excludedIds.isEmpty && !hasOverrides) {
         return app;
       }
       final Map<String, dynamic> updated = Map<String, dynamic>.from(
@@ -283,33 +319,33 @@ extension AppsProviderImportExport on AppsProvider {
       if (folderIds.isNotEmpty) {
         final List<String> updatedFolderIds = [];
         for (final id in folderIds) {
-          final String? targetId = backupIdToTargetId[id];
-          if (targetId != null) {
-            updatedFolderIds.add(targetId);
-            final String? folderName = backupFolderIdToName[id];
-            if (folderName != null) {
-              updatedFolderNames[targetId] = folderName;
-            }
-          } else if (existingFolders.any((f) => f.id == id)) {
-            updatedFolderIds.add(id);
-            updatedFolderNames[id] = existingFolders
-                .firstWhere((f) => f.id == id)
-                .name;
-          }
+          final String? targetId = resolveId(id);
+          if (targetId == null) continue;
+          updatedFolderIds.add(targetId);
+          final String folderName =
+              backupFolderIdToName[id] ??
+              existingFolders.firstWhere((f) => f.id == targetId).name;
+          updatedFolderNames[targetId] = folderName;
         }
         updated['folderIds'] = updatedFolderIds;
       }
       if (excludedIds.isNotEmpty) {
         final List<String> updatedExcludedIds = [];
         for (final id in excludedIds) {
-          final String? targetId = backupIdToTargetId[id];
-          if (targetId != null) {
-            updatedExcludedIds.add(targetId);
-          } else if (existingFolders.any((f) => f.id == id)) {
-            updatedExcludedIds.add(id);
-          }
+          final String? targetId = resolveId(id);
+          if (targetId != null) updatedExcludedIds.add(targetId);
         }
         updated['excludedFolderIds'] = updatedExcludedIds;
+      }
+      // Remap the membership overrides (Always include / Always exclude) so
+      // they survive folder-ID remapping instead of being silently lost.
+      if (hasOverrides) {
+        final Map<String, dynamic> updatedOverrides = {};
+        overridesRaw.forEach((key, value) {
+          final String? targetId = resolveId(key.toString());
+          if (targetId != null) updatedOverrides[targetId] = value;
+        });
+        updated['folderOverrides'] = updatedOverrides;
       }
       updated['folderNames'] = updatedFolderNames;
       return app.copyWith(additionalSettings: updated);
@@ -340,6 +376,162 @@ extension AppsProviderImportExport on AppsProvider {
   }
 }
 
+const int obtainiumSortColumnCount = 4;
+const String obtainXFolderViewSettingPrefix = 'folderView_';
+const String obtainXSettingsSectionPrefix = 'settingsSection_';
+
+/// Pref keys with no counterpart in upstream Obtainium. They're kept out of
+/// [SplitExportSettings.settings] (so an Obtainium import isn't polluted by keys
+/// it can never use) and carried in [SplitExportSettings.settingsObtainX]
+/// instead. Every other pref goes in [settings], matching Obtainium's own backup
+/// format so Obtainium restores it directly.
+///
+/// Notably absent: grouping (`groupBy`) and the installer (`installMethod`).
+/// ObtainX now persists both under upstream's own keys/values, so they are plain
+/// shared settings — no translation, no overlay.
+const Set<String> obtainXOnlySettingKeys = {
+  'appFolders',
+  'appAccentColorSource',
+  'activeCustomSeedHex',
+  'savedCustomSeedHexList',
+  'appThemePaletteStyle',
+  'progressiveBlurEnabled',
+  'progressiveBlurDefaultMigrated',
+  'reduceVisualEffects',
+  'useGradientBackground',
+  'shadingIntensity',
+  'appUiScale',
+  'cardCornerScale',
+  'matchAppPageToIconColors',
+  'showAppTypeBadge',
+  'showTrackedStoreBadge',
+  'showCategoriesBadge',
+  'saveDownloadedApkCopies',
+  'apkSaveDir',
+  'rightSwipeAction',
+  'leftSwipeAction',
+  'rightSwipeActionName',
+  'leftSwipeActionName',
+  'swipeActionEnumVersion',
+  'enableVirusTotalScanning',
+  'githubValidatedPATFingerprint',
+  'openAppInfoInAppManager',
+  'folderCriteriaMigrationVersion',
+  'collapsedGroups',
+  'showFolderedAppsOnMainPage',
+  'groupNonInstalledSeparately',
+  'groupTrackOnlySeparately',
+  'groupUpdatesSeparately',
+  'enableLetMeDowngrade',
+  'lastCompletedBGCheckTime',
+  'showDebugOpts',
+  'useFGService',
+  'hideBatteryOptimizationWarning',
+};
+
+bool isObtainXOnlySettingKey(String key) {
+  return obtainXOnlySettingKeys.contains(key) ||
+      key.startsWith(obtainXFolderViewSettingPrefix) ||
+      key.startsWith(obtainXSettingsSectionPrefix);
+}
+
+class SplitExportSettings {
+  const SplitExportSettings({required this.settings, this.settingsObtainX});
+
+  final Map<String, dynamic> settings;
+  final Map<String, dynamic>? settingsObtainX;
+}
+
+/// Builds the Obtainium-facing [settings] block: every pref except ObtainX-only
+/// keys, with the one value ObtainX can encode out of Obtainium's range
+/// (`sortColumn`) sanitized. Shared keys (`groupBy`, `installMethod`, …) are
+/// already Obtainium-compatible thanks to the settings convergence, so they pass
+/// through verbatim.
+Map<String, dynamic> buildObtainiumSettingsMap(
+  Map<String, dynamic> fullSettings,
+) {
+  final Map<String, dynamic> settings = <String, dynamic>{};
+
+  fullSettings.forEach((String key, dynamic value) {
+    if (!isObtainXOnlySettingKey(key)) {
+      settings[key] = value;
+    }
+  });
+
+  sanitizeExportedSettingsForObtainium(settings);
+  return settings;
+}
+
+/// Builds the ObtainX-only overlay: keys Obtainium can't use, plus the original
+/// value of any setting [buildObtainiumSettingsMap] had to sanitize (so an
+/// ObtainX self-import restores it exactly).
+Map<String, dynamic> buildObtainXSettingsMap(
+  Map<String, dynamic> fullSettings,
+  Map<String, dynamic> obtainiumSettings,
+) {
+  final Map<String, dynamic> settingsObtainX = <String, dynamic>{};
+
+  fullSettings.forEach((String key, dynamic value) {
+    if (isObtainXOnlySettingKey(key)) {
+      settingsObtainX[key] = value;
+    }
+  });
+
+  // `sortColumn` is the only shared key ObtainX can set out of Obtainium's range
+  // (its lastUpdateCheck = index 4). The shared block sanitized it; keep the real
+  // value here so ObtainX's own import overrides the sanitized one.
+  final dynamic fullSortColumn = fullSettings['sortColumn'];
+  if (fullSortColumn != null &&
+      fullSortColumn != obtainiumSettings['sortColumn']) {
+    settingsObtainX['sortColumn'] = fullSortColumn;
+  }
+
+  return settingsObtainX;
+}
+
+/// Splits live prefs into a shared Obtainium-safe block and an ObtainX overlay.
+SplitExportSettings splitSettingsForExport(Map<String, dynamic> fullSettings) {
+  final Map<String, dynamic> settings = buildObtainiumSettingsMap(fullSettings);
+  final Map<String, dynamic> settingsObtainX = buildObtainXSettingsMap(
+    fullSettings,
+    settings,
+  );
+
+  return SplitExportSettings(
+    settings: settings,
+    settingsObtainX: settingsObtainX.isEmpty ? null : settingsObtainX,
+  );
+}
+
+/// Merges the shared settings block with the ObtainX overlay on import. The
+/// overlay wins on conflicts (e.g. the real `sortColumn` over the sanitized one).
+Map<String, dynamic>? mergeImportedSettingsMaps(
+  Map<String, dynamic>? sharedSettings,
+  Map<String, dynamic>? settingsObtainX,
+) {
+  if (sharedSettings == null) {
+    return null;
+  }
+  if (settingsObtainX == null || settingsObtainX.isEmpty) {
+    return Map<String, dynamic>.from(sharedSettings);
+  }
+  return <String, dynamic>{...sharedSettings, ...settingsObtainX};
+}
+
+/// Obtainium reads `sortColumn` as an unchecked index into its 4-value
+/// [SortColumnSettings]. ObtainX adds a 5th value
+/// ([SortColumnSettings.lastUpdateCheck], index 4), which would crash
+/// Obtainium's home screen on import — so clamp any out-of-range index to a safe
+/// default in the shared block. (`groupBy` needs no such handling: Obtainium
+/// tolerates unknown group values, falling back to none.)
+void sanitizeExportedSettingsForObtainium(Map<String, dynamic> settings) {
+  final dynamic sortColumn = settings['sortColumn'];
+  if (sortColumn is int &&
+      (sortColumn < 0 || sortColumn >= obtainiumSortColumnCount)) {
+    settings['sortColumn'] = SortColumnSettings.releaseDate.index;
+  }
+}
+
 const int currentExportSchemaVersion = 2;
 const String kPackageVersion = String.fromEnvironment(
   'APP_VERSION',
@@ -352,6 +544,7 @@ class ExportSchema {
   final String appVersion;
   final List<Map<String, dynamic>> apps;
   final Map<String, dynamic>? settings;
+  final Map<String, dynamic>? settingsObtainX;
 
   ExportSchema({
     required this.schemaVersion,
@@ -359,6 +552,7 @@ class ExportSchema {
     required this.appVersion,
     required this.apps,
     this.settings,
+    this.settingsObtainX,
   });
 
   factory ExportSchema.fromJson(Map<String, dynamic> json) {
@@ -384,14 +578,21 @@ class ExportSchema {
               .toList() ??
           [],
       settings: json['settings'] as Map<String, dynamic>?,
+      settingsObtainX: json['settingsObtainX'] as Map<String, dynamic>?,
     );
   }
 
-  Map<String, dynamic> toJson() => {
-    'schemaVersion': currentExportSchemaVersion,
-    'exportedAt': exportedAt,
-    'appVersion': appVersion,
-    'apps': apps,
-    'settings': settings,
-  };
+  Map<String, dynamic> toJson() {
+    final Map<String, dynamic> json = <String, dynamic>{
+      'schemaVersion': currentExportSchemaVersion,
+      'exportedAt': exportedAt,
+      'appVersion': appVersion,
+      'apps': apps,
+      'settings': settings,
+    };
+    if (settingsObtainX != null && settingsObtainX!.isNotEmpty) {
+      json['settingsObtainX'] = settingsObtainX;
+    }
+    return json;
+  }
 }

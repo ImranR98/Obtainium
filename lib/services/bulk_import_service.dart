@@ -1,10 +1,8 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io' show HttpClient;
-import 'dart:isolate';
 import 'dart:math';
 
-import 'package:android_package_manager/android_package_manager.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:html/dom.dart' as html_dom;
@@ -14,10 +12,19 @@ import 'package:http/io_client.dart';
 import 'package:obtainium/app_sources/github.dart';
 import 'package:obtainium/providers/settings_provider.dart';
 
-const int _flagSystem = 1; // ApplicationInfo.FLAG_SYSTEM = 0x1
-const int _flagUpdatedSystemApp =
-    128; // ApplicationInfo.FLAG_UPDATED_SYSTEM_APP = 0x80
 const _deviceAppsChannel = MethodChannel('dev.imranr.obtainium/device_apps');
+
+typedef _ApkMirrorAvailability = ({bool exists, String? link, String? iconUrl});
+
+@visibleForTesting
+String? apkMirrorIconUrlFromAvailabilityItem(dynamic item) {
+  if (item is! Map) return null;
+  final dynamic app = item['app'];
+  if (app is! Map) return null;
+  final dynamic iconUrl = app['icon_url'];
+  if (iconUrl is! String || iconUrl.trim().isEmpty) return null;
+  return iconUrl.trim();
+}
 
 class InstalledAppInfo {
   final String packageName;
@@ -58,21 +65,17 @@ class InstalledAppInfo {
   }
 }
 
+class SigningCertificateInfo {
+  const SigningCertificateInfo({
+    required this.signatures,
+    required this.hasMultipleSigners,
+  });
+
+  final List<Uint8List> signatures;
+  final bool hasMultipleSigners;
+}
+
 class BulkImportService {
-  static final _pm = AndroidPackageManager();
-
-  // Cache of ApplicationInfo references keyed by package name. Populated by
-  // [getInstalledApps] from the same getInstalledPackages payload it returns
-  // anyway, so fetching the cache costs nothing extra. Used by [getAppIcon]
-  // to skip a redundant pm.getPackageInfo() platform-channel round-trip per
-  // icon load - on a 300-app device that's ~300 fewer JNI hops if the user
-  // scrolls past every row.
-  // We cache `dynamic` rather than the typed ApplicationInfo because the
-  // android_package_manager package's types are dynamic-bridged at the
-  // platform-channel boundary; the only call we actually make is .getAppIcon()
-  // which is duck-typed.
-  static final Map<String, dynamic> _applicationInfoByPackage = {};
-
   static const Map<String, String> _apkMirrorPreferredPackageUrls = {
     // APKMirror's app_exists endpoint can return Wear OS / Android Automotive
     // sibling listings for this shared package ID. Prefer the phone listing.
@@ -103,114 +106,113 @@ class BulkImportService {
     );
   }
 
+  static Future<SigningCertificateInfo?> getSigningCertificates(
+    String packageName,
+  ) async {
+    Map<String, dynamic>? certificateData;
+    try {
+      certificateData = await _deviceAppsChannel
+          .invokeMapMethod<String, dynamic>('getSigningCertificates', {
+            'packageName': packageName,
+          });
+    } on MissingPluginException {
+      return null;
+    } on PlatformException {
+      return null;
+    }
+    if (certificateData == null) return null;
+
+    final List<dynamic> rawSignatures =
+        certificateData['signatures'] as List<dynamic>? ?? const <dynamic>[];
+    final signatures = rawSignatures
+        .map((rawSignature) {
+          if (rawSignature is Uint8List) return rawSignature;
+          return Uint8List.fromList(
+            List<int>.from(rawSignature as List<dynamic>),
+          );
+        })
+        .toList(growable: false);
+    return SigningCertificateInfo(
+      signatures: signatures,
+      hasMultipleSigners:
+          certificateData['hasMultipleSigners'] as bool? ?? false,
+    );
+  }
+
+  static Future<bool?> uses24HourFormat() async {
+    try {
+      return await _deviceAppsChannel.invokeMethod<bool>('uses24HourFormat');
+    } on MissingPluginException {
+      return null;
+    } on PlatformException {
+      return null;
+    }
+  }
+
   /// Returns all installed apps, filtered by system/user.
+  ///
+  /// Backed by the app's own `getInstalledAppsLight` platform method, which
+  /// returns only the four primitive fields a row needs (package name, label,
+  /// system flag, source dir) in one native pass. This replaces the previous
+  /// `AndroidPackageManager.getInstalledPackages` path, which marshalled a full
+  /// PackageInfo + ApplicationInfo per app across the channel and decoded it on
+  /// the Flutter UI isolate — hundreds of objects, the cause of the bulk-scan
+  /// slide-in stutter. The enumeration + label lookup now happen natively on a
+  /// background thread and the tiny reply decodes in negligible time.
   static Future<List<InstalledAppInfo>> getInstalledApps({
     bool includeSystem = false,
     bool includeUser = true,
   }) async {
-    // No flags: avoids expensive disk I/O (e.g. getSigningCertificates reads
-    // every APK's signing block). applicationInfo is populated by default.
-    final packages =
-        await _pm.getInstalledPackages(flags: PackageInfoFlags({})) ?? [];
-
-    // Pre-filter before any async work.
-    final filtered = <dynamic>[];
-    for (final pkg in packages) {
-      final pkgName = pkg.packageName ?? '';
-      if (pkgName.isEmpty) continue;
-      if (pkgName == obtainiumId) continue;
-      final appFlags = pkg.applicationInfo?.flags ?? 0;
-      final isSystem =
-          (appFlags & _flagSystem) != 0 ||
-          (appFlags & _flagUpdatedSystemApp) != 0;
-      if (isSystem && !includeSystem) continue;
-      if (!isSystem && !includeUser) continue;
-      filtered.add(pkg);
+    List<Object?>? raw;
+    try {
+      raw = await _deviceAppsChannel.invokeListMethod<Object?>(
+        'getInstalledAppsLight',
+      );
+    } on MissingPluginException {
+      // Background update engines don't register this app-owned channel.
+      return const <InstalledAppInfo>[];
     }
 
-    final packageNames = [
-      for (final pkg in filtered) pkg.packageName as String,
-    ];
-    final labelsByPackageName = await getApplicationLabels(packageNames);
+    final result = <InstalledAppInfo>[];
+    for (final entry in raw ?? const <Object?>[]) {
+      if (entry is! Map) continue;
+      final pkgName = entry['packageName'] as String? ?? '';
+      if (pkgName.isEmpty || pkgName == obtainiumId) continue;
+      final isSystem = entry['isSystem'] as bool? ?? false;
+      if (isSystem && !includeSystem) continue;
+      if (!isSystem && !includeUser) continue;
+      final label = entry['label'] as String?;
+      result.add(
+        InstalledAppInfo(
+          packageName: pkgName,
+          name: (label != null && label.isNotEmpty) ? label : pkgName,
+          icon: null,
+          isSystemApp: isSystem,
+          sourceDir: entry['sourceDir'] as String?,
+        ),
+      );
+    }
 
-    // Reset the ApplicationInfo cache to match this fresh installed-apps
-    // snapshot. Stale entries from a previous fetch could refer to apps the
-    // user has since uninstalled.
-    _applicationInfoByPackage.clear();
-
-    final result = <InstalledAppInfo>[
-      for (int packageIndex = 0; packageIndex < filtered.length; packageIndex++)
-        () {
-          final pkg = filtered[packageIndex];
-          final pkgName = pkg.packageName as String;
-          // Stash the ApplicationInfo for later icon lookup so getAppIcon()
-          // doesn't need to do its own pm.getPackageInfo().
-          if (pkg.applicationInfo != null) {
-            _applicationInfoByPackage[pkgName] = pkg.applicationInfo;
-          }
-          return InstalledAppInfo(
-            packageName: pkgName,
-            name:
-                labelsByPackageName[pkgName] ??
-                pkg.applicationInfo?.nonLocalizedLabel ??
-                pkg.applicationInfo?.processName ??
-                pkgName,
-            icon: null,
-            isSystemApp:
-                ((pkg.applicationInfo?.flags ?? 0) & _flagSystem) != 0 ||
-                ((pkg.applicationInfo?.flags ?? 0) & _flagUpdatedSystemApp) !=
-                    0,
-            sourceDir: pkg.applicationInfo?.sourceDir,
-          );
-        }(),
-    ];
-
-    // Sort off the UI isolate. With ~hundreds of apps this is single-digit
-    // milliseconds on the main thread, but moving it ensures a deterministic
-    // zero-cost finish to the loading step regardless of how many apps the
-    // user has installed. [InstalledAppInfo] is plain Dart (Strings, bools,
-    // optional Uint8List) so SendPort serialization is straightforward; the
-    // [_applicationInfoByPackage] cache is on the BulkImportService class
-    // and stays put on the main isolate, where the icon path needs it.
-    return await Isolate.run<List<InstalledAppInfo>>(() {
-      result.sort((a, b) => a.nameLower.compareTo(b.nameLower));
-      return result;
-    }, debugName: 'bulk-installed-sort');
+    // Sorting a few hundred pre-lowercased strings in place is sub-millisecond;
+    // the compact payload no longer justifies an off-isolate round-trip (which
+    // would copy the whole list twice across the isolate boundary).
+    result.sort((a, b) => a.nameLower.compareTo(b.nameLower));
+    return result;
   }
 
-  /// Gets app icon for a given package name. Used for lazy loading.
+  /// Gets an app icon for a given package name, for lazy list loading.
   ///
-  /// Consults the [_applicationInfoByPackage] cache populated by
-  /// [getInstalledApps] before falling back to a fresh
-  /// `pm.getPackageInfo()` round-trip. The cache hit path skips one
-  /// platform-channel call per icon, which is the dominant cost of
-  /// rendering the bulk-add list as the user scrolls through it.
+  /// Rendered natively (adaptive icons composited to a size-capped PNG) via the
+  /// app's `getAppIcon` platform method, so no ApplicationInfo handle needs to
+  /// survive from [getInstalledApps] on the Dart side.
   static Future<Uint8List?> getAppIcon(String packageName) async {
     try {
-      final dynamic cached = _applicationInfoByPackage[packageName];
-      if (cached != null) {
-        // Direct path: use the ApplicationInfo we already fetched.
-        return await cached.getAppIcon();
-      }
-      // Fallback: caller skipped getInstalledApps (e.g. icon refresh after
-      // an external uninstall/reinstall). Pay the round-trip once.
-      final List<PackageInfo> installed =
-          await _pm.getInstalledPackages(flags: PackageInfoFlags({})) ?? [];
-      final bool isInstalled = installed.any(
-        (p) => p.packageName == packageName,
-      );
-      if (!isInstalled) {
-        return null;
-      }
-      final info = await _pm.getPackageInfo(
-        packageName: packageName,
-        flags: PackageInfoFlags({}),
-      );
-      if (info?.applicationInfo != null) {
-        _applicationInfoByPackage[packageName] = info!.applicationInfo;
-      }
-      return await info?.applicationInfo?.getAppIcon();
-    } catch (_) {
+      return await _deviceAppsChannel.invokeMethod<Uint8List>('getAppIcon', {
+        'packageName': packageName,
+      });
+    } on MissingPluginException {
+      return null;
+    } on PlatformException {
       return null;
     }
   }
@@ -252,10 +254,13 @@ class BulkImportService {
   /// Checks APKMirror for a list of package names.
   /// Returns a map of packageName -> apkmirror URL (null if not found).
   /// Uses APKMirror's REST API with batch requests of 100 apps.
+  /// When supplied, [resolvedIconUrls] is populated from the same response;
+  /// resolving these URLs does not issue another metadata request.
   static Future<Map<String, String?>> checkApkMirror(
     List<String> packageNames, {
     void Function(int done, int total)? onProgress,
     Map<String, String?>? alreadyKnown,
+    Map<String, String>? resolvedIconUrls,
     bool Function()? shouldAbort,
   }) async {
     final result = <String, String?>{};
@@ -333,13 +338,14 @@ class BulkImportService {
           final data = jsonDecode(response.body) as Map<String, dynamic>;
           final dataList = data['data'] as List? ?? [];
 
-          final Map<String, ({bool exists, String? link})> batchResults = {};
+          final Map<String, _ApkMirrorAvailability> batchResults = {};
           for (final item in dataList) {
             final pname = item['pname'] as String?;
             if (pname != null) {
               batchResults[pname] = (
                 exists: item['exists'] as bool? ?? false,
                 link: item['app']?['link'] as String?,
+                iconUrl: apkMirrorIconUrlFromAvailabilityItem(item),
               );
             }
           }
@@ -356,6 +362,10 @@ class BulkImportService {
                   result[original] =
                       _apkMirrorPreferredPackageUrls[candidate] ??
                       'https://www.apkmirror.com$appLink';
+                  final String? iconUrl = res?.iconUrl;
+                  if (iconUrl != null) {
+                    resolvedIconUrls?[original] = iconUrl;
+                  }
                 }
               }
               pendingCandidates[original]?.remove(candidate);
@@ -866,7 +876,7 @@ class BulkImportService {
     void Function(int done, int total)? onProgress,
     Map<String, String?>? alreadyKnown,
     bool Function()? shouldAbort,
-    void Function()? onRateLimit,
+    void Function(bool hadToken)? onRateLimit,
   }) async {
     final Map<String, String?> result = <String, String?>{};
     if (alreadyKnown != null) {
@@ -909,10 +919,25 @@ class BulkImportService {
         headers.containsKey('Authorization') ||
         headers.containsKey('authorization');
 
+    // GitHub's search API has a low primary limit and aggressive secondary/
+    // burst limits (code search especially). Pace requests well apart so we
+    // don't trip the limit: authenticated search is ~30/min (→ ~2s spacing),
+    // unauthenticated ~10/min (→ ~6s). The old 120ms/850ms pacing fired a burst
+    // that tripped the secondary limit after a handful of apps.
+    final Duration baseDelay = hasAuthToken
+        ? const Duration(milliseconds: 2000)
+        : const Duration(milliseconds: 6000);
+    // Cap how long a single throttle wait may be before we give up, and how
+    // many consecutive throttles to ride out per package.
+    const Duration maxBackoff = Duration(seconds: 90);
+    const int maxRateLimitRetries = 5;
+
     for (final String pkg in toQuery) {
       if (shouldAbort?.call() == true) {
         return result;
       }
+      bool aborted = false;
+      Duration pacing = baseDelay;
       try {
         final String searchPkg = _cleanPackageNameForSearch(pkg);
         // Quoted id reduces unrelated matches; "in:file" scopes to file contents.
@@ -925,9 +950,34 @@ class BulkImportService {
             'per_page': '15',
           },
         );
-        final http.Response response = await http
+        http.Response response = await http
             .get(uri, headers: headers)
             .timeout(const Duration(seconds: 25));
+        // On a throttle (403/429), honour Retry-After / X-RateLimit-Reset and
+        // retry the SAME package instead of aborting the scan on the first hit.
+        int rateLimitRetries = 0;
+        while (response.statusCode == 403 || response.statusCode == 429) {
+          final Duration wait = _githubRateLimitWait(response);
+          if (rateLimitRetries >= maxRateLimitRetries || wait > maxBackoff) {
+            debugPrint('GitHub search rate limit exceeded; stopping scan');
+            onRateLimit?.call(hasAuthToken);
+            aborted = true;
+            break;
+          }
+          rateLimitRetries++;
+          debugPrint(
+            'GitHub search rate-limited for $pkg; waiting '
+            '${wait.inSeconds}s (retry $rateLimitRetries)',
+          );
+          await Future<void>.delayed(wait + const Duration(milliseconds: 500));
+          if (shouldAbort?.call() == true) {
+            return result;
+          }
+          response = await http
+              .get(uri, headers: headers)
+              .timeout(const Duration(seconds: 25));
+        }
+        if (aborted) break;
         if (response.statusCode == 200) {
           final Object? decoded = jsonDecode(response.body);
           if (decoded is Map<String, dynamic>) {
@@ -1019,29 +1069,78 @@ class BulkImportService {
           } else {
             result[pkg] = null;
           }
+          // If the search budget is nearly spent, wait for the window to reset
+          // before the next request rather than plowing into the limit.
+          pacing = _githubPacingDelay(response, baseDelay);
+        } else if (response.statusCode == 401) {
+          // Auth failure — the token is missing or invalid, NOT a rate limit.
+          debugPrint('GitHub search auth failed for $pkg (401)');
+          onRateLimit?.call(hasAuthToken);
+          break;
         } else {
           debugPrint(
-            'GitHub search failed for $pkg: status ${response.statusCode}, body: ${response.body}',
+            'GitHub search failed for $pkg: status ${response.statusCode}',
           );
-          if (response.statusCode == 401 ||
-              response.statusCode == 403 ||
-              response.statusCode == 429) {
-            onRateLimit?.call();
-            break;
-          }
+          // Non-rate-limit failure — leave uncached so it retries next scan.
         }
       } catch (e, s) {
         debugPrint('GitHub search exception for $pkg: $e\n$s');
         // Network error or timeout — don't cache; retry next scan.
       }
       reportProgress();
-      if (!hasAuthToken) {
-        await Future.delayed(const Duration(milliseconds: 850));
-      } else {
-        await Future.delayed(const Duration(milliseconds: 120));
-      }
+      await Future<void>.delayed(pacing);
     }
     return result;
+  }
+
+  /// How long to wait after a 403/429 from GitHub's search API, derived from
+  /// the `Retry-After` (secondary limit) or `X-RateLimit-Reset` (primary limit)
+  /// headers, falling back to a fixed cooldown when neither is present.
+  static Duration _githubRateLimitWait(http.Response response) {
+    final int? retryAfter = int.tryParse(response.headers['retry-after'] ?? '');
+    if (retryAfter != null && retryAfter > 0) {
+      return Duration(seconds: retryAfter);
+    }
+    final int? reset = int.tryParse(
+      response.headers['x-ratelimit-reset'] ?? '',
+    );
+    if (reset != null) {
+      final DateTime resetAt = DateTime.fromMillisecondsSinceEpoch(
+        reset * 1000,
+      );
+      final Duration remaining = resetAt.difference(DateTime.now());
+      if (remaining > Duration.zero) {
+        return remaining;
+      }
+    }
+    return const Duration(seconds: 30);
+  }
+
+  /// Pacing after a successful search: normally [baseDelay], but if the search
+  /// budget is nearly spent (`X-RateLimit-Remaining` ≤ 1), wait until the window
+  /// resets so the next request doesn't hit the primary limit.
+  static Duration _githubPacingDelay(
+    http.Response response,
+    Duration baseDelay,
+  ) {
+    final int? remaining = int.tryParse(
+      response.headers['x-ratelimit-remaining'] ?? '',
+    );
+    if (remaining != null && remaining <= 1) {
+      final int? reset = int.tryParse(
+        response.headers['x-ratelimit-reset'] ?? '',
+      );
+      if (reset != null) {
+        final DateTime resetAt = DateTime.fromMillisecondsSinceEpoch(
+          reset * 1000,
+        );
+        final Duration untilReset = resetAt.difference(DateTime.now());
+        if (untilReset > Duration.zero) {
+          return untilReset + const Duration(milliseconds: 500);
+        }
+      }
+    }
+    return baseDelay;
   }
 
   static String _slugify(String label) {

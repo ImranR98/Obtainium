@@ -24,6 +24,7 @@ import 'package:obtainium/installers/installer.dart';
 import 'package:obtainium/installers/shizuku_installer.dart';
 import 'package:obtainium/installers/stock_installer.dart';
 import 'package:obtainium/installers/external_installer.dart';
+import 'package:obtainium/main.dart';
 import 'package:obtainium/providers/apps_provider.dart';
 import 'package:obtainium/providers/logs_provider.dart';
 import 'package:obtainium/providers/notifications_provider.dart';
@@ -36,10 +37,9 @@ import 'package:provider/provider.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:shared_storage/shared_storage.dart' as saf;
 
-// NOTE: This provider extension is intentionally UX-coupled — it shows dialogs,
-// toasts, and interacts with BuildContext for install operations that inherently
-// require user interaction (APK file pickers, permission prompts, foreground
-// detection, etc.). Decoupling these would add indirection without real benefit.
+// NOTE: This provider extension is intentionally UX-coupled. Interactive calls
+// use the app-level navigator for dialogs and receive an explicit interaction
+// flag internally, so an async operation never retains a page BuildContext.
 
 // Named constants for magic numbers and hardcoded values
 const int _androidApiLevelR = 30;
@@ -238,7 +238,7 @@ bool isStockInstallerDowngrade({
   required int? newVersionCode,
   required String installerModeKey,
 }) {
-  return installerModeKey == 'stock' &&
+  return installerModeKey == 'system' &&
       installedVersionCode != null &&
       newVersionCode != null &&
       newVersionCode < installedVersionCode;
@@ -251,9 +251,9 @@ extension AppsProviderInstall on AppsProvider {
     switch (settingsProvider.installerMode) {
       case 'shizuku':
         return ShizukuInstaller(settingsProvider);
-      // The third-party installer's stored mode value is 'legacy' (what the
-      // settings UI writes, and what fork main uses); do NOT check 'external'.
-      case 'legacy':
+      // Third-party installer. Value matches upstream Obtainium's
+      // InstallerMode.external.name.
+      case 'external':
         return ExternalInstaller(settingsProvider);
       default:
         return StockInstaller(settingsProvider);
@@ -318,8 +318,8 @@ extension AppsProviderInstall on AppsProvider {
 
   /// Downloads the preferred APK for [app], returning a [DownloadedApk] or [DownloadedDir].
   Future<Object> downloadApp(
-    App app,
-    BuildContext? context, {
+    App app, {
+    bool allowUserInteraction = false,
     NotificationsProvider? notificationsProvider,
     bool useExisting = true,
   }) async {
@@ -358,11 +358,13 @@ extension AppsProviderInstall on AppsProvider {
         app.url,
         additionalSettingsPlusSourceConfig,
       );
-      if (context != null &&
-          context.mounted &&
-          isCleartextDownloadUrl(downloadUrl)) {
+      if (allowUserInteraction && isCleartextDownloadUrl(downloadUrl)) {
+        final NavigatorState? navigator = globalNavigatorKey.currentState;
+        if (navigator == null || !navigator.mounted) {
+          throw ObtainiumError(tr('cancelled'));
+        }
         final bool? proceed = await showDialog<bool>(
-          context: context,
+          context: navigator.context,
           barrierDismissible: false,
           builder: (BuildContext dialogContext) => AlertDialog(
             title: Text(tr('insecureDownloadUrl')),
@@ -659,9 +661,9 @@ extension AppsProviderInstall on AppsProvider {
     return canInstallSilently(app);
   }
 
-  Future<void> waitForUserToReturnToForeground(BuildContext context) async {
-    final NotificationsProvider notificationsProvider = context
-        .read<NotificationsProvider>();
+  Future<void> waitForUserToReturnToForeground(
+    NotificationsProvider notificationsProvider,
+  ) async {
     if (!isForeground) {
       await notificationsProvider.notify(
         completeInstallationNotification,
@@ -732,14 +734,14 @@ extension AppsProviderInstall on AppsProvider {
 
   Future<bool> installApkDir(
     DownloadedDir dir,
-    BuildContext? firstTimeWithContext, {
+    NotificationsProvider? firstInstallNotificationsProvider, {
     bool needsBGWorkaround = false,
     Map<String, dynamic> installOptions = const {},
     bool skipPreInstallVerification = false,
 
     /// See [installApk]'s param of the same name. Verification/scanning runs
     /// once here against the container before any split part is installed.
-    BuildContext? malwareScanContext,
+    bool showMalwareScanDialog = false,
   }) async {
     // Verify + scan the container once up front; the split-APK installApk calls
     // below pass skipMalwareScan so it is not repeated per part.
@@ -747,7 +749,7 @@ extension AppsProviderInstall on AppsProvider {
       final bool proceedAfterVerification = await _runPreInstallVerification(
         appId: dir.appId,
         primaryFile: dir.file,
-        malwareScanContext: malwareScanContext,
+        showMalwareScanDialog: showMalwareScanDialog,
         cleanupOnSkip: () {
           try {
             if (dir.file.existsSync()) dir.file.deleteSync();
@@ -819,8 +821,7 @@ extension AppsProviderInstall on AppsProvider {
       try {
         final wasInstalled = await installApk(
           DownloadedApk(dir.appId, apkFiles[0]),
-          // ignore: use_build_context_synchronously
-          firstTimeWithContext,
+          firstInstallNotificationsProvider,
           needsBGWorkaround: needsBGWorkaround,
           installOptions: installOptions,
           additionalAPKs: apkFiles
@@ -855,15 +856,14 @@ extension AppsProviderInstall on AppsProvider {
   /// Installs a downloaded APK file, with optional auxiliary split APKs and Shizuku support.
   Future<bool> installApk(
     DownloadedApk file,
-    BuildContext? firstTimeWithContext, {
+    NotificationsProvider? firstInstallNotificationsProvider, {
     bool needsBGWorkaround = false,
     Map<String, dynamic> installOptions = const {},
     List<DownloadedApk> additionalAPKs = const [],
 
-    /// Context used to decide whether a build-verification/VirusTotal result can
-    /// be shown as a dialog (someone's watching) or must skip the app and notify
-    /// (background/silent). Null in the background.
-    BuildContext? malwareScanContext,
+    /// Whether a build-verification/VirusTotal result can be shown as a dialog
+    /// (someone's watching) or must skip the app and notify (background/silent).
+    bool showMalwareScanDialog = false,
 
     /// Set by [installApkDir] for a split APK — the container was already
     /// verified/scanned once, so re-running per part would waste effort and the
@@ -889,10 +889,7 @@ extension AppsProviderInstall on AppsProvider {
       final bool proceed = await _runPreInstallVerification(
         appId: file.appId,
         primaryFile: file.file,
-        // Resolving the APK save dir above is an async gap; _runPreInstallVerification
-        // guards context.mounted internally (via _handleMalwareScanResult).
-        // ignore: use_build_context_synchronously
-        malwareScanContext: malwareScanContext,
+        showMalwareScanDialog: showMalwareScanDialog,
         cleanupOnSkip: () {
           try {
             if (file.file.existsSync()) file.file.deleteSync();
@@ -904,13 +901,8 @@ extension AppsProviderInstall on AppsProvider {
       );
       if (!proceed) return false;
     }
-    if (firstTimeWithContext != null) {
-      // _shareWithVerifiedApps guards its only BuildContext use with an internal
-      // context.mounted check; a call-site guard would wrongly skip the
-      // user-opted share sheet (which doesn't need a live context) if the widget
-      // was disposed during the preceding verification await.
-      // ignore: use_build_context_synchronously
-      await _shareWithVerifiedApps(file, firstTimeWithContext);
+    if (firstInstallNotificationsProvider != null) {
+      await _shareWithVerifiedApps(file, firstInstallNotificationsProvider);
     }
     final newInfo = await packageManager.getPackageArchiveInfo(
       archiveFilePath: file.file.path,
@@ -1019,7 +1011,7 @@ extension AppsProviderInstall on AppsProvider {
 
   Future<void> _shareWithVerifiedApps(
     DownloadedApk file,
-    BuildContext context,
+    NotificationsProvider notificationsProvider,
   ) async {
     if (!settingsProvider.beforeNewInstallsShareToAppVerifier) return;
     // Intentionally does NOT gate on whether a known verifier app is installed.
@@ -1043,9 +1035,7 @@ extension AppsProviderInstall on AppsProvider {
       await SharePlus.instance.share(ShareParams(files: [f]));
       // The share sheet pulls the user out to the verifier app; wait for them to
       // return before continuing to the actual install prompt.
-      if (context.mounted) {
-        await waitForUserToReturnToForeground(context);
-      }
+      await waitForUserToReturnToForeground(notificationsProvider);
     } catch (e) {
       unawaited(logs.add('Share to App Verifier failed: ${e.toString()}'));
     }
@@ -1115,8 +1105,8 @@ extension AppsProviderInstall on AppsProvider {
 
   Future<MapEntry<String, String>?> confirmAppFileUrl(
     App app,
-    BuildContext? context,
     bool pickAnyAsset, {
+    bool allowUserInteraction = false,
     bool evenIfSingleChoice = false,
     ThemeData? dialogTheme,
   }) async {
@@ -1125,10 +1115,15 @@ extension AppsProviderInstall on AppsProvider {
       urlsToSelectFrom = [...urlsToSelectFrom, ...app.otherAssetUrls];
     }
     // If the App has more than one APK, the user should pick one (if context provided)
-    MapEntry<String, String>? appFileUrl =
-        urlsToSelectFrom[app.preferredApkIndex >= 0
-            ? app.preferredApkIndex
-            : 0];
+    MapEntry<String, String>? appFileUrl;
+    if (urlsToSelectFrom.isNotEmpty) {
+      final int selectedApkIndex =
+          app.preferredApkIndex >= 0 &&
+              app.preferredApkIndex < urlsToSelectFrom.length
+          ? app.preferredApkIndex
+          : 0;
+      appFileUrl = urlsToSelectFrom[selectedApkIndex];
+    }
     // When picking any asset, use the APK filter regex to pre-select the best matching
     // asset by default, without hiding other assets from the user.
     if (pickAnyAsset &&
@@ -1145,11 +1140,14 @@ extension AppsProviderInstall on AppsProvider {
     final List<String> archs =
         (await DeviceInfoPlugin().androidInfo).supportedAbis;
 
+    final NavigatorState? navigator = allowUserInteraction
+        ? globalNavigatorKey.currentState
+        : null;
     if ((urlsToSelectFrom.length > 1 || evenIfSingleChoice) &&
-        context != null &&
-        context.mounted) {
+        navigator != null &&
+        navigator.mounted) {
       appFileUrl = await showDialog(
-        context: context,
+        context: navigator.context,
         builder: (BuildContext ctx) {
           final Widget picker = AppFilePicker(
             app: app,
@@ -1178,11 +1176,11 @@ extension AppsProviderInstall on AppsProvider {
           getHost(app.url),
           'placeholder',
         ].contains(getHost(appFileUrl.value)) &&
-        context != null &&
-        context.mounted) {
+        navigator != null &&
+        navigator.mounted) {
       if (!(settingsProvider.hideAPKOriginWarning) &&
           await showDialog(
-                context: context,
+                context: navigator.context,
                 builder: (BuildContext ctx) {
                   return APKOriginWarningDialog(
                     sourceUrl: app.url,
@@ -1201,7 +1199,7 @@ extension AppsProviderInstall on AppsProvider {
   // refreshing stale data and confirming file URLs before returning.
   Future<(List<String>, List<String>)> _resolveAppsToInstall(
     List<String> appIds,
-    BuildContext? context, {
+    bool allowUserInteraction, {
     ThemeData? dialogTheme,
   }) async {
     final List<String> appsToInstall = [];
@@ -1219,8 +1217,8 @@ extension AppsProviderInstall on AppsProvider {
       if (!trackOnly) {
         apkUrl = await confirmAppFileUrl(
           apps[id]!.app,
-          context != null && context.mounted ? context : null,
           false,
+          allowUserInteraction: allowUserInteraction,
           dialogTheme: dialogTheme,
         );
       }
@@ -1233,7 +1231,7 @@ extension AppsProviderInstall on AppsProvider {
           apps[id]!.app = apps[id]!.app.copyWith(preferredApkIndex: urlInd);
           await saveApps([apps[id]!.app]);
         }
-        if (context != null ||
+        if (allowUserInteraction ||
             await canInstallSilentlyInBackground(apps[id]!.app)) {
           appsToInstall.add(id);
         }
@@ -1256,12 +1254,17 @@ extension AppsProviderInstall on AppsProvider {
     bool useExisting = true,
     ThemeData? dialogTheme,
   }) async {
-    notificationsProvider =
-        notificationsProvider ?? context?.read<NotificationsProvider>();
+    final bool allowUserInteraction = context != null;
+    if (notificationsProvider == null && allowUserInteraction) {
+      final BuildContext? appContext = globalNavigatorKey.currentContext;
+      if (appContext != null) {
+        notificationsProvider = appContext.read<NotificationsProvider>();
+      }
+    }
 
     var (appsToInstall, trackOnlyAppsToUpdate) = await _resolveAppsToInstall(
       appIds,
-      context,
+      allowUserInteraction,
       dialogTheme: dialogTheme,
     );
 
@@ -1301,7 +1304,7 @@ extension AppsProviderInstall on AppsProvider {
           result.downloadedDir,
           installedIds,
           errors,
-          context != null && context.mounted ? context : null,
+          allowUserInteraction,
           notificationsProvider,
         );
       } on MalwareScanBlockedError catch (error) {
@@ -1321,7 +1324,7 @@ extension AppsProviderInstall on AppsProvider {
           await installDownloadResult(
             await _downloadAppForInstall(
               id,
-              context != null && context.mounted ? context : null,
+              allowUserInteraction,
               notificationsProvider,
               useExisting,
               errors,
@@ -1335,7 +1338,7 @@ extension AppsProviderInstall on AppsProvider {
               id: id,
               result: _downloadAppForInstall(
                 id,
-                context != null && context.mounted ? context : null,
+                allowUserInteraction,
                 notificationsProvider,
                 useExisting,
                 errors,
@@ -1379,12 +1382,15 @@ extension AppsProviderInstall on AppsProvider {
   }
 
   Future<List<String>> downloadAppAssets(
-    List<String> appIds,
-    BuildContext context, {
+    List<String> appIds, {
     bool forceParallelDownloads = false,
     ThemeData? dialogTheme,
   }) async {
-    final NotificationsProvider notificationsProvider = context
+    final BuildContext? appContext = globalNavigatorKey.currentContext;
+    if (appContext == null) {
+      throw ObtainiumError(tr('unknown'));
+    }
+    final NotificationsProvider notificationsProvider = appContext
         .read<NotificationsProvider>();
     final List<MapEntry<MapEntry<String, String>, App>> filesToDownload = [];
     for (var id in appIds) {
@@ -1400,9 +1406,8 @@ extension AppsProviderInstall on AppsProvider {
           apps[id]!.app.otherAssetUrls.isNotEmpty) {
         final MapEntry<String, String>? tempFileUrl = await confirmAppFileUrl(
           apps[id]!.app,
-          // ignore: use_build_context_synchronously
-          context,
           true,
+          allowUserInteraction: true,
           evenIfSingleChoice: true,
           dialogTheme: dialogTheme,
         );
@@ -1492,7 +1497,7 @@ extension AppsProviderInstall on AppsProvider {
     DownloadedDir? downloadedDir,
     List<String> installedIds,
     MultiAppMultiError errors,
-    BuildContext? context,
+    bool allowUserInteraction,
     NotificationsProvider? notificationsProvider,
   ) async {
     final appEntry = apps[id];
@@ -1509,14 +1514,15 @@ extension AppsProviderInstall on AppsProvider {
     notify();
     try {
       bool sayInstalled = true;
-      final contextIfNewInstall = appEntry.installedInfo == null
-          ? context
+      final NotificationsProvider? firstInstallNotificationsProvider =
+          appEntry.installedInfo == null && allowUserInteraction
+          ? notificationsProvider
           : null;
       final String installerModeKey = getInstaller().modeKey;
       // Only the stock session-based installer needs the background-completion
       // workaround (its install await never returns in the background).
       final bool needBGWorkaround =
-          willBeSilent && context == null && installerModeKey == 'stock';
+          willBeSilent && !allowUserInteraction && installerModeKey == 'system';
       final bool shizukuPretendToBeGooglePlay =
           settingsProvider.shizukuPretendToBeGooglePlay ||
           appEntry.app.settings.getBool('shizukuPretendToBeGooglePlay');
@@ -1526,7 +1532,7 @@ extension AppsProviderInstall on AppsProvider {
               await _runPreInstallVerification(
                 appId: id,
                 primaryFile: downloadedFile.file,
-                malwareScanContext: null,
+                showMalwareScanDialog: false,
                 cleanupOnSkip: () {
                   try {
                     if (downloadedFile.file.existsSync()) {
@@ -1576,12 +1582,11 @@ extension AppsProviderInstall on AppsProvider {
         } else {
           sayInstalled = await installApk(
             downloadedFile,
-            contextIfNewInstall,
+            firstInstallNotificationsProvider,
             installOptions: {
               'shizukuPretendToBeGooglePlay': shizukuPretendToBeGooglePlay,
             },
-            // ignore: use_build_context_synchronously
-            malwareScanContext: context,
+            showMalwareScanDialog: allowUserInteraction,
           );
         }
       } else {
@@ -1590,7 +1595,7 @@ extension AppsProviderInstall on AppsProvider {
               await _runPreInstallVerification(
                 appId: id,
                 primaryFile: downloadedDir!.file,
-                malwareScanContext: null,
+                showMalwareScanDialog: false,
                 cleanupOnSkip: () {
                   try {
                     if (downloadedDir.file.existsSync()) {
@@ -1640,17 +1645,16 @@ extension AppsProviderInstall on AppsProvider {
         } else {
           sayInstalled = await installApkDir(
             downloadedDir!,
-            contextIfNewInstall,
+            firstInstallNotificationsProvider,
             installOptions: {
               'shizukuPretendToBeGooglePlay': shizukuPretendToBeGooglePlay,
             },
-            // ignore: use_build_context_synchronously
-            malwareScanContext: context,
+            showMalwareScanDialog: allowUserInteraction,
           );
         }
       }
-      if (willBeSilent && context == null) {
-        if (installerModeKey == 'stock' && !sayInstalled) {
+      if (willBeSilent && !allowUserInteraction) {
+        if (installerModeKey == 'system' && !sayInstalled) {
           // Stock background install couldn't be confirmed within the polling
           // window, so report it as a best-effort attempt rather than a result.
           unawaited(
@@ -1683,7 +1687,7 @@ extension AppsProviderInstall on AppsProvider {
 
   Future<_InstallResult> _downloadAppForInstall(
     String id,
-    BuildContext? context,
+    bool allowUserInteraction,
     NotificationsProvider? notificationsProvider,
     bool useExisting,
     MultiAppMultiError errors,
@@ -1694,7 +1698,7 @@ extension AppsProviderInstall on AppsProvider {
     try {
       final downloadedArtifact = await downloadApp(
         apps[id]!.app,
-        context,
+        allowUserInteraction: allowUserInteraction,
         notificationsProvider: notificationsProvider,
         useExisting: useExisting,
       );
@@ -1717,10 +1721,10 @@ extension AppsProviderInstall on AppsProvider {
       // Only the stock installer surfaces a system install prompt that pulls the
       // user away; wait for them to return before proceeding.
       if (!willBeSilent &&
-          context != null &&
-          context.mounted &&
-          installer.modeKey == 'stock') {
-        await waitForUserToReturnToForeground(context);
+          allowUserInteraction &&
+          notificationsProvider != null &&
+          installer.modeKey == 'system') {
+        await waitForUserToReturnToForeground(notificationsProvider);
       }
     } catch (e) {
       // A user-cancelled download is not an error; skip it silently.
@@ -1891,7 +1895,7 @@ extension AppsProviderInstall on AppsProvider {
 
   /// Acts on a [scanApkWithVirusTotal] result: `clean` never interrupts;
   /// `flagged`/`error` pause with a decision dialog when someone is watching
-  /// ([malwareScanContext] != null), or skip the app (throwing
+  /// ([showMalwareScanDialog]), or skip the app (throwing
   /// [MalwareScanBlockedError]) when there is no one to ask. [cleanupOnSkip]
   /// deletes whatever was downloaded. Returns true to proceed, false when the
   /// watching user declined (a deliberate choice, not a failure — callers must
@@ -1901,11 +1905,11 @@ extension AppsProviderInstall on AppsProvider {
     required String status,
     String? detail,
     String? reportUrl,
-    required BuildContext? malwareScanContext,
+    required bool showMalwareScanDialog,
     required void Function() cleanupOnSkip,
   }) async {
     if (status == malwareScanStatusClean) {
-      if (malwareScanContext != null && malwareScanContext.mounted) {
+      if (showMalwareScanDialog) {
         unawaited(
           Fluttertoast.showToast(
             msg: tr('malwareScanCleanToast', args: [app.finalName]),
@@ -1914,16 +1918,15 @@ extension AppsProviderInstall on AppsProvider {
       }
       return true;
     }
-    if (malwareScanContext != null) {
-      if (!malwareScanContext.mounted) {
-        return true;
-      }
+    if (showMalwareScanDialog) {
+      final NavigatorState? navigator = globalNavigatorKey.currentState;
+      if (navigator == null || !navigator.mounted) return true;
+      final ThemeData dialogTheme = Theme.of(navigator.context);
       final bool? proceed = await showDialog<bool>(
-        // ignore: use_build_context_synchronously
-        context: malwareScanContext,
+        context: navigator.context,
         barrierDismissible: false,
         builder: (BuildContext ctx) => Theme(
-          data: Theme.of(malwareScanContext),
+          data: dialogTheme,
           child: MalwareScanWarningDialog(
             appName: app.finalName,
             status: status,
@@ -2154,7 +2157,7 @@ extension AppsProviderInstall on AppsProvider {
   Future<bool> _runPreInstallVerification({
     required String appId,
     required File primaryFile,
-    required BuildContext? malwareScanContext,
+    required bool showMalwareScanDialog,
     required void Function() cleanupOnSkip,
   }) async {
     final AppInMemory? appInMemory = apps[appId];
@@ -2226,12 +2229,7 @@ extension AppsProviderInstall on AppsProvider {
         status: scan.status!,
         detail: scan.detail,
         reportUrl: scan.reportUrl,
-        // _handleMalwareScanResult must run for every context state: it guards
-        // its context.mounted internally and, when malwareScanContext is null
-        // (background), throws MalwareScanBlockedError. A call-site mounted guard
-        // would break that background path, so intentionally pass it through.
-        // ignore: use_build_context_synchronously
-        malwareScanContext: malwareScanContext,
+        showMalwareScanDialog: showMalwareScanDialog,
         cleanupOnSkip: cleanupOnSkip,
       );
       if (!proceed) return false;

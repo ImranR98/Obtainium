@@ -38,29 +38,39 @@ Future<T?> showAppModalSheet<T>({
     builder: (BuildContext sheetContext) {
       final Widget sheet = builder(sheetContext);
       final ColorScheme colorScheme = Theme.of(sheetContext).colorScheme;
-      return Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Center(
-            child: Container(
-              margin: const EdgeInsets.only(top: 12, bottom: 8),
-              width: 40,
-              height: 4,
-              decoration: BoxDecoration(
-                color: colorScheme.onSurfaceVariant.withValues(alpha: 0.4),
-                borderRadius: BorderRadius.circular(2),
+      return Padding(
+        // Keep the sheet itself above the keyboard. Putting this inset inside
+        // the scroll view only adds hidden space below the focused field and
+        // leaves the visible content behind the keyboard.
+        padding: EdgeInsets.only(
+          bottom: MediaQuery.viewInsetsOf(sheetContext).bottom,
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Center(
+              child: Container(
+                margin: const EdgeInsets.only(top: 12, bottom: 8),
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: colorScheme.onSurfaceVariant.withValues(alpha: 0.4),
+                  borderRadius: BorderRadius.circular(2),
+                ),
               ),
             ),
-          ),
-          fullWidth
-              ? sheet
-              : MediaQuery.removePadding(
-                  context: sheetContext,
-                  removeLeft: true,
-                  removeRight: true,
-                  child: sheet,
-                ),
-        ],
+            Flexible(
+              child: fullWidth
+                  ? sheet
+                  : MediaQuery.removePadding(
+                      context: sheetContext,
+                      removeLeft: true,
+                      removeRight: true,
+                      child: sheet,
+                    ),
+            ),
+          ],
+        ),
       );
     },
   );
@@ -72,8 +82,8 @@ Future<T?> showAppModalSheet<T>({
 /// * Height hugs the content up to ([MediaQuery] height − status bar − 12);
 ///   shorter content produces a shorter sheet (no dead space), taller content
 ///   scrolls.
-/// * Bottom padding tracks the keyboard when open, otherwise the system nav
-///   bar, so content is never hidden behind either.
+/// * The sheet boundary tracks the keyboard while bottom padding clears the
+///   system nav bar, so focused fields can scroll into the visible area.
 /// * Horizontal padding plus a left/right [SafeArea] keep content clear of
 ///   landscape display cutouts.
 class AppSheetContent extends StatelessWidget {
@@ -94,7 +104,7 @@ class AppSheetContent extends StatelessWidget {
   final List<Widget> children;
 
   /// Padding around the column. The bottom value is automatically extended by
-  /// the keyboard / nav-bar inset.
+  /// the system nav-bar inset.
   final EdgeInsets padding;
 
   final CrossAxisAlignment crossAxisAlignment;
@@ -112,10 +122,7 @@ class AppSheetContent extends StatelessWidget {
     final double maxHeight = byFraction < byClearance
         ? byFraction
         : byClearance;
-    // Keyboard when it's open, otherwise the system nav bar.
-    final double bottomInset = mq.viewInsets.bottom > 0
-        ? mq.viewInsets.bottom
-        : mq.viewPadding.bottom;
+    final double bottomInset = mq.viewPadding.bottom;
     return SafeArea(
       top: false,
       bottom: false,

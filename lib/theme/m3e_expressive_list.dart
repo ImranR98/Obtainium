@@ -72,6 +72,11 @@ M3eListGroupPosition m3eFlatStackSlotPosition(int index, int itemCount) {
   return M3eListGroupPosition.middle;
 }
 
+Color m3eCollapsedGroupHeaderFill(ColorScheme scheme) {
+  if (scheme.usesPureBlackBackgrounds) return Colors.black;
+  return Color.lerp(scheme.secondaryContainer, scheme.primaryContainer, 0.30)!;
+}
+
 Color m3eGroupedListRowFill(ColorScheme scheme) {
   if (scheme.usesPureBlackBackgrounds) return Colors.black;
   return Color.lerp(scheme.surfaceContainer, scheme.primary, 0.08)!;

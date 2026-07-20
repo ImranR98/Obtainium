@@ -79,10 +79,7 @@ class _StoreSourceChipAvatarState extends State<StoreSourceChipAvatar> {
 
     final String? localAsset = storeSourceAssetPathForHost(widget.host);
     if (localAsset != null) {
-      return StoreSourceIconImage(
-        assetPath: localAsset,
-        size: widget.size,
-      );
+      return StoreSourceIconImage(assetPath: localAsset, size: widget.size);
     }
 
     return FutureBuilder<Uint8List?>(
@@ -287,7 +284,7 @@ String? storeSourceAssetPathForClassName(String className) {
   }
 }
 
-/// Square clip for bundled source icons.
+/// Bundled source icon rendered at a fixed logical size.
 class StoreSourceIconImage extends StatelessWidget {
   const StoreSourceIconImage({
     super.key,
@@ -303,43 +300,42 @@ class StoreSourceIconImage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final bool isDark = Theme.of(context).brightness == Brightness.dark;
-    final Widget image;
     if (assetPath.endsWith('.svg')) {
-      image = SvgPicture.asset(
-        assetPath,
-        fit: BoxFit.contain,
-        colorFilter: iconNeedsInversion(assetPath, isDark)
-            ? invertColorFilter
-            : null,
-        errorBuilder: (BuildContext context, Object error, StackTrace stack) {
-          return errorBuilder?.call(context, error, stack) ??
-              _buildError(context);
-        },
-      );
-    } else {
-      final int cachePx =
-          (size * MediaQuery.devicePixelRatioOf(context)).round();
-      image = Image.asset(
-        assetPath,
-        fit: BoxFit.contain,
-        gaplessPlayback: true,
-        cacheWidth: cachePx,
-        cacheHeight: cachePx,
-        errorBuilder:
-            (BuildContext context, Object error, StackTrace? stackTrace) {
-              return errorBuilder?.call(context, error, stackTrace) ??
-                  _buildError(context);
-            },
+      return SizedBox.square(
+        dimension: size,
+        child: SvgPicture.asset(
+          assetPath,
+          fit: BoxFit.contain,
+          clipBehavior: Clip.antiAlias,
+          colorFilter: iconNeedsInversion(assetPath, isDark)
+              ? invertColorFilter
+              : null,
+          errorBuilder: (BuildContext context, Object error, StackTrace stack) {
+            return errorBuilder?.call(context, error, stack) ??
+                _buildError(context);
+          },
+        ),
       );
     }
 
+    final int cachePx = (size * MediaQuery.devicePixelRatioOf(context)).round();
+    final Widget image = Image.asset(
+      assetPath,
+      fit: BoxFit.contain,
+      filterQuality: FilterQuality.high,
+      gaplessPlayback: true,
+      cacheWidth: cachePx,
+      cacheHeight: cachePx,
+      errorBuilder:
+          (BuildContext context, Object error, StackTrace? stackTrace) {
+            return errorBuilder?.call(context, error, stackTrace) ??
+                _buildError(context);
+          },
+    );
+
     return ClipRRect(
       borderRadius: BorderRadius.circular(size * 0.22),
-      child: SizedBox(
-        width: size,
-        height: size,
-        child: image,
-      ),
+      child: SizedBox(width: size, height: size, child: image),
     );
   }
 
@@ -388,10 +384,7 @@ class _StoreSourceIconForUrlState extends State<StoreSourceIconForUrl> {
   Widget build(BuildContext context) {
     final String? localAsset = storeSourceAssetPathForHost(_host);
     if (localAsset != null) {
-      return StoreSourceIconImage(
-        assetPath: localAsset,
-        size: widget.size,
-      );
+      return StoreSourceIconImage(assetPath: localAsset, size: widget.size);
     }
     return FutureBuilder<Uint8List?>(
       future: _iconFuture,

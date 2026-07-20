@@ -19,7 +19,7 @@ class StockInstaller extends Installer {
   StockInstaller(super.settingsProvider);
 
   @override
-  String get modeKey => 'stock';
+  String get modeKey => 'system';
 
   @override
   Future<bool> canInstallSilently(App app) async {
