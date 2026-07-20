@@ -2936,9 +2936,10 @@ class _AppPageState extends State<AppPage> with WidgetsBindingObserver {
           reproducibleBuildEnforcementBlocksInstall(app.app, source);
       final bool reproducibleBuildHasDisplayStatus =
           reproducibleBuildVerified ||
-          reproducibleBuildNotReproducible ||
-          reproducibleBuildNoData ||
-          reproducibleBuildUnknown;
+          (reproducibleBuildBlocked &&
+              (reproducibleBuildNotReproducible ||
+                  reproducibleBuildNoData ||
+                  reproducibleBuildUnknown));
       final bool githubAttestationExpected =
           source is GitHub &&
           source.shouldVerifyAttestations(
@@ -3068,9 +3069,10 @@ class _AppPageState extends State<AppPage> with WidgetsBindingObserver {
                   icon: Icons.shield_outlined,
                   label: tr('verifiedBuild'),
                 ),
-              if (reproducibleBuildNotReproducible ||
-                  reproducibleBuildNoData ||
-                  reproducibleBuildUnknown)
+              if (reproducibleBuildBlocked &&
+                  (reproducibleBuildNotReproducible ||
+                      reproducibleBuildNoData ||
+                      reproducibleBuildUnknown))
                 statusBadge(
                   backgroundColor: reproducibleBuildProblemContainerColor,
                   borderColor: reproducibleBuildProblemBorderColor,

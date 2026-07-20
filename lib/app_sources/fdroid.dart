@@ -68,6 +68,8 @@ String? _fdroidDisplayNameFromHtml(String html) {
 
 class FDroid extends AppSource {
   static const _maxChangeLogCodeUnits = 2048;
+  static const String _verificationReportBaseUrl =
+      'https://verification.f-droid.org/unsigned';
   @override
   String get name => tr('fdroid');
 
@@ -151,7 +153,9 @@ class FDroid extends AppSource {
       if (appId == null) {
         throw NoReleasesError();
       }
-      final String host = Uri.parse(standardUrl).host;
+      final String host = Uri.parse(standardUrl).host.toLowerCase();
+      final bool usesOfficialFDroidHost =
+          host == 'f-droid.org' || host == 'www.f-droid.org';
       // Fetch the packages API response and hand it to
       // getAPKUrlsFromFDroidPackagesAPIResponse, which owns all parsing
       // (version selection, name/icon/APK-size resolution).
@@ -166,25 +170,21 @@ class FDroid extends AppSource {
         name,
         additionalSettings: additionalSettings,
       );
-      // Fork addition (reproducible-build verification): skip the per-refresh
-      // fdroiddata metadata YAML fetch (gitlab.com) only when the upstream
-      // release is unchanged AND the cached verdict is the terminal 'verified'
-      // state. An F-Droid build's reproducible status can flip from
-      // no_data / not_reproducible to verified hours after a release WITHOUT a
-      // versionCode change (the reproducible-build verification completes after
-      // the initial publish). So every non-verified status must keep
-      // re-checking to catch that flip; only 'verified' (which does not revert)
-      // is reused. This is never worse than always fetching, and saves the call
-      // for the already-verified majority.
+      // Reuse only a terminal verified result for the same source version.
+      // Missing and mismatched reports are deliberately checked again because
+      // F-Droid can publish a successful verification report after the APK.
       final App? prevApp = previouslyCheckedApp;
-      final bool canReuseCachedMetadata =
+      final bool canReuseCachedVerification =
           prevApp != null &&
           prevApp.rawLatestVersionFromSource != null &&
           prevApp.rawLatestVersionFromSource == details.version &&
+          details.apkUrls.length == 1 &&
+          _apkUrlsMatch(prevApp.apkUrls, details.apkUrls) &&
+          prevApp.latestReproducibleVersionCode == details.versionCode &&
           prevApp.latestReproducibleStatus == reproducibleBuildStatusVerified;
       // Fork addition (icon / APK size / display name): reuse the previous
       // check's icon, APK size and name whenever the upstream version is
-      // unchanged. This is deliberately SEPARATE from canReuseCachedMetadata
+      // unchanged. This is deliberately separate from verification caching
       // above — it keys off the version alone and does NOT also require the
       // reproducible status to be 'verified', because icon/size/name never
       // change without a version change, whereas the reproducible verdict can.
@@ -192,28 +192,39 @@ class FDroid extends AppSource {
           prevApp != null &&
           prevApp.rawLatestVersionFromSource != null &&
           prevApp.rawLatestVersionFromSource == details.version;
-      if (!hostChanged && canReuseCachedMetadata) {
+      if (usesOfficialFDroidHost && canReuseCachedVerification) {
         details.reproducibleStatus = prevApp.latestReproducibleStatus;
         details.isReproducible = reproducibleBuildBoolFromStatus(
           prevApp.latestReproducibleStatus,
         );
+      } else if (usesOfficialFDroidHost && details.versionCode != null) {
+        details.reproducibleStatus = await getReproducibleBuildStatus(
+          appId,
+          details.versionCode!,
+          additionalSettings,
+        );
+        details.isReproducible = reproducibleBuildBoolFromStatus(
+          details.reproducibleStatus,
+        );
+      } else if (usesOfficialFDroidHost) {
+        details.reproducibleStatus = reproducibleBuildStatusError;
+        details.isReproducible = null;
+      }
+
+      if (usesOfficialFDroidHost && canReuseCachedVerification) {
         if (prevApp.changeLog?.isNotEmpty == true) {
           details.changeLog = prevApp.changeLog;
         }
         if (prevApp.author.trim().isNotEmpty) {
           details.names.author = prevApp.author;
         }
-      } else if (!hostChanged) {
+      }
+      if (usesOfficialFDroidHost && !canReuseCachedVerification) {
         try {
           final res = await sourceRequest(
             'https://gitlab.com/fdroid/fdroiddata/-/raw/master/metadata/$appId.yml',
             additionalSettings,
           );
-          if (res.statusCode != 200 &&
-              details.reproducibleStatus != reproducibleBuildStatusVerified) {
-            details.reproducibleStatus = reproducibleBuildStatusError;
-            details.isReproducible = null;
-          }
           if (res.statusCode == 200) {
             final lines = res.body.split('\n');
             final authorLines = lines.where(
@@ -225,20 +236,6 @@ class FDroid extends AppSource {
                   .sublist(1)
                   .join(': ');
             }
-            // A non-empty top-level `Binaries:` field in the fdroiddata
-            // metadata means F-Droid publishes and verifies a reproducible
-            // build against the source for this app.
-            final bool hasBinaries = lines.any((l) {
-              final t = l.trim();
-              return t.startsWith('Binaries:') &&
-                  t.substring('Binaries:'.length).trim().isNotEmpty;
-            });
-            details.reproducibleStatus = hasBinaries
-                ? reproducibleBuildStatusVerified
-                : reproducibleBuildStatusNoData;
-            details.isReproducible = reproducibleBuildBoolFromStatus(
-              details.reproducibleStatus,
-            );
             final changelogUrls = lines
                 .where((l) => l.startsWith('Changelog: '))
                 .map((e) => e.split(' ').sublist(1).join(' '));
@@ -272,12 +269,6 @@ class FDroid extends AppSource {
             }
           }
         } catch (e) {
-          // Any metadata failure demotes an unverified status to 'error' so it
-          // keeps being re-checked; a prior 'verified' is preserved.
-          if (details.reproducibleStatus != reproducibleBuildStatusVerified) {
-            details.reproducibleStatus = reproducibleBuildStatusError;
-            details.isReproducible = null;
-          }
           unawaited(
             LogsProvider().add(
               'Failed to process changelog for F-Droid app: ${e.toString()}',
@@ -316,6 +307,122 @@ class FDroid extends AppSource {
     } catch (e) {
       rethrowOrWrapError(e);
     }
+  }
+
+  Future<String> getReproducibleBuildStatus(
+    String appId,
+    int versionCode,
+    Map<String, dynamic> additionalSettings,
+  ) async {
+    try {
+      final String reportFileName = '${appId}_$versionCode.apk.json';
+      final Response response = await sourceRequest(
+        '$_verificationReportBaseUrl/$reportFileName',
+        additionalSettings,
+      );
+      if (response.statusCode == 404) {
+        return reproducibleBuildStatusNoData;
+      }
+      if (response.statusCode != 200) {
+        throw getObtainiumHttpError(response);
+      }
+
+      final Object? decoded = jsonDecode(response.body);
+      if (decoded is! Map) {
+        throw const FormatException('Invalid F-Droid verification report');
+      }
+
+      Map<String, dynamic>? latestMatchingReport;
+      double? latestTimestamp;
+      for (final reportEntry in decoded.entries) {
+        if (reportEntry.value is! Map) {
+          continue;
+        }
+        final Map<String, dynamic> report = Map<String, dynamic>.from(
+          reportEntry.value as Map,
+        );
+        if (!_verificationDescriptorMatches(
+              report['local'],
+              appId,
+              versionCode,
+            ) ||
+            !_verificationDescriptorMatches(
+              report['remote'],
+              appId,
+              versionCode,
+            )) {
+          continue;
+        }
+        final String? reportUrl = report['url'] is String
+            ? report['url'] as String
+            : null;
+        final Uri? parsedReportUrl = reportUrl == null
+            ? null
+            : Uri.tryParse(reportUrl);
+        final String? reportApkName =
+            parsedReportUrl == null || parsedReportUrl.pathSegments.isEmpty
+            ? null
+            : parsedReportUrl.pathSegments.last;
+        if (reportApkName != '${appId}_$versionCode.apk') {
+          continue;
+        }
+        final double? reportTimestamp = double.tryParse(
+          reportEntry.key.toString(),
+        );
+        if (reportTimestamp == null) {
+          continue;
+        }
+        if (latestTimestamp == null || reportTimestamp > latestTimestamp) {
+          latestTimestamp = reportTimestamp;
+          latestMatchingReport = report;
+        }
+      }
+      final Object? verified = latestMatchingReport?['verified'];
+      if (verified is! bool) {
+        throw const FormatException(
+          'F-Droid verification report has no matching verdict',
+        );
+      }
+      return verified
+          ? reproducibleBuildStatusVerified
+          : reproducibleBuildStatusNotReproducible;
+    } catch (e) {
+      unawaited(
+        LogsProvider().add(
+          'Failed to check F-Droid reproducible build status for '
+          '$appId ($versionCode): $e',
+        ),
+      );
+      return reproducibleBuildStatusError;
+    }
+  }
+
+  static bool _verificationDescriptorMatches(
+    Object? rawDescriptor,
+    String appId,
+    int versionCode,
+  ) {
+    if (rawDescriptor is! Map) {
+      return false;
+    }
+    return rawDescriptor['packageName'] == appId &&
+        rawDescriptor['versionCode']?.toString() == versionCode.toString();
+  }
+
+  static bool _apkUrlsMatch(
+    List<MapEntry<String, String>> previousUrls,
+    List<MapEntry<String, String>> currentUrls,
+  ) {
+    if (previousUrls.length != currentUrls.length) {
+      return false;
+    }
+    for (var index = 0; index < previousUrls.length; index++) {
+      if (previousUrls[index].key != currentUrls[index].key ||
+          previousUrls[index].value != currentUrls[index].value) {
+        return false;
+      }
+    }
+    return true;
   }
 
   @override
@@ -467,27 +574,26 @@ class FDroid extends AppSource {
       if (releaseChoices.isEmpty) {
         throw NoReleasesError();
       }
-      final List<String> apkUrls = releaseChoices
+      final List<dynamic> selectedReleases = releaseChoices.toList();
+      final List<String> apkUrls = selectedReleases
           .map((e) => '${apkUrlPrefix}_${e['versionCode']}.apk')
           .toList();
       final List<String> uniqueApkUrls = apkUrls.toSet().toList();
-      // Fork addition (reproducible-build verification): derive an initial
-      // status from the F-Droid packages API. A `binaries` field on the
-      // response or the selected release indicates a reproducible build; this
-      // may be refined to 'verified' by the fdroiddata metadata in
-      // getLatestAPKDetails.
-      final bool hasBinaries =
-          response['binaries'] != null ||
-          (releaseChoices.isNotEmpty &&
-              releaseChoices.first['binaries'] != null);
-      final String reproducibleStatus = hasBinaries
-          ? reproducibleBuildStatusVerified
-          : reproducibleBuildStatusNoData;
+      final App? prevApp = previouslyCheckedApp;
+      final int preferredReleaseIndex =
+          prevApp != null &&
+              prevApp.preferredApkIndex >= 0 &&
+              prevApp.preferredApkIndex < selectedReleases.length
+          ? prevApp.preferredApkIndex
+          : selectedReleases.length - 1;
+      final int? selectedVersionCode = int.tryParse(
+        selectedReleases[preferredReleaseIndex]['versionCode']?.toString() ??
+            '',
+      );
       // Skip the per-check APK-size HEAD and the package-page fetch (icon/name)
       // when the upstream version is unchanged since the last check. getApp()
       // reuses the previous apkSizeBytes / iconUrl / name in that case, so these
       // network round-trips would just be wasted work on a no-op refresh.
-      final App? prevApp = previouslyCheckedApp;
       final bool versionUnchanged =
           prevApp != null &&
           prevApp.rawLatestVersionFromSource != null &&
@@ -599,11 +705,11 @@ class FDroid extends AppSource {
         version,
         getApkUrlsFromUrls(uniqueApkUrls),
         AppNames(sourceName, appName),
+        versionCode: selectedVersionCode,
         iconUrl: iconUrl,
         rawReleaseTitleCandidates: rawVersionNameCandidates,
         apkSizeBytes: apkSizeBytes,
-        isReproducible: reproducibleBuildBoolFromStatus(reproducibleStatus),
-        reproducibleStatus: reproducibleStatus,
+        reproducibleStatus: reproducibleBuildStatusNoData,
       );
     } else {
       throw getObtainiumHttpError(res);

@@ -58,7 +58,7 @@ This is called a **reproducible build**. It is useful because it reduces the cha
 
 | Source | What ObtainX checks |
 |---|---|
-| **F-Droid official** | F-Droid metadata for reproducible build information. |
+| **F-Droid official** | The exact package and version-code report from F-Droid's Verification Server. |
 | **IzzyOnDroid** | Izzy reproducible build test data when available. |
 | **F-Droid third-party repo** | Reproducible metadata included in the repo index, when available. |
 

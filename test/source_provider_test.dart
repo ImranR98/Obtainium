@@ -103,6 +103,45 @@ class _StubFDroid extends FDroid {
   }
 }
 
+class _StubFDroidVerification extends FDroid {
+  _StubFDroidVerification(this.verificationResponses);
+
+  final List<Response> verificationResponses;
+  int verificationRequestCount = 0;
+
+  @override
+  Future<Response> sourceRequest(
+    String url,
+    Map<String, dynamic> additionalSettings, {
+    bool followRedirects = true,
+    Object? postBody,
+  }) async {
+    if (url ==
+        'https://f-droid.org/api/v1/packages/app.pwhs.universalinstaller') {
+      return Response(
+        jsonEncode({
+          'packageName': 'app.pwhs.universalinstaller',
+          'suggestedVersionCode': 31,
+          'packages': [
+            {'versionName': '1.9.11', 'versionCode': 31},
+          ],
+        }),
+        200,
+      );
+    }
+    if (url ==
+        'https://verification.f-droid.org/unsigned/app.pwhs.universalinstaller_31.apk.json') {
+      final int responseIndex =
+          verificationRequestCount < verificationResponses.length
+          ? verificationRequestCount
+          : verificationResponses.length - 1;
+      verificationRequestCount++;
+      return verificationResponses[responseIndex];
+    }
+    return Response('', 404);
+  }
+}
+
 class _StubIzzyOnDroid extends IzzyOnDroid {
   @override
   Future<Response> sourceRequest(
@@ -267,6 +306,52 @@ Response _fdroidRepoResponse(String xml) {
       'GET',
       Uri.parse('https://apt.izzysoft.de/fdroid/repo/index.xml'),
     ),
+  );
+}
+
+Response _fdroidVerificationResponse({required bool verified}) {
+  return Response(
+    jsonEncode({
+      '1783233447.4899063': {
+        'local': {
+          'packageName': 'app.pwhs.universalinstaller',
+          'versionCode': 31,
+          'versionName': '1.9.11',
+        },
+        'remote': {
+          'packageName': 'app.pwhs.universalinstaller',
+          'versionCode': 31,
+          'versionName': '1.9.11',
+        },
+        'url':
+            'https://f-droid.org/repo/app.pwhs.universalinstaller_31.apk',
+        'verified': verified,
+      },
+    }),
+    200,
+  );
+}
+
+App _previousUniversalInstaller({required String reproducibleStatus}) {
+  return App(
+    id: 'app.pwhs.universalinstaller',
+    url: 'https://f-droid.org/packages/app.pwhs.universalinstaller',
+    author: 'Nguyen Quang Minh (NQM)',
+    name: 'Universal Installer',
+    latestVersion: '1.9.11',
+    apkUrls: const <MapEntry<String, String>>[
+      MapEntry(
+        'app.pwhs.universalinstaller_31.apk',
+        'https://f-droid.org/repo/app.pwhs.universalinstaller_31.apk',
+      ),
+    ],
+    preferredApkIndex: 0,
+    additionalSettings: const <String, dynamic>{
+      'trySelectingSuggestedVersionCode': true,
+    },
+    rawLatestVersionFromSource: '1.9.11',
+    latestReproducibleStatus: reproducibleStatus,
+    latestReproducibleVersionCode: 31,
   );
 }
 
@@ -542,6 +627,31 @@ void main() {
   );
 
   test(
+    'F-Droid repo parser does not treat an empty binaries element as verified',
+    () async {
+      final details = await FDroidRepo.apkDetailsFromIndexXmlResponse(
+        _fdroidRepoResponse('''
+<fdroid><repo name="Example Repo"/><application id="org.example.app">
+  <name>Example App</name>
+  <marketvercode>3</marketvercode>
+  <package>
+    <version>3.0</version>
+    <versioncode>3</versioncode>
+    <apkname>org.example.app_3.apk</apkname>
+    <binaries>   </binaries>
+  </package>
+</application></fdroid>
+'''),
+        'org.example.app',
+        <String, dynamic>{},
+        'Example Repo',
+      );
+
+      expect(details.reproducibleStatus, reproducibleBuildStatusNoData);
+    },
+  );
+
+  test(
     'F-Droid repo source uses shared parser for valid releases and metadata',
     () async {
       final details =
@@ -656,6 +766,153 @@ void main() {
       expect(details.reproducibleStatus, reproducibleBuildStatusNoData);
     },
   );
+
+  test('App JSON preserves the reproducible verification version code', () {
+    final original = _previousUniversalInstaller(
+      reproducibleStatus: reproducibleBuildStatusVerified,
+    );
+
+    final restored = App.fromJson(original.toJson());
+
+    expect(restored.latestReproducibleStatus, reproducibleBuildStatusVerified);
+    expect(restored.latestReproducibleVersionCode, 31);
+  });
+
+  test(
+    'F-Droid maps a matching successful version report to verified',
+    () async {
+      final source = _StubFDroidVerification(<Response>[
+        _fdroidVerificationResponse(verified: true),
+      ]);
+
+      final status = await source.getReproducibleBuildStatus(
+        'app.pwhs.universalinstaller',
+        31,
+        <String, dynamic>{},
+      );
+
+      expect(status, reproducibleBuildStatusVerified);
+    },
+  );
+
+  test('F-Droid maps a matching failed version report to mismatched', () async {
+    final source = _StubFDroidVerification(<Response>[
+      _fdroidVerificationResponse(verified: false),
+    ]);
+
+    final status = await source.getReproducibleBuildStatus(
+      'app.pwhs.universalinstaller',
+      31,
+      <String, dynamic>{},
+    );
+
+    expect(status, reproducibleBuildStatusNotReproducible);
+  });
+
+  test('F-Droid maps a missing version report to no data', () async {
+    final source = _StubFDroidVerification(<Response>[Response('', 404)]);
+
+    final status = await source.getReproducibleBuildStatus(
+      'app.pwhs.universalinstaller',
+      31,
+      <String, dynamic>{},
+    );
+
+    expect(status, reproducibleBuildStatusNoData);
+  });
+
+  test('F-Droid maps an invalid version report to check error', () async {
+    final source = _StubFDroidVerification(<Response>[
+      Response('{"unexpected":true}', 200),
+    ]);
+
+    final status = await source.getReproducibleBuildStatus(
+      'app.pwhs.universalinstaller',
+      31,
+      <String, dynamic>{},
+    );
+
+    expect(status, reproducibleBuildStatusError);
+  });
+
+  test('F-Droid maps a verification server failure to check error', () async {
+    final source = _StubFDroidVerification(<Response>[Response('', 500)]);
+
+    final status = await source.getReproducibleBuildStatus(
+      'app.pwhs.universalinstaller',
+      31,
+      <String, dynamic>{},
+    );
+
+    expect(status, reproducibleBuildStatusError);
+  });
+
+  test(
+    'F-Droid rechecks no data and observes a delayed verified report',
+    () async {
+      final source = _StubFDroidVerification(<Response>[
+        Response('', 404),
+        _fdroidVerificationResponse(verified: true),
+      ]);
+      source.previouslyCheckedApp = _previousUniversalInstaller(
+        reproducibleStatus: reproducibleBuildStatusNoData,
+      );
+
+      final firstDetails = await source.getLatestAPKDetails(
+        'https://f-droid.org/packages/app.pwhs.universalinstaller',
+        <String, dynamic>{'trySelectingSuggestedVersionCode': true},
+      );
+      final secondDetails = await source.getLatestAPKDetails(
+        'https://f-droid.org/packages/app.pwhs.universalinstaller',
+        <String, dynamic>{'trySelectingSuggestedVersionCode': true},
+      );
+
+      expect(firstDetails.versionCode, 31);
+      expect(firstDetails.reproducibleStatus, reproducibleBuildStatusNoData);
+      expect(secondDetails.reproducibleStatus, reproducibleBuildStatusVerified);
+      expect(source.verificationRequestCount, 2);
+    },
+  );
+
+  test(
+    'F-Droid rechecks legacy verified state without a version code',
+    () async {
+      final source = _StubFDroidVerification(<Response>[
+        _fdroidVerificationResponse(verified: false),
+      ]);
+      source.previouslyCheckedApp = _previousUniversalInstaller(
+        reproducibleStatus: reproducibleBuildStatusVerified,
+      ).copyWith(latestReproducibleVersionCode: null);
+
+      final details = await source.getLatestAPKDetails(
+        'https://f-droid.org/packages/app.pwhs.universalinstaller',
+        <String, dynamic>{'trySelectingSuggestedVersionCode': true},
+      );
+
+      expect(
+        details.reproducibleStatus,
+        reproducibleBuildStatusNotReproducible,
+      );
+      expect(source.verificationRequestCount, 1);
+    },
+  );
+
+  test('F-Droid reuses an exact cached verified version report', () async {
+    final source = _StubFDroidVerification(<Response>[
+      _fdroidVerificationResponse(verified: true),
+    ]);
+    source.previouslyCheckedApp = _previousUniversalInstaller(
+      reproducibleStatus: reproducibleBuildStatusVerified,
+    );
+
+    final details = await source.getLatestAPKDetails(
+      'https://f-droid.org/packages/app.pwhs.universalinstaller',
+      <String, dynamic>{'trySelectingSuggestedVersionCode': true},
+    );
+
+    expect(details.reproducibleStatus, reproducibleBuildStatusVerified);
+    expect(source.verificationRequestCount, 0);
+  });
 
   test('F-Droid API parser falls back to package page title', () async {
     final details =

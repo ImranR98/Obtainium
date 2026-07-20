@@ -32,6 +32,7 @@ App _buildTestApp({
   int? apkSizeBytes,
   String? rawLatestVersionFromSource,
   String? latestReproducibleStatus,
+  int? latestReproducibleVersionCode,
   String? latestAttestationStatus,
   String? latestMalwareScanStatus,
   String? latestMalwareScanDetail,
@@ -57,6 +58,7 @@ App _buildTestApp({
     apkSizeBytes: apkSizeBytes,
     rawLatestVersionFromSource: rawLatestVersionFromSource,
     latestReproducibleStatus: latestReproducibleStatus,
+    latestReproducibleVersionCode: latestReproducibleVersionCode,
     latestAttestationStatus: latestAttestationStatus,
     latestMalwareScanStatus: latestMalwareScanStatus,
     latestMalwareScanDetail: latestMalwareScanDetail,
@@ -71,6 +73,7 @@ void main() {
       iconUrl: 'https://example.com/icon.png',
       apkSizeBytes: 123,
       latestReproducibleStatus: reproducibleBuildStatusVerified,
+      latestReproducibleVersionCode: 31,
       latestAttestationStatus: githubAttestationStatusVerified,
       latestMalwareScanStatus: malwareScanStatusFlagged,
       latestMalwareScanDetail: 'Detected',
@@ -81,6 +84,7 @@ void main() {
       iconUrl: null,
       apkSizeBytes: null,
       latestReproducibleStatus: null,
+      latestReproducibleVersionCode: null,
       latestAttestationStatus: null,
       latestMalwareScanStatus: null,
       latestMalwareScanDetail: null,
@@ -90,6 +94,7 @@ void main() {
     expect(cleared.iconUrl, isNull);
     expect(cleared.apkSizeBytes, isNull);
     expect(cleared.latestReproducibleStatus, isNull);
+    expect(cleared.latestReproducibleVersionCode, isNull);
     expect(cleared.latestAttestationStatus, isNull);
     expect(cleared.latestMalwareScanStatus, isNull);
     expect(cleared.latestMalwareScanDetail, isNull);
@@ -129,6 +134,7 @@ void main() {
       changeLog: 'Changes',
       rawLatestVersionFromSource: 'v2.0',
       latestReproducibleStatus: reproducibleBuildStatusVerified,
+      latestReproducibleVersionCode: 31,
       latestAttestationStatus: githubAttestationStatusVerified,
     );
 
@@ -145,6 +151,7 @@ void main() {
     expect(merged.apkUrls.single.key, 'new.apk');
     expect(merged.lastUpdateCheck, fetchedAt);
     expect(merged.apkSizeBytes, isNull);
+    expect(merged.latestReproducibleVersionCode, 31);
     expect(merged.installedVersion, '1.1');
     expect(merged.pinned, isTrue);
     expect(merged.categories, const ['Live category']);

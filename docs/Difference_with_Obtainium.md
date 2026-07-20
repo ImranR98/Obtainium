@@ -2,23 +2,25 @@
 
 ## Contents
 
-- [UI and feature comparisons](#UI-and-feature-comparisons)
-  - [Home page and apps list](#Home-page-and-apps-list)
-  - [View options](#View-options)
-  - [App filters](#App-filters)
-  - [App details page](#App-details-page)
-  - [Adding apps](#Adding-apps)
-    - [Adding apps – paste a link](#adding-apps--paste-a-link)
-    - [Adding apps – search across stores](#adding-apps--search-across-stores)
-    - [Adding apps – bulk import device apps](#Adding-apps--bulk-import-device-apps)
+- [UI and feature comparisons](#ui-and-feature-comparisons)
+  - [Home page and apps list](#home-page-and-apps-list)
+  - [View options](#view-options)
+  - [App filters](#app-filters)
+  - [App details page](#app-details-page)
+  - [Adding apps](#adding-apps)
+    - [Paste a link](#adding-apps-paste-a-link)
+    - [Search across stores](#adding-apps-search-across-stores)
+    - [Bulk import device apps](#adding-apps-bulk-import-device-apps)
   - [Category management](#category-management)
   - [Settings](#settings)
-  - [Tablets, foldables, and landscape layout](#Tablets-foldables-and-landscape-layout)
-- [Clearer app statuses](#clearer-app-statuses)
-- [Why this fork exists — installer choice](#why-this-fork-exists--installer-choice)
-- [Bulk import device apps](#bulk-import-device-apps)
-- [Folders](#folders)
-- [On-Demand Only](#on-demand-only)
+  - [Tablets, foldables, and landscape layout](#tablets-foldables-and-landscape-layout)
+- [ObtainX Exclusives](#obtainx-exclusives)
+  - [Security features](#security-features)
+  - [Bulk import device apps](#bulk-import-device-apps)
+  - [Folders](#folders)
+  - [On-Demand Only](#on-demand-only)
+  - [Clearer app statuses](#clearer-app-statuses)
+  - [Installer choice - why this fork exists](#installer-choice---why-this-fork-exists)
 - [More features worth knowing](#more-features-worth-knowing)
 
 ## UI and feature comparisons
@@ -389,7 +391,7 @@ Obtainium's Add page is a single pushed screen: a URL field with an **Add** butt
     </tr>
 </table>
 
-### Adding apps – paste a link
+### Adding apps: paste a link
 
 ObtainX groups a source's additional options into labeled section cards, so that it's easier to eyeball and quickly find the one you want to change. It also offers a built-in RegEx helper for some fields. Obtainium renders the same options as one flat form with no helper.
 
@@ -425,7 +427,7 @@ ObtainX groups a source's additional options into labeled section cards, so that
     </tr>
 </table>
 
-### Adding apps – search across stores
+### Adding apps: search across stores
 
 ObtainX searches 9 stores (3 more than Obtainium), shows them all as chips upfront, shows the result on the same page with each result showing store badge. You can also change store selection afterwards and re-search without leaving the page; Obtainium searches 6 stores through a two-dialog flow with no store badges on results.
 
@@ -481,7 +483,7 @@ ObtainX searches 9 stores (3 more than Obtainium), shows them all as chips upfro
     </tr>
 </table>
 
-### Adding apps – bulk import device apps
+### Adding apps: bulk import device apps
 
 This is an ObtainX exclusive feature. [Check it out below](#bulk-import-device-apps).
 
@@ -579,10 +581,15 @@ Both now support exact color pick and rename-with-propagation; ObtainX adds cont
 
 ### Tablets, foldables, and landscape layout
 
-ObtainX pioneered the large-screen layout (v2.9.0, Jun 2026); Obtainium added a two-pane apps list shortly after (v1.6.0, Jul 2026) — but that one screen is the extent of its tablet support.
+ObtainX pioneered the large-screen layout (v2.9.0, June 2026); Obtainium added a two-pane apps list shortly after (v1.6.0, July 2026) — but that one screen is the extent of its tablet support.
 
 <table>
     <tr><th width="35%">Feature</th><th width="32%">Obtainium</th><th width="32%">ObtainX</th></tr>
+    <tr>
+        <td>Landscape / foldable / large-phone support</td>
+        <td>Two-pane at width ≥ 840 only</td>
+        <td>✓ full adaptive layout</td>
+    </tr>
     <tr>
         <td>Two-pane apps list + detail</td>
         <td>Yes (added July 2026)</td>
@@ -595,194 +602,116 @@ ObtainX pioneered the large-screen layout (v2.9.0, Jun 2026); Obtainium added a 
     </tr>
     <tr>
         <td>Add-app adapts to big screen</td>
-        <td>✗ centered phone column</td>
-        <td>✓</td>
-    </tr>
-    <tr>
-        <td>Bulk-import adapts to big screen</td>
-        <td>✗</td>
-        <td>✓</td>
+        <td>✗ phone layout</td>
+        <td>✓ two panels</td>
     </tr>
     <tr>
         <td>Settings adapts to big screen</td>
         <td>✗ one long scroll even on tablets</td>
-        <td>✓ master-detail (categories left, options right)</td>
-    </tr>
-    <tr>
-        <td>Multi-select / batch actions on tablet</td>
-        <td>Yes</td>
-        <td>Yes</td>
-    </tr>
-    <tr>
-        <td>Landscape / foldable / large-phone support</td>
-        <td>Two-pane at width ≥ 840 only</td>
-        <td>✓ full adaptive layout</td>
+        <td>✓ two panels - categories left, options right</td>
     </tr>
 </table>
-
-- **The apps list — two panes with details**
-
-    - Your app list sits **side-by-side with the app's detail page** in a true two-pane view — tap a row and it opens *in place* on the right, no full-screen push, no losing your place in the list. Editing happens in the same pane.
-    - **side navigation rail** replaces the bottom bar, reclaiming vertical space.
-
-    <table>
-    <tr>
-    <td width="50%" align="center" valign="top">
-    <img src="../assets/screenshots/Compare_Tablet_Apps.webp" alt="Obtainium apps list on a tablet" width="400" /><br /><strong>Obtainium</strong>
-    </td>
-    <td width="50%" align="center" valign="top">
-    <img src="../fastlane/metadata/android/en-US/images/phoneScreenshots/tablet_01_apps.jpg" alt="ObtainX two-pane app list and detail on a tablet" width="400" /><br /><strong>ObtainX</strong>
-    </td>
-    </tr>
-    </table>
-
-- **Multi-select & batch actions**
-
-    <table>
-    <tr>
-    <td width="50%" align="center" valign="top">
-    <img src="../assets/screenshots/Compare_Tablet_MultiSelect_1.webp" alt="Obtainium multi-select on a tablet" width="400" /><br /><strong>Obtainium</strong>
-    </td>
-    <td width="50%" align="center" valign="top">
-    <img src="../assets/screenshots/Compare_Tablet_MultiSelect_2.webp" alt="ObtainX multi-select on a tablet" width="400" /><br /><strong>ObtainX</strong>
-    </td>
-    </tr>
-    </table>
-
-- **Settings — one long page vs. categories + detail**
-
-    Obtainium shows one long scrolling settings page. ObtainX splits it: pick a category on the left, its options open in the right pane.
-    <table>
-    <tr>
-    <td width="50%" align="center" valign="top">
-    <img src="../assets/screenshots/Compare_Tablet_Settings_1.webp" alt="Obtainium settings on a tablet" width="400" /><br /><strong>Obtainium</strong>
-    </td>
-    <td width="50%" align="center" valign="top">
-    <img src="../fastlane/metadata/android/en-US/images/phoneScreenshots/tablet_04_settings.jpg" alt="ObtainX settings on a tablet — categories on the left, detail on the right" width="400" /><br /><strong>ObtainX</strong>
-    </td>
-    </tr>
-    </table>
-
----
-
-## Clearer app statuses
-
-ObtainX surfaces **finer-grained states** rather than forcing every situation into a binary "update / up to date" answer.
 
 <table>
-<tr>
-<td width="50%" align="center" valign="top">
-<img src="../assets/screenshots/App_Up_to_Date.webp" alt="ObtainX status: up to date" width="300" /><br />
-<strong>Up to date</strong><br />
-What's on your device matches what the source is offering — you're current.
-</td>
-<td width="50%" align="center" valign="top">
-<img src="../fastlane/metadata/android/en-US/images/phoneScreenshots/04_app.jpg" alt="ObtainX status: update available" width="300" /><br />
-<strong>Update available</strong><br />
-The source has a newer version than what's installed — time to update.
-</td>
-</tr>
-<tr>
-<td width="50%" align="center" valign="top">
-<img src="../assets/screenshots/App_Newer.webp" alt="ObtainX status: newer on device" width="300" /><br />
-<strong>Device has a higher version</strong><br />
-Your installed version is ahead of what the source advertises. Common with betas, sideloads, or sources that lag behind the actual release — shown correctly rather than flagged as a false update.
-</td>
-<td width="50%" align="center" valign="top">
-<img src="../assets/screenshots/App_Same_Build.webp" alt="ObtainX status: same version different label" width="300" /><br />
-<strong>Same version, shown differently</strong><br />
-The version is the same, but the text from the source and from Android don't match exactly. ObtainX recognizes this and doesn't send you chasing an "update" that isn't really one.
-</td>
-</tr>
-<tr>
-<td width="50%" align="center" valign="top">
-<img src="../assets/screenshots/App_Uncertain.webp" alt="ObtainX status: unclear comparison" width="300" /><br />
-<strong>Genuinely unclear</strong><br />
-Sometimes two versions can't be fairly compared — for example when a developer labels releases with commit hashes instead of version numbers. Rather than guessing, ObtainX says so and lets you check for yourself or skip it.
-</td>
-<td width="50%" align="center" valign="top">
-<img src="../assets/screenshots/App_Not_Installed.webp" alt="ObtainX status: unclear comparison" width="300" /><br />
-<strong>App not installed</strong><br />
-This app is currently not installed on you device. Tip: if ObtainX somehow fetched a wrong package id when you added the app, that will cause it say "App not installed". In that case, you can click edit and fix the package id. 
-</td>
-</tr>
+    <tr>
+        <td width="50%" align="center" valign="top">
+            <img src="../assets/screenshots/Compare_Tablet_Apps_1.webp" alt="Obtainium apps list on a tablet" width="400" /><br />
+            <strong>Obtainium - apps list</strong>
+        </td>
+        <td width="50%" align="center" valign="top">
+            <img src="../fastlane/metadata/android/en-US/images/phoneScreenshots/tablet_01_apps.jpg" alt="ObtainX app list on a tablet" width="400" /><br />
+            <strong>ObtainX - apps list</strong>
+        </td>
+    </tr>
+    <tr>
+        <td width="50%" align="center" valign="top">
+            <img src="../assets/screenshots/Compare_Tablet_MultiSelect_1.webp" alt="Obtainium multi-select on a tablet" width="400" /><br />
+            <strong>Obtainium - multi-select & batch actions</strong>
+        </td>
+        <td width="50%" align="center" valign="top">
+            <img src="../assets/screenshots/Compare_Tablet_MultiSelect_2.webp" alt="ObtainX multi-select on a tablet" width="400" /><br />
+            <strong>ObtainX - multi-select & batch actions</strong>
+        </td>
+    </tr>
+    <tr>
+        <td width="50%" align="center" valign="top">
+            <img src="../assets/screenshots/Compare_Tablet_AddApp_1.webp" alt="Obtainium apps list on a tablet" width="400" /><br />
+            <strong>Obtainium - add app</strong>
+        </td>
+        <td width="50%" align="center" valign="top">
+            <img src="../fastlane/metadata/android/en-US/images/phoneScreenshots/tablet_03_add.jpg" alt="ObtainX app list on a tablet" width="400" /><br />
+            <strong>ObtainX - add app</strong>
+        </td>
+    </tr>
+    <tr>
+        <td width="50%" align="center" valign="top">
+            <img src="../assets/screenshots/Compare_Tablet_Settings_1.webp" alt="Obtainium settings on a tablet" width="400" /><br />
+            <strong>Obtainium - Settings - one long page</strong>
+        </td>
+        <td width="50%" align="center" valign="top">
+            <img src="../fastlane/metadata/android/en-US/images/phoneScreenshots/tablet_04_settings.jpg" alt="ObtainX settings on a tablet — categories on the left, detail on the right" width="400" /><br />
+            <strong>ObtainX - Settings - grouped sections</strong>
+        </td>
+    </tr>
 </table>
 
 ---
+## ObtainX Exclusives
 
-## Why this fork exists — installer choice
+### 🛡️ Security features
 
-> **This is the feature that started everything.**
+Obtainium pulls each APK straight off the open internet — a GitHub asset, an F-Droid mirror, a third-party store, sometimes a plain HTML page — and its only integrity signal is the **signing-certificate hash**, which merely says the *signer* hasn't changed. It tells you nothing about whether the bytes match what the developer actually built, or whether the file is malicious. That leaves **you** as the last line of defense. ObtainX adds two independent layers, either of which can hard-block an install:
 
-Obtainium installs APKs itself, through the standard Android package installer. That's fine for most people — but there are two very different reasons you might want something else.
+- **Build verification — "is this the developer's real build?"** ObtainX confirms the exact file you downloaded against **reproducible-build** proof (F-Droid / IzzyOnDroid rebuild the app from public source and match it) or a **GitHub Release Attestation** (GitHub's signed record that the file came out of the developer's own CI — not swapped in by a hijacked account, CDN, or man-in-the-middle). Configurable per app as **Off / Audit-only / Enforce**, where Enforce blocks anything unverified. This is exactly the signal that catches a *trusted* app whose release pipeline was later compromised — Obtainium has neither check. *(See the [Build Verification Guide](build-verification-guide.md).)*
+- **VirusTotal scanning — "is this file known-bad?"** With your own API key, ObtainX scans every downloaded APK against VirusTotal's dozens of engines **before install**. Flagged or failed scans **fail safe**: a manual install stops and asks you (view report / cancel / install anyway), and a background update skips the app and notifies you instead of installing silently.
 
-**Reason 1: You care about what you're installing.**
-
-Third-party installers like [InstallerX](https://github.com/MuntashirAkon/InstallerX) show you things the stock installer doesn't: the APK's version number, its minimum and target API levels, whether those levels changed from your currently installed version, and a range of install options the standard path simply doesn't expose. [App Manager](https://github.com/MuntashirAkon/AppManager) goes further and surfaces any trackers bundled in the APK before you commit to installing it. If you want to know what you're actually installing rather than just tapping through a system dialog, these tools give you that visibility — which Obtainium couldn't offer when ObtainX built this.
-
-**Reason 2: Advanced Protection blocks sideloading.**
-
-Android's Advanced Protection mode is one of the strongest security configurations available. Among other things, it restricts the standard sideload install path that Obtainium uses. So every update becomes a three-step routine:
-
-1. Disable Advanced Protection
-2. Install the update
-3. Re-enable Advanced Protection
-
-Step three is easy to forget. Your phone silently sits in a weaker state until you remember.
-
-InstallerX and similar tools can be granted elevated install permissions via root or ADB, allowing them to install APKs even with Advanced Protection active. They're purpose-built for exactly this — but Obtainium had no way to hand off to them.
-
-**ObtainX solves both.** You pick your installer. ObtainX fetches the APK and passes it to whichever installer you've configured. You get the visibility and control of a proper installer tool, and Advanced Protection stays on.
-
-A pull request with this feature was submitted to Obtainium — it wasn't merged. While waiting, there were other rough edges worth fixing. Then a few more. That compounding list of improvements is what became ObtainX. (Obtainium has since added its own generic installer-handoff option in v1.6.0, July 2026 — months after ObtainX shipped installer choice in v2.0.0, March 2026.)
+The two are complementary — a reproducible build proves authenticity, but an authentic build of a *malicious* app still passes, and that's what VirusTotal catches. ObtainX's own releases are reproducible and attested too, so the updater itself is verifiable by the same checks.
 
 ---
 
-## Bulk import device apps
-
-> **This is the feature that makes ObtainX worth switching to.**
+### Bulk import device apps
 
 Obtainium let you add apps by searching by name — pick a store, search, pick from results. That works fine for one app. But if you want to track 50 apps, you do that 50 times. 100 apps? 100 times. There's no shortcut.
 
 ObtainX has the shortcut.
 
-**Tap Device. Select your apps. Hit scan. Done.**
+**Select your apps. Hit scan. Done.**
 
-ObtainX reads every app installed on your device, searches each of your chosen stores in turn — APKMirror, APKPure, F-Droid, GitHub — and comes back with a ready-to-go list of what it found and where. The whole thing — scanning 200 apps across four stores — takes a few minutes and zero manual effort. You can add your entire library in one shot.
+ObtainX reads every app installed on your device, searches each of your chosen stores in turn — F-Droid, Izzy, GitHub APKPure, APKMirror — and comes back with a ready-to-go list of what it found and where. The whole thing — scanning 200 apps across four stores — takes a few minutes and zero manual effort. You can add your entire library in one shot.
 
 <table>
-<tr>
-<td width="50%" align="center" valign="top">
-<img src="../fastlane/metadata/android/en-US/images/phoneScreenshots/09_bulk_add.jpg" alt="Select apps from device" width="300" /><br />
-<strong>Select</strong><br />Filter by app type, pick your stores, toggle Skip tracked / Skip privileged, search, select all or hand-pick.
-</td>
-<td width="50%" align="center" valign="top">
-<img src="../assets/screenshots/Bulk_Add_2.webp" alt="Scanning stores in parallel" width="300" /><br />
-<strong>Scan</strong><br />Stores are searched, with live per-store progress. Results are cached — repeat scans skip what's already known.
-</td>
-</tr>
-<tr>
-<td width="50%" align="center" valign="top">
-<img src="../assets/screenshots/Bulk_Add_3.webp" alt="Results with store badges" width="300" /><br />
-<strong>Review</strong><br />Found / Not found summary at a glance. Each result shows which store(s) it was found on. Uncheck anything you don't want.
-</td>
-<td width="50%" align="center" valign="top">
-<img src="../assets/screenshots/Bulk_Add_4.webp" alt="Adding apps in progress" width="300" /><br />
-<strong>Add</strong><br />Tap "Add N found apps." Live progress as they're added. Cancel any time.
-</td>
-</tr>
+    <tr>
+        <td width="50%" align="center" valign="top">
+            <img src="../fastlane/metadata/android/en-US/images/phoneScreenshots/09_bulk_add.jpg" alt="Select apps from device" width="300" /><br />
+            <strong>Select</strong><br />Filter by app type, pick your stores, toggle Skip tracked / Skip privileged, search, select all or hand-pick.
+        </td>
+        <td width="50%" align="center" valign="top">
+            <img src="../assets/screenshots/Bulk_Add_2.webp" alt="Scanning stores in parallel" width="300" /><br />
+            <strong>Scan</strong><br />Stores are searched, with live per-store progress. Results are cached — repeat scans skip what's already known.
+        </td>
+    </tr>
+    <tr>
+        <td width="50%" align="center" valign="top">
+            <img src="../assets/screenshots/Bulk_Add_3.webp" alt="Results with store badges" width="300" /><br />
+            <strong>Review</strong><br />Found / Not found summary at a glance. Each result shows which store(s) it was found on. Uncheck anything you don't want.
+        </td>
+        <td width="50%" align="center" valign="top">
+            <img src="../assets/screenshots/Bulk_Add_4.webp" alt="Adding apps in progress" width="300" /><br />
+            <strong>Add</strong><br />Tap "Add N found apps." Live progress as they're added. Cancel any time.
+        </td>
+    </tr>
 </table>
 
 ---
 
-## Folders
+### Folders
 
-Obtainium has one flat list. Once you're tracking 30+ apps it becomes hard to navigate — even with grouping, everything is on one page.
+Obtainium has one singular home for all your apps. Once you're tracking 30+ apps it becomes hard to navigate — even with grouping, everything is on one page.
 
 ObtainX adds **Folders**: persistent named views that pull apps off the main list and give them their own separate page, reacheable via button at the bottom of the Apps page. The main list shows only apps that don't belong to any folder, so it stays focused.
 
 **How folders work:**
-- **Rule-based** — Set a match rule (field: name, author, package ID, category, or source; match type: contains, equals, starts with; value: any text) and ObtainX auto-assigns every matching app to the folder, including any new apps you add later.
+- **Rule-based** — Set a match rule (field: name, author, source, category, state: installed or not, up-to-date or not etc.) and ObtainX auto-assigns every matching app to the folder, including any new apps you add later.
 - **Manual** — Long-press one or more apps and tap the folder icon in the multi-select toolbar to assign them directly.
 - **Mixed** — A folder can have a rule for new apps and still accept manual additions.
 - **Exclusions** — If you manually remove an app from a rule-based folder, it's excluded and the rule won't re-add it. Manually adding it back clears the exclusion.
@@ -791,9 +720,10 @@ ObtainX adds **Folders**: persistent named views that pull apps off the main lis
 <p align="center">
 <img src="../fastlane/metadata/android/en-US/images/phoneScreenshots/10_folders.jpg" alt="Folders with rules" width="300" />
 </p>
+
 ---
 
-## On-Demand Only
+### On-Demand Only
 
 Obtainium checks every tracked app on its refresh schedule — every hour, every few hours, however you've set it. That's fine for most apps, but some you simply don't need polled constantly.
 
@@ -804,6 +734,83 @@ ObtainX lets you mark individual apps as **On-Demand Only**. Apps with this flag
 - **Apps that rarely change** — Niche tools, archived apps, or anything that updates in a long while. No point waking your phone for them every hour.
 - **Apps you want full control over** — If you prefer to audit what's being updated rather than letting the background refresh decide for you, move those apps here and update them deliberately.
 - **Reduce background noise** — Fewer background checks means fewer notifications, less network use, and a quieter update count badge on the main list.
+
+---
+
+### Clearer app statuses
+
+ObtainX surfaces **finer-grained states** rather than forcing every situation into a binary "update / up to date" answer.
+
+<table>
+    <tr>
+        <td width="33%" align="center" valign="top">
+            <img src="../assets/screenshots/App_Up_to_Date.webp" alt="ObtainX status: up to date" width="300" /><br />
+            <strong>Up to date</strong><br />
+            What's on your device matches what the source is offering — you're current.
+        </td>
+        <td width="33%" align="center" valign="top">
+            <img src="../fastlane/metadata/android/en-US/images/phoneScreenshots/04_app.jpg" alt="ObtainX status: update available" width="300" /><br />
+            <strong>Update available</strong><br />
+            The source has a newer version than what's installed — time to update.
+        </td>
+        <td width="33%" align="center" valign="top">
+            <img src="../assets/screenshots/App_Newer.webp" alt="ObtainX status: newer on device" width="300" /><br />
+            <strong>Device has a higher version</strong><br />
+            Your installed version is ahead of what the source advertises. Common with betas, sideloads, or sources that lag behind the actual release — shown correctly rather than flagged as a false update.
+        </td>
+    </tr>
+    <tr>
+        <td width="33%" align="center" valign="top">
+            <img src="../assets/screenshots/App_Same_Build.webp" alt="ObtainX status: same version different label" width="300" /><br />
+            <strong>Same version, shown differently</strong><br />
+            The version is the same, but the text from the source and from Android don't match exactly. ObtainX recognizes this and doesn't send you chasing an "update" that isn't really one.
+        </td>
+        <td width="33%" align="center" valign="top">
+            <img src="../assets/screenshots/App_Uncertain.webp" alt="ObtainX status: unclear comparison" width="300" /><br />
+            <strong>Genuinely unclear</strong><br />
+            Sometimes two versions can't be fairly compared — for example when a developer labels releases with commit hashes instead of version numbers. Rather than guessing, ObtainX says so and lets you check for yourself or skip it.
+        </td>
+        <td width="33%" align="center" valign="top">
+            <img src="../assets/screenshots/App_Not_Installed.webp" alt="ObtainX status: unclear comparison" width="300" /><br />
+            <strong>App not installed</strong><br />
+            This app is currently not installed on you device. Tip: if ObtainX somehow fetched a wrong package id when you added the app, that will cause it say "App not installed". In that case, you can click edit and fix the package id. 
+        </td>
+    </tr>
+</table>
+
+---
+
+<a id="installer-choice---why-this-fork-exists"></a>
+<details>
+<summary><b>Installer choice - why this fork exists</b></summary>
+  
+  > **This is the feature that started everything.**
+  
+  Obtainium installs APKs itself, through the standard Android package installer. That's fine for most people — but there are two very different reasons you might want something else.
+  
+  **Reason 1: You care about what you're installing.**
+  
+  Third-party installers like [InstallerX](https://github.com/MuntashirAkon/InstallerX) show you things the stock installer doesn't: the APK's version number, its minimum and target API levels, whether those levels changed from your currently installed version, and a range of install options the standard path simply doesn't expose. [App Manager](https://github.com/MuntashirAkon/AppManager) goes further and surfaces any trackers bundled in the APK before you commit to installing it. If you want to know what you're actually installing rather than just tapping through a system dialog, these tools give you that visibility — which Obtainium couldn't offer when ObtainX built this.
+  
+  **Reason 2: Advanced Protection blocks sideloading.**
+  
+  Android's Advanced Protection mode is one of the strongest security configurations available. Among other things, it restricts the standard sideload install path that Obtainium uses. So every update becomes a three-step routine:
+  
+  1. Disable Advanced Protection
+  2. Install the update
+  3. Re-enable Advanced Protection
+  
+  Step three is easy to forget. Your phone silently sits in a weaker state until you remember.
+  
+  InstallerX and similar tools can be granted elevated install permissions via root or ADB, allowing them to install APKs even with Advanced Protection active. They're purpose-built for exactly this — but Obtainium had no way to hand off to them.
+  
+  **ObtainX solves both.** You pick your installer. ObtainX fetches the APK and passes it to whichever installer you've configured. You get the visibility and control of a proper installer tool, and Advanced Protection stays on.
+  
+  A pull request with this feature was submitted to Obtainium — it wasn't merged. While waiting, there were other rough edges worth fixing. Then a few more. That compounding list of improvements is what became ObtainX. 
+  
+  Obtainium has since added its own installer-handoff option in v1.6.0, July 2026 — months after ObtainX shipped installer choice in March 2026. Thus this feture is no longer exclusive to ObtainX.
+
+</details>
 
 ---
 
