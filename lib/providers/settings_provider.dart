@@ -705,7 +705,7 @@ class SettingsProvider with ChangeNotifier {
   }
 
   bool get parallelDownloads {
-    return _getBool('parallelDownloads') ?? false;
+    return _getBool('parallelDownloads') ?? true;
   }
 
   set parallelDownloads(bool val) {

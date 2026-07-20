@@ -892,6 +892,12 @@ class AppsPageState extends State<AppsPage> {
     if (mode == ActionBannerMode.none) {
       return const SliverToBoxAdapter(child: SizedBox(width: double.infinity));
     }
+    final pendingCount = existingUpdateIdsAllOrSelected.length +
+        newInstallIdsAllOrSelected.length +
+        trackOnlyUpdateIdsAllOrSelected.length;
+    if (pendingCount < 2) {
+      return const SliverToBoxAdapter(child: SizedBox(width: double.infinity));
+    }
     final onObtain =
         mode == ActionBannerMode.updatesOnly &&
             existingUpdateIdsAllOrSelected.isEmpty
