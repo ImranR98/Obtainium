@@ -78,10 +78,8 @@ class _ImportGitHubStarsContentState extends State<ImportGitHubStarsContent> {
       setState(() {
         _isLoading = false;
       });
-      await showModalBottomSheet<List<String>>(
+      await showAppModalSheet<List<String>>(
         context: navigator.context,
-        isScrollControlled: true,
-        showDragHandle: false,
         builder: (_) => SelectionModal(
           entries: repositories,
           title: tr('selectAppsToImport'),

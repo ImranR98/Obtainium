@@ -1,16 +1,13 @@
 import 'package:flutter/material.dart';
 
-const BorderRadius _kSheetRadius = BorderRadius.vertical(
-  top: Radius.circular(20),
-);
-
 /// Presents [builder] as a modal bottom sheet with the app's standard chrome:
-/// a rounded top, an M3 drag handle, and (optionally) full width on large
+/// the themed M3 Expressive shape, the framework drag handle, and (optionally)
+/// full width on large
 /// screens.
 ///
-/// Pair the builder result with [AppSheetContent] so the body hugs its own
-/// height, caps just below the status bar, scrolls once it would exceed that,
-/// and clears the keyboard and system nav bar. Call sites must **not**
+/// Pair the builder result with [AppSheetContent] or [AppSheetScaffold] so the
+/// body caps just below the status bar, scrolls once it would exceed that, and
+/// clears the keyboard and system nav bar. Call sites must **not**
 /// re-implement handles, height caps, scroll views, padding, or inset math —
 /// that all lives here so every sheet behaves identically.
 Future<T?> showAppModalSheet<T>({
@@ -25,7 +22,7 @@ Future<T?> showAppModalSheet<T>({
   return showModalBottomSheet<T>(
     context: context,
     isScrollControlled: true,
-    showDragHandle: false,
+    showDragHandle: enableDrag,
     isDismissible: isDismissible,
     enableDrag: enableDrag,
     useRootNavigator: useRootNavigator,
@@ -34,10 +31,8 @@ Future<T?> showAppModalSheet<T>({
     constraints: fullWidth
         ? const BoxConstraints(maxWidth: double.infinity)
         : null,
-    shape: const RoundedRectangleBorder(borderRadius: _kSheetRadius),
     builder: (BuildContext sheetContext) {
       final Widget sheet = builder(sheetContext);
-      final ColorScheme colorScheme = Theme.of(sheetContext).colorScheme;
       return Padding(
         // Keep the sheet itself above the keyboard. Putting this inset inside
         // the scroll view only adds hidden space below the focused field and
@@ -45,35 +40,97 @@ Future<T?> showAppModalSheet<T>({
         padding: EdgeInsets.only(
           bottom: MediaQuery.viewInsetsOf(sheetContext).bottom,
         ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Center(
-              child: Container(
-                margin: const EdgeInsets.only(top: 12, bottom: 8),
-                width: 40,
-                height: 4,
-                decoration: BoxDecoration(
-                  color: colorScheme.onSurfaceVariant.withValues(alpha: 0.4),
-                  borderRadius: BorderRadius.circular(2),
-                ),
+        child: fullWidth
+            ? sheet
+            : MediaQuery.removePadding(
+                context: sheetContext,
+                removeLeft: true,
+                removeRight: true,
+                child: sheet,
               ),
-            ),
-            Flexible(
-              child: fullWidth
-                  ? sheet
-                  : MediaQuery.removePadding(
-                      context: sheetContext,
-                      removeLeft: true,
-                      removeRight: true,
-                      child: sheet,
-                    ),
-            ),
-          ],
-        ),
       );
     },
   );
+}
+
+double _appSheetMaxHeight(BuildContext context) {
+  final MediaQueryData mediaQuery = MediaQuery.of(context);
+  final double byFraction =
+      mediaQuery.size.height * AppSheetContent.maxHeightFraction;
+  final double byClearance =
+      mediaQuery.size.height - mediaQuery.viewPadding.top - 56;
+  return byFraction < byClearance ? byFraction : byClearance;
+}
+
+/// Shared structure for sheets that need a fixed header and action area around
+/// a separately scrollable body.
+///
+/// This owns the height cap, safe-area handling, footer treatment, and system
+/// navigation inset. Specialized sheets provide only their content and actions.
+class AppSheetScaffold extends StatelessWidget {
+  const AppSheetScaffold({
+    super.key,
+    required this.header,
+    required this.body,
+    this.footer,
+    this.expand = false,
+    this.headerPadding = const EdgeInsets.fromLTRB(20, 4, 20, 12),
+    this.bodyPadding = EdgeInsets.zero,
+    this.footerPadding = const EdgeInsets.fromLTRB(16, 12, 16, 16),
+  });
+
+  final Widget header;
+  final Widget body;
+  final Widget? footer;
+
+  /// Whether the sheet should fill its available height even when its body is
+  /// short. Reading and large selection surfaces generally opt into this.
+  final bool expand;
+
+  final EdgeInsetsGeometry headerPadding;
+  final EdgeInsetsGeometry bodyPadding;
+  final EdgeInsets footerPadding;
+
+  @override
+  Widget build(BuildContext context) {
+    final ColorScheme colorScheme = Theme.of(context).colorScheme;
+    final double maxHeight = _appSheetMaxHeight(context);
+    final double bottomInset = MediaQuery.viewPaddingOf(context).bottom;
+    return SafeArea(
+      top: false,
+      bottom: false,
+      child: ConstrainedBox(
+        constraints: BoxConstraints(maxHeight: maxHeight),
+        child: SizedBox(
+          height: expand ? maxHeight : null,
+          child: Column(
+            mainAxisSize: expand ? MainAxisSize.max : MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Padding(padding: headerPadding, child: header),
+              Flexible(
+                fit: expand ? FlexFit.tight : FlexFit.loose,
+                child: Padding(padding: bodyPadding, child: body),
+              ),
+              if (footer != null)
+                Material(
+                  color: colorScheme.surfaceContainerLow,
+                  child: Padding(
+                    padding: EdgeInsets.fromLTRB(
+                      footerPadding.left,
+                      footerPadding.top,
+                      footerPadding.right,
+                      footerPadding.bottom + bottomInset,
+                    ),
+                    child: footer,
+                  ),
+                ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
 }
 
 /// The standard body for [showAppModalSheet]: a min-sized [Column] of
@@ -117,11 +174,7 @@ class AppSheetContent extends StatelessWidget {
     // enough in landscape, where the screen is short and 10% headroom is only a
     // few pixels — so also keep a fixed clearance below the top system inset and
     // use whichever limit is more restrictive.
-    final double byFraction = mq.size.height * maxHeightFraction;
-    final double byClearance = mq.size.height - mq.viewPadding.top - 56;
-    final double maxHeight = byFraction < byClearance
-        ? byFraction
-        : byClearance;
+    final double maxHeight = _appSheetMaxHeight(context);
     final double bottomInset = mq.viewPadding.bottom;
     return SafeArea(
       top: false,

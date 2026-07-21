@@ -14,6 +14,13 @@ const double kM3eGroupCardRadius = 20.0;
 /// Gap between expansion group header and first row in apps list body.
 const double kM3eHeaderToFirstCardGap = 3.0;
 
+const Duration kM3eGroupHeaderTransitionDuration = Duration(
+  milliseconds: 300,
+);
+const Curve kM3eGroupTransitionCurve = Curves.easeInOutCubicEmphasized;
+const Duration kM3eGroupExpandDuration = Duration(milliseconds: 360);
+const Duration kM3eGroupCollapseDuration = Duration(milliseconds: 250);
+
 /// Shared horizontal gutter for full-width fields, segmented controls, and
 /// sliders inside [M3eExpressiveSettingsCard] on the settings page.
 const double kM3eSettingsCardHorizontalInset = 16;
@@ -103,6 +110,120 @@ BorderSide m3ePureBlackOutlineSide(ColorScheme scheme, {double alpha = 0.18}) {
     return BorderSide.none;
   }
   return BorderSide(color: scheme.onSurface.withValues(alpha: alpha));
+}
+
+/// The shared Material 3 Expressive header used by collapsible app groups.
+class M3eCollapsibleGroupHeader extends StatelessWidget {
+  const M3eCollapsibleGroupHeader({
+    super.key,
+    required this.title,
+    required this.count,
+    required this.isExpanded,
+    required this.onTap,
+    required this.collapsedRadius,
+    required this.colorScheme,
+    this.trailingAction,
+  });
+
+  final String title;
+  final int count;
+  final bool isExpanded;
+  final VoidCallback onTap;
+  final double collapsedRadius;
+  final ColorScheme colorScheme;
+  final Widget? trailingAction;
+
+  @override
+  Widget build(BuildContext context) {
+    final ThemeData theme = Theme.of(context);
+    final ShapeBorder shape = isExpanded
+        ? RoundedRectangleBorder(
+            borderRadius: BorderRadius.only(
+              topLeft: Radius.circular(collapsedRadius),
+              topRight: Radius.circular(collapsedRadius),
+              bottomLeft: const Radius.circular(kM3eInnerRadius),
+              bottomRight: const Radius.circular(kM3eInnerRadius),
+            ),
+            side: m3ePureBlackOutlineSide(colorScheme, alpha: 0.22),
+          )
+        : RoundedRectangleBorder(
+            borderRadius: BorderRadius.all(Radius.circular(collapsedRadius)),
+            side: m3ePureBlackOutlineSide(colorScheme, alpha: 0.22),
+          );
+    final Widget countLabel = Text(
+      count.toString(),
+      style: theme.textTheme.bodyMedium?.copyWith(
+        color: colorScheme.onSurfaceVariant,
+      ),
+    );
+
+    return Material(
+      elevation: 3,
+      shadowColor: colorScheme.shadow.withAlpha(100),
+      surfaceTintColor: colorScheme.surfaceTint,
+      shape: shape,
+      color: colorScheme.usesPureBlackBackgrounds
+          ? Color.alphaBlend(
+              colorScheme.onSurface.withValues(alpha: 0.14),
+              Colors.black,
+            )
+          : m3eCollapsedGroupHeaderFill(colorScheme),
+      clipBehavior: Clip.antiAlias,
+      child: InkWell(
+        onTap: onTap,
+        child: SizedBox(
+          height: SettingsProvider.collapsedHeaderHeight,
+          child: Center(
+            child: ListTile(
+              dense: true,
+              onTap: null,
+              contentPadding: const EdgeInsets.symmetric(horizontal: 16),
+              leading: AnimatedContainer(
+                duration: kM3eGroupHeaderTransitionDuration,
+                curve: kM3eGroupTransitionCurve,
+                width: isExpanded ? 20 : 32,
+                height: isExpanded ? 20 : 32,
+                decoration: BoxDecoration(
+                  color: isExpanded
+                      ? Colors.transparent
+                      : colorScheme.surfaceContainerHighest,
+                  shape: BoxShape.circle,
+                ),
+                child: AnimatedRotation(
+                  turns: isExpanded ? 0.25 : 0,
+                  duration: kM3eGroupHeaderTransitionDuration,
+                  curve: kM3eGroupTransitionCurve,
+                  child: Icon(
+                    Icons.chevron_right_rounded,
+                    color: isExpanded
+                        ? colorScheme.primary
+                        : colorScheme.onSurfaceVariant,
+                    size: isExpanded ? 18 : 20,
+                  ),
+                ),
+              ),
+              title: Text(
+                title,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(fontWeight: FontWeight.bold),
+              ),
+              trailing: trailingAction == null
+                  ? countLabel
+                  : Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        countLabel,
+                        const SizedBox(width: 8),
+                        trailingAction!,
+                      ],
+                    ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
 }
 
 /// Tighter [DropdownMenu] anchor field (language, backup scope, etc.).

@@ -275,8 +275,8 @@ ObtainX's filters provide tri-state options (neutral/include/exclude) plus Any/A
     </tr>
     <tr>
         <td>Changelog view</td>
-        <td>• Centered, narrow panel squishes text vertically<br>• Completely obscures the center of the screen<br>• Doesn't show screenshots present in release notes</td>
-        <td>• Full-width bottom sheet (wider, better readable text layout)<br>• Keeps background app context visible<br>• Shows screenshots present in release notes</td>
+        <td>• Centered, narrow panel squishes text vertically<br>• Completely obscures the center of the screen<br>• Doesn't show screenshots present in release notes<br>• Can't fetch changelog from APKMirror apps</td>
+        <td>• Full-width bottom sheet (wider, better readable text layout)<br>• Keeps background app context visible<br>• Shows screenshots present in release notes<br>• Fetches changelog from APKMirror apps too</td>
     </tr>
     <tr>
         <td>Update check configuration</td>

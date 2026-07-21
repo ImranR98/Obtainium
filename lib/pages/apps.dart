@@ -27,10 +27,10 @@ import 'package:obtainium/app_sources/apkmirror.dart';
 import 'package:obtainium/components/app_bottom_sheet.dart';
 import 'package:obtainium/components/app_dropdown_field.dart';
 import 'package:obtainium/components/bulk_category_editor.dart';
+import 'package:obtainium/components/bulk_update_sheet.dart';
 import 'package:obtainium/components/category_action_chip.dart';
 import 'package:obtainium/layout_breakpoints.dart';
 import 'package:obtainium/components/custom_app_bar.dart';
-import 'package:obtainium/components/generated_form_renderer.dart';
 import 'package:obtainium/components/rippling_wavy_progress/circular.dart';
 import 'package:obtainium/components/rippling_wavy_progress/linear.dart';
 import 'package:obtainium/components/ui_widgets.dart' show ActionListTile;
@@ -142,9 +142,6 @@ String visibilityFilterChipLabel(String label, CategoryFilterIntent intent) {
   };
 }
 
-const Duration _appsGroupHeaderTransitionDuration = Duration(milliseconds: 300);
-const Curve _appsGroupTransitionCurve = Curves.easeInOutCubicEmphasized;
-
 class _AppsGroupHeaderDelegate extends SliverPersistentHeaderDelegate {
   final String title;
   final int count;
@@ -180,22 +177,6 @@ class _AppsGroupHeaderDelegate extends SliverPersistentHeaderDelegate {
     double shrinkOffset,
     bool overlapsContent,
   ) {
-    final theme = Theme.of(context);
-    final ShapeBorder shape = isExpanded
-        ? RoundedRectangleBorder(
-            borderRadius: BorderRadius.only(
-              topLeft: Radius.circular(collapsedRadius),
-              topRight: Radius.circular(collapsedRadius),
-              bottomLeft: const Radius.circular(kM3eInnerRadius),
-              bottomRight: const Radius.circular(kM3eInnerRadius),
-            ),
-            side: m3ePureBlackOutlineSide(colorScheme, alpha: 0.22),
-          )
-        : RoundedRectangleBorder(
-            borderRadius: BorderRadius.all(Radius.circular(collapsedRadius)),
-            side: m3ePureBlackOutlineSide(colorScheme, alpha: 0.22),
-          );
-
     return Padding(
       padding: const EdgeInsets.fromLTRB(
         12,
@@ -203,69 +184,13 @@ class _AppsGroupHeaderDelegate extends SliverPersistentHeaderDelegate {
         12,
         0,
       ),
-      child: Material(
-        elevation: 3,
-        shadowColor: colorScheme.shadow.withAlpha(100),
-        surfaceTintColor: colorScheme.surfaceTint,
-        shape: shape,
-        // Apps-tab group headers get a subtly lifted fill in the pure-black
-        // theme so they read as distinct headers against the black page
-        // (scoped here rather than in the shared helper, which settings and
-        // add-app also use).
-        color: colorScheme.usesPureBlackBackgrounds
-            ? Color.alphaBlend(
-                colorScheme.onSurface.withValues(alpha: 0.14),
-                Colors.black,
-              )
-            : m3eCollapsedGroupHeaderFill(colorScheme),
-        clipBehavior: Clip.antiAlias,
-        child: InkWell(
-          onTap: onTap,
-          child: SizedBox(
-            height: SettingsProvider.collapsedHeaderHeight,
-            child: Center(
-              child: ListTile(
-                dense: true,
-                onTap: null,
-                contentPadding: const EdgeInsets.symmetric(horizontal: 16),
-                leading: AnimatedContainer(
-                  duration: _appsGroupHeaderTransitionDuration,
-                  curve: _appsGroupTransitionCurve,
-                  width: isExpanded ? 20 : 32,
-                  height: isExpanded ? 20 : 32,
-                  decoration: BoxDecoration(
-                    color: isExpanded
-                        ? Colors.transparent
-                        : colorScheme.surfaceContainerHighest,
-                    shape: BoxShape.circle,
-                  ),
-                  child: AnimatedRotation(
-                    turns: isExpanded ? 0.25 : 0,
-                    duration: _appsGroupHeaderTransitionDuration,
-                    curve: _appsGroupTransitionCurve,
-                    child: Icon(
-                      Icons.chevron_right_rounded,
-                      color: isExpanded
-                          ? colorScheme.primary
-                          : colorScheme.onSurfaceVariant,
-                      size: isExpanded ? 18 : 20,
-                    ),
-                  ),
-                ),
-                title: Text(
-                  title,
-                  style: const TextStyle(fontWeight: FontWeight.bold),
-                ),
-                trailing: Text(
-                  count.toString(),
-                  style: theme.textTheme.bodyMedium?.copyWith(
-                    color: colorScheme.onSurfaceVariant,
-                  ),
-                ),
-              ),
-            ),
-          ),
-        ),
+      child: M3eCollapsibleGroupHeader(
+        title: title,
+        count: count,
+        isExpanded: isExpanded,
+        onTap: onTap,
+        collapsedRadius: collapsedRadius,
+        colorScheme: colorScheme,
       ),
     );
   }
@@ -397,9 +322,6 @@ class _AnimatedAppsGroupBody extends StatefulWidget {
 
 class _AnimatedAppsGroupBodyState extends State<_AnimatedAppsGroupBody>
     with SingleTickerProviderStateMixin {
-  static const Duration _expandDuration = Duration(milliseconds: 360);
-  static const Duration _collapseDuration = Duration(milliseconds: 250);
-
   late final AnimationController _controller;
   late final CurvedAnimation _factor;
 
@@ -408,8 +330,8 @@ class _AnimatedAppsGroupBodyState extends State<_AnimatedAppsGroupBody>
     super.initState();
     _controller = AnimationController(
       vsync: this,
-      duration: _expandDuration,
-      reverseDuration: _collapseDuration,
+      duration: kM3eGroupExpandDuration,
+      reverseDuration: kM3eGroupCollapseDuration,
       value: widget.expanded ? 1.0 : 0.0,
     );
     // A single, idempotent 0..1 reveal factor drives the whole group body as
@@ -420,7 +342,7 @@ class _AnimatedAppsGroupBodyState extends State<_AnimatedAppsGroupBody>
     // out into "helicopter blade" ghost rows.
     _factor = CurvedAnimation(
       parent: _controller,
-      curve: Curves.easeInOutCubicEmphasized,
+      curve: kM3eGroupTransitionCurve,
       reverseCurve: Curves.easeOutCubic,
     );
   }
@@ -1247,6 +1169,11 @@ class _AppListItem extends StatelessWidget {
               Material(
                 color: Colors.transparent,
                 child: ListTile(
+                  shape: itemBorderRadius == null
+                      ? null
+                      : RoundedRectangleBorder(
+                          borderRadius: itemBorderRadius!,
+                        ),
                   tileColor: Colors.transparent,
                   // Selection no longer uses [selectedTileColor]; the visual
                   // treatment lives in the parent [Container] (outline + 1dp
@@ -1796,7 +1723,7 @@ String? _rawFileUrlFromRepositoryPageUrl(String url) {
   return null;
 }
 
-Future<String> _loadLinkedChangeLog(
+Future<String?> _loadLinkedChangeLog(
   AppSource appSource,
   App app,
   String changesUrl,
@@ -1820,10 +1747,10 @@ Future<String> _loadLinkedChangeLog(
     }
   }
   if (appSource is APKMirror) {
-    final apkMirrorChangeLog = await apkMirrorChangeLogFromReleasePageHtml(
-      response.body,
-    );
-    if (apkMirrorChangeLog != null) return apkMirrorChangeLog;
+    // APKMirror URLs can point at an app listing with no "What's new"
+    // section (for example Markup). Never fall through to the generic raw-body
+    // path for this HTML source, or the entire document is shown as a changelog.
+    return apkMirrorChangeLogFromReleasePageHtml(response.body);
   }
   return response.body;
 }
@@ -1916,7 +1843,7 @@ void showChangeLogDialog(
       '\n\n',
     );
   }
-  final Future<String>? linkedChangeLogFuture =
+  final Future<String?>? linkedChangeLogFuture =
       changeLog == null && changesUrl != null
       ? _loadLinkedChangeLog(appSource, app, changesUrl)
       : null;
@@ -1930,8 +1857,8 @@ void showChangeLogDialog(
       // Non-scrolling content — the shared sheet provides the scroll view, so
       // short changelogs hug their height and long ones scroll within the cap.
       Widget buildChangeLogContent(String? displayChangeLog) {
-        if (displayChangeLog == null) {
-          return const SizedBox.shrink();
+        if (displayChangeLog == null || displayChangeLog.trim().isEmpty) {
+          return Text(tr('notFound'), style: textTheme.bodyMedium);
         }
         return appSource.changeLogIfAnyIsMarkDown
             ? MarkdownBody(
@@ -1964,7 +1891,7 @@ void showChangeLogDialog(
 
       final Widget changeLogContent = linkedChangeLogFuture == null
           ? buildChangeLogContent(processedChangeLog)
-          : FutureBuilder<String>(
+          : FutureBuilder<String?>(
               future: linkedChangeLogFuture,
               builder: (context, snapshot) {
                 if (snapshot.connectionState != ConnectionState.done) {
@@ -4566,111 +4493,32 @@ class AppsPageState extends State<AppsPage> {
           ? null
           : () {
               hapticHeavyImpact();
-              final List<GeneratedFormItem> formItems = [];
-              if (existingUpdateIdsAllOrSelected.isNotEmpty) {
-                formItems.add(
-                  GeneratedFormSwitch(
-                    'updates',
-                    label: tr(
-                      'updateX',
-                      args: [
-                        plural(
-                          'apps',
-                          existingUpdateIdsAllOrSelected.length,
-                        ).toLowerCase(),
-                      ],
-                    ),
-                    value: true,
-                  ),
-                );
-              }
-              if (newInstallIdsAllOrSelected.isNotEmpty) {
-                formItems.add(
-                  GeneratedFormSwitch(
-                    'installs',
-                    label: tr(
-                      'installX',
-                      args: [
-                        plural(
-                          'apps',
-                          newInstallIdsAllOrSelected.length,
-                        ).toLowerCase(),
-                      ],
-                    ),
-                    value: existingUpdateIdsAllOrSelected.isEmpty,
-                  ),
-                );
-              }
-              if (trackOnlyUpdateIdsAllOrSelected.isNotEmpty) {
-                formItems.add(
-                  GeneratedFormSwitch(
-                    'trackonlies',
-                    label: tr(
-                      'markXTrackOnlyAsUpdated',
-                      args: [
-                        plural('apps', trackOnlyUpdateIdsAllOrSelected.length),
-                      ],
-                    ),
-                    value:
-                        existingUpdateIdsAllOrSelected.isEmpty &&
-                        newInstallIdsAllOrSelected.isEmpty,
-                  ),
-                );
-              }
-              showDialog<Map<String, dynamic>?>(
+              showBulkUpdatePickerSheet(
                 context: context,
-                builder: (BuildContext ctx) {
-                  final totalApps =
-                      existingUpdateIdsAllOrSelected.length +
-                      newInstallIdsAllOrSelected.length +
-                      trackOnlyUpdateIdsAllOrSelected.length;
-                  return GeneratedFormModal(
-                    title: tr(
-                      'changeX',
-                      args: [plural('apps', totalApps).toLowerCase()],
-                    ),
-                    items: formItems.map((e) => [e]).toList(),
-                    initValid: true,
-                  );
-                },
-              ).then((values) async {
-                if (values != null) {
-                  if (values.isEmpty) {
-                    values = getDefaultValuesFromFormItems([formItems]);
-                  }
-                  final bool shouldInstallUpdates = values['updates'] == true;
-                  final bool shouldInstallNew = values['installs'] == true;
-                  final bool shouldMarkTrackOnlies =
-                      values['trackonlies'] == true;
-                  final List<String> toInstall = [];
-                  if (shouldInstallUpdates) {
-                    toInstall.addAll(existingUpdateIdsAllOrSelected);
-                  }
-                  if (shouldInstallNew) {
-                    toInstall.addAll(newInstallIdsAllOrSelected);
-                  }
-                  if (shouldMarkTrackOnlies) {
-                    toInstall.addAll(trackOnlyUpdateIdsAllOrSelected);
-                  }
-                  unawaited(
-                    appsProvider
-                        .downloadAndInstallLatestApps(
-                          toInstall,
-                          globalNavigatorKey.currentContext,
-                        )
-                        .catchError((e) {
-                          if (!context.mounted) return <String>[];
-                          showError(e);
-                          return <String>[];
-                        })
-                        .then((value) {
-                          if (value.isNotEmpty && shouldInstallUpdates) {
-                            if (!context.mounted) return;
-                            showMessage(tr('appsUpdated'));
-                          }
-                        }),
-                  );
-                }
+                apps: appsProvider.apps,
+                existingUpdateIds: existingUpdateIdsAllOrSelected,
+                newInstallIds: newInstallIdsAllOrSelected,
+                trackOnlyUpdateIds: trackOnlyUpdateIdsAllOrSelected,
+              ).then((Set<String>? selectedIds) {
+                if (selectedIds == null || selectedIds.isEmpty) return;
+                unawaited(
+                  appsProvider
+                      .downloadAndInstallLatestApps(
+                        selectedIds.toList(),
+                        globalNavigatorKey.currentContext,
+                      )
+                      .catchError((e) {
+                        if (!context.mounted) return <String>[];
+                        showError(e);
+                        return <String>[];
+                      })
+                      .then((value) {
+                        if (value.isNotEmpty) {
+                          if (!context.mounted) return;
+                          showMessage(tr('appsUpdated'));
+                        }
+                      }),
+                );
               });
             };
     }
