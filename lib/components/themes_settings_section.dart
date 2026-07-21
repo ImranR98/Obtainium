@@ -6,6 +6,7 @@ import 'package:obtainium/components/theme_accent_settings_section.dart'
 import 'package:obtainium/providers/settings_provider.dart';
 import 'package:obtainium/components/tv_slider_wrapper.dart';
 import 'package:obtainium/theme/app_segmented_button_theme.dart';
+import 'package:obtainium/theme/m3e_expressive_list.dart';
 import 'package:obtainium/widgets/help_hint_icon.dart';
 import 'package:provider/provider.dart';
 
@@ -41,7 +42,12 @@ List<Widget> buildThemesSettingsCardItems(
 
   return [
     Padding(
-      padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
+      padding: const EdgeInsets.fromLTRB(
+        kM3eSettingsCardHorizontalInset,
+        8,
+        kM3eSettingsCardHorizontalInset,
+        8,
+      ),
       child: SizedBox(
         width: double.infinity,
         child: AppSegmentedButton<ThemeSettings>(
@@ -214,7 +220,12 @@ class _ShadingIntensityTileState extends State<_ShadingIntensityTile> {
               _showBlackThemeSurfaceSettingDisabledSnackbar(context);
             },
       child: Padding(
-        padding: const EdgeInsets.fromLTRB(16, 10, 16, 12),
+        padding: const EdgeInsets.fromLTRB(
+          kM3eSettingsCardHorizontalInset,
+          10,
+          kM3eSettingsCardHorizontalInset,
+          12,
+        ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [

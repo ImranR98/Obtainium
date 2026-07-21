@@ -14,6 +14,20 @@ const double kM3eGroupCardRadius = 20.0;
 /// Gap between expansion group header and first row in apps list body.
 const double kM3eHeaderToFirstCardGap = 3.0;
 
+/// Shared horizontal gutter for full-width fields, segmented controls, and
+/// sliders inside [M3eExpressiveSettingsCard] on the settings page.
+const double kM3eSettingsCardHorizontalInset = 16;
+
+/// Trailing gutter for [ListTile] rows and field rows with a trailing action
+/// (switch, save, validate). Tighter than [kM3eSettingsCardHorizontalInset]
+/// so those controls line up with the right edge of full-width fields.
+const double kM3eSettingsCardTrailingInset = 8;
+
+const EdgeInsets kM3eSettingsListTileContentPadding = EdgeInsets.only(
+  left: kM3eSettingsCardHorizontalInset,
+  right: kM3eSettingsCardTrailingInset,
+);
+
 enum M3eListGroupPosition { first, middle, last, only }
 
 /// Corner radii for one row in a vertical stack. Use [flatListBody]: true for

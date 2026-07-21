@@ -718,6 +718,32 @@ class SettingsProvider with ChangeNotifier {
     notifyListeners();
   }
 
+  String? get customFontPath {
+    return prefs?.getString('customFontPath');
+  }
+
+  set customFontPath(String? value) {
+    if (value == null) {
+      prefs?.remove('customFontPath');
+    } else {
+      prefs?.setString('customFontPath', value);
+    }
+    notifyListeners();
+  }
+
+  String? get customFontName {
+    return prefs?.getString('customFontName');
+  }
+
+  set customFontName(String? value) {
+    if (value == null) {
+      prefs?.remove('customFontName');
+    } else {
+      prefs?.setString('customFontName', value);
+    }
+    notifyListeners();
+  }
+
   bool _blackThemeAppliesTo(Brightness platformBrightness) {
     if (!useBlackTheme || theme == ThemeSettings.light) return false;
     return theme == ThemeSettings.dark || platformBrightness == Brightness.dark;
