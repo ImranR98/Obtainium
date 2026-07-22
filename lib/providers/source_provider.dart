@@ -1261,7 +1261,7 @@ abstract class AppSource {
       }
     }
 
-    return [
+    final combined = [
       // Clone so callers (e.g. the add-app form pre-filling default values)
       // can't mutate the source-owned items. Sources are now cached/shared, so
       // an in-place edit here would otherwise leak across apps.
@@ -1269,6 +1269,25 @@ abstract class AppSource {
       ...agnosticItems,
       ...moreConditionalItems,
     ];
+
+    final List<List<GeneratedFormItem>> pruned = [];
+    List<GeneratedFormItem>? pendingHeaderRow;
+
+    for (final row in combined) {
+      final bool isHeader =
+          row.length == 1 && row.first is GeneratedFormSectionHeader;
+      if (isHeader) {
+        pendingHeaderRow = row;
+      } else {
+        if (pendingHeaderRow != null) {
+          pruned.add(pendingHeaderRow);
+          pendingHeaderRow = null;
+        }
+        pruned.add(row);
+      }
+    }
+
+    return pruned;
   }
 
   bool get hasAppSpecificSettings =>

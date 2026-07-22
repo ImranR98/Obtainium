@@ -70,8 +70,6 @@ class BulkUpdateSheet extends StatefulWidget {
 }
 
 class _BulkUpdateSheetState extends State<BulkUpdateSheet> {
-  static const int _expandedByDefaultLimit = 3;
-
   late Set<String> selectedIds;
   late Set<_BulkUpdateSectionId> expandedSectionIds;
 
@@ -95,12 +93,7 @@ class _BulkUpdateSheetState extends State<BulkUpdateSheet> {
       };
     }
     expandedSectionIds = {
-      if (visibleAppCount(widget.existingUpdateIds) <= _expandedByDefaultLimit)
-        _BulkUpdateSectionId.updates,
-      if (visibleAppCount(widget.newInstallIds) <= _expandedByDefaultLimit)
-        _BulkUpdateSectionId.installs,
-      if (visibleAppCount(widget.trackOnlyUpdateIds) <= _expandedByDefaultLimit)
-        _BulkUpdateSectionId.trackOnly,
+      _BulkUpdateSectionId.updates,
     };
   }
 
@@ -122,9 +115,6 @@ class _BulkUpdateSheetState extends State<BulkUpdateSheet> {
     ),
   ];
 
-  int visibleAppCount(List<String> appIds) {
-    return appIds.where(widget.apps.containsKey).length;
-  }
 
   void setAppSelected(String appId, bool selected) {
     hapticSelection();
@@ -309,8 +299,8 @@ class _BulkUpdateSheetState extends State<BulkUpdateSheet> {
           onTap: () => toggleSectionExpanded(section.id),
           collapsedRadius: collapsedHeaderRadius,
           colorScheme: colorScheme,
-          trailingAction: Tooltip(
-            message: allInGroupSelected
+          trailingAction: Semantics(
+            label: allInGroupSelected
                 ? tr('deselectX', args: [visibleAppIds.length.toString()])
                 : tr('selectAll'),
             child: Checkbox(
@@ -409,6 +399,9 @@ class _BulkUpdateSheetState extends State<BulkUpdateSheet> {
         .toList();
 
     return AppSheetScaffold(
+      expand: false,
+      headerPadding: const EdgeInsets.fromLTRB(20, 0, 20, 6),
+      footerPadding: const EdgeInsets.fromLTRB(16, 6, 16, 6),
       header: Row(
         children: [
           Material(
@@ -417,11 +410,11 @@ class _BulkUpdateSheetState extends State<BulkUpdateSheet> {
               borderRadius: BorderRadius.circular(16),
             ),
             child: SizedBox.square(
-              dimension: 48,
+              dimension: 40,
               child: Icon(
                 Icons.system_update_alt_rounded,
                 color: colorScheme.onTertiaryContainer,
-                size: 28,
+                size: 24,
               ),
             ),
           ),
@@ -429,7 +422,7 @@ class _BulkUpdateSheetState extends State<BulkUpdateSheet> {
           Expanded(
             child: Text(
               '${tr('changeX', args: [tr('appsString').toLowerCase()])} (${selectedIds.length}/${widget.totalApps})',
-              style: theme.textTheme.headlineSmall?.copyWith(
+              style: theme.textTheme.titleLarge?.copyWith(
                 fontWeight: FontWeight.w700,
               ),
             ),
@@ -438,7 +431,7 @@ class _BulkUpdateSheetState extends State<BulkUpdateSheet> {
       ),
       body: SingleChildScrollView(
         keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
-        padding: const EdgeInsets.fromLTRB(12, 4, 12, 20),
+        padding: const EdgeInsets.fromLTRB(12, 0, 12, 8),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
@@ -465,14 +458,24 @@ class _BulkUpdateSheetState extends State<BulkUpdateSheet> {
         alignment: WrapAlignment.end,
         crossAxisAlignment: WrapCrossAlignment.center,
         spacing: 8,
-        runSpacing: 8,
+        runSpacing: 4,
         children: [
           TextButton(
+            style: TextButton.styleFrom(
+              visualDensity: VisualDensity.compact,
+              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            ),
             autofocus: isTelevision,
             onPressed: () => Navigator.of(context).pop(null),
             child: Text(tr('cancel')),
           ),
           FilledButton(
+            style: FilledButton.styleFrom(
+              visualDensity: VisualDensity.compact,
+              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            ),
             onPressed: selectedIds.isEmpty
                 ? null
                 : () {

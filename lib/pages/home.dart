@@ -16,7 +16,6 @@ import 'package:obtainium/providers/apps_provider.dart';
 import 'package:obtainium/providers/settings_provider.dart';
 import 'package:obtainium/providers/source_provider.dart';
 import 'package:obtainium/services/shared_url_receiver.dart';
-import 'package:obtainium/theme/app_theme_accent.dart';
 import 'package:provider/provider.dart';
 
 class HomePage extends StatefulWidget {
@@ -36,6 +35,7 @@ class NavigationPageItem {
 
 class _DirectionalIndexedStack extends StatefulWidget {
   const _DirectionalIndexedStack({
+    super.key,
     required this.index,
     required this.axis,
     required this.children,
@@ -82,11 +82,48 @@ class _DirectionalIndexedStackState extends State<_DirectionalIndexedStack>
   @override
   void didUpdateWidget(covariant _DirectionalIndexedStack oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (widget.index == _currentIndex) return;
+    if (widget.index == _currentIndex) {
+      if (_previousIndex != null) {
+        _controller.stop();
+        _controller.value = 1.0;
+        setState(() {
+          _previousIndex = null;
+        });
+      }
+      return;
+    }
     _direction = widget.index > _currentIndex ? 1 : -1;
     _previousIndex = _currentIndex;
     _currentIndex = widget.index;
     _controller.forward(from: 0);
+  }
+
+  /// Ends a slide that never finished (e.g. interrupted by a shell rebuild).
+  void completeTransitionIfStuck() {
+    if (_previousIndex == null) return;
+    _controller.stop();
+    _controller.value = 1.0;
+    if (!mounted) return;
+    setState(() {
+      _previousIndex = null;
+    });
+  }
+
+  bool _pageIgnoresPointer(int index) {
+    if (_previousIndex == null) {
+      return index != _currentIndex;
+    }
+    if (index != _currentIndex && index != _previousIndex) {
+      return true;
+    }
+    final double progress = _animation.value;
+    if (index == _previousIndex) {
+      return progress >= 0.5;
+    }
+    if (index == _currentIndex) {
+      return progress < 0.5;
+    }
+    return true;
   }
 
   @override
@@ -129,7 +166,7 @@ class _DirectionalIndexedStackState extends State<_DirectionalIndexedStack>
                       enabled:
                           index == _currentIndex || index == _previousIndex,
                       child: IgnorePointer(
-                        ignoring: index != _currentIndex,
+                        ignoring: _pageIgnoresPointer(index),
                         child: FractionalTranslation(
                           translation: _offsetFor(index, _animation.value),
                           child: widget.children[index],
@@ -156,21 +193,43 @@ class HomePageState extends State<HomePage> {
   final SharedUrlReceiver _sharedUrlReceiver = SharedUrlReceiver();
   bool isLinkActivity = false;
 
+  /// Bumps when [AppsPageState] FAB chrome (badge, mass obtain, selection)
+  /// changes so the bottom nav FAB row can rebuild without [setState] on
+  /// [HomePageState] (avoids relayout during pointer routing / tooltips).
+  final ValueNotifier<int> appsTabFabChromeTick = ValueNotifier<int>(0);
+  int? _lastHomeAppsFabProviderSyncKey;
+  bool _homeFabNullStateRetryScheduled = false;
+
+  final GlobalKey<_DirectionalIndexedStackState> _pageStackKey =
+      GlobalKey<_DirectionalIndexedStackState>();
+
+  void _onAppsPageFabStateChanged() {
+    if (!mounted) return;
+    final int activeIndex = selectedIndexHistory.isEmpty
+        ? 0
+        : selectedIndexHistory.last;
+    if (activeIndex != 0) return;
+    setState(() {});
+  }
+
   late final List<NavigationPageItem> pages = [
     NavigationPageItem(
       tr('appsString'),
       Icons.apps,
       AppsPage(
         key: GlobalKey<AppsPageState>(),
-        onStateChanged: () {
-          if (mounted) setState(() {});
-        },
+        homeFabChromeTick: appsTabFabChromeTick,
+        onStateChanged: _onAppsPageFabStateChanged,
       ),
     ),
     NavigationPageItem(
       tr('addApp'),
       Icons.add,
-      AddAppPage(key: GlobalKey<AddAppPageState>()),
+      AddAppPage(
+        key: GlobalKey<AddAppPageState>(),
+        homeFabChromeTick: appsTabFabChromeTick,
+        onStateChanged: _onAppsPageFabStateChanged,
+      ),
     ),
     NavigationPageItem(
       tr('importExport'),
@@ -362,8 +421,48 @@ class HomePageState extends State<HomePage> {
     required ColorScheme scheme,
     required BuildContext context,
   }) {
+    context.select<AppsProvider, int>(
+      (AppsProvider provider) => Object.hash(
+        provider.loadingApps,
+        provider.appsListRevision,
+        provider.apps.length,
+        provider.pendingUpdateCount,
+        provider.areDownloadsRunning(),
+      ),
+    );
+    return ValueListenableBuilder<int>(
+      valueListenable: appsTabFabChromeTick,
+      builder: (BuildContext context, int _, Widget? child) {
+        return _floatingHomeNavigationBarContent(
+          pages: pages,
+          selectedIndex: selectedIndex,
+          blurBottomNav: blurBottomNav,
+          scheme: scheme,
+          context: context,
+        );
+      },
+    );
+  }
+
+  Widget _floatingHomeNavigationBarContent({
+    required List<NavigationPageItem> pages,
+    required int selectedIndex,
+    required bool blurBottomNav,
+    required ColorScheme scheme,
+    required BuildContext context,
+  }) {
     final bool keyboardOpen = MediaQuery.of(context).viewInsets.bottom > 0;
     final double bottomInset = MediaQuery.of(context).padding.bottom;
+
+    bool isAddAppSubFlowActive = false;
+    if (selectedIndex == 1) {
+      final key = pages[1].widget.key;
+      if (key is GlobalKey<AddAppPageState>) {
+        if (key.currentState != null) {
+          isAddAppSubFlowActive = key.currentState!.isSubFlowActive;
+        }
+      }
+    }
 
     // Check AppsPageState for side FABs when on the Apps tab (selectedIndex == 0)
     Widget? leadingFab;
@@ -387,7 +486,7 @@ class HomePageState extends State<HomePage> {
                 hapticSelection();
                 state.runMassObtain();
               },
-              tooltip: tr('installUpdateApps'),
+              tooltip: null,
               child: const Icon(Icons.file_download_outlined, size: 20),
             );
 
@@ -421,7 +520,7 @@ class HomePageState extends State<HomePage> {
                 hapticSelection();
                 state.openSelectionActionsSheet();
               },
-              tooltip: tr('actions'),
+              tooltip: null,
               child: const Icon(Icons.checklist, size: 20),
             );
           } else {
@@ -435,15 +534,17 @@ class HomePageState extends State<HomePage> {
                 hapticSelection();
                 state.openViewOptionsSheet();
               },
-              tooltip: tr('appsViewOptions'),
+              tooltip: null,
               child: const Icon(Icons.tune, size: 20),
             );
           }
-        } else {
-          // On cold start, AppsPageState mounts on frame 1.
-          // Trigger post-frame rebuild so FABs show up immediately on frame 2!
+        } else if (!_homeFabNullStateRetryScheduled) {
+          _homeFabNullStateRetryScheduled = true;
           WidgetsBinding.instance.addPostFrameCallback((_) {
-            if (mounted) setState(() {});
+            _homeFabNullStateRetryScheduled = false;
+            if (mounted) {
+              appsTabFabChromeTick.value = appsTabFabChromeTick.value + 1;
+            }
           });
         }
       }
@@ -565,7 +666,9 @@ class HomePageState extends State<HomePage> {
     return AnimatedSlide(
       duration: const Duration(milliseconds: 250),
       curve: Curves.easeOutCubic,
-      offset: keyboardOpen ? const Offset(0, 1.5) : Offset.zero,
+      offset: (keyboardOpen || isAddAppSubFlowActive)
+          ? const Offset(0, 1.5)
+          : Offset.zero,
       child: Padding(
         padding: EdgeInsets.only(
           left: 12.0,
@@ -588,6 +691,7 @@ class HomePageState extends State<HomePage> {
         ? 0
         : selectedIndexHistory.last;
     if (activeIndex == index) {
+      _pageStackKey.currentState?.completeTransitionIfStuck();
       return;
     }
 
@@ -667,6 +771,17 @@ class HomePageState extends State<HomePage> {
     prevAppCount = appsCount;
     prevIsLoading = isLoading;
 
+    final int homeAppsFabProviderSyncKey = Object.hash(
+      appsCount,
+      isLoading,
+      updateCount,
+    );
+    if (_lastHomeAppsFabProviderSyncKey != null &&
+        homeAppsFabProviderSyncKey != _lastHomeAppsFabProviderSyncKey) {
+      appsTabFabChromeTick.value = appsTabFabChromeTick.value + 1;
+    }
+    _lastHomeAppsFabProviderSyncKey = homeAppsFabProviderSyncKey;
+
     return PopScope(
       canPop:
           isLinkActivity &&
@@ -721,9 +836,6 @@ class HomePageState extends State<HomePage> {
       },
       child: Builder(
         builder: (BuildContext context) {
-          // Watch AppsProvider so HomePage rebuilds immediately on cold start
-          // as soon as apps finish loading from database.
-          context.watch<AppsProvider>();
           final ColorScheme scheme = Theme.of(context).colorScheme;
           final bool blurBottomNav = settingsProvider.progressiveBlurEnabled;
           final double screenWidth = MediaQuery.sizeOf(context).width;
@@ -821,6 +933,7 @@ class HomePageState extends State<HomePage> {
                               removeLeft: true,
                               removeRight: true,
                               child: _DirectionalIndexedStack(
+                                key: _pageStackKey,
                                 index: homeNavSelectedIndex,
                                 axis: pageTransitionAxis,
                                 children: pages.map((p) => p.widget).toList(),
@@ -837,6 +950,7 @@ class HomePageState extends State<HomePage> {
                       // Keep all four pages mounted while sliding only the
                       // active page pair during tab changes.
                       _DirectionalIndexedStack(
+                        key: _pageStackKey,
                         index: homeNavSelectedIndex,
                         axis: pageTransitionAxis,
                         children: pages.map((p) => p.widget).toList(),
@@ -860,6 +974,7 @@ class HomePageState extends State<HomePage> {
 
   @override
   void dispose() {
+    appsTabFabChromeTick.dispose();
     _linkSubscription?.cancel();
     _sharedUrlReceiver.dispose();
     super.dispose();

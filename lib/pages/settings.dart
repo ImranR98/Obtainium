@@ -154,6 +154,7 @@ class SettingsPageState extends State<SettingsPage> {
     if (hasUnsavedChanges) {
       final bool? discard = await showDialog<bool>(
         context: context,
+        barrierDismissible: false,
         builder: (BuildContext dialogContext) {
           return AlertDialog(
             title: Text(tr('discardUnsavedChangesQuestion')),

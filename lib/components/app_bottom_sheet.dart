@@ -74,9 +74,9 @@ class AppSheetScaffold extends StatelessWidget {
     required this.body,
     this.footer,
     this.expand = false,
-    this.headerPadding = const EdgeInsets.fromLTRB(20, 4, 20, 12),
+    this.headerPadding = const EdgeInsets.fromLTRB(20, 0, 20, 8),
     this.bodyPadding = EdgeInsets.zero,
-    this.footerPadding = const EdgeInsets.fromLTRB(16, 12, 16, 16),
+    this.footerPadding = const EdgeInsets.fromLTRB(16, 8, 16, 8),
   });
 
   final Widget header;
@@ -108,10 +108,14 @@ class AppSheetScaffold extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               Padding(padding: headerPadding, child: header),
-              Flexible(
-                fit: expand ? FlexFit.tight : FlexFit.loose,
-                child: Padding(padding: bodyPadding, child: body),
-              ),
+              if (expand)
+                Expanded(
+                  child: Padding(padding: bodyPadding, child: body),
+                )
+              else
+                Flexible(
+                  child: Padding(padding: bodyPadding, child: body),
+                ),
               if (footer != null)
                 Material(
                   color: colorScheme.surfaceContainerLow,

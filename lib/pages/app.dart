@@ -827,7 +827,7 @@ class _AppPageState extends State<AppPage> with WidgetsBindingObserver {
         children: [
           FloatingActionButton.small(
             heroTag: 'app_page_edit_cancel',
-            tooltip: tr('cancel'),
+            tooltip: widget.isEmbedded ? null : tr('cancel'),
             onPressed: updating
                 ? null
                 : () => _onCancelEditPressed(
@@ -840,7 +840,7 @@ class _AppPageState extends State<AppPage> with WidgetsBindingObserver {
           const SizedBox(height: 12),
           FloatingActionButton(
             heroTag: 'app_page_edit_save',
-            tooltip: tr('save'),
+            tooltip: widget.isEmbedded ? null : tr('save'),
             onPressed: appData.downloadProgress != null || updating
                 ? null
                 : () => _saveEdit(appData, appsProvider),
@@ -2179,7 +2179,7 @@ class _AppPageState extends State<AppPage> with WidgetsBindingObserver {
         ? themedPageColorScheme.withPureBlackBackgrounds()
         : themedPageColorScheme;
     final ColorScheme sharedPageBackgroundColorScheme =
-        parentThemeForPage.colorScheme;
+        pageColorSchemeForPage;
     final Brightness pageBrightness = pageColorSchemeForPage.brightness;
     // ThemeData.copyWith() is expensive — cache it and recompute only when the
     // icon scheme, parent brightness, or active black state actually changes.
@@ -4394,6 +4394,8 @@ class _AppPageState extends State<AppPage> with WidgetsBindingObserver {
       final bool isLandscapeEmbedded =
           widget.isEmbedded &&
           MediaQuery.orientationOf(themeContext) == Orientation.landscape;
+      String? actionBarTooltip(String message) =>
+          widget.isEmbedded ? null : message;
       Widget actionBarContent = Padding(
         padding: isLandscapeEmbedded
             ? const EdgeInsets.fromLTRB(16, 6, 16, 6)
@@ -4413,7 +4415,7 @@ class _AppPageState extends State<AppPage> with WidgetsBindingObserver {
                         appsProvider.openAppSettings(app.app.id);
                       },
                       icon: const Icon(Icons.info_outline),
-                      tooltip: tr('appPageAppInfo'),
+                      tooltip: actionBarTooltip(tr('appPageAppInfo')),
                     ),
                   );
                 }
@@ -4424,7 +4426,7 @@ class _AppPageState extends State<AppPage> with WidgetsBindingObserver {
                       iconSize: 24,
                       onPressed: () => _startEdit(app, appsProvider),
                       icon: const Icon(Icons.edit_outlined),
-                      tooltip: tr('editAppInfo'),
+                      tooltip: actionBarTooltip(tr('editAppInfo')),
                     ),
                   );
                 }
@@ -4452,7 +4454,7 @@ class _AppPageState extends State<AppPage> with WidgetsBindingObserver {
                                 );
                               }
                             },
-                      tooltip: tr('appOptions'),
+                      tooltip: actionBarTooltip(tr('appOptions')),
                       icon: const Icon(Icons.tune),
                     ),
                   );
@@ -4493,7 +4495,7 @@ class _AppPageState extends State<AppPage> with WidgetsBindingObserver {
                         );
                       },
                       icon: const Icon(Icons.more_horiz),
-                      tooltip: tr('more'),
+                      tooltip: actionBarTooltip(tr('more')),
                     ),
                   );
                 }
@@ -4519,7 +4521,7 @@ class _AppPageState extends State<AppPage> with WidgetsBindingObserver {
                                 ]);
                               },
                         icon: const Icon(Icons.restore_rounded),
-                        tooltip: tr('resetInstallStatus'),
+                        tooltip: actionBarTooltip(tr('resetInstallStatus')),
                       ),
                     );
                   }
@@ -4571,7 +4573,7 @@ class _AppPageState extends State<AppPage> with WidgetsBindingObserver {
                               Navigator.of(themeContext).pop();
                             }
                           },
-                    tooltip: tr('remove'),
+                    tooltip: actionBarTooltip(tr('remove')),
                     icon: const Icon(Icons.delete_outline),
                   ),
                 );
@@ -4598,7 +4600,7 @@ class _AppPageState extends State<AppPage> with WidgetsBindingObserver {
           child: actionBarContent,
         );
       }
-      if (gestureNavigationActive) {
+      if (gestureNavigationActive && !widget.isEmbedded) {
         actionBarContent = SafeArea(top: false, child: actionBarContent);
       }
       final Widget actionBarSurface = Container(
@@ -4634,6 +4636,9 @@ class _AppPageState extends State<AppPage> with WidgetsBindingObserver {
         ),
         child: actionBarContent,
       );
+      if (widget.isEmbedded) {
+        return actionBarSurface;
+      }
       if (gestureNavigationActive) {
         return actionBarSurface;
       }
@@ -4742,7 +4747,10 @@ class _AppPageState extends State<AppPage> with WidgetsBindingObserver {
               ),
               floatingActionButtonLocation:
                   FloatingActionButtonLocation.endFloat,
-              body: RefreshIndicator(
+              body: Stack(
+                fit: StackFit.expand,
+                children: [
+                  RefreshIndicator(
                 displacement: 20,
                 child: showAppWebpageFinal
                     ? Stack(
@@ -4910,15 +4918,24 @@ class _AppPageState extends State<AppPage> with WidgetsBindingObserver {
                   }
                 },
               ),
-              bottomNavigationBar: widget.isEmbedded
-                  ? _ScrollLinkedAppPageFooter(
-                      key: ValueKey<bool>(_editMode),
-                      scrollController: _appPageScrollController,
-                      child: _MeasureSize(
-                        onChange: _handleBottomActionBarSizeChanged,
-                        child: getBottomActionBar(themedPageContext),
+                  if (widget.isEmbedded)
+                    Positioned(
+                      left: 0,
+                      right: 0,
+                      bottom: 0,
+                      child: _ScrollLinkedAppPageFooter(
+                        key: ValueKey<bool>(_editMode),
+                        scrollController: _appPageScrollController,
+                        child: _MeasureSize(
+                          onChange: _handleBottomActionBarSizeChanged,
+                          child: getBottomActionBar(themedPageContext),
+                        ),
                       ),
-                    )
+                    ),
+                ],
+              ),
+              bottomNavigationBar: widget.isEmbedded
+                  ? null
                   : _MeasureSize(
                       onChange: _handleBottomActionBarSizeChanged,
                       child: getBottomActionBar(themedPageContext),

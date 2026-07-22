@@ -331,7 +331,8 @@ App normalizeSkippedLatestVersion(App app) {
     shouldRemove =
         installed == app.latestVersion ||
         versionsEffectivelyEqual(installed, app.latestVersion) ||
-        compareVersionsByNumericSegments(installed, app.latestVersion) == 1;
+        (compareVersionsByNumericSegments(installed, app.latestVersion) == 1 &&
+            !versionOrderIsUnclear(installed, app.latestVersion));
   }
   if (!shouldRemove) return app;
 

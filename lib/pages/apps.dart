@@ -593,6 +593,8 @@ int _appsPageAppsRebuildToken(AppsProvider provider) {
     provider.loadingApps,
     provider.areDownloadsRunning(),
     provider.appsListRevision,
+    provider.apps.length,
+    provider.pendingUpdateCount,
   );
 }
 
@@ -1345,11 +1347,22 @@ class _SwipeableListItemState extends State<_SwipeableListItem>
   // Eases [_dragOffset] back to 0 on release so the revealed action (icon +
   // label) slides and fades out smoothly instead of snapping — mirroring
   // Remember's swipe-reveal behaviour.
-  late final AnimationController _settleController = AnimationController(
-    vsync: this,
-    duration: const Duration(milliseconds: 250),
-  );
+  //
+  // Created eagerly in initState (not a `late final` inline initializer): a
+  // lazy initializer would run on first access, and for rows that are never
+  // swiped the first access is dispose(), which would construct the ticker
+  // during an ancestor lookup on an already-deactivated element.
+  late final AnimationController _settleController;
   Animation<double>? _settleAnimation;
+
+  @override
+  void initState() {
+    super.initState();
+    _settleController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 250),
+    );
+  }
 
   @override
   void dispose() {
@@ -1657,6 +1670,7 @@ class AppsPage extends StatefulWidget {
     super.key,
     this.onDemandOnlyList = false,
     this.folderId,
+    this.homeFabChromeTick,
     this.onStateChanged,
   });
 
@@ -1670,7 +1684,10 @@ class AppsPage extends StatefulWidget {
   /// When non-null, only apps belonging to this folder ID are shown.
   final String? folderId;
 
-  /// Notifies parent shell (HomePage) when apps state mounts or updates.
+  /// Notifies [HomePage] FAB overlay to rebuild when badge/selection changes.
+  final ValueNotifier<int>? homeFabChromeTick;
+
+  /// Post-frame [HomePage] rebuild when shell FAB chrome changes (phone layout).
   final VoidCallback? onStateChanged;
 
   @override
@@ -2545,12 +2562,112 @@ class AppsPageState extends State<AppsPage> {
     openSelectionActionsSheetHandler?.call();
   }
 
+  /// Update-all + actions/view-options FABs overlaid on the apps list.
+  Widget _buildAppsPageSideFabOverlay(
+    BuildContext context, {
+    required String heroScope,
+  }) {
+    return Positioned(
+      left: 16,
+      right: 16,
+      bottom: MediaQuery.paddingOf(context).bottom,
+      child: AnimatedSlide(
+        duration: const Duration(milliseconds: 250),
+        curve: Curves.easeOutCubic,
+        offset: MediaQuery.of(context).viewInsets.bottom > 0
+            ? const Offset(0, 1.5)
+            : Offset.zero,
+        child: AnimatedOpacity(
+          duration: const Duration(milliseconds: 200),
+          opacity: MediaQuery.of(context).viewInsets.bottom > 0 ? 0.0 : 1.0,
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              if (hasMassObtainOperations)
+                Stack(
+                  clipBehavior: Clip.none,
+                  children: [
+                    FloatingActionButton.small(
+                      heroTag: '${heroScope}_update_all_fab',
+                      elevation: 6,
+                      highlightElevation: 8,
+                      backgroundColor: Theme.of(
+                        context,
+                      ).colorScheme.primaryContainer,
+                      foregroundColor: Theme.of(
+                        context,
+                      ).colorScheme.onPrimaryContainer,
+                      onPressed: () {
+                        hapticSelection();
+                        runMassObtain();
+                      },
+                      tooltip: null,
+                      child: const Icon(
+                        Icons.file_download_outlined,
+                        size: 20,
+                      ),
+                    ),
+                    if (pageUpdateCount > 0)
+                      Positioned(
+                        left: -4,
+                        bottom: -4,
+                        child: Badge(
+                          label: Text(pageUpdateCount.toString()),
+                          backgroundColor: Theme.of(
+                            context,
+                          ).colorScheme.error,
+                          textColor: Theme.of(context).colorScheme.onError,
+                        ),
+                      ),
+                  ],
+                )
+              else
+                const SizedBox.shrink(),
+              if (isSelectionActive)
+                FloatingActionButton.small(
+                  heroTag: '${heroScope}_actions_fab',
+                  elevation: 6,
+                  highlightElevation: 8,
+                  backgroundColor: Theme.of(context).colorScheme.primary,
+                  foregroundColor: Theme.of(context).colorScheme.onPrimary,
+                  onPressed: () {
+                    hapticSelection();
+                    openSelectionActionsSheet();
+                  },
+                  tooltip: null,
+                  child: const Icon(Icons.checklist, size: 20),
+                )
+              else
+                FloatingActionButton.small(
+                  heroTag: '${heroScope}_view_options_fab',
+                  elevation: 6,
+                  highlightElevation: 8,
+                  backgroundColor: Theme.of(
+                    context,
+                  ).colorScheme.surfaceContainerHighest,
+                  foregroundColor: Theme.of(
+                    context,
+                  ).colorScheme.onSurfaceVariant,
+                  onPressed: () {
+                    hapticSelection();
+                    openViewOptionsSheet();
+                  },
+                  tooltip: null,
+                  child: const Icon(Icons.tune, size: 20),
+                ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
   bool clearSelected() {
     if (selectedAppIds.isNotEmpty) {
       setState(() {
         selectedAppIds.clear();
       });
-      widget.onStateChanged?.call();
+      _notifyHomeFabChromeIfChanged();
       return true;
     }
     return false;
@@ -2656,9 +2773,40 @@ class AppsPageState extends State<AppsPage> {
   Map<String, int> _folderAppCountsCache = const {};
   Map<String, int> _folderUpdateCountsCache = const {};
 
-  /// Last [Object.hash] of FAB badge count + mass-obtain availability pushed
-  /// to [HomePage] via [AppsPage.onStateChanged].
-  int? _lastNotifiedHomeFabToken;
+  /// Pushes FAB badge / mass-obtain / selection state to [HomePage] without
+  /// calling [setState] on the home shell.
+  int? _lastNotifiedPageUpdateCount;
+  bool? _lastNotifiedMassObtainAvailable;
+  bool? _lastNotifiedSelectionActive;
+  bool _homeFabBadgeSyncScheduled = false;
+
+  void _notifyHomeFabChromeIfChanged({bool force = false}) {
+    final bool massObtainAvailable = runMassObtainHandler != null;
+    final bool selectionActive = isSelectionActive;
+    if (!force &&
+        pageUpdateCount == _lastNotifiedPageUpdateCount &&
+        massObtainAvailable == _lastNotifiedMassObtainAvailable &&
+        selectionActive == _lastNotifiedSelectionActive) {
+      return;
+    }
+    _lastNotifiedPageUpdateCount = pageUpdateCount;
+    _lastNotifiedMassObtainAvailable = massObtainAvailable;
+    _lastNotifiedSelectionActive = selectionActive;
+
+    final ValueNotifier<int>? tick = widget.homeFabChromeTick;
+    if (tick != null) {
+      tick.value = tick.value + 1;
+    }
+
+    final VoidCallback? notifyHome = widget.onStateChanged;
+    if (notifyHome == null) return;
+    if (_homeFabBadgeSyncScheduled) return;
+    _homeFabBadgeSyncScheduled = true;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _homeFabBadgeSyncScheduled = false;
+      if (mounted) notifyHome();
+    });
+  }
 
   // ── Group expansion state ─────────────────────────────────────────────────
   // Groups start expanded. When the user collapses one its key goes here and
@@ -2753,7 +2901,7 @@ class AppsPageState extends State<AppsPage> {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted) widget.onStateChanged?.call();
+      if (mounted) _notifyHomeFabChromeIfChanged(force: true);
     });
     final sp = context.read<SettingsProvider>();
     _collapsedGroups.addAll(
@@ -3265,7 +3413,7 @@ class AppsPageState extends State<AppsPage> {
           selectedAppIds.add(app.id);
         }
       });
-      widget.onStateChanged?.call();
+      _notifyHomeFabChromeIfChanged();
     }
 
     // ── Cached filter / sort / reorder ─────────────────────────────────────
@@ -3611,6 +3759,15 @@ class AppsPageState extends State<AppsPage> {
       }
     }
 
+    // Multi-select puts batch actions in pane 2; hide duplicate list FABs then.
+    final bool showSplitPaneListFabs = isLargeScreen &&
+        widget.folderId == null &&
+        !widget.onDemandOnlyList &&
+        selectedAppIds.isEmpty;
+    final bool showFolderListFabs = isLargeScreen &&
+        (widget.folderId != null || widget.onDemandOnlyList) &&
+        selectedAppIds.isEmpty;
+
     final existingUpdates = _existingUpdatesCache;
     final newInstalls = _newInstallsCache;
 
@@ -3661,38 +3818,51 @@ class AppsPageState extends State<AppsPage> {
     // Membership set so the filters below are O(updates) instead of
     // O(updates × apps) from a `listedApps.any(...)` scan per id.
     final separateUpdates = _effectiveGroupUpdatesSeparately(settingsProvider);
-    bool isInUpdatesGroup(AppInMemory e) =>
+    bool isInUpdatesGroup(AppInMemory entry) =>
         separateUpdates &&
-        _existingUpdatesCache.contains(e.app.id) &&
+        _existingUpdatesCache.contains(entry.app.id) &&
         (widget.onDemandOnlyList ||
-            e.app.additionalSettings['onDemandOnly'] != true);
+            entry.app.additionalSettings['onDemandOnly'] != true);
 
-    final existingUpdateIdsAllOrSelected = listedApps
-        .where((a) => isInUpdatesGroup(a))
-        .map((a) => a.app.id)
+    final Set<String> listedAppIdSet = {
+      for (final AppInMemory listed in listedApps) listed.app.id,
+    };
+
+    List<String> filterListedMassObtainIds(Iterable<String> ids) =>
+        ids.where((id) => listedAppIdSet.contains(id)).toList();
+
+    // Mass-obtain / bulk sheet: listed pending updates (not gated on a
+    // separate Updates group — default [groupUpdatesSeparately] is false).
+    var existingUpdateIdsAllOrSelected = filterListedMassObtainIds(
+      _existingUpdatesCache,
+    );
+    var newInstallIdsAllOrSelected = filterListedMassObtainIds(
+      _newInstallsCache,
+    );
+
+    final List<String> trackOnlyUpdateIdsAllOrSelected = [];
+    for (final String id in [
+      ...existingUpdateIdsAllOrSelected,
+      ...newInstallIdsAllOrSelected,
+    ]) {
+      if (appsProvider.apps[id]?.app.additionalSettings['trackOnly'] == true) {
+        trackOnlyUpdateIdsAllOrSelected.add(id);
+      }
+    }
+    existingUpdateIdsAllOrSelected = existingUpdateIdsAllOrSelected
+        .where((id) => !trackOnlyUpdateIdsAllOrSelected.contains(id))
+        .toList();
+    newInstallIdsAllOrSelected = newInstallIdsAllOrSelected
+        .where((id) => !trackOnlyUpdateIdsAllOrSelected.contains(id))
         .toList();
 
-    final trackOnlyUpdateIdsAllOrSelected = listedApps
-        .where(
-          (a) =>
-              !isInUpdatesGroup(a) &&
-              a.app.additionalSettings['trackOnly'] == true,
-        )
-        .map((a) => a.app.id)
-        .toList();
-
-    final newInstallIdsAllOrSelected = listedApps
-        .where(
-          (a) =>
-              !isInUpdatesGroup(a) &&
-              a.app.additionalSettings['trackOnly'] != true &&
-              a.app.installedVersion == null,
-        )
-        .map((a) => a.app.id)
-        .toList();
-
-    // FAB badge: updates section only (not new installs or track-only).
-    final Set<String> pageUpdateBadgeIds = existingUpdateIdsAllOrSelected.toSet();
+    // FAB badge: grouped Updates section only when that section exists.
+    final Set<String> pageUpdateBadgeIds = separateUpdates
+        ? {
+            for (final AppInMemory listed in listedApps)
+              if (isInUpdatesGroup(listed)) listed.app.id,
+          }
+        : existingUpdateIdsAllOrSelected.toSet();
     if (selectedAppIds.isEmpty) {
       pageUpdateCount = pageUpdateBadgeIds.length;
     } else {
@@ -4814,7 +4984,7 @@ class AppsPageState extends State<AppsPage> {
                                       selectedAppIds.add(appInMem.app.id);
                                     }
                                   });
-                                  widget.onStateChanged?.call();
+                                  _notifyHomeFabChromeIfChanged();
                                   setSheetState(() {});
                                 },
                           icon: const Icon(Icons.select_all_outlined, size: 18),
@@ -4826,7 +4996,7 @@ class AppsPageState extends State<AppsPage> {
                             setState(() {
                               selectedAppIds.clear();
                             });
-                            widget.onStateChanged?.call();
+                            _notifyHomeFabChromeIfChanged();
                             Navigator.of(sheetCtx).pop();
                           },
                           tooltip: tr('deselectAll'),
@@ -4973,16 +5143,7 @@ class AppsPageState extends State<AppsPage> {
     runMassObtainHandler = getMassObtainFunction();
     openSelectionActionsSheetHandler = showCombinedSelectionActionsSheet;
 
-    final int homeFabToken = Object.hash(
-      pageUpdateCount,
-      runMassObtainHandler != null,
-    );
-    if (homeFabToken != _lastNotifiedHomeFabToken) {
-      _lastNotifiedHomeFabToken = homeFabToken;
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (mounted) widget.onStateChanged?.call();
-      });
-    }
+    _notifyHomeFabChromeIfChanged();
 
     // ── Filter bottom sheet ──────────────────────────────────────────────────
     // Shows all filter/search options in a modal bottom sheet.
@@ -6000,119 +6161,28 @@ class AppsPageState extends State<AppsPage> {
                             SliverToBoxAdapter(
                               child: SizedBox(
                                 height: MediaQuery.paddingOf(context).bottom +
-                                    (isLargeScreen ? 0.0 : 80.0),
+                                    (!isLargeScreen
+                                        ? 80.0
+                                        : ((showSplitPaneListFabs ||
+                                              showFolderListFabs)
+                                          ? 52.0
+                                          : 0.0)),
                               ),
                             ),
                           ],
                     ),
               if (!isLargeScreen &&
                   (widget.folderId != null || widget.onDemandOnlyList))
-                Positioned(
-                  left: 16,
-                  right: 16,
-                  bottom: 12 + MediaQuery.paddingOf(context).bottom,
-                  child: AnimatedSlide(
-                    duration: const Duration(milliseconds: 250),
-                    curve: Curves.easeOutCubic,
-                    offset: MediaQuery.of(context).viewInsets.bottom > 0
-                        ? const Offset(0, 1.5)
-                        : Offset.zero,
-                    child: AnimatedOpacity(
-                      duration: const Duration(milliseconds: 200),
-                      opacity:
-                          MediaQuery.of(context).viewInsets.bottom > 0
-                          ? 0.0
-                          : 1.0,
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          if (hasMassObtainOperations)
-                            Stack(
-                              clipBehavior: Clip.none,
-                              children: [
-                                FloatingActionButton.small(
-                                  heroTag:
-                                      'folder_update_all_fab_${widget.folderId ?? "ondemand"}',
-                                  elevation: 6,
-                                  highlightElevation: 8,
-                                  backgroundColor: Theme.of(
-                                    context,
-                                  ).colorScheme.primaryContainer,
-                                  foregroundColor: Theme.of(
-                                    context,
-                                  ).colorScheme.onPrimaryContainer,
-                                  onPressed: () {
-                                    hapticSelection();
-                                    runMassObtain();
-                                  },
-                                  tooltip: tr('installUpdateApps'),
-                                  child: const Icon(
-                                    Icons.file_download_outlined,
-                                    size: 20,
-                                  ),
-                                ),
-                                if (pageUpdateCount > 0)
-                                  Positioned(
-                                    left: -4,
-                                    bottom: -4,
-                                    child: Badge(
-                                      label: Text(
-                                        pageUpdateCount.toString(),
-                                      ),
-                                      backgroundColor: Theme.of(
-                                        context,
-                                      ).colorScheme.error,
-                                      textColor: Theme.of(
-                                        context,
-                                      ).colorScheme.onError,
-                                    ),
-                                  ),
-                              ],
-                            )
-                          else
-                            const SizedBox.shrink(),
-                          if (isSelectionActive)
-                            FloatingActionButton.small(
-                              heroTag:
-                                  'folder_actions_fab_${widget.folderId ?? "ondemand"}',
-                              elevation: 6,
-                              highlightElevation: 8,
-                              backgroundColor: Theme.of(
-                                context,
-                              ).colorScheme.primary,
-                              foregroundColor: Theme.of(
-                                context,
-                              ).colorScheme.onPrimary,
-                              onPressed: () {
-                                hapticSelection();
-                                openSelectionActionsSheet();
-                              },
-                              tooltip: tr('actions'),
-                              child: const Icon(Icons.checklist, size: 20),
-                            )
-                          else
-                            FloatingActionButton.small(
-                              heroTag:
-                                  'folder_view_options_fab_${widget.folderId ?? "ondemand"}',
-                              elevation: 6,
-                              highlightElevation: 8,
-                              backgroundColor: Theme.of(
-                                context,
-                              ).colorScheme.surfaceContainerHighest,
-                              foregroundColor: Theme.of(
-                                context,
-                              ).colorScheme.onSurfaceVariant,
-                              onPressed: () {
-                                hapticSelection();
-                                openViewOptionsSheet();
-                              },
-                              tooltip: tr('appsViewOptions'),
-                              child: const Icon(Icons.tune, size: 20),
-                            ),
-                        ],
-                      ),
-                    ),
-                  ),
+                _buildAppsPageSideFabOverlay(
+                  context,
+                  heroScope: widget.folderId ?? 'ondemand',
+                ),
+              if (showSplitPaneListFabs)
+                _buildAppsPageSideFabOverlay(context, heroScope: 'main_split'),
+              if (showFolderListFabs)
+                _buildAppsPageSideFabOverlay(
+                  context,
+                  heroScope: widget.folderId ?? 'ondemand',
                 ),
             ],
           ),
