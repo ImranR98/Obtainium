@@ -116,6 +116,7 @@ class M3eCollapsibleGroupHeader extends StatelessWidget {
     super.key,
     required this.title,
     required this.count,
+    this.countText,
     required this.isExpanded,
     required this.onTap,
     required this.collapsedRadius,
@@ -125,6 +126,7 @@ class M3eCollapsibleGroupHeader extends StatelessWidget {
 
   final String title;
   final int count;
+  final String? countText;
   final bool isExpanded;
   final VoidCallback onTap;
   final double collapsedRadius;
@@ -149,7 +151,7 @@ class M3eCollapsibleGroupHeader extends StatelessWidget {
             side: m3ePureBlackOutlineSide(colorScheme, alpha: 0.22),
           );
     final Widget countLabel = Text(
-      count.toString(),
+      countText ?? count.toString(),
       style: theme.textTheme.bodyMedium?.copyWith(
         color: colorScheme.onSurfaceVariant,
       ),

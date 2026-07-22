@@ -12,6 +12,7 @@ Future<Set<String>?> showBulkUpdatePickerSheet({
   required List<String> existingUpdateIds,
   required List<String> newInstallIds,
   required List<String> trackOnlyUpdateIds,
+  Set<String>? initialSelectedIds,
 }) {
   final int totalApps =
       existingUpdateIds.length +
@@ -24,6 +25,7 @@ Future<Set<String>?> showBulkUpdatePickerSheet({
         existingUpdateIds: existingUpdateIds,
         newInstallIds: newInstallIds,
         trackOnlyUpdateIds: trackOnlyUpdateIds,
+        initialSelectedIds: initialSelectedIds,
         totalApps: totalApps,
         apps: apps,
       );
@@ -51,6 +53,7 @@ class BulkUpdateSheet extends StatefulWidget {
     required this.existingUpdateIds,
     required this.newInstallIds,
     required this.trackOnlyUpdateIds,
+    this.initialSelectedIds,
     required this.totalApps,
     required this.apps,
   });
@@ -58,6 +61,7 @@ class BulkUpdateSheet extends StatefulWidget {
   final List<String> existingUpdateIds;
   final List<String> newInstallIds;
   final List<String> trackOnlyUpdateIds;
+  final Set<String>? initialSelectedIds;
   final int totalApps;
   final Map<String, AppInMemory> apps;
 
@@ -74,9 +78,21 @@ class _BulkUpdateSheetState extends State<BulkUpdateSheet> {
   @override
   void initState() {
     super.initState();
-    selectedIds = {...widget.existingUpdateIds, ...widget.trackOnlyUpdateIds};
-    if (widget.existingUpdateIds.isEmpty) {
-      selectedIds.addAll(widget.newInstallIds);
+    final validSheetIds = {
+      ...widget.existingUpdateIds,
+      ...widget.newInstallIds,
+      ...widget.trackOnlyUpdateIds,
+    };
+    if (widget.initialSelectedIds != null &&
+        widget.initialSelectedIds!.isNotEmpty) {
+      selectedIds = widget.initialSelectedIds!
+          .where(validSheetIds.contains)
+          .toSet();
+    } else {
+      selectedIds = {
+        ...widget.existingUpdateIds,
+        ...widget.trackOnlyUpdateIds,
+      };
     }
     expandedSectionIds = {
       if (visibleAppCount(widget.existingUpdateIds) <= _expandedByDefaultLimit)
@@ -228,7 +244,7 @@ class _BulkUpdateSheetState extends State<BulkUpdateSheet> {
         selected: isSelected,
         tileColor: Colors.transparent,
         selectedTileColor: Colors.transparent,
-        contentPadding: const EdgeInsets.only(left: 12, right: 8),
+        contentPadding: const EdgeInsets.only(left: 12, right: 16),
         leading: buildAppIcon(appInMemory, isNewInstall),
         title: Text(
           appInMemory.name,
@@ -288,6 +304,7 @@ class _BulkUpdateSheetState extends State<BulkUpdateSheet> {
         M3eCollapsibleGroupHeader(
           title: section.label,
           count: visibleAppIds.length,
+          countText: '$selectedInGroup/${visibleAppIds.length}',
           isExpanded: isExpanded,
           onTap: () => toggleSectionExpanded(section.id),
           collapsedRadius: collapsedHeaderRadius,
@@ -411,10 +428,7 @@ class _BulkUpdateSheetState extends State<BulkUpdateSheet> {
           const SizedBox(width: 12),
           Expanded(
             child: Text(
-              tr(
-                'changeX',
-                args: [plural('apps', widget.totalApps).toLowerCase()],
-              ),
+              '${tr('changeX', args: [tr('appsString').toLowerCase()])} (${selectedIds.length}/${widget.totalApps})',
               style: theme.textTheme.headlineSmall?.copyWith(
                 fontWeight: FontWeight.w700,
               ),

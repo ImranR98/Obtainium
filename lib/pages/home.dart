@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:ui';
 
 import 'package:app_links/app_links.dart';
 import 'package:easy_localization/easy_localization.dart';
@@ -16,7 +17,6 @@ import 'package:obtainium/providers/settings_provider.dart';
 import 'package:obtainium/providers/source_provider.dart';
 import 'package:obtainium/services/shared_url_receiver.dart';
 import 'package:obtainium/theme/app_theme_accent.dart';
-import 'package:obtainium/widgets/progressive_top_edge_overlay.dart';
 import 'package:provider/provider.dart';
 
 class HomePage extends StatefulWidget {
@@ -156,11 +156,16 @@ class HomePageState extends State<HomePage> {
   final SharedUrlReceiver _sharedUrlReceiver = SharedUrlReceiver();
   bool isLinkActivity = false;
 
-  List<NavigationPageItem> pages = [
+  late final List<NavigationPageItem> pages = [
     NavigationPageItem(
       tr('appsString'),
       Icons.apps,
-      AppsPage(key: GlobalKey<AppsPageState>()),
+      AppsPage(
+        key: GlobalKey<AppsPageState>(),
+        onStateChanged: () {
+          if (mounted) setState(() {});
+        },
+      ),
     ),
     NavigationPageItem(
       tr('addApp'),
@@ -349,22 +354,232 @@ class HomePageState extends State<HomePage> {
     });
   }
 
-  NavigationBar _materialHomeNavigationBar({
-    required List<NavigationDestination> destinations,
+  Widget _floatingHomeNavigationBar({
+    required List<NavigationPageItem> pages,
     required int selectedIndex,
-    required bool transparent,
+    required int updateCount,
+    required bool blurBottomNav,
+    required ColorScheme scheme,
+    required BuildContext context,
   }) {
-    return NavigationBar(
-      backgroundColor: transparent ? Colors.transparent : null,
-      surfaceTintColor: transparent ? Colors.transparent : null,
-      elevation: transparent ? 0 : null,
-      shadowColor: transparent ? Colors.transparent : null,
-      destinations: destinations,
-      onDestinationSelected: (int index) async {
-        hapticSelection();
-        unawaited(switchToPage(index));
-      },
-      selectedIndex: selectedIndex,
+    final bool keyboardOpen = MediaQuery.of(context).viewInsets.bottom > 0;
+    final double bottomInset = MediaQuery.of(context).padding.bottom;
+
+    // Check AppsPageState for side FABs when on the Apps tab (selectedIndex == 0)
+    Widget? leadingFab;
+    Widget? trailingFab;
+
+    if (selectedIndex == 0) {
+      final key = pages[0].widget.key;
+      if (key is GlobalKey<AppsPageState>) {
+        if (key.currentState != null) {
+          final state = key.currentState!;
+
+          // 1. Left side FAB: Update-all FAB (when operations available) with bottom-left badge
+          if (state.hasMassObtainOperations) {
+            final Widget fabButton = FloatingActionButton.small(
+              heroTag: 'home_update_all_fab',
+              elevation: 6,
+              highlightElevation: 8,
+              backgroundColor: scheme.primaryContainer,
+              foregroundColor: scheme.onPrimaryContainer,
+              onPressed: () {
+                hapticSelection();
+                state.runMassObtain();
+              },
+              tooltip: tr('installUpdateApps'),
+              child: const Icon(Icons.file_download_outlined, size: 20),
+            );
+
+            leadingFab = Stack(
+              clipBehavior: Clip.none,
+              children: [
+                fabButton,
+                if (state.pageUpdateCount > 0)
+                  Positioned(
+                    left: -4,
+                    bottom: -4,
+                    child: Badge(
+                      label: Text(state.pageUpdateCount.toString()),
+                      backgroundColor: scheme.error,
+                      textColor: scheme.onError,
+                    ),
+                  ),
+              ],
+            );
+          }
+
+          // 2. Right side FAB: View Options FAB or Selection Actions FAB
+          if (state.isSelectionActive) {
+            trailingFab = FloatingActionButton.small(
+              heroTag: 'home_actions_fab',
+              elevation: 6,
+              highlightElevation: 8,
+              backgroundColor: scheme.primary,
+              foregroundColor: scheme.onPrimary,
+              onPressed: () {
+                hapticSelection();
+                state.openSelectionActionsSheet();
+              },
+              tooltip: tr('actions'),
+              child: const Icon(Icons.checklist, size: 20),
+            );
+          } else {
+            trailingFab = FloatingActionButton.small(
+              heroTag: 'home_view_options_fab',
+              elevation: 6,
+              highlightElevation: 8,
+              backgroundColor: scheme.surfaceContainerHighest,
+              foregroundColor: scheme.onSurfaceVariant,
+              onPressed: () {
+                hapticSelection();
+                state.openViewOptionsSheet();
+              },
+              tooltip: tr('appsViewOptions'),
+              child: const Icon(Icons.tune, size: 20),
+            );
+          }
+        } else {
+          // On cold start, AppsPageState mounts on frame 1.
+          // Trigger post-frame rebuild so FABs show up immediately on frame 2!
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (mounted) setState(() {});
+          });
+        }
+      }
+    }
+
+    final Widget pillRow = Row(
+      mainAxisSize: MainAxisSize.min,
+      children: List.generate(pages.length, (int index) {
+        final bool isSelected = selectedIndex == index;
+        final page = pages[index];
+
+        final Widget iconWidget = Icon(
+          page.icon,
+          size: 21,
+          color: isSelected
+              ? scheme.onPrimaryContainer
+              : scheme.onSurfaceVariant,
+        );
+
+        return GestureDetector(
+          behavior: HitTestBehavior.opaque,
+          onTap: () async {
+            hapticSelection();
+            unawaited(switchToPage(index));
+          },
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 250),
+            curve: Curves.easeOutCubic,
+            margin: const EdgeInsets.symmetric(horizontal: 2.0),
+            padding: EdgeInsets.symmetric(
+              horizontal: isSelected ? 15.0 : 11.0,
+              vertical: 10.0,
+            ),
+            decoration: BoxDecoration(
+              color: isSelected
+                  ? scheme.primaryContainer
+                  : Colors.transparent,
+              borderRadius: BorderRadius.circular(22),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                iconWidget,
+                ClipRect(
+                  child: AnimatedSize(
+                    duration: const Duration(milliseconds: 250),
+                    curve: Curves.easeOutCubic,
+                    child: isSelected
+                        ? Padding(
+                            padding: const EdgeInsets.only(left: 7.0),
+                            child: Text(
+                              page.title,
+                              maxLines: 1,
+                              overflow: TextOverflow.clip,
+                              style: TextStyle(
+                                fontSize: 13.5,
+                                fontWeight: FontWeight.w600,
+                                color: scheme.onPrimaryContainer,
+                              ),
+                            ),
+                          )
+                        : const SizedBox.shrink(),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      }),
+    );
+
+    final Widget pillContent = Padding(
+      padding: const EdgeInsets.all(5.0),
+      child: pillRow,
+    );
+
+    final Widget pillShape = Material(
+      elevation: 6,
+      shadowColor: Colors.black.withValues(alpha: 0.35),
+      borderRadius: BorderRadius.circular(30),
+      color: Colors.transparent,
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(30),
+        child: BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 16, sigmaY: 16),
+          child: Container(
+            decoration: BoxDecoration(
+              color: scheme.surfaceContainerHighest.withValues(alpha: 0.55),
+              borderRadius: BorderRadius.circular(30),
+            ),
+            child: pillContent,
+          ),
+        ),
+      ),
+    );
+
+    final Widget compositeRow = Row(
+      mainAxisSize: MainAxisSize.min,
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        SizedBox(
+          width: 48,
+          child: leadingFab != null
+              ? Align(alignment: Alignment.centerRight, child: leadingFab)
+              : const SizedBox.shrink(),
+        ),
+        const SizedBox(width: 8),
+        pillShape,
+        const SizedBox(width: 8),
+        SizedBox(
+          width: 48,
+          child: trailingFab != null
+              ? Align(alignment: Alignment.centerLeft, child: trailingFab)
+              : const SizedBox.shrink(),
+        ),
+      ],
+    );
+
+    return AnimatedSlide(
+      duration: const Duration(milliseconds: 250),
+      curve: Curves.easeOutCubic,
+      offset: keyboardOpen ? const Offset(0, 1.5) : Offset.zero,
+      child: Padding(
+        padding: EdgeInsets.only(
+          left: 12.0,
+          right: 12.0,
+          bottom: 10.0 + bottomInset,
+        ),
+        child: Align(
+          alignment: Alignment.bottomCenter,
+          child: FittedBox(
+            fit: BoxFit.scaleDown,
+            child: compositeRow,
+          ),
+        ),
+      ),
     );
   }
 
@@ -506,6 +721,9 @@ class HomePageState extends State<HomePage> {
       },
       child: Builder(
         builder: (BuildContext context) {
+          // Watch AppsProvider so HomePage rebuilds immediately on cold start
+          // as soon as apps finish loading from database.
+          context.watch<AppsProvider>();
           final ColorScheme scheme = Theme.of(context).colorScheme;
           final bool blurBottomNav = settingsProvider.progressiveBlurEnabled;
           final double screenWidth = MediaQuery.sizeOf(context).width;
@@ -527,19 +745,6 @@ class HomePageState extends State<HomePage> {
                   child: Icon(entry.value.icon),
                 )
               : Icon(entry.value.icon);
-
-          final List<NavigationDestination> homeNavDestinations = isLargeScreen
-              ? const <NavigationDestination>[]
-              : pages
-                    .asMap()
-                    .entries
-                    .map(
-                      (entry) => NavigationDestination(
-                        icon: navIcon(entry),
-                        label: entry.value.title,
-                      ),
-                    )
-                    .toList();
 
           // NavigationRailDestination.selectedIcon defaults to [icon] when
           // omitted, so the previous explicit duplicate isn't needed.
@@ -577,7 +782,7 @@ class HomePageState extends State<HomePage> {
             // (the search/URL fields are top-anchored, so they stay visible).
             resizeToAvoidBottomInset: false,
             backgroundColor: scheme.surface,
-            extendBody: blurBottomNav && !isLargeScreen,
+            extendBody: !isLargeScreen,
             body: isLargeScreen
                 ? Builder(
                     builder: (BuildContext context) {
@@ -636,35 +841,17 @@ class HomePageState extends State<HomePage> {
                         axis: pageTransitionAxis,
                         children: pages.map((p) => p.widget).toList(),
                       ),
+                      _floatingHomeNavigationBar(
+                        pages: pages,
+                        selectedIndex: homeNavSelectedIndex,
+                        updateCount: updateCount,
+                        blurBottomNav: blurBottomNav,
+                        scheme: scheme,
+                        context: context,
+                      ),
                     ],
                   ),
-            bottomNavigationBar: isLargeScreen
-                ? null
-                : blurBottomNav
-                ? ClipRect(
-                    child: Stack(
-                      alignment: Alignment.bottomCenter,
-                      fit: StackFit.loose,
-                      children: [
-                        Positioned.fill(
-                          child: ProgressiveBottomEdgeBlur(
-                            overlayColor:
-                                scheme.schemeProgressiveBlurOverlayTint,
-                          ),
-                        ),
-                        _materialHomeNavigationBar(
-                          destinations: homeNavDestinations,
-                          selectedIndex: homeNavSelectedIndex,
-                          transparent: true,
-                        ),
-                      ],
-                    ),
-                  )
-                : _materialHomeNavigationBar(
-                    destinations: homeNavDestinations,
-                    selectedIndex: homeNavSelectedIndex,
-                    transparent: false,
-                  ),
+            bottomNavigationBar: null,
           );
         },
       ),

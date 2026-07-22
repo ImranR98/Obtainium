@@ -256,6 +256,8 @@ class ActionListTile extends StatelessWidget {
   final VoidCallback? onTap;
   final bool autoPop;
   final BorderRadius? borderRadius;
+  final Color? iconColor;
+  final Color? textColor;
 
   const ActionListTile({
     super.key,
@@ -265,13 +267,18 @@ class ActionListTile extends StatelessWidget {
     this.onTap,
     this.autoPop = false,
     this.borderRadius,
+    this.iconColor,
+    this.textColor,
   });
 
   @override
   Widget build(BuildContext context) {
     return ListTile(
-      leading: Icon(icon),
-      title: Text(label),
+      leading: Icon(icon, color: iconColor),
+      title: Text(
+        label,
+        style: textColor != null ? TextStyle(color: textColor) : null,
+      ),
       trailing: trailing,
       enabled: onTap != null,
       shape: borderRadius != null
