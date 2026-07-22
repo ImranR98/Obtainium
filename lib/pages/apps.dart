@@ -1171,9 +1171,7 @@ class _AppListItem extends StatelessWidget {
                 child: ListTile(
                   shape: itemBorderRadius == null
                       ? null
-                      : RoundedRectangleBorder(
-                          borderRadius: itemBorderRadius!,
-                        ),
+                      : RoundedRectangleBorder(borderRadius: itemBorderRadius!),
                   tileColor: Colors.transparent,
                   // Selection no longer uses [selectedTileColor]; the visual
                   // treatment lives in the parent [Container] (outline + 1dp

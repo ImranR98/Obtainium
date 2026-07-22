@@ -494,7 +494,7 @@ class App {
       name: name ?? this.name,
       installedVersion: installedVersion == _sentinel
           ? this.installedVersion
-          : installedVersion as String?,
+          : installedVersion?.toString(),
       latestVersion: latestVersion ?? this.latestVersion,
       apkUrls: apkUrls ?? List<MapEntry<String, String>>.from(this.apkUrls),
       otherAssetUrls:
@@ -512,48 +512,50 @@ class App {
       releaseDate: releaseDate == _sentinel
           ? this.releaseDate
           : releaseDate as DateTime?,
-      changeLog: changeLog == _sentinel ? this.changeLog : changeLog as String?,
+      changeLog: changeLog == _sentinel
+          ? this.changeLog
+          : changeLog?.toString(),
       overrideSource: overrideSource == _sentinel
           ? this.overrideSource
-          : overrideSource as String?,
+          : overrideSource?.toString(),
       allowIdChange: allowIdChange ?? this.allowIdChange,
       pendingRepoRenameUrl: pendingRepoRenameUrl == _sentinel
           ? this.pendingRepoRenameUrl
-          : pendingRepoRenameUrl as String?,
-      iconUrl: iconUrl == _sentinel ? this.iconUrl : iconUrl as String?,
+          : pendingRepoRenameUrl?.toString(),
+      iconUrl: iconUrl == _sentinel ? this.iconUrl : iconUrl?.toString(),
       apkSizeBytes: apkSizeBytes == _sentinel
           ? this.apkSizeBytes
           : apkSizeBytes as int?,
       rawLatestVersionFromSource: rawLatestVersionFromSource == _sentinel
           ? this.rawLatestVersionFromSource
-          : rawLatestVersionFromSource as String?,
+          : rawLatestVersionFromSource?.toString(),
       rawApkNamesFromSource: rawApkNamesFromSource == _sentinel
           ? this.rawApkNamesFromSource
-          : rawApkNamesFromSource as String?,
+          : rawApkNamesFromSource?.toString(),
       rawReleaseTitlesFromSource: rawReleaseTitlesFromSource == _sentinel
           ? this.rawReleaseTitlesFromSource
-          : rawReleaseTitlesFromSource as String?,
+          : rawReleaseTitlesFromSource?.toString(),
       latestIsReproducible: latestIsReproducible == _sentinel
           ? this.latestIsReproducible
           : latestIsReproducible as bool?,
       latestReproducibleStatus: latestReproducibleStatus == _sentinel
           ? this.latestReproducibleStatus
-          : latestReproducibleStatus as String?,
+          : latestReproducibleStatus?.toString(),
       latestReproducibleVersionCode: latestReproducibleVersionCode == _sentinel
           ? this.latestReproducibleVersionCode
           : latestReproducibleVersionCode as int?,
       latestAttestationStatus: latestAttestationStatus == _sentinel
           ? this.latestAttestationStatus
-          : latestAttestationStatus as String?,
+          : latestAttestationStatus?.toString(),
       latestMalwareScanStatus: latestMalwareScanStatus == _sentinel
           ? this.latestMalwareScanStatus
-          : latestMalwareScanStatus as String?,
+          : latestMalwareScanStatus?.toString(),
       latestMalwareScanDetail: latestMalwareScanDetail == _sentinel
           ? this.latestMalwareScanDetail
-          : latestMalwareScanDetail as String?,
+          : latestMalwareScanDetail?.toString(),
       latestMalwareScanReportUrl: latestMalwareScanReportUrl == _sentinel
           ? this.latestMalwareScanReportUrl
-          : latestMalwareScanReportUrl as String?,
+          : latestMalwareScanReportUrl?.toString(),
     );
   }
 
@@ -579,14 +581,12 @@ class App {
     }
     try {
       return App(
-        id: json['id'] as String,
-        url: json['url'] as String,
-        author: json['author'] as String,
-        name: json['name'] as String,
-        installedVersion: json['installedVersion'] == null
-            ? null
-            : json['installedVersion'] as String,
-        latestVersion: (json['latestVersion'] ?? tr('unknown')) as String,
+        id: json['id']?.toString() ?? '',
+        url: json['url']?.toString() ?? '',
+        author: json['author']?.toString() ?? '',
+        name: json['name']?.toString() ?? '',
+        installedVersion: json['installedVersion']?.toString(),
+        latestVersion: json['latestVersion']?.toString() ?? tr('unknown'),
         apkUrls: assumed2DlistToStringMapList(
           jsonDecode((json['apkUrls'] ?? '[["placeholder", "placeholder"]]')),
         ),
@@ -600,25 +600,23 @@ class App {
                   .map((e) => e.toString())
                   .toList()
             : json['category'] != null
-            ? [json['category'] as String]
+            ? [json['category'].toString()]
             : [],
         releaseDate: dateTimeFromJsonValue(json['releaseDate']),
-        changeLog: json['changeLog'] == null
-            ? null
-            : json['changeLog'] as String,
-        overrideSource: json['overrideSource'],
+        changeLog: json['changeLog']?.toString(),
+        overrideSource: json['overrideSource']?.toString(),
         allowIdChange: json['allowIdChange'] ?? false,
         otherAssetUrls: assumed2DlistToStringMapList(
           jsonDecode((json['otherAssetUrls'] ?? '[]')),
         ),
-        pendingRepoRenameUrl: json['pendingRepoRenameUrl'] as String?,
-        iconUrl: json['iconUrl'] as String?,
+        pendingRepoRenameUrl: json['pendingRepoRenameUrl']?.toString(),
+        iconUrl: json['iconUrl']?.toString(),
         apkSizeBytes: json['apkSizeBytes'] as int?,
-        rawLatestVersionFromSource:
-            json['rawLatestVersionFromSource'] as String?,
-        rawApkNamesFromSource: json['rawApkNamesFromSource'] as String?,
-        rawReleaseTitlesFromSource:
-            json['rawReleaseTitlesFromSource'] as String?,
+        rawLatestVersionFromSource: json['rawLatestVersionFromSource']
+            ?.toString(),
+        rawApkNamesFromSource: json['rawApkNamesFromSource']?.toString(),
+        rawReleaseTitlesFromSource: json['rawReleaseTitlesFromSource']
+            ?.toString(),
         latestIsReproducible: json['latestIsReproducible'] as bool?,
         latestReproducibleStatus: reproducibleBuildStatusFromJsonValue(
           json['latestReproducibleStatus'] ?? json['latestIsReproducible'],
@@ -635,9 +633,9 @@ class App {
         latestMalwareScanStatus: malwareScanStatusFromJsonValue(
           json['latestMalwareScanStatus'],
         ),
-        latestMalwareScanDetail: json['latestMalwareScanDetail'] as String?,
-        latestMalwareScanReportUrl:
-            json['latestMalwareScanReportUrl'] as String?,
+        latestMalwareScanDetail: json['latestMalwareScanDetail']?.toString(),
+        latestMalwareScanReportUrl: json['latestMalwareScanReportUrl']
+            ?.toString(),
       );
     } on TypeError catch (e) {
       unawaited(

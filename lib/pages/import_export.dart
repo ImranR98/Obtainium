@@ -1243,9 +1243,9 @@ class _SelectionModalState extends State<SelectionModal> {
           children: [
             Text(
               widget.title ?? tr('pick'),
-              style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                fontWeight: FontWeight.w700,
-              ),
+              style: Theme.of(
+                context,
+              ).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w700),
             ),
             if (filterFormWidget != null) ...[
               const SizedBox(height: 12),

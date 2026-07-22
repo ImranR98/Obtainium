@@ -14,9 +14,7 @@ const double kM3eGroupCardRadius = 20.0;
 /// Gap between expansion group header and first row in apps list body.
 const double kM3eHeaderToFirstCardGap = 3.0;
 
-const Duration kM3eGroupHeaderTransitionDuration = Duration(
-  milliseconds: 300,
-);
+const Duration kM3eGroupHeaderTransitionDuration = Duration(milliseconds: 300);
 const Curve kM3eGroupTransitionCurve = Curves.easeInOutCubicEmphasized;
 const Duration kM3eGroupExpandDuration = Duration(milliseconds: 360);
 const Duration kM3eGroupCollapseDuration = Duration(milliseconds: 250);

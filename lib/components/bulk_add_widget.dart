@@ -2813,10 +2813,7 @@ class _GithubPatSheetState extends State<_GithubPatSheet> {
           Center(
             child: ExpressiveLoadingIndicator(
               color: Theme.of(context).colorScheme.primary,
-              constraints: const BoxConstraints.tightFor(
-                width: 32,
-                height: 32,
-              ),
+              constraints: const BoxConstraints.tightFor(width: 32, height: 32),
             ),
           ),
         ],
@@ -2832,9 +2829,7 @@ class _GithubPatSheetState extends State<_GithubPatSheet> {
             ),
             TextButton(
               onPressed:
-                  (_isValidating ||
-                      _controller.text.trim().isEmpty ||
-                      _isSaved)
+                  (_isValidating || _controller.text.trim().isEmpty || _isSaved)
                   ? null
                   : () async {
                       setState(() {
@@ -2858,9 +2853,7 @@ class _GithubPatSheetState extends State<_GithubPatSheet> {
                         );
                         if (context.mounted) {
                           ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: Text(tr('githubPATValidated')),
-                            ),
+                            SnackBar(content: Text(tr('githubPATValidated'))),
                           );
                         }
                         setState(() {

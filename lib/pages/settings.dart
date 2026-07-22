@@ -384,7 +384,9 @@ class SettingsPageState extends State<SettingsPage> {
                                   duration: headerTransitionDuration,
                                   curve: headerTransitionCurve,
                                   style: TextStyle(
-                                    fontFamily: Theme.of(context).textTheme.bodyLarge?.fontFamily,
+                                    fontFamily: Theme.of(
+                                      context,
+                                    ).textTheme.bodyLarge?.fontFamily,
                                     fontWeight: expanded
                                         ? FontWeight.w600
                                         : FontWeight.w700,
@@ -454,7 +456,9 @@ class SettingsPageState extends State<SettingsPage> {
                   child: Text(
                     tr('about'),
                     style: TextStyle(
-                      fontFamily: Theme.of(context).textTheme.bodyLarge?.fontFamily,
+                      fontFamily: Theme.of(
+                        context,
+                      ).textTheme.bodyLarge?.fontFamily,
                       fontWeight: FontWeight.w600,
                       color: cs.primary,
                       fontSize: 13,
@@ -608,7 +612,9 @@ class SettingsPageState extends State<SettingsPage> {
                         child: Text(
                           title,
                           style: TextStyle(
-                            fontFamily: Theme.of(context).textTheme.bodyLarge?.fontFamily,
+                            fontFamily: Theme.of(
+                              context,
+                            ).textTheme.bodyLarge?.fontFamily,
                             fontWeight: selected
                                 ? FontWeight.w600
                                 : FontWeight.w500,
@@ -1932,13 +1938,16 @@ class _CustomFontTile extends StatelessWidget {
         final int tag2 = data.getUint8(recordOffset + 1);
         final int tag3 = data.getUint8(recordOffset + 2);
         final int tag4 = data.getUint8(recordOffset + 3);
-        if (tag1 == 110 && tag2 == 97 && tag3 == 109 && tag4 == 101) { // "name"
+        if (tag1 == 110 && tag2 == 97 && tag3 == 109 && tag4 == 101) {
+          // "name"
           nameTableOffset = data.getUint32(recordOffset + 8, Endian.big);
           break;
         }
       }
 
-      if (nameTableOffset == null || nameTableOffset >= data.lengthInBytes) return null;
+      if (nameTableOffset == null || nameTableOffset >= data.lengthInBytes) {
+        return null;
+      }
 
       final int count = data.getUint16(nameTableOffset + 2, Endian.big);
       final int stringOffset = data.getUint16(nameTableOffset + 4, Endian.big);
@@ -2037,7 +2046,8 @@ class _CustomFontTile extends StatelessWidget {
 
       // Read font name from metadata
       final String? parsedName = _readFontName(bytes);
-      final String displayName = parsedName ?? pickedPath.split(Platform.pathSeparator).last;
+      final String displayName =
+          parsedName ?? pickedPath.split(Platform.pathSeparator).last;
 
       // Verify the font by temporarily loading it
       final FontLoader fontLoader = FontLoader('TempCustomFontTest');

@@ -383,6 +383,13 @@ bool versionOrderUncertainUpdate(App app) {
   if (installed == latest) return false;
   if (versionsEffectivelyEqual(installed, latest)) return false;
 
+  // Pseudo-mode apps cannot reliably order version strings; any version difference
+  // is an update rather than "version order unclear" (parity with appHasActionableUpdate).
+  if (app.additionalSettings['versionDetection'] == 'pseudo' ||
+      app.additionalSettings['versionDetection'] == false) {
+    return false;
+  }
+
   if (versionOrderIsUnclear(installed, latest)) {
     final dynamic lastInstalledTimeRaw =
         app.additionalSettings['lastInstalledTime'];

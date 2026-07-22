@@ -79,13 +79,11 @@ class _BulkUpdateSheetState extends State<BulkUpdateSheet> {
       selectedIds.addAll(widget.newInstallIds);
     }
     expandedSectionIds = {
-      if (visibleAppCount(widget.existingUpdateIds) <=
-          _expandedByDefaultLimit)
+      if (visibleAppCount(widget.existingUpdateIds) <= _expandedByDefaultLimit)
         _BulkUpdateSectionId.updates,
       if (visibleAppCount(widget.newInstallIds) <= _expandedByDefaultLimit)
         _BulkUpdateSectionId.installs,
-      if (visibleAppCount(widget.trackOnlyUpdateIds) <=
-          _expandedByDefaultLimit)
+      if (visibleAppCount(widget.trackOnlyUpdateIds) <= _expandedByDefaultLimit)
         _BulkUpdateSectionId.trackOnly,
     };
   }
@@ -249,11 +247,7 @@ class _BulkUpdateSheetState extends State<BulkUpdateSheet> {
                 overflow: TextOverflow.ellipsis,
               ),
             if (versionLabel.isNotEmpty)
-              Text(
-                versionLabel,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-              ),
+              Text(versionLabel, maxLines: 1, overflow: TextOverflow.ellipsis),
           ],
         ),
         trailing: Checkbox(
@@ -287,8 +281,7 @@ class _BulkUpdateSheetState extends State<BulkUpdateSheet> {
         .where(selectedIds.contains)
         .length;
     final bool allInGroupSelected = visibleAppIds.every(selectedIds.contains);
-    final bool someInGroupSelected =
-        selectedInGroup > 0 && !allInGroupSelected;
+    final bool someInGroupSelected = selectedInGroup > 0 && !allInGroupSelected;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -301,10 +294,7 @@ class _BulkUpdateSheetState extends State<BulkUpdateSheet> {
           colorScheme: colorScheme,
           trailingAction: Tooltip(
             message: allInGroupSelected
-                ? tr(
-                    'deselectX',
-                    args: [visibleAppIds.length.toString()],
-                  )
+                ? tr('deselectX', args: [visibleAppIds.length.toString()])
                 : tr('selectAll'),
             child: Checkbox(
               value: allInGroupSelected

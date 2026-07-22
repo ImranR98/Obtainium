@@ -1,6 +1,5 @@
 import 'dart:async' show unawaited;
 import 'dart:io' show File;
-import 'dart:typed_data' show ByteData, Uint8List;
 import 'dart:ui' show PlatformDispatcher, PointerDeviceKind;
 
 import 'package:flutter/material.dart';
@@ -769,7 +768,9 @@ class _ObtainiumState extends State<Obtainium> with WidgetsBindingObserver {
           // platform font with real weights). Once an explicit multi-weight
           // device family is loaded, switch to it so a user-picked OEM font is
           // honoured. Montserrat is no longer bundled.
-          final String? appFontFamily = (settingsProvider.customFontPath != null && !_customFontLoadFailed)
+          final String? appFontFamily =
+              (settingsProvider.customFontPath != null &&
+                  !_customFontLoadFailed)
               ? 'CustomFont'
               : (NativeFeatures.systemFontApplied ? 'SystemFont' : null);
           final ThemeData lightBaseTheme = buildObtainiumTheme(

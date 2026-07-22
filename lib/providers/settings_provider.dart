@@ -327,7 +327,8 @@ class SettingsProvider with ChangeNotifier {
     if (prefs == null) return;
     final Object? existing = prefs!.get('installMethod');
     if (existing is int) {
-      final String converged = (existing >= 0 && existing < InstallerMode.values.length)
+      final String converged =
+          (existing >= 0 && existing < InstallerMode.values.length)
           ? InstallerMode.values[existing].name
           : InstallerMode.system.name;
       prefs!.setString('installMethod', converged);
@@ -340,11 +341,13 @@ class SettingsProvider with ChangeNotifier {
         'shizuku' || '1' => InstallerMode.shizuku.name,
         'legacy' || '2' => InstallerMode.external.name,
         'stock' || '0' => InstallerMode.system.name,
-        _ => int.tryParse(legacyStr) != null
-            ? (int.parse(legacyStr) >= 0 && int.parse(legacyStr) < InstallerMode.values.length
-                ? InstallerMode.values[int.parse(legacyStr)].name
-                : InstallerMode.system.name)
-            : InstallerMode.system.name,
+        _ =>
+          int.tryParse(legacyStr) != null
+              ? (int.parse(legacyStr) >= 0 &&
+                        int.parse(legacyStr) < InstallerMode.values.length
+                    ? InstallerMode.values[int.parse(legacyStr)].name
+                    : InstallerMode.system.name)
+              : InstallerMode.system.name,
       };
       prefs!.setString('installMethod', converged);
       prefs!.remove('installerMode');
@@ -439,7 +442,9 @@ class SettingsProvider with ChangeNotifier {
   String get installerMode {
     final Object? stored = prefs?.get('installMethod');
     if (stored is String) {
-      if (InstallerMode.values.any((InstallerMode modeOption) => modeOption.name == stored)) {
+      if (InstallerMode.values.any(
+        (InstallerMode modeOption) => modeOption.name == stored,
+      )) {
         return stored;
       }
     } else if (stored is int) {
@@ -452,7 +457,9 @@ class SettingsProvider with ChangeNotifier {
 
   set installerMode(String mode) {
     final String resolved =
-        InstallerMode.values.any((InstallerMode modeOption) => modeOption.name == mode)
+        InstallerMode.values.any(
+          (InstallerMode modeOption) => modeOption.name == mode,
+        )
         ? mode
         : InstallerMode.system.name;
     prefs?.setString('installMethod', resolved);
