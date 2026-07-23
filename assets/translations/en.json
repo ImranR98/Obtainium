@@ -151,6 +151,7 @@
   "dropdownNoOptsError": "ERROR: DROPDOWN MUST HAVE AT LEAST ONE OPT",
   "editCategory": "Edit category",
   "enableBackgroundUpdates": "Enable background updates",
+  "enableCertificatePinning": "Enable certificate pinning",
   "error": "Error",
   "errorCheckingUpdates": "Error checking for updates",
   "errorCheckingUpdatesNotifChannel": "Error checking for updates",

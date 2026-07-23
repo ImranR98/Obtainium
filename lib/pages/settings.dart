@@ -602,6 +602,11 @@ class _SettingsPageState extends State<SettingsPage> {
             ),
         ],
         ToggleTile(
+            label: tr('enableCertificatePinning'),
+            value: settingsProvider.enableCertificatePinning,
+            onChanged: (value) => settingsProvider.enableCertificatePinning = value,
+        ),
+        ToggleTile(
           label: tr('checkOnStart'),
           value: settingsProvider.checkOnStart,
           onChanged: (value) => settingsProvider.checkOnStart = value,
