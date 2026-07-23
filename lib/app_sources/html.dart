@@ -463,6 +463,7 @@ class HTML extends AppSource {
             ? versionExtractionWholePageString
             : relDecoded,
       );
+      additionalSettings['url'] = rel;
       final apkReqHeaders = await getRequestHeaders(
         additionalSettings,
         rel,
@@ -471,9 +472,8 @@ class HTML extends AppSource {
       if (version == null &&
           additionalSettings['defaultPseudoVersioningMethod'] == 'ETag') {
         version = await checkETagHeader(
-          rel,
+          additionalSettings,
           headers: apkReqHeaders,
-          allowInsecure: additionalSettings['allowInsecure'] == true,
         );
         if (version == null || version.isEmpty) {
           throw NoVersionError();
@@ -483,9 +483,8 @@ class HTML extends AppSource {
           additionalSettings['defaultPseudoVersioningMethod'] == 'APKLinkHash'
           ? rel.hashCode.toString()
           : (await checkPartialDownloadHashDynamic(
-              rel,
+              additionalSettings,
               headers: apkReqHeaders,
-              allowInsecure: additionalSettings['allowInsecure'] == true,
             )).toString();
       return APKDetails(
         version,
