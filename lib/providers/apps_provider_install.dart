@@ -187,8 +187,10 @@ extension AppsProviderInstall on AppsProvider {
         downloadUrl,
         forAPKDownload: true,
       );
+      additionalSettingsPlusSourceConfig['url'] = downloadUrl;
+      additionalSettingsPlusSourceConfig['allowInsecure'] = app.settings.getBool('allowInsecure');
+      additionalSettingsPlusSourceConfig['enableCertificatePinning'] = app.settings.getBool('enableCertificatePinning');
       var downloadedFile = await downloadFileWithRetry(
-        downloadUrl,
         fileNameNoExt,
         source.urlsAlwaysHaveExtension,
         headers: headers,
@@ -221,8 +223,8 @@ extension AppsProviderInstall on AppsProvider {
           prevProg = prog;
         },
         this.apkDir.path,
+        additionalSettingsPlusSourceConfig,
         useExisting: useExisting,
-        allowInsecure: app.settings.getBool('allowInsecure'),
         logs: logs,
         cancellationToken: cancellationToken,
       );
@@ -983,7 +985,8 @@ extension AppsProviderInstall on AppsProvider {
 
   Future<List<String>> downloadAppAssets(
     List<String> appIds,
-    BuildContext context, {
+    BuildContext context,
+    bool enableCertificatePinning, {
     bool forceParallelDownloads = false,
   }) async {
     final NotificationsProvider notificationsProvider = context
@@ -1047,6 +1050,7 @@ extension AppsProviderInstall on AppsProvider {
           errors,
           downloadedIds,
           notificationsProvider,
+          settingsProvider.enableCertificatePinning
         );
       }
     } else {
@@ -1058,6 +1062,7 @@ extension AppsProviderInstall on AppsProvider {
             errors,
             downloadedIds,
             notificationsProvider,
+            settingsProvider.enableCertificatePinning
           ),
         ),
       );
@@ -1304,11 +1309,13 @@ extension AppsProviderInstall on AppsProvider {
     MultiAppMultiError errors,
     List<String> downloadedIds,
     NotificationsProvider notificationsProvider,
+    bool enableCertificatePinning,
   ) async {
+    app.additionalSettings['url'] = fileUrl.value;
+    app.additionalSettings['enableCertificatePinning'] = enableCertificatePinning;
     try {
       final String downloadPath = '${await getStorageRootPath()}/Download';
       await downloadFile(
-        fileUrl.value,
         fileUrl.key,
         true,
         (double? progress, [int? received, int? total]) {
@@ -1324,6 +1331,7 @@ extension AppsProviderInstall on AppsProvider {
           );
         },
         downloadPath,
+        app.additionalSettings,
         headers: await SourceProvider()
             .getSource(app.url, overrideSource: app.overrideSource)
             .getRequestHeaders(
@@ -1332,7 +1340,6 @@ extension AppsProviderInstall on AppsProvider {
               forAPKDownload: AppSource.isApkOrContainerFile(fileUrl.key),
             ),
         useExisting: false,
-        allowInsecure: app.settings.getBool('allowInsecure'),
         logs: logs,
       );
       unawaited(

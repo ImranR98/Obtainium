@@ -1070,7 +1070,7 @@ class _AppPageState extends State<AppPage> {
                         try {
                           await appsProvider.downloadAppAssets([
                             app!.app.id,
-                          ], context);
+                          ], context, settingsProvider.enableCertificatePinning);
                         } catch (e) {
                           if (mounted) {
                             showError(e, context);

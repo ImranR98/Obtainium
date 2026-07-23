@@ -407,7 +407,8 @@ class ItchIO extends AppSource {
     if (directUrl == null) return null;
 
     final String baseUrl = standardUrl.replaceAll(RegExp(r'/$'), '');
-    final streamRes = await sourceRequestStreamResponse('GET', directUrl, {
+    additionalSettings['url'] = directUrl;
+    final streamRes = await sourceRequestStreamResponse('GET', {
       'Referer': '$baseUrl?download',
     }, additionalSettings);
 

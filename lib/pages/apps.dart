@@ -578,6 +578,7 @@ class AppsPageState extends State<AppsPage> {
                         .downloadAppAssets(
                           selectedApps.map((e) => e.id).toList(),
                           context,
+                          settingsProvider.enableCertificatePinning
                         )
                         .catchError((e) {
                           if (context.mounted) showError(e, context);
