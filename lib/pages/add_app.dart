@@ -1295,7 +1295,7 @@ class AddAppPageState extends State<AddAppPage> {
                 ).pop(_PackageIdDetectionChoice.trackOnly),
                 child: Text(tr('trackOnly')),
               ),
-              TextButton(
+              FilledButton(
                 onPressed: () => Navigator.of(
                   dialogContext,
                 ).pop(_PackageIdDetectionChoice.download),
@@ -1332,7 +1332,10 @@ class AddAppPageState extends State<AddAppPage> {
                     },
                     child: Text(tr('cancel')),
                   ),
-                  TextButton(
+                  // Tonal (medium emphasis), not a full FilledButton: this
+                  // proceeds over an insecure http:// connection, so it gets a
+                  // clear hierarchy without strongly pushing the risky action.
+                  FilledButton.tonal(
                     onPressed: () {
                       proceed = true;
                       Navigator.of(dialogContext).pop();
@@ -2356,7 +2359,7 @@ class AddAppPageState extends State<AddAppPage> {
                           },
                         ),
                       )
-                    : const Icon(Icons.arrow_forward_ios_rounded, size: 16),
+                    : const Icon(Icons.chevron_right_rounded, size: 20),
                 onTap: () {
                   if (widget._searchAddsMultipleApps) {
                     updateResultSelection(!selected);

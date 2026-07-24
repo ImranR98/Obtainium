@@ -2493,7 +2493,7 @@ class _ScrollLinkedAppFooterState extends State<_ScrollLinkedAppFooter> {
   Widget build(BuildContext context) {
     return AnimatedSize(
       duration: const Duration(milliseconds: 240),
-      curve: Curves.fastOutSlowIn,
+      curve: Curves.easeInOutCubicEmphasized,
       alignment: Alignment.topCenter,
       clipBehavior: Clip.hardEdge,
       child: _footerExpanded || widget.selectionActive
@@ -2573,7 +2573,7 @@ class AppsPageState extends State<AppsPage> {
       bottom: MediaQuery.paddingOf(context).bottom,
       child: AnimatedSlide(
         duration: const Duration(milliseconds: 250),
-        curve: Curves.easeOutCubic,
+        curve: Curves.easeInOutCubicEmphasized,
         offset: MediaQuery.of(context).viewInsets.bottom > 0
             ? const Offset(0, 1.5)
             : Offset.zero,
@@ -3768,9 +3768,6 @@ class AppsPageState extends State<AppsPage> {
         (widget.folderId != null || widget.onDemandOnlyList) &&
         selectedAppIds.isEmpty;
 
-    final existingUpdates = _existingUpdatesCache;
-    final newInstalls = _newInstallsCache;
-
     // On-demand and per-folder app/update counts. Recomputed only when app
     // state ([appsToken]) or the folder set changes — not on every rebuild.
     // A single pass over the apps fills all three maps (previously this was
@@ -4875,75 +4872,6 @@ class AppsPageState extends State<AppsPage> {
       );
     }
 
-    Future<void> showMoreOptionsBottomSheet() {
-      final bool selectedAppsArePinned = selectedApps.any(
-        (selectedApp) => selectedApp.pinned,
-      );
-      return showAppModalSheet<void>(
-        context: context,
-        builder: (BuildContext sheetContext) {
-          return AppSheetContent(
-            padding: const EdgeInsets.fromLTRB(8, 0, 8, 8),
-            children: [
-              ActionListTile(
-                icon: selectedAppsArePinned
-                    ? Icons.push_pin
-                    : Icons.push_pin_outlined,
-                label: selectedAppsArePinned
-                    ? tr('unpinFromTop')
-                    : tr('pinToTop'),
-                onTap: pinSelectedApps,
-                autoPop: true,
-              ),
-              ActionListTile(
-                icon: Icons.folder_copy_outlined,
-                label: tr('addToFolder'),
-                onTap: () => _showFolderAssignDialog(context, selectedApps),
-                autoPop: true,
-              ),
-              ActionListTile(
-                icon: Icons.share_outlined,
-                label: tr('shareSelectedAppURLs'),
-                onTap: shareSelectedAppUrls,
-                autoPop: true,
-              ),
-              ActionListTile(
-                icon: Icons.link_outlined,
-                label: tr('shareAppConfigLinks'),
-                onTap: selectedAppIds.isEmpty
-                    ? null
-                    : shareSelectedAppConfigLinks,
-                autoPop: true,
-              ),
-              ActionListTile(
-                icon: Icons.file_download_outlined,
-                label: '${tr('share')} - ${tr('obtainiumExport')}',
-                onTap: selectedAppIds.isEmpty ? null : exportSelectedApps,
-                autoPop: true,
-              ),
-              ActionListTile(
-                icon: Icons.download_outlined,
-                label: tr(
-                  'downloadX',
-                  args: [lowerCaseIfEnglish(tr('releaseAsset'))],
-                ),
-                onTap: downloadSelectedAppAssets,
-                autoPop: true,
-              ),
-              ActionListTile(
-                icon: Icons.done_all,
-                label: tr('markSelectedAppsUpdated'),
-                onTap: appsProvider.areDownloadsRunning()
-                    ? null
-                    : showMassMarkDialog,
-                autoPop: true,
-              ),
-            ],
-          );
-        },
-      );
-    }
-
     void showCombinedSelectionActionsSheet() {
       final ColorScheme scheme = Theme.of(context).colorScheme;
       final bool selectedAppsArePinned = selectedApps.any(
@@ -5402,216 +5330,6 @@ class AppsPageState extends State<AppsPage> {
             },
           );
         },
-      );
-    }
-
-    Row getFilterButtonsRow() {
-      final colorScheme = Theme.of(context).colorScheme;
-      final selectAllFooterStyle = TextButton.styleFrom(
-        foregroundColor: colorScheme.primary,
-        visualDensity: VisualDensity.compact,
-        iconSize: 24,
-        minimumSize: const Size(48, 48),
-        padding: const EdgeInsets.symmetric(horizontal: 4),
-        textStyle: Theme.of(context).textTheme.labelLarge?.copyWith(
-          color: colorScheme.primary,
-          fontWeight: FontWeight.w600,
-        ),
-      );
-      if (selectedAppIds.isNotEmpty) {
-        return Row(
-          children: [
-            Expanded(
-              child: Center(
-                child: Tooltip(
-                  message: tr('selectAll'),
-                  child: TextButton.icon(
-                    style: selectAllFooterStyle,
-                    onPressed: listedApps.isEmpty
-                        ? null
-                        : () {
-                            setState(() {
-                              for (final appInMem in listedApps) {
-                                selectedAppIds.add(appInMem.app.id);
-                              }
-                            });
-                          },
-                    icon: const Icon(Icons.select_all_outlined, size: 24),
-                    label: FittedBox(
-                      fit: BoxFit.scaleDown,
-                      child: Text(
-                        selectedAppIds.length.toString(),
-                        maxLines: 1,
-                        softWrap: false,
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-            ),
-            Expanded(
-              child: Center(
-                child: IconButton(
-                  visualDensity: VisualDensity.compact,
-                  iconSize: 24,
-                  color: colorScheme.primary,
-                  onPressed: () {
-                    setState(() {
-                      selectedAppIds.clear();
-                    });
-                  },
-                  tooltip: tr('deselectAll'),
-                  icon: const Icon(Icons.deselect),
-                ),
-              ),
-            ),
-            Expanded(
-              child: Center(
-                child: IconButton(
-                  visualDensity: VisualDensity.compact,
-                  iconSize: 24,
-                  color: colorScheme.primary,
-                  onPressed: () async {
-                    final appsProviderRef = appsProvider;
-                    // Capture messenger before the await
-                    final messenger = scaffoldMessengerKey.currentState;
-                    final RemoveAppsWithModalResult removeResult =
-                        await appsProviderRef.removeAppsWithModal(
-                          context,
-                          selectedApps.toList(),
-                        );
-                    if (removeResult.shouldShowSnackBar) {
-                      final Set<String> undoAppIds =
-                          removeResult.deferredUndoAppIds;
-                      final int removedCount =
-                          removeResult.deferredUndoAppIds.isNotEmpty
-                          ? removeResult.deferredUndoAppIds.length
-                          : selectedApps.length;
-                      messenger
-                        ?..clearSnackBars()
-                        ..showSnackBar(
-                          SnackBar(
-                            content: Text(
-                              tr('xAppsRemoved', args: ['$removedCount']),
-                            ),
-                            persist: false,
-                            duration: const Duration(seconds: 5),
-                            behavior: SnackBarBehavior.floating,
-                            action: undoAppIds.isNotEmpty
-                                ? SnackBarAction(
-                                    label: tr('undo'),
-                                    onPressed: () => appsProviderRef
-                                        .undoDeferredObtainiumRemovals(
-                                          undoAppIds,
-                                        ),
-                                  )
-                                : null,
-                          ),
-                        );
-                    }
-                  },
-                  tooltip: tr('removeSelectedApps'),
-                  icon: const Icon(Icons.delete_outline_outlined),
-                ),
-              ),
-            ),
-            Expanded(
-              child: Center(
-                child: IconButton(
-                  visualDensity: VisualDensity.compact,
-                  iconSize: 24,
-                  color: colorScheme.primary,
-                  onPressed: launchCategorizeDialog(),
-                  tooltip: tr('categorize'),
-                  icon: const Icon(Icons.category_outlined),
-                ),
-              ),
-            ),
-            Expanded(
-              child: Center(
-                child: IconButton(
-                  visualDensity: VisualDensity.compact,
-                  iconSize: 24,
-                  color: colorScheme.primary,
-                  onPressed: getMassObtainFunction(),
-                  tooltip: tr('installUpdateSelectedApps'),
-                  icon: const Icon(Icons.file_download_outlined),
-                ),
-              ),
-            ),
-            Expanded(
-              child: Center(
-                child: IconButton(
-                  visualDensity: VisualDensity.compact,
-                  iconSize: 24,
-                  color: colorScheme.primary,
-                  onPressed: showMoreOptionsBottomSheet,
-                  tooltip: tr('more'),
-                  icon: const Icon(Icons.more_horiz),
-                ),
-              ),
-            ),
-          ],
-        );
-      }
-      return Row(
-        children: [
-          Expanded(
-            child: Center(
-              child: Tooltip(
-                message: tr('selectAll'),
-                child: TextButton.icon(
-                  style: selectAllFooterStyle,
-                  onPressed: listedApps.isEmpty
-                      ? null
-                      : () {
-                          setState(() {
-                            for (final appInMem in listedApps) {
-                              selectedAppIds.add(appInMem.app.id);
-                            }
-                          });
-                        },
-                  icon: const Icon(Icons.select_all_outlined, size: 24),
-                  label: FittedBox(
-                    fit: BoxFit.scaleDown,
-                    child: Text(
-                      selectedAppIds.length.toString(),
-                      maxLines: 1,
-                      softWrap: false,
-                    ),
-                  ),
-                ),
-              ),
-            ),
-          ),
-          Expanded(
-            child: Center(
-              child: IconButton(
-                visualDensity: VisualDensity.compact,
-                iconSize: 24,
-                color: colorScheme.primary,
-                onPressed: getMassObtainFunction(),
-                tooltip: tr('installUpdateApps'),
-                icon: const Icon(Icons.file_download_outlined),
-              ),
-            ),
-          ),
-          Expanded(
-            child: Center(
-              child: IconButton(
-                visualDensity: VisualDensity.compact,
-                iconSize: 24,
-                color: colorScheme.primary,
-                tooltip: tr('appsViewOptions'),
-                onPressed: () => showAppsViewOptionsSheet(
-                  context,
-                  folderId: _viewSettingsId,
-                ),
-                icon: const Icon(Icons.tune),
-              ),
-            ),
-          ),
-        ],
       );
     }
 
@@ -6252,19 +5970,8 @@ class AppsPageState extends State<AppsPage> {
                               final ColorScheme scheme = Theme.of(
                                 context,
                               ).colorScheme;
-                              final buttonStyle = ElevatedButton.styleFrom(
-                                minimumSize: const Size.fromHeight(56),
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 24,
-                                  vertical: 16,
-                                ),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(16),
-                                ),
-                                alignment: Alignment.centerLeft,
-                              );
                               final destructiveButtonStyle =
-                                  ElevatedButton.styleFrom(
+                                  FilledButton.styleFrom(
                                     minimumSize: const Size.fromHeight(56),
                                     padding: const EdgeInsets.symmetric(
                                       horizontal: 24,
@@ -6275,6 +5982,13 @@ class AppsPageState extends State<AppsPage> {
                                     ),
                                     backgroundColor: scheme.errorContainer,
                                     foregroundColor: scheme.onErrorContainer,
+                                    elevation: 0,
+                                    // Match the ActionListTile rows above:
+                                    // bodyLarge (16sp) label + 24dp icon, so the
+                                    // Remove action isn't visually smaller.
+                                    textStyle: Theme.of(
+                                      context,
+                                    ).textTheme.bodyLarge,
                                     alignment: Alignment.centerLeft,
                                   );
                               return Scaffold(
@@ -6317,95 +6031,59 @@ class AppsPageState extends State<AppsPage> {
                                                 crossAxisAlignment:
                                                     CrossAxisAlignment.stretch,
                                                 children: [
-                                                  Row(
-                                                    children: [
-                                                      Expanded(
-                                                        child: OutlinedButton.icon(
-                                                          style: OutlinedButton.styleFrom(
-                                                            minimumSize:
-                                                                const Size.fromHeight(
-                                                                  48,
-                                                                ),
-                                                            shape: RoundedRectangleBorder(
-                                                              borderRadius:
-                                                                  BorderRadius.circular(
-                                                                    12,
-                                                                  ),
-                                                            ),
-                                                            side: BorderSide(
-                                                              color: scheme
-                                                                  .primary
-                                                                  .withAlpha(
-                                                                    120,
-                                                                  ),
-                                                              width: 1,
-                                                              strokeAlign:
-                                                                  BorderSide
-                                                                      .strokeAlignInside,
-                                                            ),
-                                                          ),
-                                                          onPressed:
-                                                              listedApps.isEmpty
-                                                              ? null
-                                                              : () {
-                                                                  setState(() {
-                                                                    for (final appInMem
-                                                                        in listedApps) {
-                                                                      selectedAppIds.add(
-                                                                        appInMem
-                                                                            .app
-                                                                            .id,
-                                                                      );
-                                                                    }
-                                                                  });
-                                                                },
-                                                          icon: const Icon(
-                                                            Icons
-                                                                .select_all_outlined,
-                                                          ),
-                                                          label: Text(
-                                                            tr('selectAll'),
-                                                          ),
-                                                        ),
-                                                      ),
-                                                      const SizedBox(width: 12),
-                                                      Expanded(
-                                                        child: OutlinedButton.icon(
-                                                          style: OutlinedButton.styleFrom(
-                                                            minimumSize:
-                                                                const Size.fromHeight(
-                                                                  48,
-                                                                ),
-                                                            shape: RoundedRectangleBorder(
-                                                              borderRadius:
-                                                                  BorderRadius.circular(
-                                                                    12,
-                                                                  ),
-                                                            ),
-                                                            side: BorderSide(
-                                                              color: scheme
-                                                                  .primary
-                                                                  .withAlpha(
-                                                                    120,
-                                                                  ),
-                                                              width: 1,
-                                                              strokeAlign:
-                                                                  BorderSide
-                                                                      .strokeAlignInside,
-                                                            ),
-                                                          ),
-                                                          onPressed: () {
-                                                            setState(() {
+                                                  // Select-all / deselect-all as
+                                                  // a connected M3E segmented
+                                                  // control, driven in action
+                                                  // mode: the selection is never
+                                                  // persisted (always empty), so
+                                                  // each tap simply fires its
+                                                  // action.
+                                                  AppSegmentedButton<bool>(
+                                                    selected: const <bool>{},
+                                                    emptySelectionAllowed: true,
+                                                    onSelectionChanged:
+                                                        (Set<bool> values) {
+                                                          final bool selectAll =
+                                                              values.contains(
+                                                                true,
+                                                              );
+                                                          setState(() {
+                                                            if (selectAll) {
+                                                              for (final appInMem
+                                                                  in listedApps) {
+                                                                selectedAppIds
+                                                                    .add(
+                                                                      appInMem
+                                                                          .app
+                                                                          .id,
+                                                                    );
+                                                              }
+                                                            } else {
                                                               selectedAppIds
                                                                   .clear();
-                                                            });
-                                                          },
-                                                          icon: const Icon(
-                                                            Icons.deselect,
-                                                          ),
-                                                          label: Text(
-                                                            tr('deselectAll'),
-                                                          ),
+                                                            }
+                                                          });
+                                                        },
+                                                    segments: [
+                                                      ButtonSegment<bool>(
+                                                        value: true,
+                                                        enabled: listedApps
+                                                            .isNotEmpty,
+                                                        icon: const Icon(
+                                                          Icons
+                                                              .select_all_outlined,
+                                                        ),
+                                                        label: Text(
+                                                          tr('selectAll'),
+                                                        ),
+                                                      ),
+                                                      ButtonSegment<bool>(
+                                                        value: false,
+                                                        icon: const Icon(
+                                                          Icons.deselect,
+                                                        ),
+                                                        label: Text(
+                                                          tr('deselectAll'),
                                                         ),
                                                       ),
                                                     ],
@@ -6444,132 +6122,142 @@ class AppsPageState extends State<AppsPage> {
                                                     ),
                                                   ),
                                                   const SizedBox(height: 12),
-                                                  ElevatedButton.icon(
-                                                    style: buttonStyle,
-                                                    onPressed:
-                                                        appsProvider
-                                                            .areDownloadsRunning()
-                                                        ? null
-                                                        : showMassMarkDialog,
-                                                    icon: const Icon(
-                                                      Icons
-                                                          .check_circle_outline_rounded,
-                                                    ),
-                                                    label: Text(
-                                                      tr(
-                                                        'markSelectedAppsUpdated',
-                                                      ),
-                                                    ),
-                                                  ),
-                                                  const SizedBox(height: 12),
-                                                  ElevatedButton.icon(
-                                                    style: buttonStyle,
-                                                    onPressed:
-                                                        downloadSelectedAppAssets,
-                                                    icon: const Icon(
-                                                      Icons
-                                                          .download_for_offline_outlined,
-                                                    ),
-                                                    label: Text(
-                                                      tr(
-                                                        'downloadX',
-                                                        args: [
-                                                          lowerCaseIfEnglish(
-                                                            tr('releaseAsset'),
-                                                          ),
-                                                        ],
-                                                      ),
-                                                    ),
-                                                  ),
-                                                  const SizedBox(height: 12),
-                                                  ElevatedButton.icon(
-                                                    style: buttonStyle,
-                                                    onPressed:
-                                                        launchCategorizeDialog(),
-                                                    icon: const Icon(
-                                                      Icons.category_outlined,
-                                                    ),
-                                                    label: Text(
-                                                      tr('categorize'),
-                                                    ),
-                                                  ),
-                                                  const SizedBox(height: 12),
-                                                  ElevatedButton.icon(
-                                                    style: buttonStyle,
-                                                    onPressed: pinSelectedApps,
-                                                    icon: const Icon(
-                                                      Icons.push_pin_outlined,
-                                                    ),
-                                                    label: Text(
-                                                      selectedApps
-                                                              .where(
-                                                                (element) =>
-                                                                    element
-                                                                        .pinned,
-                                                              )
-                                                              .isEmpty
-                                                          ? tr('pinToTop')
-                                                          : tr('unpinFromTop'),
-                                                    ),
-                                                  ),
-                                                  const SizedBox(height: 12),
-                                                  ElevatedButton.icon(
-                                                    style: buttonStyle,
-                                                    onPressed: () =>
-                                                        _showFolderAssignDialog(
-                                                          context,
-                                                          selectedApps,
+                                                  M3eExpressiveSettingsCard(
+                                                    colorScheme: scheme,
+                                                    items: [
+                                                      ActionListTile(
+                                                        iconColor:
+                                                            appsProvider
+                                                                .areDownloadsRunning()
+                                                            ? null
+                                                            : scheme.primary,
+                                                        textColor:
+                                                            appsProvider
+                                                                .areDownloadsRunning()
+                                                            ? null
+                                                            : scheme.primary,
+                                                        icon: Icons
+                                                            .check_circle_outline_rounded,
+                                                        label: tr(
+                                                          'markSelectedAppsUpdated',
                                                         ),
-                                                    icon: const Icon(
-                                                      Icons
-                                                          .folder_copy_outlined,
-                                                    ),
-                                                    label: Text(
-                                                      tr('addToFolder'),
-                                                    ),
-                                                  ),
-                                                  const SizedBox(height: 12),
-                                                  ElevatedButton.icon(
-                                                    style: buttonStyle,
-                                                    onPressed:
-                                                        shareSelectedAppUrls,
-                                                    icon: const Icon(
-                                                      Icons.share_outlined,
-                                                    ),
-                                                    label: Text(
-                                                      tr(
-                                                        'shareSelectedAppURLs',
+                                                        onTap:
+                                                            appsProvider
+                                                                .areDownloadsRunning()
+                                                            ? null
+                                                            : showMassMarkDialog,
                                                       ),
-                                                    ),
-                                                  ),
-                                                  const SizedBox(height: 12),
-                                                  ElevatedButton.icon(
-                                                    style: buttonStyle,
-                                                    onPressed:
-                                                        shareSelectedAppConfigLinks,
-                                                    icon: const Icon(
-                                                      Icons
-                                                          .settings_suggest_outlined,
-                                                    ),
-                                                    label: Text(
-                                                      tr('shareAppConfigLinks'),
-                                                    ),
-                                                  ),
-                                                  const SizedBox(height: 12),
-                                                  ElevatedButton.icon(
-                                                    style: buttonStyle,
-                                                    onPressed:
-                                                        exportSelectedApps,
-                                                    icon: const Icon(
-                                                      Icons
-                                                          .import_export_outlined,
-                                                    ),
-                                                    label: Text(
-                                                      '${tr('share')} - ${tr('obtainiumExport')}',
-                                                    ),
+                                                      ActionListTile(
+                                                        iconColor:
+                                                            scheme.primary,
+                                                        textColor:
+                                                            scheme.primary,
+                                                        icon: Icons
+                                                            .download_for_offline_outlined,
+                                                        label: tr(
+                                                          'downloadX',
+                                                          args: [
+                                                            lowerCaseIfEnglish(
+                                                              tr(
+                                                                'releaseAsset',
+                                                              ),
+                                                            ),
+                                                          ],
+                                                        ),
+                                                        onTap:
+                                                            downloadSelectedAppAssets,
+                                                      ),
+                                                      ActionListTile(
+                                                        iconColor:
+                                                            scheme.primary,
+                                                        textColor:
+                                                            scheme.primary,
+                                                        icon: Icons
+                                                            .category_outlined,
+                                                        label: tr('categorize'),
+                                                        onTap:
+                                                            launchCategorizeDialog(),
+                                                      ),
+                                                      ActionListTile(
+                                                        iconColor:
+                                                            scheme.primary,
+                                                        textColor:
+                                                            scheme.primary,
+                                                        icon: Icons
+                                                            .push_pin_outlined,
+                                                        label:
+                                                            selectedApps
+                                                                .where(
+                                                                  (
+                                                                    element,
+                                                                  ) => element
+                                                                      .pinned,
+                                                                )
+                                                                .isEmpty
+                                                            ? tr('pinToTop')
+                                                            : tr(
+                                                                'unpinFromTop',
+                                                              ),
+                                                        onTap: pinSelectedApps,
+                                                      ),
+                                                      ActionListTile(
+                                                        iconColor:
+                                                            scheme.primary,
+                                                        textColor:
+                                                            scheme.primary,
+                                                        icon: Icons
+                                                            .folder_copy_outlined,
+                                                        label: tr(
+                                                          'addToFolder',
+                                                        ),
+                                                        onTap: () =>
+                                                            _showFolderAssignDialog(
+                                                              context,
+                                                              selectedApps,
+                                                            ),
+                                                      ),
+                                                      ActionListTile(
+                                                        iconColor:
+                                                            scheme.primary,
+                                                        textColor:
+                                                            scheme.primary,
+                                                        icon: Icons
+                                                            .share_outlined,
+                                                        label: tr(
+                                                          'shareSelectedAppURLs',
+                                                        ),
+                                                        onTap:
+                                                            shareSelectedAppUrls,
+                                                      ),
+                                                      ActionListTile(
+                                                        iconColor:
+                                                            scheme.primary,
+                                                        textColor:
+                                                            scheme.primary,
+                                                        icon: Icons
+                                                            .settings_suggest_outlined,
+                                                        label: tr(
+                                                          'shareAppConfigLinks',
+                                                        ),
+                                                        onTap:
+                                                            shareSelectedAppConfigLinks,
+                                                      ),
+                                                      ActionListTile(
+                                                        iconColor:
+                                                            scheme.primary,
+                                                        textColor:
+                                                            scheme.primary,
+                                                        icon: Icons
+                                                            .import_export_outlined,
+                                                        label:
+                                                            '${tr('share')} - ${tr('obtainiumExport')}',
+                                                        onTap:
+                                                            exportSelectedApps,
+                                                      ),
+                                                    ],
                                                   ),
                                                   const SizedBox(height: 24),
-                                                  ElevatedButton.icon(
+                                                  FilledButton.icon(
                                                     style:
                                                         destructiveButtonStyle,
                                                     onPressed: () async {
@@ -6640,6 +6328,7 @@ class AppsPageState extends State<AppsPage> {
                                                     icon: const Icon(
                                                       Icons
                                                           .delete_outline_outlined,
+                                                      size: 24,
                                                     ),
                                                     label: Text(
                                                       tr('removeSelectedApps'),
@@ -7439,7 +7128,7 @@ class AppsPageState extends State<AppsPage> {
                           width: double.infinity,
                           child: AnimatedSize(
                             duration: const Duration(milliseconds: 220),
-                            curve: Curves.easeInOutCubic,
+                            curve: Curves.easeInOutCubicEmphasized,
                             alignment: Alignment.topCenter,
                             child: isEditing
                                 ? Padding(
@@ -7553,7 +7242,7 @@ class AppsPageState extends State<AppsPage> {
                 width: double.infinity,
                 child: AnimatedSize(
                   duration: const Duration(milliseconds: 220),
-                  curve: Curves.easeInOutCubic,
+                  curve: Curves.easeInOutCubicEmphasized,
                   alignment: Alignment.topCenter,
                   child: creatingFolder
                       ? Padding(

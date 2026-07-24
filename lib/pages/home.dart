@@ -478,8 +478,6 @@ class HomePageState extends State<HomePage> {
           if (state.hasMassObtainOperations) {
             final Widget fabButton = FloatingActionButton.small(
               heroTag: 'home_update_all_fab',
-              elevation: 6,
-              highlightElevation: 8,
               backgroundColor: scheme.primaryContainer,
               foregroundColor: scheme.onPrimaryContainer,
               onPressed: () {
@@ -512,8 +510,6 @@ class HomePageState extends State<HomePage> {
           if (state.isSelectionActive) {
             trailingFab = FloatingActionButton.small(
               heroTag: 'home_actions_fab',
-              elevation: 6,
-              highlightElevation: 8,
               backgroundColor: scheme.primary,
               foregroundColor: scheme.onPrimary,
               onPressed: () {
@@ -526,8 +522,6 @@ class HomePageState extends State<HomePage> {
           } else {
             trailingFab = FloatingActionButton.small(
               heroTag: 'home_view_options_fab',
-              elevation: 6,
-              highlightElevation: 8,
               backgroundColor: scheme.surfaceContainerHighest,
               foregroundColor: scheme.onSurfaceVariant,
               onPressed: () {
@@ -571,8 +565,10 @@ class HomePageState extends State<HomePage> {
             unawaited(switchToPage(index));
           },
           child: AnimatedContainer(
-            duration: const Duration(milliseconds: 250),
-            curve: Curves.easeOutCubic,
+            // M3 expressive (emphasized) motion, matched to the page transition
+            // above so the selection indicator settles in sync with the page.
+            duration: const Duration(milliseconds: 300),
+            curve: Curves.easeInOutCubicEmphasized,
             margin: const EdgeInsets.symmetric(horizontal: 2.0),
             padding: EdgeInsets.symmetric(
               horizontal: isSelected ? 15.0 : 11.0,
@@ -590,8 +586,8 @@ class HomePageState extends State<HomePage> {
                 iconWidget,
                 ClipRect(
                   child: AnimatedSize(
-                    duration: const Duration(milliseconds: 250),
-                    curve: Curves.easeOutCubic,
+                    duration: const Duration(milliseconds: 300),
+                    curve: Curves.easeInOutCubicEmphasized,
                     child: isSelected
                         ? Padding(
                             padding: const EdgeInsets.only(left: 7.0),
@@ -664,8 +660,8 @@ class HomePageState extends State<HomePage> {
     );
 
     return AnimatedSlide(
-      duration: const Duration(milliseconds: 250),
-      curve: Curves.easeOutCubic,
+      duration: const Duration(milliseconds: 300),
+      curve: Curves.easeInOutCubicEmphasized,
       offset: (keyboardOpen || isAddAppSubFlowActive)
           ? const Offset(0, 1.5)
           : Offset.zero,

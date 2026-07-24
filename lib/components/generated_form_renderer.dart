@@ -1661,11 +1661,22 @@ class _GeneratedFormModalState extends State<GeneratedFormModal> {
           ),
         ),
         widget.singleNullReturnButton == null
-            ? TextButton(
+            ? FilledButton(
+                // Emphasized primary. A non-null primaryActionColour marks a
+                // destructive confirm (e.g. colorScheme.error) → filled in that
+                // colour with a contrast-safe foreground; otherwise the default
+                // primary fill.
                 style: widget.primaryActionColour == null
                     ? null
-                    : TextButton.styleFrom(
-                        foregroundColor: widget.primaryActionColour,
+                    : FilledButton.styleFrom(
+                        backgroundColor: widget.primaryActionColour,
+                        foregroundColor:
+                            ThemeData.estimateBrightnessForColor(
+                                  widget.primaryActionColour!,
+                                ) ==
+                                Brightness.dark
+                            ? Colors.white
+                            : Colors.black,
                       ),
                 onPressed: !valid
                     ? null

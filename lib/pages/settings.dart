@@ -1250,7 +1250,7 @@ class _RunBgUpdateCheckNowButtonState
               ? const SizedBox(
                   width: 20,
                   height: 20,
-                  child: CircularProgressIndicator(strokeWidth: 2),
+                  child: ExpressiveLoadingIndicator(),
                 )
               : Text(tr('runBgCheckNow')),
         ),
@@ -1367,18 +1367,13 @@ class _UpdateIntervalSliderState extends State<_UpdateIntervalSlider> {
                       trackHeight: 16,
                       trackShape: const _GappedTrackShape(),
                       thumbShape: const _VerticalBarThumbShape(),
-                      tickMarkShape: const RoundSliderTickMarkShape(
-                        tickMarkRadius: 3,
-                      ),
                       activeTickMarkColor: Theme.of(
                         context,
                       ).colorScheme.onPrimary,
                       inactiveTickMarkColor: Theme.of(
                         context,
                       ).colorScheme.primary,
-                      overlayShape: const RoundSliderOverlayShape(
-                        overlayRadius: 20,
-                      ),
+                      overlayShape: SliderComponentShape.noOverlay,
                     ),
                     child: Slider(
                       focusNode: isTV ? _sliderFocusNode : null,
@@ -2245,14 +2240,9 @@ class _UiScaleSliderState extends State<_UiScaleSlider> {
                       trackHeight: 16,
                       trackShape: const _GappedTrackShape(),
                       thumbShape: const _VerticalBarThumbShape(),
-                      tickMarkShape: const RoundSliderTickMarkShape(
-                        tickMarkRadius: 3,
-                      ),
                       activeTickMarkColor: cs.onPrimary,
                       inactiveTickMarkColor: cs.primary,
-                      overlayShape: const RoundSliderOverlayShape(
-                        overlayRadius: 20,
-                      ),
+                      overlayShape: SliderComponentShape.noOverlay,
                     ),
                     child: Slider(
                       focusNode: isTV ? _sliderFocusNode : null,
@@ -2363,14 +2353,9 @@ class _CardCornerScaleSliderState extends State<_CardCornerScaleSlider> {
                       trackHeight: 16,
                       trackShape: const _GappedTrackShape(),
                       thumbShape: const _VerticalBarThumbShape(),
-                      tickMarkShape: const RoundSliderTickMarkShape(
-                        tickMarkRadius: 3,
-                      ),
                       activeTickMarkColor: cs.onPrimary,
                       inactiveTickMarkColor: cs.primary,
-                      overlayShape: const RoundSliderOverlayShape(
-                        overlayRadius: 20,
-                      ),
+                      overlayShape: SliderComponentShape.noOverlay,
                     ),
                     child: Slider(
                       focusNode: isTV ? _sliderFocusNode : null,
@@ -4337,7 +4322,7 @@ class _ExternalInstallerTileState extends State<_ExternalInstallerTile> {
               leading: _targetIcon(current),
               title: Text(tr('chooseExternalInstaller')),
               subtitle: Text(subtitle),
-              trailing: const Icon(Icons.arrow_drop_down),
+              trailing: const Icon(Icons.expand_more_rounded),
               onTap: () => _choose(targets, settingsProvider),
             );
           },
