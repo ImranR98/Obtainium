@@ -31,7 +31,7 @@ jobs:
           # toolchain must be fixed (a floating `channel: stable` would break it).
           # Keep this EQUAL to the .flutter submodule commit referenced by the
           # fdroiddata recipe; bump both together when upgrading Flutter.
-          flutter-version: 3.44.2
+          flutter-version: 3.44.7
           cache: true
 
       - name: Cache Gradle packages

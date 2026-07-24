@@ -331,7 +331,8 @@ App normalizeSkippedLatestVersion(App app) {
     shouldRemove =
         installed == app.latestVersion ||
         versionsEffectivelyEqual(installed, app.latestVersion) ||
-        compareVersionsByNumericSegments(installed, app.latestVersion) == 1;
+        (compareVersionsByNumericSegments(installed, app.latestVersion) == 1 &&
+            !versionOrderIsUnclear(installed, app.latestVersion));
   }
   if (!shouldRemove) return app;
 
@@ -382,6 +383,13 @@ bool versionOrderUncertainUpdate(App app) {
   if (isSkipActiveForCurrentLatest(app)) return false;
   if (installed == latest) return false;
   if (versionsEffectivelyEqual(installed, latest)) return false;
+
+  // Pseudo-mode apps cannot reliably order version strings; any version difference
+  // is an update rather than "version order unclear" (parity with appHasActionableUpdate).
+  if (app.additionalSettings['versionDetection'] == 'pseudo' ||
+      app.additionalSettings['versionDetection'] == false) {
+    return false;
+  }
 
   if (versionOrderIsUnclear(installed, latest)) {
     final dynamic lastInstalledTimeRaw =

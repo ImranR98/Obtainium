@@ -67,7 +67,7 @@ enum _AddAppLauncherDestination {
 enum _PackageIdDetectionChoice { download, trackOnly }
 
 class AddAppPage extends StatefulWidget {
-  const AddAppPage({super.key})
+  const AddAppPage({super.key, this.homeFabChromeTick, this.onStateChanged})
     : _initialMode = _AddMode.launcher,
       _initialUrl = null,
       _searchAddsMultipleApps = false,
@@ -83,6 +83,8 @@ class AddAppPage extends StatefulWidget {
     Future<void> Function()? onBatchSearchSaved,
     VoidCallback? onEmbeddedAddCompleted,
     bool embeddedDetail = false,
+    this.homeFabChromeTick,
+    this.onStateChanged,
   }) : assert(initialMode == _AddMode.byUrl || initialMode == _AddMode.search),
        assert(!searchAddsMultipleApps || initialMode == _AddMode.search),
        assert(onBatchSearchSaved == null || searchAddsMultipleApps),
@@ -99,6 +101,8 @@ class AddAppPage extends StatefulWidget {
   final Future<void> Function()? _onBatchSearchSaved;
   final VoidCallback? _onEmbeddedAddCompleted;
   final bool _embeddedDetail;
+  final ValueNotifier<int>? homeFabChromeTick;
+  final VoidCallback? onStateChanged;
 
   @override
   State<AddAppPage> createState() => AddAppPageState();
@@ -107,6 +111,18 @@ class AddAppPage extends StatefulWidget {
 class AddAppPageState extends State<AddAppPage> {
   // ─── Mode ──────────────────────────────────────────────────────────────
   late _AddMode _mode;
+
+  bool get isSubFlowActive => _mode != _AddMode.launcher;
+
+  void _notifyModeChanged() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      if (widget.homeFabChromeTick != null) {
+        widget.homeFabChromeTick!.value = widget.homeFabChromeTick!.value + 1;
+      }
+      widget.onStateChanged?.call();
+    });
+  }
 
   // ─── URL mode state ────────────────────────────────────────────────────
   bool gettingAppInfo = false;
@@ -263,6 +279,7 @@ class AddAppPageState extends State<AddAppPage> {
         _byUrlOpenedFromSearchPick = false;
         _mode = _AddMode.search;
       });
+      _notifyModeChanged();
       return true;
     }
     return false;
@@ -298,16 +315,22 @@ class AddAppPageState extends State<AddAppPage> {
         throw UnsupportedURLError();
       }
       sourceProvider.getSource(input);
+      bool modeChanged = false;
       if (_mode == _AddMode.launcher) {
         setState(() {
           _mode = _AddMode.byUrl;
         });
+        modeChanged = true;
       }
       if (_mode != _AddMode.byUrl || _byUrlOpenedFromSearchPick) {
         setState(() {
           _mode = _AddMode.byUrl;
           _byUrlOpenedFromSearchPick = false;
         });
+        modeChanged = true;
+      }
+      if (modeChanged) {
+        _notifyModeChanged();
       }
       changeUserInput(input, true, false, updateUrlInput: true);
     } catch (e) {
@@ -439,6 +462,7 @@ class AddAppPageState extends State<AddAppPage> {
   }
 
   void _resetAllInputStates() {
+    final bool modeChanged = _mode != widget._initialMode;
     setState(() {
       _resetUrlModeInput();
       searching = false;
@@ -452,6 +476,9 @@ class AddAppPageState extends State<AddAppPage> {
       _searchResultFilterController.clear();
       _mode = widget._initialMode;
     });
+    if (modeChanged) {
+      _notifyModeChanged();
+    }
   }
 
   void _scrollEmbeddedSearchResultsToFilter() {
@@ -950,12 +977,16 @@ class AddAppPageState extends State<AddAppPage> {
           initialUrl: _launcherDetailUrl,
           onEmbeddedAddCompleted: resetLauncherAfterSuccessfulAdd,
           embeddedDetail: true,
+          homeFabChromeTick: widget.homeFabChromeTick,
+          onStateChanged: widget.onStateChanged,
         ),
         _AddAppLauncherDestination.searchSources => AddAppPage._flow(
           key: _launcherSearchDetailKey,
           initialMode: _AddMode.search,
           onEmbeddedAddCompleted: resetLauncherAfterSuccessfulAdd,
           embeddedDetail: true,
+          homeFabChromeTick: widget.homeFabChromeTick,
+          onStateChanged: widget.onStateChanged,
         ),
         _AddAppLauncherDestination.batchSearch => AddAppPage._flow(
           key: _launcherBatchSearchDetailKey,
@@ -963,6 +994,8 @@ class AddAppPageState extends State<AddAppPage> {
           searchAddsMultipleApps: true,
           onBatchSearchSaved: resetLauncherAndSwitchToAppsPage,
           embeddedDetail: true,
+          homeFabChromeTick: widget.homeFabChromeTick,
+          onStateChanged: widget.onStateChanged,
         ),
         _AddAppLauncherDestination.bulkSearch => BulkAddWidget(
           key: _launcherBulkDetailKey,
@@ -1265,7 +1298,7 @@ class AddAppPageState extends State<AddAppPage> {
                 ).pop(_PackageIdDetectionChoice.trackOnly),
                 child: Text(tr('trackOnly')),
               ),
-              TextButton(
+              FilledButton(
                 onPressed: () => Navigator.of(
                   dialogContext,
                 ).pop(_PackageIdDetectionChoice.download),
@@ -1302,7 +1335,10 @@ class AddAppPageState extends State<AddAppPage> {
                     },
                     child: Text(tr('cancel')),
                   ),
-                  TextButton(
+                  // Tonal (medium emphasis), not a full FilledButton: this
+                  // proceeds over an insecure http:// connection, so it gets a
+                  // clear hierarchy without strongly pushing the risky action.
+                  FilledButton.tonal(
                     onPressed: () {
                       proceed = true;
                       Navigator.of(dialogContext).pop();
@@ -2326,7 +2362,7 @@ class AddAppPageState extends State<AddAppPage> {
                           },
                         ),
                       )
-                    : const Icon(Icons.arrow_forward_ios_rounded, size: 16),
+                    : const Icon(Icons.chevron_right_rounded, size: 20),
                 onTap: () {
                   if (widget._searchAddsMultipleApps) {
                     updateResultSelection(!selected);

@@ -611,9 +611,11 @@ extension AppsProviderLifecycle on AppsProvider {
             }
           }),
         );
-        if (singleId == null && chunkEnd < appFiles.length) {
-          await Future<void>.delayed(Duration.zero);
-        }
+        // No explicit per-chunk event-loop yield: the awaited file reads above
+        // already yield to the event loop (so the spinner keeps animating),
+        // and a forced Timer(0) between chunks only added a frame-length stall
+        // that lengthened the cold-start spinner. Chunking still bounds the
+        // number of file handles open at once.
       }
       if (singleId == null) {
         lastFullDiskLoadAt = diskLoadStartedAt;
@@ -720,8 +722,17 @@ extension AppsProviderLifecycle on AppsProvider {
   /// Moves legacy user-icon overrides (`*.user.png`) out of [iconsCacheDir]
   /// (which Android "clear cache" wipes) into [userAppIconsDir].
   Future<void> migrateUserIconsFromLegacyCacheDir() async {
+    // One-shot: once complete, never enumerate the (potentially large) icon
+    // cache dir again on subsequent cold starts.
+    const String migratedFlag = 'userIconsMigratedFromLegacyCacheDir';
+    if (settingsProvider.prefs?.getBool(migratedFlag) ?? false) {
+      return;
+    }
     try {
-      if (!await iconsCacheDir.exists()) return;
+      if (!await iconsCacheDir.exists()) {
+        await settingsProvider.prefs?.setBool(migratedFlag, true);
+        return;
+      }
       for (final FileSystemEntity entity
           in await iconsCacheDir.list().toList()) {
         if (entity is! File) continue;
@@ -741,6 +752,8 @@ extension AppsProviderLifecycle on AppsProvider {
           unawaited(logs.add('User icon migrate $fileName: $e'));
         }
       }
+      // Mark done only after a clean pass so an interrupted migration retries.
+      await settingsProvider.prefs?.setBool(migratedFlag, true);
     } catch (e) {
       unawaited(logs.add('User icon migrate: $e'));
     }

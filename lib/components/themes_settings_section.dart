@@ -6,6 +6,7 @@ import 'package:obtainium/components/theme_accent_settings_section.dart'
 import 'package:obtainium/providers/settings_provider.dart';
 import 'package:obtainium/components/tv_slider_wrapper.dart';
 import 'package:obtainium/theme/app_segmented_button_theme.dart';
+import 'package:obtainium/theme/m3e_expressive_list.dart';
 import 'package:obtainium/widgets/help_hint_icon.dart';
 import 'package:provider/provider.dart';
 
@@ -41,7 +42,12 @@ List<Widget> buildThemesSettingsCardItems(
 
   return [
     Padding(
-      padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
+      padding: const EdgeInsets.fromLTRB(
+        kM3eSettingsCardHorizontalInset,
+        8,
+        kM3eSettingsCardHorizontalInset,
+        8,
+      ),
       child: SizedBox(
         width: double.infinity,
         child: AppSegmentedButton<ThemeSettings>(
@@ -188,6 +194,11 @@ class _ShadingIntensityTile extends StatefulWidget {
 class _ShadingIntensityTileState extends State<_ShadingIntensityTile> {
   late final FocusNode _sliderFocusNode;
 
+  // Live drag value; committed to settings only on drag end so the (expensive)
+  // live re-shading doesn't run every frame and stutter — matches the other
+  // sliders (e.g. the bg-update-interval slider in settings.dart).
+  double? _dragValue;
+
   @override
   void initState() {
     super.initState();
@@ -204,7 +215,7 @@ class _ShadingIntensityTileState extends State<_ShadingIntensityTile> {
   Widget build(BuildContext context) {
     final ColorScheme colorScheme = Theme.of(context).colorScheme;
     final bool enabled = !widget.settings.blackThemeActive;
-    final double sliderValue = widget.settings.shadingIntensity;
+    final double sliderValue = _dragValue ?? widget.settings.shadingIntensity;
     final isTV = context.read<SettingsProvider>().isTV;
 
     return InkWell(
@@ -214,7 +225,12 @@ class _ShadingIntensityTileState extends State<_ShadingIntensityTile> {
               _showBlackThemeSurfaceSettingDisabledSnackbar(context);
             },
       child: Padding(
-        padding: const EdgeInsets.fromLTRB(16, 10, 16, 12),
+        padding: const EdgeInsets.fromLTRB(
+          kM3eSettingsCardHorizontalInset,
+          10,
+          kM3eSettingsCardHorizontalInset,
+          12,
+        ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
@@ -251,16 +267,17 @@ class _ShadingIntensityTileState extends State<_ShadingIntensityTile> {
               max: 2,
               divisions: 20,
               onChanged: (double value) {
+                setState(() => _dragValue = value);
+              },
+              onChangeEnd: (double value) {
                 widget.settings.shadingIntensity = value;
+                setState(() => _dragValue = null);
               },
               child: SliderTheme(
                 data: SliderTheme.of(context).copyWith(
                   trackHeight: 16,
                   trackShape: const _ShadingGappedTrackShape(),
                   thumbShape: const _ShadingVerticalBarThumbShape(),
-                  tickMarkShape: const RoundSliderTickMarkShape(
-                    tickMarkRadius: 3,
-                  ),
                   activeTickMarkColor: colorScheme.onPrimary,
                   inactiveTickMarkColor: colorScheme.primary,
                   disabledActiveTrackColor: colorScheme.onSurface.withValues(
@@ -277,9 +294,7 @@ class _ShadingIntensityTileState extends State<_ShadingIntensityTile> {
                   ),
                   disabledInactiveTickMarkColor: colorScheme.onSurface
                       .withValues(alpha: 0.38),
-                  overlayShape: const RoundSliderOverlayShape(
-                    overlayRadius: 20,
-                  ),
+                  overlayShape: SliderComponentShape.noOverlay,
                 ),
                 child: Slider(
                   focusNode: isTV ? _sliderFocusNode : null,
@@ -290,7 +305,13 @@ class _ShadingIntensityTileState extends State<_ShadingIntensityTile> {
                   label: _shadingIntensityLabel(sliderValue),
                   onChanged: enabled
                       ? (double value) {
+                          setState(() => _dragValue = value);
+                        }
+                      : null,
+                  onChangeEnd: enabled
+                      ? (double value) {
                           widget.settings.shadingIntensity = value;
+                          setState(() => _dragValue = null);
                         }
                       : null,
                 ),
@@ -377,10 +398,8 @@ class _ShadingGappedTrackShape extends SliderTrackShape
     with BaseSliderTrackShape {
   const _ShadingGappedTrackShape();
 
-  static const int _divisions = 20;
   static const double _gap = 4;
   static const double _radius = 8;
-  static const double _tickRadius = 2.75;
 
   @override
   void paint(
@@ -431,18 +450,6 @@ class _ShadingGappedTrackShape extends SliderTrackShape
         ).evaluate(enableAnimation) ??
         sliderTheme.inactiveTrackColor ??
         Colors.grey;
-    final Color activeTickMarkColor =
-        ColorTween(
-          begin: sliderTheme.disabledActiveTickMarkColor,
-          end: sliderTheme.activeTickMarkColor,
-        ).evaluate(enableAnimation) ??
-        activeTrackColor;
-    final Color inactiveTickMarkColor =
-        ColorTween(
-          begin: sliderTheme.disabledInactiveTickMarkColor,
-          end: sliderTheme.inactiveTickMarkColor,
-        ).evaluate(enableAnimation) ??
-        inactiveTrackColor;
     final Paint activePaint = Paint()..color = activeTrackColor;
     final Paint inactivePaint = Paint()..color = inactiveTrackColor;
 
@@ -473,23 +480,5 @@ class _ShadingGappedTrackShape extends SliderTrackShape
       ),
       inactivePaint,
     );
-
-    final Paint tickPaint = Paint()..style = PaintingStyle.fill;
-    for (int tickIndex = 1; tickIndex < _divisions; tickIndex++) {
-      final double tickRatio = tickIndex / _divisions;
-      final double tickX =
-          trackRect.left +
-          tickRatio * (trackWidth - trackHeight) +
-          trackHeight / 2;
-      final bool isActive = textDirection == TextDirection.rtl
-          ? tickX > thumbX
-          : tickX < thumbX;
-      tickPaint.color = isActive ? activeTickMarkColor : inactiveTickMarkColor;
-      canvas.drawCircle(
-        Offset(tickX, trackRect.center.dy),
-        _tickRadius,
-        tickPaint,
-      );
-    }
   }
 }

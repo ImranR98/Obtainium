@@ -5,6 +5,7 @@ import 'dart:typed_data';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:expressive_loading_indicator/expressive_loading_indicator.dart';
 import 'package:flutter/material.dart';
+import 'package:obtainium/components/app_bottom_sheet.dart';
 import 'package:obtainium/components/generated_form_renderer.dart';
 import 'package:flutter/rendering.dart' show ScrollCacheExtent;
 import 'package:obtainium/app_sources/apkmirror.dart';
@@ -2522,27 +2523,19 @@ class BulkAddWidgetState extends State<BulkAddWidget> {
     final SettingsProvider settingsProvider = context.read<SettingsProvider>();
     final String currentPat =
         settingsProvider.getSettingString(GitHub.githubCredsKey) ?? '';
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Theme.of(context).colorScheme.surface,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(28.0)),
-      ),
-      builder: (BuildContext sheetContext) {
-        return Padding(
-          padding: EdgeInsets.only(
-            bottom: MediaQuery.of(sheetContext).viewInsets.bottom,
-          ),
-          child: _GithubPatSheet(
+    unawaited(
+      showAppModalSheet<void>(
+        context: context,
+        builder: (BuildContext sheetContext) {
+          return _GithubPatSheet(
             initialPat: currentPat,
             settingsProvider: settingsProvider,
             onSearchAgain: () {
               _startScanning();
             },
-          ),
-        );
-      },
+          );
+        },
+      ),
     );
   }
 
@@ -2792,137 +2785,109 @@ class _GithubPatSheetState extends State<_GithubPatSheet> {
 
   @override
   Widget build(BuildContext context) {
-    return SingleChildScrollView(
-      child: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(24.0, 8.0, 24.0, 24.0),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Center(
-                child: Container(
-                  width: 32,
-                  height: 4,
-                  margin: const EdgeInsets.only(bottom: 16.0),
-                  decoration: BoxDecoration(
-                    color: Theme.of(context).colorScheme.outlineVariant,
-                    borderRadius: BorderRadius.circular(2.0),
-                  ),
-                ),
-              ),
-              Text(
-                tr('personalAccessTokenPAT'),
-                style: Theme.of(context).textTheme.headlineSmall,
-              ),
-              const SizedBox(height: 16),
-              TextField(
-                controller: _controller,
-                autofocus: true,
-                decoration: appPageOutlinedInputDecoration(
-                  context,
-                  labelText: tr('githubPATLabel'),
-                ).copyWith(errorText: _validationError),
-                obscureText: true,
-                enableSuggestions: false,
-                autocorrect: false,
-                onChanged: (val) => setState(() {
-                  _isSaved = false;
-                  _validationError = null;
-                }),
-              ),
-              if (_isValidating) ...[
-                const SizedBox(height: 16),
-                Center(
-                  child: ExpressiveLoadingIndicator(
-                    color: Theme.of(context).colorScheme.primary,
-                    constraints: const BoxConstraints.tightFor(
-                      width: 32,
-                      height: 32,
-                    ),
-                  ),
-                ),
-              ],
-              const SizedBox(height: 24),
-              Wrap(
-                spacing: 8,
-                runSpacing: 8,
-                alignment: WrapAlignment.end,
-                children: [
-                  TextButton(
-                    onPressed: () => Navigator.of(context).pop(),
-                    child: Text(_isSaved ? tr('close') : tr('cancel')),
-                  ),
-                  TextButton(
-                    onPressed:
-                        (_isValidating ||
-                            _controller.text.trim().isEmpty ||
-                            _isSaved)
-                        ? null
-                        : () async {
-                            setState(() {
-                              _isValidating = true;
-                              _validationError = null;
-                            });
-                            final String enteredText = _controller.text.trim();
-                            final String? error = await GitHub.validatePAT(
-                              enteredText,
-                            );
-                            if (!context.mounted) return;
-
-                            if (error == null) {
-                              widget.settingsProvider.setSettingString(
-                                GitHub.githubCredsKey,
-                                enteredText,
-                              );
-                              GitHub.storePATValidation(
-                                enteredText,
-                                widget.settingsProvider,
-                              );
-                              if (context.mounted) {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(
-                                    content: Text(tr('githubPATValidated')),
-                                  ),
-                                );
-                              }
-                              setState(() {
-                                _isValidating = false;
-                                _isSaved = true;
-                              });
-                            } else {
-                              GitHub.clearPATValidation(
-                                widget.settingsProvider,
-                              );
-                              setState(() {
-                                _isValidating = false;
-                                _validationError = error;
-                              });
-                            }
-                          },
-                    child: Text(_isSaved ? tr('saved') : tr('save')),
-                  ),
-                  TextButton(
-                    onPressed:
-                        !GitHub.hasValidatedPAT(
-                          widget.settingsProvider.getSettingString(
-                            GitHub.githubCredsKey,
-                          ),
-                          widget.settingsProvider,
-                        )
-                        ? null
-                        : () {
-                            Navigator.of(context).pop();
-                            widget.onSearchAgain();
-                          },
-                    child: Text(tr('searchAgain')),
-                  ),
-                ],
-              ),
-            ],
-          ),
+    return AppSheetContent(
+      padding: const EdgeInsets.fromLTRB(24, 4, 24, 24),
+      children: [
+        Text(
+          tr('personalAccessTokenPAT'),
+          style: Theme.of(context).textTheme.headlineSmall,
         ),
-      ),
+        const SizedBox(height: 16),
+        TextField(
+          controller: _controller,
+          autofocus: true,
+          decoration: appPageOutlinedInputDecoration(
+            context,
+            labelText: tr('githubPATLabel'),
+          ).copyWith(errorText: _validationError),
+          obscureText: true,
+          enableSuggestions: false,
+          autocorrect: false,
+          onChanged: (val) => setState(() {
+            _isSaved = false;
+            _validationError = null;
+          }),
+        ),
+        if (_isValidating) ...[
+          const SizedBox(height: 16),
+          Center(
+            child: ExpressiveLoadingIndicator(
+              color: Theme.of(context).colorScheme.primary,
+              constraints: const BoxConstraints.tightFor(width: 32, height: 32),
+            ),
+          ),
+        ],
+        const SizedBox(height: 24),
+        Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          alignment: WrapAlignment.end,
+          children: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: Text(_isSaved ? tr('close') : tr('cancel')),
+            ),
+            TextButton(
+              onPressed:
+                  (_isValidating || _controller.text.trim().isEmpty || _isSaved)
+                  ? null
+                  : () async {
+                      setState(() {
+                        _isValidating = true;
+                        _validationError = null;
+                      });
+                      final String enteredText = _controller.text.trim();
+                      final String? error = await GitHub.validatePAT(
+                        enteredText,
+                      );
+                      if (!context.mounted) return;
+
+                      if (error == null) {
+                        widget.settingsProvider.setSettingString(
+                          GitHub.githubCredsKey,
+                          enteredText,
+                        );
+                        GitHub.storePATValidation(
+                          enteredText,
+                          widget.settingsProvider,
+                        );
+                        if (context.mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(content: Text(tr('githubPATValidated'))),
+                          );
+                        }
+                        setState(() {
+                          _isValidating = false;
+                          _isSaved = true;
+                        });
+                      } else {
+                        GitHub.clearPATValidation(widget.settingsProvider);
+                        setState(() {
+                          _isValidating = false;
+                          _validationError = error;
+                        });
+                      }
+                    },
+              child: Text(_isSaved ? tr('saved') : tr('save')),
+            ),
+            TextButton(
+              onPressed:
+                  !GitHub.hasValidatedPAT(
+                    widget.settingsProvider.getSettingString(
+                      GitHub.githubCredsKey,
+                    ),
+                    widget.settingsProvider,
+                  )
+                  ? null
+                  : () {
+                      Navigator.of(context).pop();
+                      widget.onSearchAgain();
+                    },
+              child: Text(tr('searchAgain')),
+            ),
+          ],
+        ),
+      ],
     );
   }
 }

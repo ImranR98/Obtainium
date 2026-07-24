@@ -34,7 +34,7 @@
     <tr>
         <td>Navigation</td>
         <td>• No navigation bar or tabs. You have to return to homepage to go anywhere else.<br>• Groups can be collapsed individually (no collapse-all)<br>• Expanded/collapsed state is reset on every restart</td>
-        <td>• Pinned navigation bar - switch to any tab from any tab<br>• Groups can be collapsed individually or collapse-all<br>• Every expanded/collapsed state is always remembered</td>
+        <td>• Floating navigation pill - switch to any tab from any tab<br>• Groups can be collapsed individually or collapse-all<br>• Every expanded/collapsed state is always remembered</td>
     </tr>
     <tr>
         <td>In-list live search</td>
@@ -48,9 +48,14 @@
     </tr>
     <tr>
         <td>Ease of Update</td>
-        <td>• Button at center of app row, can misalign per row.<br>• Update-all button at the top of apps list<br>• Updates scattered across individual groups</td>
-        <td>• Button at right end, in perfect alignment<br>• Update-all button at the bottom, within easy thumb reach<br>• Unified Updates group at the top</td>
+        <td>• Button at center of app row, can misalign per row.<br>• Update-all button at the top of apps list<br>• Updates scattered across individual groups<br>• Can't quickly say how many updates are available<br>• OOTB version comparison seems to be buggy.</td>
+        <td>• Button at right end, in perfect alignment<br>• Update-all button at the bottom, within easy thumb reach<br>• Unified Updates group at the top<br>• Upate button shows count of available upates<br>• OOTB version comparison is smarter.</td>
     </tr>
+    <tr>
+        <td>Bulk Update</td>
+        <td>• Eligible apps listed in centered, narrow panel<br>• Long flat list includes updates, non-installed apps, track-only apps, with no collapse option. <br>• A single "Select all" checkbox that select all 3 types.</td>
+        <td>• Eligible apps listed in full width bottom sheet<br>• All 3 types are collapsible, latter two collapsed by default <br>• Each of the 3 types have their own "Select all" checkbox</td>
+    </tr>    
     <tr>
         <td>Category Visibility</td>
         <td>• Thin, side-by-side color strips.<br>• Multiple categories overflow and blend together, making them difficult to distinguish.</td>
@@ -71,6 +76,18 @@
         <td width="33%" align="center" valign="top">
             <img src="../assets/screenshots/Category_Badges.webp" alt="ObtainX category chips shown on app rows" width="300" /><br />
             <strong>ObtainX</strong>
+        </td>
+    </tr>
+    <tr>
+        <td width="33%" align="center" valign="top">
+            <img src="../assets/screenshots/Compare_Bulk_Update_1.webp" alt="Obtainium bulk update dialog" width="300" /><br />
+            <strong>Obtainium - wrong updates</strong>
+        </td>
+        <td width="33%" align="center" valign="top">
+            <img src="../assets/screenshots/Compare_Bulk_Update_2.webp" alt="Obtainium bulk update dialog" width="300" /><br />
+            <strong>ObtainX - only valid updates</strong>
+        </td>
+        <td width="33%" align="center" valign="top">
         </td>
     </tr>
 </table>
@@ -275,8 +292,8 @@ ObtainX's filters provide tri-state options (neutral/include/exclude) plus Any/A
     </tr>
     <tr>
         <td>Changelog view</td>
-        <td>• Centered, narrow panel squishes text vertically<br>• Completely obscures the center of the screen<br>• Doesn't show screenshots present in release notes</td>
-        <td>• Full-width bottom sheet (wider, better readable text layout)<br>• Keeps background app context visible<br>• Shows screenshots present in release notes</td>
+        <td>• Centered, narrow panel squishes text vertically<br>• Completely obscures the center of the screen<br>• Doesn't show screenshots present in release notes<br>• Can't fetch changelog from APKMirror apps</td>
+        <td>• Full-width bottom sheet (wider, better readable text layout)<br>• Keeps background app context visible<br>• Shows screenshots present in release notes<br>• Fetches changelog from APKMirror apps too</td>
     </tr>
     <tr>
         <td>Update check configuration</td>

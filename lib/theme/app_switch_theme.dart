@@ -18,7 +18,14 @@ SwitchThemeData appSwitchTheme(ColorScheme colorScheme) {
       if (states.contains(WidgetState.selected)) {
         return Icon(Icons.check_rounded, color: colorScheme.primary, size: 16);
       }
-      return null;
+      // Off-state icon completes the M3 Expressive switch: a non-null unselected
+      // thumbIcon also makes Material render the unselected thumb at the larger
+      // (fuller) footprint instead of the small dot.
+      return Icon(
+        Icons.close_rounded,
+        color: colorScheme.surfaceContainerHighest,
+        size: 16,
+      );
     }),
     thumbColor: WidgetStateProperty.resolveWith<Color?>((states) {
       if (states.contains(WidgetState.disabled) ||

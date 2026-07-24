@@ -670,6 +670,26 @@ This app description should not be included.
     );
   });
 
+  test('apk mirror app listing without changelog returns no content', () async {
+    expect(
+      await apkMirrorChangeLogFromReleasePageHtml('''
+<html>
+  <head>
+    <title>Download Markup APKs for Android - APKMirror</title>
+    <meta name="description" content="Download Markup APKs" />
+    <style>.appRow { display: block; }</style>
+  </head>
+  <body>
+    <h1>Markup</h1>
+    <h3>Markup variants</h3>
+    <h3>All versions</h3>
+  </body>
+</html>
+'''),
+      isNull,
+    );
+  });
+
   test('app copy preserves known apk size when refreshed size is unknown', () {
     final currentApp = App(
       id: 'app-id',

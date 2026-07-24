@@ -6,10 +6,11 @@ import 'package:easy_localization/easy_localization.dart' hide TextDirection;
 import 'package:expressive_loading_indicator/expressive_loading_indicator.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart' show ScrollCacheExtent;
-import 'package:obtainium/components/rippling_wavy_progress/linear.dart';
+import 'package:obtainium/components/app_bottom_sheet.dart';
 import 'package:obtainium/components/app_dropdown_field.dart';
 import 'package:obtainium/components/custom_app_bar.dart';
 import 'package:obtainium/components/generated_form_renderer.dart';
+import 'package:obtainium/components/rippling_wavy_progress/linear.dart';
 import 'package:obtainium/custom_errors.dart';
 import 'package:obtainium/providers/apps_provider.dart';
 import 'package:obtainium/providers/settings_provider.dart';
@@ -747,7 +748,7 @@ class SelectionModal extends StatefulWidget {
   bool onlyOneSelectionAllowed;
   bool titlesAreLinks;
 
-  /// When true, [build] returns sheet content for [showModalBottomSheet] (drag handle, rounded top).
+  /// When true, [build] returns content for the shared app sheet scaffold.
   bool presentAsBottomSheet;
 
   /// When false, the regex filter field is hidden (for short lists such as searchable sources).
@@ -1061,16 +1062,6 @@ class _SelectionModalState extends State<SelectionModal> {
 
     if (widget.presentAsBottomSheet) {
       final ColorScheme colorScheme = Theme.of(context).colorScheme;
-      final double screenHeight = MediaQuery.sizeOf(context).height;
-      final bool isLandscape =
-          MediaQuery.orientationOf(context) == Orientation.landscape;
-      final EdgeInsets viewPadding = MediaQuery.paddingOf(context);
-      // Max height for the sheet column — from just below the status bar.
-      final double unconstrainedSheetHeight =
-          screenHeight - viewPadding.top - 16;
-      final double areaBelowStatusBar = unconstrainedSheetHeight > 0
-          ? unconstrainedSheetHeight
-          : 0;
 
       void popWithSelectedKeys() {
         Navigator.of(context).pop(
@@ -1135,218 +1126,142 @@ class _SelectionModalState extends State<SelectionModal> {
           .where((bool selected) => selected)
           .length;
 
-      final double sheetBarTopPadding = isLandscape ? 2 : 12;
-      final double sheetBottomInset =
-          MediaQuery.paddingOf(context).bottom + (isLandscape ? 2 : 20);
-      final double sheetActionIconSize = isLandscape ? 20 : 24;
-      final BoxConstraints? sheetActionConstraints = isLandscape
-          ? const BoxConstraints.tightFor(width: 32, height: 32)
-          : null;
-      final EdgeInsetsGeometry? sheetActionPadding = isLandscape
-          ? EdgeInsets.zero
-          : null;
-
       Widget sheetIconBar() {
-        Widget slot(Widget child) => Expanded(child: Center(child: child));
-        if (widget.onlyOneSelectionAllowed) {
-          return Padding(
-            padding: EdgeInsets.fromLTRB(
-              20,
-              sheetBarTopPadding,
-              20,
-              sheetBottomInset,
-            ),
-            child: Row(
-              children: [
-                slot(
-                  IconButton(
-                    visualDensity: VisualDensity.compact,
-                    iconSize: sheetActionIconSize,
-                    constraints: sheetActionConstraints,
-                    padding: sheetActionPadding,
-                    color: colorScheme.primary,
-                    tooltip: tr('cancel'),
-                    icon: const Icon(Icons.close),
-                    onPressed: () {
-                      Navigator.of(context).pop();
-                    },
-                  ),
-                ),
-                slot(
-                  IconButton(
-                    visualDensity: VisualDensity.compact,
-                    iconSize: sheetActionIconSize,
-                    constraints: sheetActionConstraints,
-                    padding: sheetActionPadding,
-                    color: colorScheme.primary,
-                    tooltip: tr('continue'),
-                    icon: const Icon(Icons.check),
-                    onPressed: hasSelection ? popWithSelectedKeys : null,
-                  ),
-                ),
-              ],
+        Widget slot({
+          required String tooltip,
+          required Widget icon,
+          required VoidCallback? onPressed,
+          bool primary = false,
+        }) {
+          return Expanded(
+            child: Center(
+              child: primary
+                  ? IconButton.filled(
+                      tooltip: tooltip,
+                      constraints: const BoxConstraints.tightFor(
+                        width: 48,
+                        height: 48,
+                      ),
+                      icon: icon,
+                      onPressed: onPressed,
+                    )
+                  : IconButton.filledTonal(
+                      tooltip: tooltip,
+                      constraints: const BoxConstraints.tightFor(
+                        width: 48,
+                        height: 48,
+                      ),
+                      icon: icon,
+                      onPressed: onPressed,
+                    ),
             ),
           );
         }
-        return Padding(
-          padding: EdgeInsets.fromLTRB(
-            20,
-            sheetBarTopPadding,
-            20,
-            sheetBottomInset,
-          ),
-          child: Row(
+
+        if (widget.onlyOneSelectionAllowed) {
+          return Row(
             children: [
               slot(
-                IconButton(
-                  visualDensity: VisualDensity.compact,
-                  iconSize: sheetActionIconSize,
-                  constraints: sheetActionConstraints,
-                  padding: sheetActionPadding,
-                  color: colorScheme.primary,
-                  tooltip: tr('selectAll'),
-                  icon: const Icon(Icons.select_all_outlined),
-                  onPressed: _isSubmitting
-                      ? null
-                      : () {
-                          setState(() {
-                            selectAll();
-                          });
-                        },
-                ),
+                tooltip: tr('cancel'),
+                icon: const Icon(Icons.close_rounded),
+                onPressed: () {
+                  Navigator.of(context).pop();
+                },
               ),
               slot(
-                IconButton(
-                  visualDensity: VisualDensity.compact,
-                  iconSize: sheetActionIconSize,
-                  constraints: sheetActionConstraints,
-                  padding: sheetActionPadding,
-                  color: colorScheme.primary,
-                  tooltip: tr('deselectAll'),
-                  icon: const Icon(Icons.deselect),
-                  onPressed: _isSubmitting
-                      ? null
-                      : () {
-                          setState(() {
-                            selectAll(deselect: true);
-                          });
-                        },
-                ),
-              ),
-              slot(
-                IconButton(
-                  visualDensity: VisualDensity.compact,
-                  iconSize: sheetActionIconSize,
-                  constraints: sheetActionConstraints,
-                  padding: sheetActionPadding,
-                  color: colorScheme.primary,
-                  tooltip: tr('cancel'),
-                  icon: const Icon(Icons.close),
-                  onPressed: _isSubmitting
-                      ? null
-                      : () {
-                          Navigator.of(context).pop();
-                        },
-                ),
-              ),
-              slot(
-                IconButton(
-                  visualDensity: VisualDensity.compact,
-                  iconSize: sheetActionIconSize,
-                  constraints: sheetActionConstraints,
-                  padding: sheetActionPadding,
-                  color: colorScheme.primary,
-                  tooltip: widget.onSubmitSelection == null
-                      ? tr('selectX', args: [selectionCount.toString()])
-                      : tr('save'),
-                  icon: _isSubmitting
-                      ? ExpressiveLoadingIndicator(
-                          color: colorScheme.primary,
-                          constraints: BoxConstraints.tightFor(
-                            width: sheetActionIconSize,
-                            height: sheetActionIconSize,
-                          ),
-                        )
-                      : Icon(
-                          widget.onSubmitSelection == null
-                              ? Icons.check_rounded
-                              : Icons.save_rounded,
-                        ),
-                  onPressed: hasSelection && !_isSubmitting
-                      ? () => unawaited(submitSelectedKeys())
-                      : null,
-                ),
+                tooltip: tr('continue'),
+                icon: const Icon(Icons.check_rounded),
+                onPressed: hasSelection ? popWithSelectedKeys : null,
+                primary: true,
               ),
             ],
-          ),
+          );
+        }
+        return Row(
+          children: [
+            slot(
+              tooltip: tr('selectAll'),
+              icon: const Icon(Icons.select_all_rounded),
+              onPressed: _isSubmitting
+                  ? null
+                  : () {
+                      setState(() {
+                        selectAll();
+                      });
+                    },
+            ),
+            slot(
+              tooltip: tr('deselectAll'),
+              icon: const Icon(Icons.deselect_rounded),
+              onPressed: _isSubmitting
+                  ? null
+                  : () {
+                      setState(() {
+                        selectAll(deselect: true);
+                      });
+                    },
+            ),
+            slot(
+              tooltip: tr('cancel'),
+              icon: const Icon(Icons.close_rounded),
+              onPressed: _isSubmitting
+                  ? null
+                  : () {
+                      Navigator.of(context).pop();
+                    },
+            ),
+            slot(
+              tooltip: widget.onSubmitSelection == null
+                  ? tr('selectX', args: [selectionCount.toString()])
+                  : tr('save'),
+              icon: _isSubmitting
+                  ? ExpressiveLoadingIndicator(
+                      color: colorScheme.onSurfaceVariant,
+                      constraints: const BoxConstraints.tightFor(
+                        width: 24,
+                        height: 24,
+                      ),
+                    )
+                  : Icon(
+                      widget.onSubmitSelection == null
+                          ? Icons.check_rounded
+                          : Icons.save_rounded,
+                    ),
+              onPressed: hasSelection && !_isSubmitting
+                  ? () => unawaited(submitSelectedKeys())
+                  : null,
+              primary: true,
+            ),
+          ],
         );
       }
 
-      return Align(
-        alignment: Alignment.bottomCenter,
-        child: SizedBox(
-          height: areaBelowStatusBar,
-          child: SafeArea(
-            top: false,
-            bottom: false,
-            child: Padding(
-              padding: const EdgeInsets.fromLTRB(20, 12, 20, 0),
-              child: Column(
-                mainAxisSize: MainAxisSize.max,
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  Expanded(
-                    child: CustomScrollView(
-                      keyboardDismissBehavior:
-                          ScrollViewKeyboardDismissBehavior.onDrag,
-                      slivers: [
-                        SliverToBoxAdapter(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.stretch,
-                            children: [
-                              Center(
-                                child: Container(
-                                  margin: const EdgeInsets.only(bottom: 12),
-                                  width: 40,
-                                  height: 4,
-                                  decoration: BoxDecoration(
-                                    color: colorScheme.outlineVariant,
-                                    borderRadius: BorderRadius.circular(2),
-                                  ),
-                                ),
-                              ),
-                              Padding(
-                                padding: const EdgeInsets.only(bottom: 12),
-                                child: Text(
-                                  widget.title ?? tr('pick'),
-                                  style: Theme.of(context).textTheme.titleLarge
-                                      ?.copyWith(fontWeight: FontWeight.w600),
-                                ),
-                              ),
-                              if (filterFormWidget != null) ...[
-                                filterFormWidget,
-                                const SizedBox(height: 8),
-                              ],
-                            ],
-                          ),
-                        ),
-                        SliverList(
-                          delegate: SliverChildBuilderDelegate(
-                            (context, index) =>
-                                buildEntryTile(filteredEntryKeys[index]),
-                            childCount: filteredEntryKeys.length,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  const Divider(height: 1),
-                  sheetIconBar(),
-                ],
-              ),
+      return AppSheetScaffold(
+        expand: true,
+        header: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Text(
+              widget.title ?? tr('pick'),
+              style: Theme.of(
+                context,
+              ).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w700),
             ),
-          ),
+            if (filterFormWidget != null) ...[
+              const SizedBox(height: 12),
+              filterFormWidget,
+            ],
+          ],
         ),
+        body: ListView.builder(
+          keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
+          padding: const EdgeInsets.fromLTRB(20, 0, 20, 8),
+          itemCount: filteredEntryKeys.length,
+          itemBuilder: (BuildContext context, int index) {
+            return buildEntryTile(filteredEntryKeys[index]);
+          },
+        ),
+        footer: sheetIconBar(),
       );
     }
 

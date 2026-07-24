@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:ui';
 
 import 'package:app_links/app_links.dart';
 import 'package:easy_localization/easy_localization.dart';
@@ -15,8 +16,6 @@ import 'package:obtainium/providers/apps_provider.dart';
 import 'package:obtainium/providers/settings_provider.dart';
 import 'package:obtainium/providers/source_provider.dart';
 import 'package:obtainium/services/shared_url_receiver.dart';
-import 'package:obtainium/theme/app_theme_accent.dart';
-import 'package:obtainium/widgets/progressive_top_edge_overlay.dart';
 import 'package:provider/provider.dart';
 
 class HomePage extends StatefulWidget {
@@ -36,6 +35,7 @@ class NavigationPageItem {
 
 class _DirectionalIndexedStack extends StatefulWidget {
   const _DirectionalIndexedStack({
+    super.key,
     required this.index,
     required this.axis,
     required this.children,
@@ -82,11 +82,48 @@ class _DirectionalIndexedStackState extends State<_DirectionalIndexedStack>
   @override
   void didUpdateWidget(covariant _DirectionalIndexedStack oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (widget.index == _currentIndex) return;
+    if (widget.index == _currentIndex) {
+      if (_previousIndex != null) {
+        _controller.stop();
+        _controller.value = 1.0;
+        setState(() {
+          _previousIndex = null;
+        });
+      }
+      return;
+    }
     _direction = widget.index > _currentIndex ? 1 : -1;
     _previousIndex = _currentIndex;
     _currentIndex = widget.index;
     _controller.forward(from: 0);
+  }
+
+  /// Ends a slide that never finished (e.g. interrupted by a shell rebuild).
+  void completeTransitionIfStuck() {
+    if (_previousIndex == null) return;
+    _controller.stop();
+    _controller.value = 1.0;
+    if (!mounted) return;
+    setState(() {
+      _previousIndex = null;
+    });
+  }
+
+  bool _pageIgnoresPointer(int index) {
+    if (_previousIndex == null) {
+      return index != _currentIndex;
+    }
+    if (index != _currentIndex && index != _previousIndex) {
+      return true;
+    }
+    final double progress = _animation.value;
+    if (index == _previousIndex) {
+      return progress >= 0.5;
+    }
+    if (index == _currentIndex) {
+      return progress < 0.5;
+    }
+    return true;
   }
 
   @override
@@ -129,7 +166,7 @@ class _DirectionalIndexedStackState extends State<_DirectionalIndexedStack>
                       enabled:
                           index == _currentIndex || index == _previousIndex,
                       child: IgnorePointer(
-                        ignoring: index != _currentIndex,
+                        ignoring: _pageIgnoresPointer(index),
                         child: FractionalTranslation(
                           translation: _offsetFor(index, _animation.value),
                           child: widget.children[index],
@@ -156,16 +193,43 @@ class HomePageState extends State<HomePage> {
   final SharedUrlReceiver _sharedUrlReceiver = SharedUrlReceiver();
   bool isLinkActivity = false;
 
-  List<NavigationPageItem> pages = [
+  /// Bumps when [AppsPageState] FAB chrome (badge, mass obtain, selection)
+  /// changes so the bottom nav FAB row can rebuild without [setState] on
+  /// [HomePageState] (avoids relayout during pointer routing / tooltips).
+  final ValueNotifier<int> appsTabFabChromeTick = ValueNotifier<int>(0);
+  int? _lastHomeAppsFabProviderSyncKey;
+  bool _homeFabNullStateRetryScheduled = false;
+
+  final GlobalKey<_DirectionalIndexedStackState> _pageStackKey =
+      GlobalKey<_DirectionalIndexedStackState>();
+
+  void _onAppsPageFabStateChanged() {
+    if (!mounted) return;
+    final int activeIndex = selectedIndexHistory.isEmpty
+        ? 0
+        : selectedIndexHistory.last;
+    if (activeIndex != 0) return;
+    setState(() {});
+  }
+
+  late final List<NavigationPageItem> pages = [
     NavigationPageItem(
       tr('appsString'),
       Icons.apps,
-      AppsPage(key: GlobalKey<AppsPageState>()),
+      AppsPage(
+        key: GlobalKey<AppsPageState>(),
+        homeFabChromeTick: appsTabFabChromeTick,
+        onStateChanged: _onAppsPageFabStateChanged,
+      ),
     ),
     NavigationPageItem(
       tr('addApp'),
       Icons.add,
-      AddAppPage(key: GlobalKey<AddAppPageState>()),
+      AddAppPage(
+        key: GlobalKey<AddAppPageState>(),
+        homeFabChromeTick: appsTabFabChromeTick,
+        onStateChanged: _onAppsPageFabStateChanged,
+      ),
     ),
     NavigationPageItem(
       tr('importExport'),
@@ -349,22 +413,267 @@ class HomePageState extends State<HomePage> {
     });
   }
 
-  NavigationBar _materialHomeNavigationBar({
-    required List<NavigationDestination> destinations,
+  Widget _floatingHomeNavigationBar({
+    required List<NavigationPageItem> pages,
     required int selectedIndex,
-    required bool transparent,
+    required int updateCount,
+    required bool blurBottomNav,
+    required ColorScheme scheme,
+    required BuildContext context,
   }) {
-    return NavigationBar(
-      backgroundColor: transparent ? Colors.transparent : null,
-      surfaceTintColor: transparent ? Colors.transparent : null,
-      elevation: transparent ? 0 : null,
-      shadowColor: transparent ? Colors.transparent : null,
-      destinations: destinations,
-      onDestinationSelected: (int index) async {
-        hapticSelection();
-        unawaited(switchToPage(index));
+    context.select<AppsProvider, int>(
+      (AppsProvider provider) => Object.hash(
+        provider.loadingApps,
+        provider.appsListRevision,
+        provider.apps.length,
+        provider.pendingUpdateCount,
+        provider.areDownloadsRunning(),
+      ),
+    );
+    return ValueListenableBuilder<int>(
+      valueListenable: appsTabFabChromeTick,
+      builder: (BuildContext context, int _, Widget? child) {
+        return _floatingHomeNavigationBarContent(
+          pages: pages,
+          selectedIndex: selectedIndex,
+          blurBottomNav: blurBottomNav,
+          scheme: scheme,
+          context: context,
+        );
       },
-      selectedIndex: selectedIndex,
+    );
+  }
+
+  Widget _floatingHomeNavigationBarContent({
+    required List<NavigationPageItem> pages,
+    required int selectedIndex,
+    required bool blurBottomNav,
+    required ColorScheme scheme,
+    required BuildContext context,
+  }) {
+    final bool keyboardOpen = MediaQuery.of(context).viewInsets.bottom > 0;
+    final double bottomInset = MediaQuery.of(context).padding.bottom;
+
+    bool isAddAppSubFlowActive = false;
+    if (selectedIndex == 1) {
+      final key = pages[1].widget.key;
+      if (key is GlobalKey<AddAppPageState>) {
+        if (key.currentState != null) {
+          isAddAppSubFlowActive = key.currentState!.isSubFlowActive;
+        }
+      }
+    }
+
+    // Check AppsPageState for side FABs when on the Apps tab (selectedIndex == 0)
+    Widget? leadingFab;
+    Widget? trailingFab;
+
+    if (selectedIndex == 0) {
+      final key = pages[0].widget.key;
+      if (key is GlobalKey<AppsPageState>) {
+        if (key.currentState != null) {
+          final state = key.currentState!;
+
+          // 1. Left side FAB: Update-all FAB (when operations available) with bottom-left badge
+          if (state.hasMassObtainOperations) {
+            final Widget fabButton = FloatingActionButton.small(
+              heroTag: 'home_update_all_fab',
+              backgroundColor: scheme.primaryContainer,
+              foregroundColor: scheme.onPrimaryContainer,
+              onPressed: () {
+                hapticSelection();
+                state.runMassObtain();
+              },
+              tooltip: null,
+              child: const Icon(Icons.file_download_outlined, size: 20),
+            );
+
+            leadingFab = Stack(
+              clipBehavior: Clip.none,
+              children: [
+                fabButton,
+                if (state.pageUpdateCount > 0)
+                  Positioned(
+                    left: -4,
+                    bottom: -4,
+                    child: Badge(
+                      label: Text(state.pageUpdateCount.toString()),
+                      backgroundColor: scheme.error,
+                      textColor: scheme.onError,
+                    ),
+                  ),
+              ],
+            );
+          }
+
+          // 2. Right side FAB: View Options FAB or Selection Actions FAB
+          if (state.isSelectionActive) {
+            trailingFab = FloatingActionButton.small(
+              heroTag: 'home_actions_fab',
+              backgroundColor: scheme.primary,
+              foregroundColor: scheme.onPrimary,
+              onPressed: () {
+                hapticSelection();
+                state.openSelectionActionsSheet();
+              },
+              tooltip: null,
+              child: const Icon(Icons.checklist, size: 20),
+            );
+          } else {
+            trailingFab = FloatingActionButton.small(
+              heroTag: 'home_view_options_fab',
+              backgroundColor: scheme.surfaceContainerHighest,
+              foregroundColor: scheme.onSurfaceVariant,
+              onPressed: () {
+                hapticSelection();
+                state.openViewOptionsSheet();
+              },
+              tooltip: null,
+              child: const Icon(Icons.tune, size: 20),
+            );
+          }
+        } else if (!_homeFabNullStateRetryScheduled) {
+          _homeFabNullStateRetryScheduled = true;
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            _homeFabNullStateRetryScheduled = false;
+            if (mounted) {
+              appsTabFabChromeTick.value = appsTabFabChromeTick.value + 1;
+            }
+          });
+        }
+      }
+    }
+
+    final Widget pillRow = Row(
+      mainAxisSize: MainAxisSize.min,
+      children: List.generate(pages.length, (int index) {
+        final bool isSelected = selectedIndex == index;
+        final page = pages[index];
+
+        final Widget iconWidget = Icon(
+          page.icon,
+          size: 21,
+          color: isSelected
+              ? scheme.onPrimaryContainer
+              : scheme.onSurfaceVariant,
+        );
+
+        return GestureDetector(
+          behavior: HitTestBehavior.opaque,
+          onTap: () async {
+            hapticSelection();
+            unawaited(switchToPage(index));
+          },
+          child: AnimatedContainer(
+            // M3 expressive (emphasized) motion, matched to the page transition
+            // above so the selection indicator settles in sync with the page.
+            duration: const Duration(milliseconds: 300),
+            curve: Curves.easeInOutCubicEmphasized,
+            margin: const EdgeInsets.symmetric(horizontal: 2.0),
+            padding: EdgeInsets.symmetric(
+              horizontal: isSelected ? 15.0 : 11.0,
+              vertical: 10.0,
+            ),
+            decoration: BoxDecoration(
+              color: isSelected ? scheme.primaryContainer : Colors.transparent,
+              borderRadius: BorderRadius.circular(22),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                iconWidget,
+                ClipRect(
+                  child: AnimatedSize(
+                    duration: const Duration(milliseconds: 300),
+                    curve: Curves.easeInOutCubicEmphasized,
+                    child: isSelected
+                        ? Padding(
+                            padding: const EdgeInsets.only(left: 7.0),
+                            child: Text(
+                              page.title,
+                              maxLines: 1,
+                              overflow: TextOverflow.clip,
+                              style: TextStyle(
+                                fontSize: 13.5,
+                                fontWeight: FontWeight.w600,
+                                color: scheme.onPrimaryContainer,
+                              ),
+                            ),
+                          )
+                        : const SizedBox.shrink(),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      }),
+    );
+
+    final Widget pillContent = Padding(
+      padding: const EdgeInsets.all(5.0),
+      child: pillRow,
+    );
+
+    final Widget pillShape = Material(
+      elevation: 6,
+      shadowColor: Colors.black.withValues(alpha: 0.35),
+      borderRadius: BorderRadius.circular(30),
+      color: Colors.transparent,
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(30),
+        child: BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 16, sigmaY: 16),
+          child: Container(
+            decoration: BoxDecoration(
+              color: scheme.surfaceContainerHighest.withValues(alpha: 0.55),
+              borderRadius: BorderRadius.circular(30),
+            ),
+            child: pillContent,
+          ),
+        ),
+      ),
+    );
+
+    final Widget compositeRow = Row(
+      mainAxisSize: MainAxisSize.min,
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        SizedBox(
+          width: 48,
+          child: leadingFab != null
+              ? Align(alignment: Alignment.centerRight, child: leadingFab)
+              : const SizedBox.shrink(),
+        ),
+        const SizedBox(width: 8),
+        pillShape,
+        const SizedBox(width: 8),
+        SizedBox(
+          width: 48,
+          child: trailingFab != null
+              ? Align(alignment: Alignment.centerLeft, child: trailingFab)
+              : const SizedBox.shrink(),
+        ),
+      ],
+    );
+
+    return AnimatedSlide(
+      duration: const Duration(milliseconds: 300),
+      curve: Curves.easeInOutCubicEmphasized,
+      offset: (keyboardOpen || isAddAppSubFlowActive)
+          ? const Offset(0, 1.5)
+          : Offset.zero,
+      child: Padding(
+        padding: EdgeInsets.only(
+          left: 12.0,
+          right: 12.0,
+          bottom: 10.0 + bottomInset,
+        ),
+        child: Align(
+          alignment: Alignment.bottomCenter,
+          child: FittedBox(fit: BoxFit.scaleDown, child: compositeRow),
+        ),
+      ),
     );
   }
 
@@ -373,6 +682,7 @@ class HomePageState extends State<HomePage> {
         ? 0
         : selectedIndexHistory.last;
     if (activeIndex == index) {
+      _pageStackKey.currentState?.completeTransitionIfStuck();
       return;
     }
 
@@ -452,6 +762,17 @@ class HomePageState extends State<HomePage> {
     prevAppCount = appsCount;
     prevIsLoading = isLoading;
 
+    final int homeAppsFabProviderSyncKey = Object.hash(
+      appsCount,
+      isLoading,
+      updateCount,
+    );
+    if (_lastHomeAppsFabProviderSyncKey != null &&
+        homeAppsFabProviderSyncKey != _lastHomeAppsFabProviderSyncKey) {
+      appsTabFabChromeTick.value = appsTabFabChromeTick.value + 1;
+    }
+    _lastHomeAppsFabProviderSyncKey = homeAppsFabProviderSyncKey;
+
     return PopScope(
       canPop:
           isLinkActivity &&
@@ -528,19 +849,6 @@ class HomePageState extends State<HomePage> {
                 )
               : Icon(entry.value.icon);
 
-          final List<NavigationDestination> homeNavDestinations = isLargeScreen
-              ? const <NavigationDestination>[]
-              : pages
-                    .asMap()
-                    .entries
-                    .map(
-                      (entry) => NavigationDestination(
-                        icon: navIcon(entry),
-                        label: entry.value.title,
-                      ),
-                    )
-                    .toList();
-
           // NavigationRailDestination.selectedIcon defaults to [icon] when
           // omitted, so the previous explicit duplicate isn't needed.
           final List<NavigationRailDestination> homeNavRailDestinations =
@@ -577,7 +885,7 @@ class HomePageState extends State<HomePage> {
             // (the search/URL fields are top-anchored, so they stay visible).
             resizeToAvoidBottomInset: false,
             backgroundColor: scheme.surface,
-            extendBody: blurBottomNav && !isLargeScreen,
+            extendBody: !isLargeScreen,
             body: isLargeScreen
                 ? Builder(
                     builder: (BuildContext context) {
@@ -616,6 +924,7 @@ class HomePageState extends State<HomePage> {
                               removeLeft: true,
                               removeRight: true,
                               child: _DirectionalIndexedStack(
+                                key: _pageStackKey,
                                 index: homeNavSelectedIndex,
                                 axis: pageTransitionAxis,
                                 children: pages.map((p) => p.widget).toList(),
@@ -632,39 +941,22 @@ class HomePageState extends State<HomePage> {
                       // Keep all four pages mounted while sliding only the
                       // active page pair during tab changes.
                       _DirectionalIndexedStack(
+                        key: _pageStackKey,
                         index: homeNavSelectedIndex,
                         axis: pageTransitionAxis,
                         children: pages.map((p) => p.widget).toList(),
                       ),
+                      _floatingHomeNavigationBar(
+                        pages: pages,
+                        selectedIndex: homeNavSelectedIndex,
+                        updateCount: updateCount,
+                        blurBottomNav: blurBottomNav,
+                        scheme: scheme,
+                        context: context,
+                      ),
                     ],
                   ),
-            bottomNavigationBar: isLargeScreen
-                ? null
-                : blurBottomNav
-                ? ClipRect(
-                    child: Stack(
-                      alignment: Alignment.bottomCenter,
-                      fit: StackFit.loose,
-                      children: [
-                        Positioned.fill(
-                          child: ProgressiveBottomEdgeBlur(
-                            overlayColor:
-                                scheme.schemeProgressiveBlurOverlayTint,
-                          ),
-                        ),
-                        _materialHomeNavigationBar(
-                          destinations: homeNavDestinations,
-                          selectedIndex: homeNavSelectedIndex,
-                          transparent: true,
-                        ),
-                      ],
-                    ),
-                  )
-                : _materialHomeNavigationBar(
-                    destinations: homeNavDestinations,
-                    selectedIndex: homeNavSelectedIndex,
-                    transparent: false,
-                  ),
+            bottomNavigationBar: null,
           );
         },
       ),
@@ -673,6 +965,7 @@ class HomePageState extends State<HomePage> {
 
   @override
   void dispose() {
+    appsTabFabChromeTick.dispose();
     _linkSubscription?.cancel();
     _sharedUrlReceiver.dispose();
     super.dispose();

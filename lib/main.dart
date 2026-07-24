@@ -1,4 +1,5 @@
 import 'dart:async' show unawaited;
+import 'dart:io' show File;
 import 'dart:ui' show PlatformDispatcher, PointerDeviceKind;
 
 import 'package:flutter/material.dart';
@@ -224,35 +225,43 @@ class MyTaskHandler extends TaskHandler {
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   installDiagnosticErrorLogging();
-  await EasyLocalization.ensureInitialized();
-  if ((await DeviceInfoPlugin().androidInfo).version.sdkInt >= 29) {
+  final SettingsProvider settingsProvider = SettingsProvider();
+  final np = NotificationsProvider();
+  // These startup round-trips are independent of one another, so run them
+  // concurrently instead of serially to shorten time-to-first-frame. Settings
+  // must complete before runApp (the theme reads it); EasyLocalization,
+  // notifications and WorkManager are awaited here too but overlap. The
+  // device-info lookup (only used to choose the system-UI mode below) runs
+  // alongside rather than blocking ahead of them.
+  final androidInfoFuture = DeviceInfoPlugin().androidInfo;
+  await Future.wait([
+    EasyLocalization.ensureInitialized(),
+    settingsProvider.initializeSettings(),
+    np.initialize(),
+    Workmanager().initialize(callbackDispatcher),
+  ]);
+  if ((await androidInfoFuture).version.sdkInt >= 29) {
     SystemChrome.setSystemUIOverlayStyle(
       const SystemUiOverlayStyle(systemNavigationBarColor: Colors.transparent),
     );
     unawaited(SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge));
   }
-  final SettingsProvider settingsProvider = SettingsProvider();
-  final np = NotificationsProvider();
-  // These three native initializations are independent of one another, so run
-  // their platform-channel round-trips concurrently instead of serially to
-  // shorten time-to-first-frame. Only settings must complete before runApp
-  // (the theme reads it); np/WorkManager are awaited here too but overlap.
-  await Future.wait([
-    settingsProvider.initializeSettings(),
-    np.initialize(),
-    Workmanager().initialize(callbackDispatcher),
-  ]);
   // The system font (when enabled) is loaded lazily after the first frame in
   // [_ObtainiumState.build] rather than blocking here: reading the font file
   // from disk on the startup path delayed first paint, and FontLoader.load()
   // triggers a repaint of the affected text automatically once it completes.
   FlutterForegroundTask.initCommunicationPort();
+  // Construct AppsProvider eagerly (before runApp) so its async init — which
+  // ends in the initial loadApps() — starts overlapping the first-frame render
+  // instead of running lazily on the first build (which happens after the first
+  // frame and left the home list stuck behind a spinner). Settings are already
+  // initialized above, so the ctor's initializeSettings() call hits its fast
+  // path (no duplicate migrations / native lookups).
+  final appsProvider = AppsProvider(settingsProvider: settingsProvider);
   runApp(
     MultiProvider(
       providers: [
-        ChangeNotifierProvider(
-          create: (context) => AppsProvider(settingsProvider: settingsProvider),
-        ),
+        ChangeNotifierProvider.value(value: appsProvider),
         ChangeNotifierProvider.value(value: settingsProvider),
         Provider(create: (context) => np),
         Provider(create: (context) => LogsProvider()),
@@ -284,6 +293,23 @@ class _ObtainiumState extends State<Obtainium> with WidgetsBindingObserver {
   // app renders with the OS default font (fontFamily: null) until/unless it
   // applies, at which point we rebuild once to switch to it.
   bool _systemFontLoadStarted = false;
+
+  String? _loadedCustomFontPath;
+  bool _customFontLoadFailed = false;
+
+  Future<bool> _loadCustomFont(String path) async {
+    try {
+      final file = File(path);
+      if (await file.exists()) {
+        final fontLoader = FontLoader('CustomFont');
+        final bytes = await file.readAsBytes();
+        fontLoader.addFont(Future.value(bytes.buffer.asByteData()));
+        await fontLoader.load();
+        return true;
+      }
+    } catch (_) {}
+    return false;
+  }
 
   // Cache for the expensive boosted light/dark [ColorScheme]s.
   // [ColorScheme.fromSeed] runs HCT colour-space math and the boost*
@@ -518,7 +544,133 @@ class _ObtainiumState extends State<Obtainium> with WidgetsBindingObserver {
     _schemeCacheKey = key;
     _cachedLightScheme = lightColorScheme;
     _cachedDarkScheme = darkColorScheme;
+    // The scheme pair changed, so any ThemeData memoized against the old schemes
+    // is stale; drop it (only the new light/dark pair gets re-cached below).
+    _appThemeCache.clear();
     return (light: lightColorScheme, dark: darkColorScheme);
+  }
+
+  // Fully-built app ThemeData (base theme + all app-wide sub-themes) memoized
+  // per (ColorScheme, fontFamily). buildObtainiumTheme() and the sub-themes are
+  // pure functions of those two inputs, so this lets rebuilds (settings/theme
+  // toggles) reuse a prebuilt ThemeData — and lets a forced light/dark theme,
+  // whose two MaterialApp slots share one scheme, build it only once. The
+  // ColorScheme instances handed out by [_resolveThemeSchemes] are themselves
+  // cached, so the map lookup hits by identity and stays bounded to the live
+  // light/dark pair (see the clear() above).
+  String? _appThemeCacheFont;
+  final Map<ColorScheme, ThemeData> _appThemeCache = {};
+
+  ThemeData _resolveAppThemeData(ColorScheme scheme, String? fontFamily) {
+    if (_appThemeCacheFont != fontFamily) {
+      _appThemeCache.clear();
+      _appThemeCacheFont = fontFamily;
+    }
+    return _appThemeCache[scheme] ??= _buildAppThemeData(scheme, fontFamily);
+  }
+
+  ThemeData _buildAppThemeData(ColorScheme scheme, String? fontFamily) {
+    // Best-of-both M3E theme: upstream's shape/motion tokens (RoundedSuperellipse
+    // cards/dialogs/fields, stadium buttons/chips, FadeForwards page transitions)
+    // via [buildObtainiumTheme], layered with the fork's boosted colour science
+    // (the passed scheme) plus the fork's vivid surface choices and custom
+    // nav/switch/segmented/tooltip themes via copyWith.
+    final ThemeData base = buildObtainiumTheme(scheme, fontFamily);
+    // Focus overlay opacity tracks brightness (subtler in light, stronger in
+    // dark) rather than the MaterialApp theme/darkTheme slot, so a forced
+    // single-brightness theme produces one identical ThemeData for both slots.
+    final double focusAlpha = scheme.brightness == Brightness.dark
+        ? 0.24
+        : 0.12;
+    return base.copyWith(
+      scaffoldBackgroundColor: scheme.surface,
+      canvasColor: scheme.surface,
+      cardColor: scheme.surfaceContainer,
+      focusColor: scheme.primary.withValues(alpha: focusAlpha),
+      navigationBarTheme: _navigationBarThemeFor(scheme, base.textTheme),
+      segmentedButtonTheme: appSegmentedButtonTheme(scheme),
+      switchTheme: appSwitchTheme(scheme),
+      tooltipTheme: _tooltipThemeFor(scheme),
+      // Fork: tighten dialog action padding + text-button tap target (the "dead
+      // space under the dialog action row" fix), keeping the M3E shapes.
+      dialogTheme: appDialogTheme().copyWith(shape: base.dialogTheme.shape),
+      textButtonTheme: TextButtonThemeData(
+        style: appTextButtonTheme().style!.merge(base.textButtonTheme.style),
+      ),
+    );
+  }
+
+  // Material 3 styled tooltips used app-wide. The default Flutter tooltip is a
+  // small dark rounded-rectangle with white text - a Material 2 holdover.
+  // Theming it lifts every Tooltip in the app (action button hover hints,
+  // settings help icons, IconButton tooltips on toolbars) to a consistent,
+  // M3-themed look without any per-call-site changes.
+  //
+  // Uses `inverseSurface` / `onInverseSurface` per the M3 spec for plain
+  // tooltips: a high-contrast block of colour against the surrounding app
+  // surface. Auto-flips with light/dark mode because [inverseSurface] is dark in
+  // light themes and light in dark themes.
+  //
+  // Default [triggerMode] is manual so Flutter does not attach a global pointer
+  // listener on every [Tooltip] (long-press mode). Rebuilding the tree during
+  // pointer routing used to recreate [RawTooltipState] and spam "multiple
+  // tickers" framework errors. Call sites that need visible tooltips (e.g.
+  // [HelpHintIcon]) set triggerMode explicitly.
+  TooltipThemeData _tooltipThemeFor(ColorScheme scheme) {
+    return TooltipThemeData(
+      triggerMode: TooltipTriggerMode.manual,
+      decoration: BoxDecoration(
+        color: scheme.inverseSurface,
+        borderRadius: BorderRadius.circular(12),
+      ),
+      textStyle: TextStyle(
+        color: scheme.onInverseSurface,
+        fontSize: 13,
+        fontWeight: FontWeight.w500,
+        height: 1.4,
+      ),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      preferBelow: true,
+    );
+  }
+
+  NavigationBarThemeData _navigationBarThemeFor(
+    ColorScheme scheme,
+    TextTheme appTextTheme,
+  ) {
+    // Use the app theme's labelMedium so nav labels keep both the M3 sizing and
+    // the app's active font family.
+    final TextStyle navLabelBase = appTextTheme.labelMedium!;
+    return NavigationBarThemeData(
+      backgroundColor: scheme.surface,
+      surfaceTintColor: Colors.transparent,
+      elevation: 0,
+      shadowColor: Colors.transparent,
+      indicatorColor: scheme.primary.withValues(alpha: 0.14),
+      iconTheme: WidgetStateProperty.resolveWith((Set<WidgetState> states) {
+        if (states.contains(WidgetState.selected)) {
+          return IconThemeData(color: scheme.primary);
+        }
+        return IconThemeData(color: scheme.onSurfaceVariant);
+      }),
+      labelTextStyle: WidgetStateProperty.resolveWith((
+        Set<WidgetState> states,
+      ) {
+        if (states.contains(WidgetState.disabled)) {
+          return navLabelBase.copyWith(
+            color: scheme.onSurfaceVariant.withValues(alpha: 0.38),
+          );
+        }
+        if (states.contains(WidgetState.selected)) {
+          return navLabelBase.copyWith(
+            color: scheme.primary,
+            fontWeight: FontWeight.w600,
+          );
+        }
+        return navLabelBase.copyWith(color: scheme.onSurfaceVariant);
+      }),
+    );
   }
 
   @override
@@ -543,9 +695,28 @@ class _ObtainiumState extends State<Obtainium> with WidgetsBindingObserver {
         s.shadingIntensity,
         s.theme,
         s.appUiScale,
+        s.customFontPath,
+        s.customFontName,
       ),
     );
     final SettingsProvider settingsProvider = context.read<SettingsProvider>();
+
+    if (settingsProvider.customFontPath != _loadedCustomFontPath) {
+      final String? fontPath = settingsProvider.customFontPath;
+      _loadedCustomFontPath = fontPath;
+      _customFontLoadFailed = false;
+      if (fontPath != null) {
+        _loadCustomFont(fontPath).then((success) {
+          if (mounted) {
+            if (!success) {
+              _customFontLoadFailed = true;
+            }
+            setState(() {});
+          }
+        });
+      }
+    }
+
     // The app renders with the OS system font by default (fontFamily: null),
     // which paints immediately with real weights. Off the startup critical
     // path we then try to adopt the device's exact font family explicitly (see
@@ -646,82 +817,6 @@ class _ObtainiumState extends State<Obtainium> with WidgetsBindingObserver {
               ? lightColorScheme
               : darkColorScheme;
 
-          // Material 3 styled tooltips used app-wide. The default Flutter
-          // tooltip is a small dark rounded-rectangle with white text - a
-          // Material 2 holdover. Theming it lifts every Tooltip in the app
-          // (action button hover hints, settings help icons, IconButton
-          // tooltips on toolbars) to a consistent, M3-themed look without
-          // any per-call-site changes.
-          //
-          // Uses `inverseSurface` / `onInverseSurface` per the M3 spec for
-          // plain tooltips: a high-contrast block of colour against the
-          // surrounding app surface, so it reads clearly without competing
-          // with surrounding content. Auto-flips with light/dark mode
-          // because [inverseSurface] is dark in light themes and light in
-          // dark themes.
-          //
-          // [triggerMode] / [waitDuration] / [showDuration] are deliberately
-          // NOT theme-set: per-Tooltip overrides drive the interaction
-          // semantics (long-press for action buttons, tap for help icons),
-          // and we want each call site to keep its current behaviour.
-          TooltipThemeData tooltipThemeFor(ColorScheme scheme) {
-            return TooltipThemeData(
-              decoration: BoxDecoration(
-                color: scheme.inverseSurface,
-                borderRadius: BorderRadius.circular(12),
-              ),
-              textStyle: TextStyle(
-                color: scheme.onInverseSurface,
-                fontSize: 13,
-                fontWeight: FontWeight.w500,
-                height: 1.4,
-              ),
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-              margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-              preferBelow: true,
-            );
-          }
-
-          NavigationBarThemeData navigationBarThemeFor(
-            ColorScheme scheme,
-            TextTheme appTextTheme,
-          ) {
-            // Use the app theme's labelMedium so nav labels keep both the M3
-            // sizing and the app's active font family.
-            final TextStyle navLabelBase = appTextTheme.labelMedium!;
-            return NavigationBarThemeData(
-              backgroundColor: scheme.surface,
-              surfaceTintColor: Colors.transparent,
-              elevation: 0,
-              shadowColor: Colors.transparent,
-              indicatorColor: scheme.primary.withValues(alpha: 0.14),
-              iconTheme: WidgetStateProperty.resolveWith((
-                Set<WidgetState> states,
-              ) {
-                if (states.contains(WidgetState.selected)) {
-                  return IconThemeData(color: scheme.primary);
-                }
-                return IconThemeData(color: scheme.onSurfaceVariant);
-              }),
-              labelTextStyle: WidgetStateProperty.resolveWith((
-                Set<WidgetState> states,
-              ) {
-                if (states.contains(WidgetState.disabled)) {
-                  return navLabelBase.copyWith(
-                    color: scheme.onSurfaceVariant.withValues(alpha: 0.38),
-                  );
-                }
-                if (states.contains(WidgetState.selected)) {
-                  return navLabelBase.copyWith(
-                    color: scheme.primary,
-                    fontWeight: FontWeight.w600,
-                  );
-                }
-                return navLabelBase.copyWith(color: scheme.onSurfaceVariant);
-              }),
-            );
-          }
-
           // Keep the locale-aware English detection in custom_errors.dart in
           // sync (drives lowerCaseIfEnglish / list2FriendlyString). Without
           // this, isEnglish() is stuck false and English strings never get
@@ -731,14 +826,20 @@ class _ObtainiumState extends State<Obtainium> with WidgetsBindingObserver {
           // platform font with real weights). Once an explicit multi-weight
           // device family is loaded, switch to it so a user-picked OEM font is
           // honoured. Montserrat is no longer bundled.
-          final String? appFontFamily = NativeFeatures.systemFontApplied
-              ? 'SystemFont'
-              : null;
-          final ThemeData lightBaseTheme = buildObtainiumTheme(
+          final String? appFontFamily =
+              (settingsProvider.customFontPath != null &&
+                  !_customFontLoadFailed)
+              ? 'CustomFont'
+              : (NativeFeatures.systemFontApplied ? 'SystemFont' : null);
+          // Resolve both MaterialApp theme slots through the memoized builder:
+          // a forced light/dark theme (same scheme for both slots) builds its
+          // ThemeData once, and rebuilds reuse the prebuilt objects instead of
+          // reconstructing buildObtainiumTheme + every sub-theme each frame.
+          final ThemeData lightTheme = _resolveAppThemeData(
             themeColorScheme,
             appFontFamily,
           );
-          final ThemeData darkBaseTheme = buildObtainiumTheme(
+          final ThemeData darkTheme = _resolveAppThemeData(
             darkThemeColorScheme,
             appFontFamily,
           );
@@ -769,60 +870,12 @@ class _ObtainiumState extends State<Obtainium> with WidgetsBindingObserver {
                 child: child ?? const SizedBox.shrink(),
               );
             },
-            // Best-of-both M3E theme: upstream's shape/motion tokens
-            // (RoundedSuperellipse cards/dialogs/fields, stadium buttons/chips,
-            // FadeForwards page transitions) via [buildObtainiumTheme], layered
-            // with the fork's boosted colour science (the passed schemes) plus
-            // the fork's vivid surface choices and custom nav/switch/segmented/
-            // tooltip themes via copyWith.
-            theme: lightBaseTheme.copyWith(
-              scaffoldBackgroundColor: themeColorScheme.surface,
-              canvasColor: themeColorScheme.surface,
-              cardColor: themeColorScheme.surfaceContainer,
-              focusColor: themeColorScheme.primary.withValues(alpha: 0.12),
-              navigationBarTheme: navigationBarThemeFor(
-                themeColorScheme,
-                lightBaseTheme.textTheme,
-              ),
-              segmentedButtonTheme: appSegmentedButtonTheme(themeColorScheme),
-              switchTheme: appSwitchTheme(themeColorScheme),
-              tooltipTheme: tooltipThemeFor(themeColorScheme),
-              // Fork: tighten dialog action padding + text-button tap target
-              // (the "dead space under the dialog action row" fix), while
-              // keeping buildObtainiumTheme's M3E shapes.
-              dialogTheme: appDialogTheme().copyWith(
-                shape: lightBaseTheme.dialogTheme.shape,
-              ),
-              textButtonTheme: TextButtonThemeData(
-                style: appTextButtonTheme().style!.merge(
-                  lightBaseTheme.textButtonTheme.style,
-                ),
-              ),
-            ),
-            darkTheme: darkBaseTheme.copyWith(
-              scaffoldBackgroundColor: darkThemeColorScheme.surface,
-              canvasColor: darkThemeColorScheme.surface,
-              cardColor: darkThemeColorScheme.surfaceContainer,
-              focusColor: darkThemeColorScheme.primary.withValues(alpha: 0.24),
-              navigationBarTheme: navigationBarThemeFor(
-                darkThemeColorScheme,
-                darkBaseTheme.textTheme,
-              ),
-              segmentedButtonTheme: appSegmentedButtonTheme(
-                darkThemeColorScheme,
-              ),
-              switchTheme: appSwitchTheme(darkThemeColorScheme),
-              tooltipTheme: tooltipThemeFor(darkThemeColorScheme),
-              // Fork: see light theme above.
-              dialogTheme: appDialogTheme().copyWith(
-                shape: darkBaseTheme.dialogTheme.shape,
-              ),
-              textButtonTheme: TextButtonThemeData(
-                style: appTextButtonTheme().style!.merge(
-                  darkBaseTheme.textButtonTheme.style,
-                ),
-              ),
-            ),
+            // Best-of-both M3E theme, built and memoized by
+            // [_resolveAppThemeData]: upstream's shape/motion tokens layered
+            // with the fork's boosted colour science and custom
+            // nav/switch/segmented/tooltip themes.
+            theme: lightTheme,
+            darkTheme: darkTheme,
             home: Shortcuts(
               shortcuts: <LogicalKeySet, Intent>{
                 LogicalKeySet(LogicalKeyboardKey.select):

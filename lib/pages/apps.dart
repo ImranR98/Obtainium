@@ -27,10 +27,10 @@ import 'package:obtainium/app_sources/apkmirror.dart';
 import 'package:obtainium/components/app_bottom_sheet.dart';
 import 'package:obtainium/components/app_dropdown_field.dart';
 import 'package:obtainium/components/bulk_category_editor.dart';
+import 'package:obtainium/components/bulk_update_sheet.dart';
 import 'package:obtainium/components/category_action_chip.dart';
 import 'package:obtainium/layout_breakpoints.dart';
 import 'package:obtainium/components/custom_app_bar.dart';
-import 'package:obtainium/components/generated_form_renderer.dart';
 import 'package:obtainium/components/rippling_wavy_progress/circular.dart';
 import 'package:obtainium/components/rippling_wavy_progress/linear.dart';
 import 'package:obtainium/components/ui_widgets.dart' show ActionListTile;
@@ -142,9 +142,6 @@ String visibilityFilterChipLabel(String label, CategoryFilterIntent intent) {
   };
 }
 
-const Duration _appsGroupHeaderTransitionDuration = Duration(milliseconds: 300);
-const Curve _appsGroupTransitionCurve = Curves.easeInOutCubicEmphasized;
-
 class _AppsGroupHeaderDelegate extends SliverPersistentHeaderDelegate {
   final String title;
   final int count;
@@ -180,22 +177,6 @@ class _AppsGroupHeaderDelegate extends SliverPersistentHeaderDelegate {
     double shrinkOffset,
     bool overlapsContent,
   ) {
-    final theme = Theme.of(context);
-    final ShapeBorder shape = isExpanded
-        ? RoundedRectangleBorder(
-            borderRadius: BorderRadius.only(
-              topLeft: Radius.circular(collapsedRadius),
-              topRight: Radius.circular(collapsedRadius),
-              bottomLeft: const Radius.circular(kM3eInnerRadius),
-              bottomRight: const Radius.circular(kM3eInnerRadius),
-            ),
-            side: m3ePureBlackOutlineSide(colorScheme, alpha: 0.22),
-          )
-        : RoundedRectangleBorder(
-            borderRadius: BorderRadius.all(Radius.circular(collapsedRadius)),
-            side: m3ePureBlackOutlineSide(colorScheme, alpha: 0.22),
-          );
-
     return Padding(
       padding: const EdgeInsets.fromLTRB(
         12,
@@ -203,69 +184,13 @@ class _AppsGroupHeaderDelegate extends SliverPersistentHeaderDelegate {
         12,
         0,
       ),
-      child: Material(
-        elevation: 3,
-        shadowColor: colorScheme.shadow.withAlpha(100),
-        surfaceTintColor: colorScheme.surfaceTint,
-        shape: shape,
-        // Apps-tab group headers get a subtly lifted fill in the pure-black
-        // theme so they read as distinct headers against the black page
-        // (scoped here rather than in the shared helper, which settings and
-        // add-app also use).
-        color: colorScheme.usesPureBlackBackgrounds
-            ? Color.alphaBlend(
-                colorScheme.onSurface.withValues(alpha: 0.14),
-                Colors.black,
-              )
-            : m3eCollapsedGroupHeaderFill(colorScheme),
-        clipBehavior: Clip.antiAlias,
-        child: InkWell(
-          onTap: onTap,
-          child: SizedBox(
-            height: SettingsProvider.collapsedHeaderHeight,
-            child: Center(
-              child: ListTile(
-                dense: true,
-                onTap: null,
-                contentPadding: const EdgeInsets.symmetric(horizontal: 16),
-                leading: AnimatedContainer(
-                  duration: _appsGroupHeaderTransitionDuration,
-                  curve: _appsGroupTransitionCurve,
-                  width: isExpanded ? 20 : 32,
-                  height: isExpanded ? 20 : 32,
-                  decoration: BoxDecoration(
-                    color: isExpanded
-                        ? Colors.transparent
-                        : colorScheme.surfaceContainerHighest,
-                    shape: BoxShape.circle,
-                  ),
-                  child: AnimatedRotation(
-                    turns: isExpanded ? 0.25 : 0,
-                    duration: _appsGroupHeaderTransitionDuration,
-                    curve: _appsGroupTransitionCurve,
-                    child: Icon(
-                      Icons.chevron_right_rounded,
-                      color: isExpanded
-                          ? colorScheme.primary
-                          : colorScheme.onSurfaceVariant,
-                      size: isExpanded ? 18 : 20,
-                    ),
-                  ),
-                ),
-                title: Text(
-                  title,
-                  style: const TextStyle(fontWeight: FontWeight.bold),
-                ),
-                trailing: Text(
-                  count.toString(),
-                  style: theme.textTheme.bodyMedium?.copyWith(
-                    color: colorScheme.onSurfaceVariant,
-                  ),
-                ),
-              ),
-            ),
-          ),
-        ),
+      child: M3eCollapsibleGroupHeader(
+        title: title,
+        count: count,
+        isExpanded: isExpanded,
+        onTap: onTap,
+        collapsedRadius: collapsedRadius,
+        colorScheme: colorScheme,
       ),
     );
   }
@@ -397,9 +322,6 @@ class _AnimatedAppsGroupBody extends StatefulWidget {
 
 class _AnimatedAppsGroupBodyState extends State<_AnimatedAppsGroupBody>
     with SingleTickerProviderStateMixin {
-  static const Duration _expandDuration = Duration(milliseconds: 360);
-  static const Duration _collapseDuration = Duration(milliseconds: 250);
-
   late final AnimationController _controller;
   late final CurvedAnimation _factor;
 
@@ -408,8 +330,8 @@ class _AnimatedAppsGroupBodyState extends State<_AnimatedAppsGroupBody>
     super.initState();
     _controller = AnimationController(
       vsync: this,
-      duration: _expandDuration,
-      reverseDuration: _collapseDuration,
+      duration: kM3eGroupExpandDuration,
+      reverseDuration: kM3eGroupCollapseDuration,
       value: widget.expanded ? 1.0 : 0.0,
     );
     // A single, idempotent 0..1 reveal factor drives the whole group body as
@@ -420,7 +342,7 @@ class _AnimatedAppsGroupBodyState extends State<_AnimatedAppsGroupBody>
     // out into "helicopter blade" ghost rows.
     _factor = CurvedAnimation(
       parent: _controller,
-      curve: Curves.easeInOutCubicEmphasized,
+      curve: kM3eGroupTransitionCurve,
       reverseCurve: Curves.easeOutCubic,
     );
   }
@@ -671,6 +593,8 @@ int _appsPageAppsRebuildToken(AppsProvider provider) {
     provider.loadingApps,
     provider.areDownloadsRunning(),
     provider.appsListRevision,
+    provider.apps.length,
+    provider.pendingUpdateCount,
   );
 }
 
@@ -1247,6 +1171,9 @@ class _AppListItem extends StatelessWidget {
               Material(
                 color: Colors.transparent,
                 child: ListTile(
+                  shape: itemBorderRadius == null
+                      ? null
+                      : RoundedRectangleBorder(borderRadius: itemBorderRadius!),
                   tileColor: Colors.transparent,
                   // Selection no longer uses [selectedTileColor]; the visual
                   // treatment lives in the parent [Container] (outline + 1dp
@@ -1420,11 +1347,22 @@ class _SwipeableListItemState extends State<_SwipeableListItem>
   // Eases [_dragOffset] back to 0 on release so the revealed action (icon +
   // label) slides and fades out smoothly instead of snapping — mirroring
   // Remember's swipe-reveal behaviour.
-  late final AnimationController _settleController = AnimationController(
-    vsync: this,
-    duration: const Duration(milliseconds: 250),
-  );
+  //
+  // Created eagerly in initState (not a `late final` inline initializer): a
+  // lazy initializer would run on first access, and for rows that are never
+  // swiped the first access is dispose(), which would construct the ticker
+  // during an ancestor lookup on an already-deactivated element.
+  late final AnimationController _settleController;
   Animation<double>? _settleAnimation;
+
+  @override
+  void initState() {
+    super.initState();
+    _settleController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 250),
+    );
+  }
 
   @override
   void dispose() {
@@ -1728,7 +1666,13 @@ class _SwipeableListItemState extends State<_SwipeableListItem>
 }
 
 class AppsPage extends StatefulWidget {
-  const AppsPage({super.key, this.onDemandOnlyList = false, this.folderId});
+  const AppsPage({
+    super.key,
+    this.onDemandOnlyList = false,
+    this.folderId,
+    this.homeFabChromeTick,
+    this.onStateChanged,
+  });
 
   /// When true, only apps with [App.additionalSettings] `onDemandOnly` are listed
   /// and pull-to-refresh checks only those IDs. When [folderId] is set,
@@ -1739,6 +1683,12 @@ class AppsPage extends StatefulWidget {
 
   /// When non-null, only apps belonging to this folder ID are shown.
   final String? folderId;
+
+  /// Notifies [HomePage] FAB overlay to rebuild when badge/selection changes.
+  final ValueNotifier<int>? homeFabChromeTick;
+
+  /// Post-frame [HomePage] rebuild when shell FAB chrome changes (phone layout).
+  final VoidCallback? onStateChanged;
 
   @override
   State<AppsPage> createState() => AppsPageState();
@@ -1796,7 +1746,7 @@ String? _rawFileUrlFromRepositoryPageUrl(String url) {
   return null;
 }
 
-Future<String> _loadLinkedChangeLog(
+Future<String?> _loadLinkedChangeLog(
   AppSource appSource,
   App app,
   String changesUrl,
@@ -1820,10 +1770,10 @@ Future<String> _loadLinkedChangeLog(
     }
   }
   if (appSource is APKMirror) {
-    final apkMirrorChangeLog = await apkMirrorChangeLogFromReleasePageHtml(
-      response.body,
-    );
-    if (apkMirrorChangeLog != null) return apkMirrorChangeLog;
+    // APKMirror URLs can point at an app listing with no "What's new"
+    // section (for example Markup). Never fall through to the generic raw-body
+    // path for this HTML source, or the entire document is shown as a changelog.
+    return apkMirrorChangeLogFromReleasePageHtml(response.body);
   }
   return response.body;
 }
@@ -1916,7 +1866,7 @@ void showChangeLogDialog(
       '\n\n',
     );
   }
-  final Future<String>? linkedChangeLogFuture =
+  final Future<String?>? linkedChangeLogFuture =
       changeLog == null && changesUrl != null
       ? _loadLinkedChangeLog(appSource, app, changesUrl)
       : null;
@@ -1930,8 +1880,8 @@ void showChangeLogDialog(
       // Non-scrolling content — the shared sheet provides the scroll view, so
       // short changelogs hug their height and long ones scroll within the cap.
       Widget buildChangeLogContent(String? displayChangeLog) {
-        if (displayChangeLog == null) {
-          return const SizedBox.shrink();
+        if (displayChangeLog == null || displayChangeLog.trim().isEmpty) {
+          return Text(tr('notFound'), style: textTheme.bodyMedium);
         }
         return appSource.changeLogIfAnyIsMarkDown
             ? MarkdownBody(
@@ -1964,7 +1914,7 @@ void showChangeLogDialog(
 
       final Widget changeLogContent = linkedChangeLogFuture == null
           ? buildChangeLogContent(processedChangeLog)
-          : FutureBuilder<String>(
+          : FutureBuilder<String?>(
               future: linkedChangeLogFuture,
               builder: (context, snapshot) {
                 if (snapshot.connectionState != ConnectionState.done) {
@@ -2543,7 +2493,7 @@ class _ScrollLinkedAppFooterState extends State<_ScrollLinkedAppFooter> {
   Widget build(BuildContext context) {
     return AnimatedSize(
       duration: const Duration(milliseconds: 240),
-      curve: Curves.fastOutSlowIn,
+      curve: Curves.easeInOutCubicEmphasized,
       alignment: Alignment.topCenter,
       clipBehavior: Clip.hardEdge,
       child: _footerExpanded || widget.selectionActive
@@ -2592,11 +2542,127 @@ class AppsPageState extends State<AppsPage> {
   Set<String> selectedAppIds = {};
   DateTime? refreshingSince;
 
+  VoidCallback? openSelectionActionsSheetHandler;
+  VoidCallback? runMassObtainHandler;
+  int pageUpdateCount = 0;
+
+  bool get hasMassObtainOperations => runMassObtainHandler != null;
+
+  void runMassObtain() {
+    runMassObtainHandler?.call();
+  }
+
+  bool get isSelectionActive => selectedAppIds.isNotEmpty;
+
+  void openViewOptionsSheet() {
+    showAppsViewOptionsSheet(context, folderId: _viewSettingsId);
+  }
+
+  void openSelectionActionsSheet() {
+    openSelectionActionsSheetHandler?.call();
+  }
+
+  /// Update-all + actions/view-options FABs overlaid on the apps list.
+  Widget _buildAppsPageSideFabOverlay(
+    BuildContext context, {
+    required String heroScope,
+  }) {
+    return Positioned(
+      left: 16,
+      right: 16,
+      bottom: MediaQuery.paddingOf(context).bottom,
+      child: AnimatedSlide(
+        duration: const Duration(milliseconds: 250),
+        curve: Curves.easeInOutCubicEmphasized,
+        offset: MediaQuery.of(context).viewInsets.bottom > 0
+            ? const Offset(0, 1.5)
+            : Offset.zero,
+        child: AnimatedOpacity(
+          duration: const Duration(milliseconds: 200),
+          opacity: MediaQuery.of(context).viewInsets.bottom > 0 ? 0.0 : 1.0,
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              if (hasMassObtainOperations)
+                Stack(
+                  clipBehavior: Clip.none,
+                  children: [
+                    FloatingActionButton.small(
+                      heroTag: '${heroScope}_update_all_fab',
+                      elevation: 6,
+                      highlightElevation: 8,
+                      backgroundColor: Theme.of(
+                        context,
+                      ).colorScheme.primaryContainer,
+                      foregroundColor: Theme.of(
+                        context,
+                      ).colorScheme.onPrimaryContainer,
+                      onPressed: () {
+                        hapticSelection();
+                        runMassObtain();
+                      },
+                      tooltip: null,
+                      child: const Icon(Icons.file_download_outlined, size: 20),
+                    ),
+                    if (pageUpdateCount > 0)
+                      Positioned(
+                        left: -4,
+                        bottom: -4,
+                        child: Badge(
+                          label: Text(pageUpdateCount.toString()),
+                          backgroundColor: Theme.of(context).colorScheme.error,
+                          textColor: Theme.of(context).colorScheme.onError,
+                        ),
+                      ),
+                  ],
+                )
+              else
+                const SizedBox.shrink(),
+              if (isSelectionActive)
+                FloatingActionButton.small(
+                  heroTag: '${heroScope}_actions_fab',
+                  elevation: 6,
+                  highlightElevation: 8,
+                  backgroundColor: Theme.of(context).colorScheme.primary,
+                  foregroundColor: Theme.of(context).colorScheme.onPrimary,
+                  onPressed: () {
+                    hapticSelection();
+                    openSelectionActionsSheet();
+                  },
+                  tooltip: null,
+                  child: const Icon(Icons.checklist, size: 20),
+                )
+              else
+                FloatingActionButton.small(
+                  heroTag: '${heroScope}_view_options_fab',
+                  elevation: 6,
+                  highlightElevation: 8,
+                  backgroundColor: Theme.of(
+                    context,
+                  ).colorScheme.surfaceContainerHighest,
+                  foregroundColor: Theme.of(
+                    context,
+                  ).colorScheme.onSurfaceVariant,
+                  onPressed: () {
+                    hapticSelection();
+                    openViewOptionsSheet();
+                  },
+                  tooltip: null,
+                  child: const Icon(Icons.tune, size: 20),
+                ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
   bool clearSelected() {
     if (selectedAppIds.isNotEmpty) {
       setState(() {
         selectedAppIds.clear();
       });
+      _notifyHomeFabChromeIfChanged();
       return true;
     }
     return false;
@@ -2702,6 +2768,41 @@ class AppsPageState extends State<AppsPage> {
   Map<String, int> _folderAppCountsCache = const {};
   Map<String, int> _folderUpdateCountsCache = const {};
 
+  /// Pushes FAB badge / mass-obtain / selection state to [HomePage] without
+  /// calling [setState] on the home shell.
+  int? _lastNotifiedPageUpdateCount;
+  bool? _lastNotifiedMassObtainAvailable;
+  bool? _lastNotifiedSelectionActive;
+  bool _homeFabBadgeSyncScheduled = false;
+
+  void _notifyHomeFabChromeIfChanged({bool force = false}) {
+    final bool massObtainAvailable = runMassObtainHandler != null;
+    final bool selectionActive = isSelectionActive;
+    if (!force &&
+        pageUpdateCount == _lastNotifiedPageUpdateCount &&
+        massObtainAvailable == _lastNotifiedMassObtainAvailable &&
+        selectionActive == _lastNotifiedSelectionActive) {
+      return;
+    }
+    _lastNotifiedPageUpdateCount = pageUpdateCount;
+    _lastNotifiedMassObtainAvailable = massObtainAvailable;
+    _lastNotifiedSelectionActive = selectionActive;
+
+    final ValueNotifier<int>? tick = widget.homeFabChromeTick;
+    if (tick != null) {
+      tick.value = tick.value + 1;
+    }
+
+    final VoidCallback? notifyHome = widget.onStateChanged;
+    if (notifyHome == null) return;
+    if (_homeFabBadgeSyncScheduled) return;
+    _homeFabBadgeSyncScheduled = true;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _homeFabBadgeSyncScheduled = false;
+      if (mounted) notifyHome();
+    });
+  }
+
   // ── Group expansion state ─────────────────────────────────────────────────
   // Groups start expanded. When the user collapses one its key goes here and
   // its child tiles are no longer built, saving widget-tree work on rebuilds.
@@ -2794,6 +2895,9 @@ class AppsPageState extends State<AppsPage> {
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) _notifyHomeFabChromeIfChanged(force: true);
+    });
     final sp = context.read<SettingsProvider>();
     _collapsedGroups.addAll(
       sp.prefs?.getStringList('collapsedGroups') ?? const <String>[],
@@ -3304,6 +3408,7 @@ class AppsPageState extends State<AppsPage> {
           selectedAppIds.add(app.id);
         }
       });
+      _notifyHomeFabChromeIfChanged();
     }
 
     // ── Cached filter / sort / reorder ─────────────────────────────────────
@@ -3649,8 +3754,16 @@ class AppsPageState extends State<AppsPage> {
       }
     }
 
-    final existingUpdates = _existingUpdatesCache;
-    final newInstalls = _newInstallsCache;
+    // Multi-select puts batch actions in pane 2; hide duplicate list FABs then.
+    final bool showSplitPaneListFabs =
+        isLargeScreen &&
+        widget.folderId == null &&
+        !widget.onDemandOnlyList &&
+        selectedAppIds.isEmpty;
+    final bool showFolderListFabs =
+        isLargeScreen &&
+        (widget.folderId != null || widget.onDemandOnlyList) &&
+        selectedAppIds.isEmpty;
 
     // On-demand and per-folder app/update counts. Recomputed only when app
     // state ([appsToken]) or the folder set changes — not on every rebuild.
@@ -3698,60 +3811,63 @@ class AppsPageState extends State<AppsPage> {
 
     // Membership set so the filters below are O(updates) instead of
     // O(updates × apps) from a `listedApps.any(...)` scan per id.
-    final Set<String> listedAppIdSet = {for (final a in listedApps) a.app.id};
-    var existingUpdateIdsAllOrSelected = existingUpdates
-        .where(
-          (element) => selectedAppIds.isEmpty
-              ? listedAppIdSet.contains(element)
-              : selectedAppIds.contains(element),
-        )
-        .toList();
-    var newInstallIdsAllOrSelected = newInstalls
-        .where(
-          (element) => selectedAppIds.isEmpty
-              ? listedAppIdSet.contains(element)
-              : selectedAppIds.contains(element),
-        )
-        .toList();
+    final separateUpdates = _effectiveGroupUpdatesSeparately(settingsProvider);
+    bool isInUpdatesGroup(AppInMemory entry) =>
+        separateUpdates &&
+        _existingUpdatesCache.contains(entry.app.id) &&
+        (widget.onDemandOnlyList ||
+            entry.app.additionalSettings['onDemandOnly'] != true);
 
-    bool buildVerificationBlockedForBatch(String id) {
-      final App? app = appsProvider.apps[id]?.app;
-      if (app == null) {
-        return false;
-      }
-      final AppSource source = SourceProvider().getSourceTemplate(
-        app.url,
-        overrideSource: app.overrideSource,
-      );
-      return buildVerificationEnforcementBlocksInstall(
-        app,
-        source,
-        settingsProvider,
-      );
-    }
+    final Set<String> listedAppIdSet = {
+      for (final AppInMemory listed in listedApps) listed.app.id,
+    };
 
-    existingUpdateIdsAllOrSelected = existingUpdateIdsAllOrSelected
-        .where((id) => !buildVerificationBlockedForBatch(id))
-        .toList();
-    newInstallIdsAllOrSelected = newInstallIdsAllOrSelected
-        .where((id) => !buildVerificationBlockedForBatch(id))
-        .toList();
+    List<String> filterListedMassObtainIds(Iterable<String> ids) =>
+        ids.where((id) => listedAppIdSet.contains(id)).toList();
+
+    // Mass-obtain / bulk sheet: listed pending updates (not gated on a
+    // separate Updates group — default [groupUpdatesSeparately] is false).
+    var existingUpdateIdsAllOrSelected = filterListedMassObtainIds(
+      _existingUpdatesCache,
+    );
+    var newInstallIdsAllOrSelected = filterListedMassObtainIds(
+      _newInstallsCache,
+    );
 
     final List<String> trackOnlyUpdateIdsAllOrSelected = [];
-    existingUpdateIdsAllOrSelected = existingUpdateIdsAllOrSelected.where((id) {
-      if (appsProvider.apps[id]!.app.additionalSettings['trackOnly'] == true) {
+    for (final String id in [
+      ...existingUpdateIdsAllOrSelected,
+      ...newInstallIdsAllOrSelected,
+    ]) {
+      if (appsProvider.apps[id]?.app.additionalSettings['trackOnly'] == true) {
         trackOnlyUpdateIdsAllOrSelected.add(id);
-        return false;
       }
-      return true;
-    }).toList();
-    newInstallIdsAllOrSelected = newInstallIdsAllOrSelected.where((id) {
-      if (appsProvider.apps[id]!.app.additionalSettings['trackOnly'] == true) {
-        trackOnlyUpdateIdsAllOrSelected.add(id);
-        return false;
+    }
+    existingUpdateIdsAllOrSelected = existingUpdateIdsAllOrSelected
+        .where((id) => !trackOnlyUpdateIdsAllOrSelected.contains(id))
+        .toList();
+    newInstallIdsAllOrSelected = newInstallIdsAllOrSelected
+        .where((id) => !trackOnlyUpdateIdsAllOrSelected.contains(id))
+        .toList();
+
+    // FAB badge: grouped Updates section only when that section exists.
+    final Set<String> pageUpdateBadgeIds = separateUpdates
+        ? {
+            for (final AppInMemory listed in listedApps)
+              if (isInUpdatesGroup(listed)) listed.app.id,
+          }
+        : existingUpdateIdsAllOrSelected.toSet();
+    if (selectedAppIds.isEmpty) {
+      pageUpdateCount = pageUpdateBadgeIds.length;
+    } else {
+      int count = 0;
+      for (final id in selectedAppIds) {
+        if (pageUpdateBadgeIds.contains(id)) {
+          count++;
+        }
       }
-      return true;
-    }).toList();
+      pageUpdateCount = count;
+    }
 
     final effectiveGroupBy = _effectiveGroupBy(settingsProvider);
     final segregateNonInstalled =
@@ -3764,13 +3880,6 @@ class AppsPageState extends State<AppsPage> {
         (effectiveGroupBy == AppsListGroupBy.category ||
             effectiveGroupBy == AppsListGroupBy.source ||
             effectiveGroupBy == AppsListGroupBy.appType);
-    final separateUpdates = _effectiveGroupUpdatesSeparately(settingsProvider);
-
-    // Returns true when an app should be shown in the dedicated "Updates" group.
-    bool isInUpdatesGroup(AppInMemory e) =>
-        separateUpdates &&
-        _existingUpdatesCache.contains(e.app.id) &&
-        e.app.additionalSettings['onDemandOnly'] != true;
 
     final tempRenamed = <AppInMemory>[];
     final tempPinned = <AppInMemory>[];
@@ -4566,111 +4675,35 @@ class AppsPageState extends State<AppsPage> {
           ? null
           : () {
               hapticHeavyImpact();
-              final List<GeneratedFormItem> formItems = [];
-              if (existingUpdateIdsAllOrSelected.isNotEmpty) {
-                formItems.add(
-                  GeneratedFormSwitch(
-                    'updates',
-                    label: tr(
-                      'updateX',
-                      args: [
-                        plural(
-                          'apps',
-                          existingUpdateIdsAllOrSelected.length,
-                        ).toLowerCase(),
-                      ],
-                    ),
-                    value: true,
-                  ),
-                );
-              }
-              if (newInstallIdsAllOrSelected.isNotEmpty) {
-                formItems.add(
-                  GeneratedFormSwitch(
-                    'installs',
-                    label: tr(
-                      'installX',
-                      args: [
-                        plural(
-                          'apps',
-                          newInstallIdsAllOrSelected.length,
-                        ).toLowerCase(),
-                      ],
-                    ),
-                    value: existingUpdateIdsAllOrSelected.isEmpty,
-                  ),
-                );
-              }
-              if (trackOnlyUpdateIdsAllOrSelected.isNotEmpty) {
-                formItems.add(
-                  GeneratedFormSwitch(
-                    'trackonlies',
-                    label: tr(
-                      'markXTrackOnlyAsUpdated',
-                      args: [
-                        plural('apps', trackOnlyUpdateIdsAllOrSelected.length),
-                      ],
-                    ),
-                    value:
-                        existingUpdateIdsAllOrSelected.isEmpty &&
-                        newInstallIdsAllOrSelected.isEmpty,
-                  ),
-                );
-              }
-              showDialog<Map<String, dynamic>?>(
+              showBulkUpdatePickerSheet(
                 context: context,
-                builder: (BuildContext ctx) {
-                  final totalApps =
-                      existingUpdateIdsAllOrSelected.length +
-                      newInstallIdsAllOrSelected.length +
-                      trackOnlyUpdateIdsAllOrSelected.length;
-                  return GeneratedFormModal(
-                    title: tr(
-                      'changeX',
-                      args: [plural('apps', totalApps).toLowerCase()],
-                    ),
-                    items: formItems.map((e) => [e]).toList(),
-                    initValid: true,
-                  );
-                },
-              ).then((values) async {
-                if (values != null) {
-                  if (values.isEmpty) {
-                    values = getDefaultValuesFromFormItems([formItems]);
-                  }
-                  final bool shouldInstallUpdates = values['updates'] == true;
-                  final bool shouldInstallNew = values['installs'] == true;
-                  final bool shouldMarkTrackOnlies =
-                      values['trackonlies'] == true;
-                  final List<String> toInstall = [];
-                  if (shouldInstallUpdates) {
-                    toInstall.addAll(existingUpdateIdsAllOrSelected);
-                  }
-                  if (shouldInstallNew) {
-                    toInstall.addAll(newInstallIdsAllOrSelected);
-                  }
-                  if (shouldMarkTrackOnlies) {
-                    toInstall.addAll(trackOnlyUpdateIdsAllOrSelected);
-                  }
-                  unawaited(
-                    appsProvider
-                        .downloadAndInstallLatestApps(
-                          toInstall,
-                          globalNavigatorKey.currentContext,
-                        )
-                        .catchError((e) {
-                          if (!context.mounted) return <String>[];
-                          showError(e);
-                          return <String>[];
-                        })
-                        .then((value) {
-                          if (value.isNotEmpty && shouldInstallUpdates) {
-                            if (!context.mounted) return;
-                            showMessage(tr('appsUpdated'));
-                          }
-                        }),
-                  );
-                }
+                apps: appsProvider.apps,
+                existingUpdateIds: existingUpdateIdsAllOrSelected,
+                newInstallIds: newInstallIdsAllOrSelected,
+                trackOnlyUpdateIds: trackOnlyUpdateIdsAllOrSelected,
+                initialSelectedIds: selectedAppIds.isNotEmpty
+                    ? selectedAppIds
+                    : null,
+              ).then((Set<String>? selectedIds) {
+                if (selectedIds == null || selectedIds.isEmpty) return;
+                unawaited(
+                  appsProvider
+                      .downloadAndInstallLatestApps(
+                        selectedIds.toList(),
+                        globalNavigatorKey.currentContext,
+                      )
+                      .catchError((e) {
+                        if (!context.mounted) return <String>[];
+                        showError(e);
+                        return <String>[];
+                      })
+                      .then((value) {
+                        if (value.isNotEmpty) {
+                          if (!context.mounted) return;
+                          showMessage(tr('appsUpdated'));
+                        }
+                      }),
+                );
               });
             };
     }
@@ -4836,74 +4869,204 @@ class AppsPageState extends State<AppsPage> {
       );
     }
 
-    Future<void> showMoreOptionsBottomSheet() {
+    void showCombinedSelectionActionsSheet() {
+      final ColorScheme scheme = Theme.of(context).colorScheme;
       final bool selectedAppsArePinned = selectedApps.any(
         (selectedApp) => selectedApp.pinned,
       );
-      return showAppModalSheet<void>(
+
+      showAppModalSheet<void>(
         context: context,
-        builder: (BuildContext sheetContext) {
-          return AppSheetContent(
-            padding: const EdgeInsets.fromLTRB(8, 0, 8, 8),
-            children: [
-              ActionListTile(
-                icon: selectedAppsArePinned
-                    ? Icons.push_pin
-                    : Icons.push_pin_outlined,
-                label: selectedAppsArePinned
-                    ? tr('unpinFromTop')
-                    : tr('pinToTop'),
-                onTap: pinSelectedApps,
-                autoPop: true,
-              ),
-              ActionListTile(
-                icon: Icons.folder_copy_outlined,
-                label: tr('addToFolder'),
-                onTap: () => _showFolderAssignDialog(context, selectedApps),
-                autoPop: true,
-              ),
-              ActionListTile(
-                icon: Icons.share_outlined,
-                label: tr('shareSelectedAppURLs'),
-                onTap: shareSelectedAppUrls,
-                autoPop: true,
-              ),
-              ActionListTile(
-                icon: Icons.link_outlined,
-                label: tr('shareAppConfigLinks'),
-                onTap: selectedAppIds.isEmpty
-                    ? null
-                    : shareSelectedAppConfigLinks,
-                autoPop: true,
-              ),
-              ActionListTile(
-                icon: Icons.file_download_outlined,
-                label: '${tr('share')} - ${tr('obtainiumExport')}',
-                onTap: selectedAppIds.isEmpty ? null : exportSelectedApps,
-                autoPop: true,
-              ),
-              ActionListTile(
-                icon: Icons.download_outlined,
-                label: tr(
-                  'downloadX',
-                  args: [lowerCaseIfEnglish(tr('releaseAsset'))],
-                ),
-                onTap: downloadSelectedAppAssets,
-                autoPop: true,
-              ),
-              ActionListTile(
-                icon: Icons.done_all,
-                label: tr('markSelectedAppsUpdated'),
-                onTap: appsProvider.areDownloadsRunning()
-                    ? null
-                    : showMassMarkDialog,
-                autoPop: true,
-              ),
-            ],
+        builder: (sheetCtx) {
+          return StatefulBuilder(
+            builder: (sheetCtx, setSheetState) {
+              return AppSheetContent(
+                padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+                children: [
+                  // Header: Selection count & Select All / Deselect All
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 8),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            tr(
+                              'selectedX',
+                              args: [selectedAppIds.length.toString()],
+                            ),
+                            style: Theme.of(context).textTheme.titleMedium
+                                ?.copyWith(fontWeight: FontWeight.bold),
+                          ),
+                        ),
+                        TextButton.icon(
+                          onPressed: listedApps.isEmpty
+                              ? null
+                              : () {
+                                  setState(() {
+                                    for (final appInMem in listedApps) {
+                                      selectedAppIds.add(appInMem.app.id);
+                                    }
+                                  });
+                                  _notifyHomeFabChromeIfChanged();
+                                  setSheetState(() {});
+                                },
+                          icon: const Icon(Icons.select_all_outlined, size: 18),
+                          label: Text(tr('selectAll')),
+                        ),
+                        const SizedBox(width: 4),
+                        IconButton(
+                          onPressed: () {
+                            setState(() {
+                              selectedAppIds.clear();
+                            });
+                            _notifyHomeFabChromeIfChanged();
+                            Navigator.of(sheetCtx).pop();
+                          },
+                          tooltip: tr('deselectAll'),
+                          icon: const Icon(Icons.deselect, size: 20),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const Divider(height: 1),
+                  const SizedBox(height: 8),
+
+                  // Install / Update Selected
+                  if (getMassObtainFunction() != null)
+                    ActionListTile(
+                      icon: Icons.file_download_outlined,
+                      label: tr('installUpdateSelectedApps'),
+                      onTap: () {
+                        getMassObtainFunction()?.call();
+                      },
+                      autoPop: true,
+                    ),
+                  // Categorize
+                  ActionListTile(
+                    icon: Icons.category_outlined,
+                    label: tr('categorize'),
+                    onTap: launchCategorizeDialog(),
+                    autoPop: true,
+                  ),
+                  // Add to Folder
+                  ActionListTile(
+                    icon: Icons.folder_copy_outlined,
+                    label: tr('addToFolder'),
+                    onTap: () => _showFolderAssignDialog(context, selectedApps),
+                    autoPop: true,
+                  ),
+                  // Pin / Unpin
+                  ActionListTile(
+                    icon: selectedAppsArePinned
+                        ? Icons.push_pin
+                        : Icons.push_pin_outlined,
+                    label: selectedAppsArePinned
+                        ? tr('unpinFromTop')
+                        : tr('pinToTop'),
+                    onTap: pinSelectedApps,
+                    autoPop: true,
+                  ),
+                  // Share URLs
+                  ActionListTile(
+                    icon: Icons.share_outlined,
+                    label: tr('shareSelectedAppURLs'),
+                    onTap: shareSelectedAppUrls,
+                    autoPop: true,
+                  ),
+                  // Share Config Links
+                  ActionListTile(
+                    icon: Icons.link_outlined,
+                    label: tr('shareAppConfigLinks'),
+                    onTap: selectedAppIds.isEmpty
+                        ? null
+                        : shareSelectedAppConfigLinks,
+                    autoPop: true,
+                  ),
+                  // Export JSON
+                  ActionListTile(
+                    icon: Icons.file_download_outlined,
+                    label: '${tr('share')} - ${tr('obtainiumExport')}',
+                    onTap: selectedAppIds.isEmpty ? null : exportSelectedApps,
+                    autoPop: true,
+                  ),
+                  // Download Release Assets
+                  ActionListTile(
+                    icon: Icons.download_outlined,
+                    label: tr(
+                      'downloadX',
+                      args: [lowerCaseIfEnglish(tr('releaseAsset'))],
+                    ),
+                    onTap: downloadSelectedAppAssets,
+                    autoPop: true,
+                  ),
+                  // Mark as Updated
+                  ActionListTile(
+                    icon: Icons.done_all,
+                    label: tr('markSelectedAppsUpdated'),
+                    onTap: appsProvider.areDownloadsRunning()
+                        ? null
+                        : showMassMarkDialog,
+                    autoPop: true,
+                  ),
+                  const Divider(height: 16),
+                  // Remove Selected Apps
+                  ActionListTile(
+                    icon: Icons.delete_outline_outlined,
+                    label: tr('removeSelectedApps'),
+                    iconColor: scheme.error,
+                    textColor: scheme.error,
+                    onTap: () async {
+                      final appsProviderRef = appsProvider;
+                      final messenger = scaffoldMessengerKey.currentState;
+                      final RemoveAppsWithModalResult removeResult =
+                          await appsProviderRef.removeAppsWithModal(
+                            context,
+                            selectedApps.toList(),
+                          );
+                      if (removeResult.shouldShowSnackBar) {
+                        final Set<String> undoAppIds =
+                            removeResult.deferredUndoAppIds;
+                        final int removedCount =
+                            removeResult.deferredUndoAppIds.isNotEmpty
+                            ? removeResult.deferredUndoAppIds.length
+                            : selectedApps.length;
+                        messenger
+                          ?..clearSnackBars()
+                          ..showSnackBar(
+                            SnackBar(
+                              content: Text(
+                                tr('xAppsRemoved', args: ['$removedCount']),
+                              ),
+                              persist: false,
+                              duration: const Duration(seconds: 5),
+                              behavior: SnackBarBehavior.floating,
+                              action: undoAppIds.isNotEmpty
+                                  ? SnackBarAction(
+                                      label: tr('undo'),
+                                      onPressed: () => appsProviderRef
+                                          .undoDeferredObtainiumRemovals(
+                                            undoAppIds,
+                                          ),
+                                    )
+                                  : null,
+                            ),
+                          );
+                      }
+                    },
+                    autoPop: true,
+                  ),
+                ],
+              );
+            },
           );
         },
       );
     }
+
+    runMassObtainHandler = getMassObtainFunction();
+    openSelectionActionsSheetHandler = showCombinedSelectionActionsSheet;
+
+    _notifyHomeFabChromeIfChanged();
 
     // ── Filter bottom sheet ──────────────────────────────────────────────────
     // Shows all filter/search options in a modal bottom sheet.
@@ -5162,216 +5325,6 @@ class AppsPageState extends State<AppsPage> {
             },
           );
         },
-      );
-    }
-
-    Row getFilterButtonsRow() {
-      final colorScheme = Theme.of(context).colorScheme;
-      final selectAllFooterStyle = TextButton.styleFrom(
-        foregroundColor: colorScheme.primary,
-        visualDensity: VisualDensity.compact,
-        iconSize: 24,
-        minimumSize: const Size(48, 48),
-        padding: const EdgeInsets.symmetric(horizontal: 4),
-        textStyle: Theme.of(context).textTheme.labelLarge?.copyWith(
-          color: colorScheme.primary,
-          fontWeight: FontWeight.w600,
-        ),
-      );
-      if (selectedAppIds.isNotEmpty) {
-        return Row(
-          children: [
-            Expanded(
-              child: Center(
-                child: Tooltip(
-                  message: tr('selectAll'),
-                  child: TextButton.icon(
-                    style: selectAllFooterStyle,
-                    onPressed: listedApps.isEmpty
-                        ? null
-                        : () {
-                            setState(() {
-                              for (final appInMem in listedApps) {
-                                selectedAppIds.add(appInMem.app.id);
-                              }
-                            });
-                          },
-                    icon: const Icon(Icons.select_all_outlined, size: 24),
-                    label: FittedBox(
-                      fit: BoxFit.scaleDown,
-                      child: Text(
-                        selectedAppIds.length.toString(),
-                        maxLines: 1,
-                        softWrap: false,
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-            ),
-            Expanded(
-              child: Center(
-                child: IconButton(
-                  visualDensity: VisualDensity.compact,
-                  iconSize: 24,
-                  color: colorScheme.primary,
-                  onPressed: () {
-                    setState(() {
-                      selectedAppIds.clear();
-                    });
-                  },
-                  tooltip: tr('deselectAll'),
-                  icon: const Icon(Icons.deselect),
-                ),
-              ),
-            ),
-            Expanded(
-              child: Center(
-                child: IconButton(
-                  visualDensity: VisualDensity.compact,
-                  iconSize: 24,
-                  color: colorScheme.primary,
-                  onPressed: () async {
-                    final appsProviderRef = appsProvider;
-                    // Capture messenger before the await
-                    final messenger = scaffoldMessengerKey.currentState;
-                    final RemoveAppsWithModalResult removeResult =
-                        await appsProviderRef.removeAppsWithModal(
-                          context,
-                          selectedApps.toList(),
-                        );
-                    if (removeResult.shouldShowSnackBar) {
-                      final Set<String> undoAppIds =
-                          removeResult.deferredUndoAppIds;
-                      final int removedCount =
-                          removeResult.deferredUndoAppIds.isNotEmpty
-                          ? removeResult.deferredUndoAppIds.length
-                          : selectedApps.length;
-                      messenger
-                        ?..clearSnackBars()
-                        ..showSnackBar(
-                          SnackBar(
-                            content: Text(
-                              tr('xAppsRemoved', args: ['$removedCount']),
-                            ),
-                            persist: false,
-                            duration: const Duration(seconds: 5),
-                            behavior: SnackBarBehavior.floating,
-                            action: undoAppIds.isNotEmpty
-                                ? SnackBarAction(
-                                    label: tr('undo'),
-                                    onPressed: () => appsProviderRef
-                                        .undoDeferredObtainiumRemovals(
-                                          undoAppIds,
-                                        ),
-                                  )
-                                : null,
-                          ),
-                        );
-                    }
-                  },
-                  tooltip: tr('removeSelectedApps'),
-                  icon: const Icon(Icons.delete_outline_outlined),
-                ),
-              ),
-            ),
-            Expanded(
-              child: Center(
-                child: IconButton(
-                  visualDensity: VisualDensity.compact,
-                  iconSize: 24,
-                  color: colorScheme.primary,
-                  onPressed: launchCategorizeDialog(),
-                  tooltip: tr('categorize'),
-                  icon: const Icon(Icons.category_outlined),
-                ),
-              ),
-            ),
-            Expanded(
-              child: Center(
-                child: IconButton(
-                  visualDensity: VisualDensity.compact,
-                  iconSize: 24,
-                  color: colorScheme.primary,
-                  onPressed: getMassObtainFunction(),
-                  tooltip: tr('installUpdateSelectedApps'),
-                  icon: const Icon(Icons.file_download_outlined),
-                ),
-              ),
-            ),
-            Expanded(
-              child: Center(
-                child: IconButton(
-                  visualDensity: VisualDensity.compact,
-                  iconSize: 24,
-                  color: colorScheme.primary,
-                  onPressed: showMoreOptionsBottomSheet,
-                  tooltip: tr('more'),
-                  icon: const Icon(Icons.more_horiz),
-                ),
-              ),
-            ),
-          ],
-        );
-      }
-      return Row(
-        children: [
-          Expanded(
-            child: Center(
-              child: Tooltip(
-                message: tr('selectAll'),
-                child: TextButton.icon(
-                  style: selectAllFooterStyle,
-                  onPressed: listedApps.isEmpty
-                      ? null
-                      : () {
-                          setState(() {
-                            for (final appInMem in listedApps) {
-                              selectedAppIds.add(appInMem.app.id);
-                            }
-                          });
-                        },
-                  icon: const Icon(Icons.select_all_outlined, size: 24),
-                  label: FittedBox(
-                    fit: BoxFit.scaleDown,
-                    child: Text(
-                      selectedAppIds.length.toString(),
-                      maxLines: 1,
-                      softWrap: false,
-                    ),
-                  ),
-                ),
-              ),
-            ),
-          ),
-          Expanded(
-            child: Center(
-              child: IconButton(
-                visualDensity: VisualDensity.compact,
-                iconSize: 24,
-                color: colorScheme.primary,
-                onPressed: getMassObtainFunction(),
-                tooltip: tr('installUpdateApps'),
-                icon: const Icon(Icons.file_download_outlined),
-              ),
-            ),
-          ),
-          Expanded(
-            child: Center(
-              child: IconButton(
-                visualDensity: VisualDensity.compact,
-                iconSize: 24,
-                color: colorScheme.primary,
-                tooltip: tr('appsViewOptions'),
-                onPressed: () => showAppsViewOptionsSheet(
-                  context,
-                  folderId: _viewSettingsId,
-                ),
-                icon: const Icon(Icons.tune),
-              ),
-            ),
-          ),
-        ],
       );
     }
 
@@ -5918,37 +5871,42 @@ class AppsPageState extends State<AppsPage> {
                                   ),
                                 ),
                               ),
-                            if (settingsProvider.progressiveBlurEnabled)
-                              SliverToBoxAdapter(
-                                child: SizedBox(
-                                  height: MediaQuery.paddingOf(context).bottom,
-                                ),
+                            SliverToBoxAdapter(
+                              child: SizedBox(
+                                height:
+                                    MediaQuery.paddingOf(context).bottom +
+                                    (!isLargeScreen
+                                        ? 80.0
+                                        : ((showSplitPaneListFabs ||
+                                                  showFolderListFabs)
+                                              ? 52.0
+                                              : 0.0)),
                               ),
+                            ),
                           ],
                         ),
+                        if (!isLargeScreen &&
+                            (widget.folderId != null ||
+                                widget.onDemandOnlyList))
+                          _buildAppsPageSideFabOverlay(
+                            context,
+                            heroScope: widget.folderId ?? 'ondemand',
+                          ),
+                        if (showSplitPaneListFabs)
+                          _buildAppsPageSideFabOverlay(
+                            context,
+                            heroScope: 'main_split',
+                          ),
+                        if (showFolderListFabs)
+                          _buildAppsPageSideFabOverlay(
+                            context,
+                            heroScope: widget.folderId ?? 'ondemand',
+                          ),
                       ],
                     ),
                   ),
                 ),
               ),
-              if (appsProvider.apps.isNotEmpty &&
-                  !(isLargeScreen && selectedAppIds.isNotEmpty))
-                _ScrollLinkedAppFooter(
-                  scrollController: scrollController,
-                  selectionActive: selectedAppIds.isNotEmpty,
-                  footer: Material(
-                    elevation: 0,
-                    surfaceTintColor: Colors.transparent,
-                    color: Theme.of(context).colorScheme.surface,
-                    child: SafeArea(
-                      top: false,
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 4),
-                        child: getFilterButtonsRow(),
-                      ),
-                    ),
-                  ),
-                ),
             ],
           ),
         );
@@ -6012,19 +5970,8 @@ class AppsPageState extends State<AppsPage> {
                               final ColorScheme scheme = Theme.of(
                                 context,
                               ).colorScheme;
-                              final buttonStyle = ElevatedButton.styleFrom(
-                                minimumSize: const Size.fromHeight(56),
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 24,
-                                  vertical: 16,
-                                ),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(16),
-                                ),
-                                alignment: Alignment.centerLeft,
-                              );
                               final destructiveButtonStyle =
-                                  ElevatedButton.styleFrom(
+                                  FilledButton.styleFrom(
                                     minimumSize: const Size.fromHeight(56),
                                     padding: const EdgeInsets.symmetric(
                                       horizontal: 24,
@@ -6035,6 +5982,13 @@ class AppsPageState extends State<AppsPage> {
                                     ),
                                     backgroundColor: scheme.errorContainer,
                                     foregroundColor: scheme.onErrorContainer,
+                                    elevation: 0,
+                                    // Match the ActionListTile rows above:
+                                    // bodyLarge (16sp) label + 24dp icon, so the
+                                    // Remove action isn't visually smaller.
+                                    textStyle: Theme.of(
+                                      context,
+                                    ).textTheme.bodyLarge,
                                     alignment: Alignment.centerLeft,
                                   );
                               return Scaffold(
@@ -6077,95 +6031,59 @@ class AppsPageState extends State<AppsPage> {
                                                 crossAxisAlignment:
                                                     CrossAxisAlignment.stretch,
                                                 children: [
-                                                  Row(
-                                                    children: [
-                                                      Expanded(
-                                                        child: OutlinedButton.icon(
-                                                          style: OutlinedButton.styleFrom(
-                                                            minimumSize:
-                                                                const Size.fromHeight(
-                                                                  48,
-                                                                ),
-                                                            shape: RoundedRectangleBorder(
-                                                              borderRadius:
-                                                                  BorderRadius.circular(
-                                                                    12,
-                                                                  ),
-                                                            ),
-                                                            side: BorderSide(
-                                                              color: scheme
-                                                                  .primary
-                                                                  .withAlpha(
-                                                                    120,
-                                                                  ),
-                                                              width: 1,
-                                                              strokeAlign:
-                                                                  BorderSide
-                                                                      .strokeAlignInside,
-                                                            ),
-                                                          ),
-                                                          onPressed:
-                                                              listedApps.isEmpty
-                                                              ? null
-                                                              : () {
-                                                                  setState(() {
-                                                                    for (final appInMem
-                                                                        in listedApps) {
-                                                                      selectedAppIds.add(
-                                                                        appInMem
-                                                                            .app
-                                                                            .id,
-                                                                      );
-                                                                    }
-                                                                  });
-                                                                },
-                                                          icon: const Icon(
-                                                            Icons
-                                                                .select_all_outlined,
-                                                          ),
-                                                          label: Text(
-                                                            tr('selectAll'),
-                                                          ),
-                                                        ),
-                                                      ),
-                                                      const SizedBox(width: 12),
-                                                      Expanded(
-                                                        child: OutlinedButton.icon(
-                                                          style: OutlinedButton.styleFrom(
-                                                            minimumSize:
-                                                                const Size.fromHeight(
-                                                                  48,
-                                                                ),
-                                                            shape: RoundedRectangleBorder(
-                                                              borderRadius:
-                                                                  BorderRadius.circular(
-                                                                    12,
-                                                                  ),
-                                                            ),
-                                                            side: BorderSide(
-                                                              color: scheme
-                                                                  .primary
-                                                                  .withAlpha(
-                                                                    120,
-                                                                  ),
-                                                              width: 1,
-                                                              strokeAlign:
-                                                                  BorderSide
-                                                                      .strokeAlignInside,
-                                                            ),
-                                                          ),
-                                                          onPressed: () {
-                                                            setState(() {
+                                                  // Select-all / deselect-all as
+                                                  // a connected M3E segmented
+                                                  // control, driven in action
+                                                  // mode: the selection is never
+                                                  // persisted (always empty), so
+                                                  // each tap simply fires its
+                                                  // action.
+                                                  AppSegmentedButton<bool>(
+                                                    selected: const <bool>{},
+                                                    emptySelectionAllowed: true,
+                                                    onSelectionChanged:
+                                                        (Set<bool> values) {
+                                                          final bool selectAll =
+                                                              values.contains(
+                                                                true,
+                                                              );
+                                                          setState(() {
+                                                            if (selectAll) {
+                                                              for (final appInMem
+                                                                  in listedApps) {
+                                                                selectedAppIds
+                                                                    .add(
+                                                                      appInMem
+                                                                          .app
+                                                                          .id,
+                                                                    );
+                                                              }
+                                                            } else {
                                                               selectedAppIds
                                                                   .clear();
-                                                            });
-                                                          },
-                                                          icon: const Icon(
-                                                            Icons.deselect,
-                                                          ),
-                                                          label: Text(
-                                                            tr('deselectAll'),
-                                                          ),
+                                                            }
+                                                          });
+                                                        },
+                                                    segments: [
+                                                      ButtonSegment<bool>(
+                                                        value: true,
+                                                        enabled: listedApps
+                                                            .isNotEmpty,
+                                                        icon: const Icon(
+                                                          Icons
+                                                              .select_all_outlined,
+                                                        ),
+                                                        label: Text(
+                                                          tr('selectAll'),
+                                                        ),
+                                                      ),
+                                                      ButtonSegment<bool>(
+                                                        value: false,
+                                                        icon: const Icon(
+                                                          Icons.deselect,
+                                                        ),
+                                                        label: Text(
+                                                          tr('deselectAll'),
                                                         ),
                                                       ),
                                                     ],
@@ -6204,132 +6122,142 @@ class AppsPageState extends State<AppsPage> {
                                                     ),
                                                   ),
                                                   const SizedBox(height: 12),
-                                                  ElevatedButton.icon(
-                                                    style: buttonStyle,
-                                                    onPressed:
-                                                        appsProvider
-                                                            .areDownloadsRunning()
-                                                        ? null
-                                                        : showMassMarkDialog,
-                                                    icon: const Icon(
-                                                      Icons
-                                                          .check_circle_outline_rounded,
-                                                    ),
-                                                    label: Text(
-                                                      tr(
-                                                        'markSelectedAppsUpdated',
-                                                      ),
-                                                    ),
-                                                  ),
-                                                  const SizedBox(height: 12),
-                                                  ElevatedButton.icon(
-                                                    style: buttonStyle,
-                                                    onPressed:
-                                                        downloadSelectedAppAssets,
-                                                    icon: const Icon(
-                                                      Icons
-                                                          .download_for_offline_outlined,
-                                                    ),
-                                                    label: Text(
-                                                      tr(
-                                                        'downloadX',
-                                                        args: [
-                                                          lowerCaseIfEnglish(
-                                                            tr('releaseAsset'),
-                                                          ),
-                                                        ],
-                                                      ),
-                                                    ),
-                                                  ),
-                                                  const SizedBox(height: 12),
-                                                  ElevatedButton.icon(
-                                                    style: buttonStyle,
-                                                    onPressed:
-                                                        launchCategorizeDialog(),
-                                                    icon: const Icon(
-                                                      Icons.category_outlined,
-                                                    ),
-                                                    label: Text(
-                                                      tr('categorize'),
-                                                    ),
-                                                  ),
-                                                  const SizedBox(height: 12),
-                                                  ElevatedButton.icon(
-                                                    style: buttonStyle,
-                                                    onPressed: pinSelectedApps,
-                                                    icon: const Icon(
-                                                      Icons.push_pin_outlined,
-                                                    ),
-                                                    label: Text(
-                                                      selectedApps
-                                                              .where(
-                                                                (element) =>
-                                                                    element
-                                                                        .pinned,
-                                                              )
-                                                              .isEmpty
-                                                          ? tr('pinToTop')
-                                                          : tr('unpinFromTop'),
-                                                    ),
-                                                  ),
-                                                  const SizedBox(height: 12),
-                                                  ElevatedButton.icon(
-                                                    style: buttonStyle,
-                                                    onPressed: () =>
-                                                        _showFolderAssignDialog(
-                                                          context,
-                                                          selectedApps,
+                                                  M3eExpressiveSettingsCard(
+                                                    colorScheme: scheme,
+                                                    items: [
+                                                      ActionListTile(
+                                                        iconColor:
+                                                            appsProvider
+                                                                .areDownloadsRunning()
+                                                            ? null
+                                                            : scheme.primary,
+                                                        textColor:
+                                                            appsProvider
+                                                                .areDownloadsRunning()
+                                                            ? null
+                                                            : scheme.primary,
+                                                        icon: Icons
+                                                            .check_circle_outline_rounded,
+                                                        label: tr(
+                                                          'markSelectedAppsUpdated',
                                                         ),
-                                                    icon: const Icon(
-                                                      Icons
-                                                          .folder_copy_outlined,
-                                                    ),
-                                                    label: Text(
-                                                      tr('addToFolder'),
-                                                    ),
-                                                  ),
-                                                  const SizedBox(height: 12),
-                                                  ElevatedButton.icon(
-                                                    style: buttonStyle,
-                                                    onPressed:
-                                                        shareSelectedAppUrls,
-                                                    icon: const Icon(
-                                                      Icons.share_outlined,
-                                                    ),
-                                                    label: Text(
-                                                      tr(
-                                                        'shareSelectedAppURLs',
+                                                        onTap:
+                                                            appsProvider
+                                                                .areDownloadsRunning()
+                                                            ? null
+                                                            : showMassMarkDialog,
                                                       ),
-                                                    ),
-                                                  ),
-                                                  const SizedBox(height: 12),
-                                                  ElevatedButton.icon(
-                                                    style: buttonStyle,
-                                                    onPressed:
-                                                        shareSelectedAppConfigLinks,
-                                                    icon: const Icon(
-                                                      Icons
-                                                          .settings_suggest_outlined,
-                                                    ),
-                                                    label: Text(
-                                                      tr('shareAppConfigLinks'),
-                                                    ),
-                                                  ),
-                                                  const SizedBox(height: 12),
-                                                  ElevatedButton.icon(
-                                                    style: buttonStyle,
-                                                    onPressed:
-                                                        exportSelectedApps,
-                                                    icon: const Icon(
-                                                      Icons
-                                                          .import_export_outlined,
-                                                    ),
-                                                    label: Text(
-                                                      '${tr('share')} - ${tr('obtainiumExport')}',
-                                                    ),
+                                                      ActionListTile(
+                                                        iconColor:
+                                                            scheme.primary,
+                                                        textColor:
+                                                            scheme.primary,
+                                                        icon: Icons
+                                                            .download_for_offline_outlined,
+                                                        label: tr(
+                                                          'downloadX',
+                                                          args: [
+                                                            lowerCaseIfEnglish(
+                                                              tr(
+                                                                'releaseAsset',
+                                                              ),
+                                                            ),
+                                                          ],
+                                                        ),
+                                                        onTap:
+                                                            downloadSelectedAppAssets,
+                                                      ),
+                                                      ActionListTile(
+                                                        iconColor:
+                                                            scheme.primary,
+                                                        textColor:
+                                                            scheme.primary,
+                                                        icon: Icons
+                                                            .category_outlined,
+                                                        label: tr('categorize'),
+                                                        onTap:
+                                                            launchCategorizeDialog(),
+                                                      ),
+                                                      ActionListTile(
+                                                        iconColor:
+                                                            scheme.primary,
+                                                        textColor:
+                                                            scheme.primary,
+                                                        icon: Icons
+                                                            .push_pin_outlined,
+                                                        label:
+                                                            selectedApps
+                                                                .where(
+                                                                  (
+                                                                    element,
+                                                                  ) => element
+                                                                      .pinned,
+                                                                )
+                                                                .isEmpty
+                                                            ? tr('pinToTop')
+                                                            : tr(
+                                                                'unpinFromTop',
+                                                              ),
+                                                        onTap: pinSelectedApps,
+                                                      ),
+                                                      ActionListTile(
+                                                        iconColor:
+                                                            scheme.primary,
+                                                        textColor:
+                                                            scheme.primary,
+                                                        icon: Icons
+                                                            .folder_copy_outlined,
+                                                        label: tr(
+                                                          'addToFolder',
+                                                        ),
+                                                        onTap: () =>
+                                                            _showFolderAssignDialog(
+                                                              context,
+                                                              selectedApps,
+                                                            ),
+                                                      ),
+                                                      ActionListTile(
+                                                        iconColor:
+                                                            scheme.primary,
+                                                        textColor:
+                                                            scheme.primary,
+                                                        icon: Icons
+                                                            .share_outlined,
+                                                        label: tr(
+                                                          'shareSelectedAppURLs',
+                                                        ),
+                                                        onTap:
+                                                            shareSelectedAppUrls,
+                                                      ),
+                                                      ActionListTile(
+                                                        iconColor:
+                                                            scheme.primary,
+                                                        textColor:
+                                                            scheme.primary,
+                                                        icon: Icons
+                                                            .settings_suggest_outlined,
+                                                        label: tr(
+                                                          'shareAppConfigLinks',
+                                                        ),
+                                                        onTap:
+                                                            shareSelectedAppConfigLinks,
+                                                      ),
+                                                      ActionListTile(
+                                                        iconColor:
+                                                            scheme.primary,
+                                                        textColor:
+                                                            scheme.primary,
+                                                        icon: Icons
+                                                            .import_export_outlined,
+                                                        label:
+                                                            '${tr('share')} - ${tr('obtainiumExport')}',
+                                                        onTap:
+                                                            exportSelectedApps,
+                                                      ),
+                                                    ],
                                                   ),
                                                   const SizedBox(height: 24),
-                                                  ElevatedButton.icon(
+                                                  FilledButton.icon(
                                                     style:
                                                         destructiveButtonStyle,
                                                     onPressed: () async {
@@ -6400,6 +6328,7 @@ class AppsPageState extends State<AppsPage> {
                                                     icon: const Icon(
                                                       Icons
                                                           .delete_outline_outlined,
+                                                      size: 24,
                                                     ),
                                                     label: Text(
                                                       tr('removeSelectedApps'),
@@ -7199,7 +7128,7 @@ class AppsPageState extends State<AppsPage> {
                           width: double.infinity,
                           child: AnimatedSize(
                             duration: const Duration(milliseconds: 220),
-                            curve: Curves.easeInOutCubic,
+                            curve: Curves.easeInOutCubicEmphasized,
                             alignment: Alignment.topCenter,
                             child: isEditing
                                 ? Padding(
@@ -7313,7 +7242,7 @@ class AppsPageState extends State<AppsPage> {
                 width: double.infinity,
                 child: AnimatedSize(
                   duration: const Duration(milliseconds: 220),
-                  curve: Curves.easeInOutCubic,
+                  curve: Curves.easeInOutCubicEmphasized,
                   alignment: Alignment.topCenter,
                   child: creatingFolder
                       ? Padding(

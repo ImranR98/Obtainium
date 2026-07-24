@@ -325,20 +325,39 @@ class SettingsProvider with ChangeNotifier {
   /// the even-older `useShizuku` bool. Runs once; skips if `installMethod` is set.
   void _migrateInstallMethodSetting() {
     if (prefs == null) return;
+    final Object? existing = prefs!.get('installMethod');
+    if (existing is int) {
+      final String converged =
+          (existing >= 0 && existing < InstallerMode.values.length)
+          ? InstallerMode.values[existing].name
+          : InstallerMode.system.name;
+      prefs!.setString('installMethod', converged);
+    }
     if (prefs!.containsKey('installMethod')) return;
-    final String? legacyMode = prefs!.getString('installerMode');
+    final Object? legacyMode = prefs!.get('installerMode');
     if (legacyMode != null) {
-      final String converged = switch (legacyMode) {
-        'shizuku' => InstallerMode.shizuku.name,
-        'legacy' => InstallerMode.external.name,
-        _ => InstallerMode.system.name,
+      final String legacyStr = legacyMode.toString();
+      final String converged = switch (legacyStr) {
+        'shizuku' || '1' => InstallerMode.shizuku.name,
+        'legacy' || '2' => InstallerMode.external.name,
+        'stock' || '0' => InstallerMode.system.name,
+        _ =>
+          int.tryParse(legacyStr) != null
+              ? (int.parse(legacyStr) >= 0 &&
+                        int.parse(legacyStr) < InstallerMode.values.length
+                    ? InstallerMode.values[int.parse(legacyStr)].name
+                    : InstallerMode.system.name)
+              : InstallerMode.system.name,
       };
       prefs!.setString('installMethod', converged);
       prefs!.remove('installerMode');
       prefs!.remove('useShizuku');
       return;
     }
-    if (prefs!.getBool('useShizuku') == true) {
+    final Object? useShizukuVal = prefs!.get('useShizuku');
+    if (useShizukuVal == true ||
+        useShizukuVal == 1 ||
+        useShizukuVal.toString().toLowerCase() == 'true') {
       prefs!.setString('installMethod', InstallerMode.shizuku.name);
     }
     prefs!.remove('useShizuku');
@@ -421,17 +440,26 @@ class SettingsProvider with ChangeNotifier {
   // Sharing the key/values with upstream is what lets backups move cleanly
   // between ObtainX and Obtainium without any translation.
   String get installerMode {
-    final String? stored = prefs?.getString('installMethod');
-    if (stored != null &&
-        InstallerMode.values.any((InstallerMode m) => m.name == stored)) {
-      return stored;
+    final Object? stored = prefs?.get('installMethod');
+    if (stored is String) {
+      if (InstallerMode.values.any(
+        (InstallerMode modeOption) => modeOption.name == stored,
+      )) {
+        return stored;
+      }
+    } else if (stored is int) {
+      if (stored >= 0 && stored < InstallerMode.values.length) {
+        return InstallerMode.values[stored].name;
+      }
     }
     return InstallerMode.system.name;
   }
 
   set installerMode(String mode) {
     final String resolved =
-        InstallerMode.values.any((InstallerMode m) => m.name == mode)
+        InstallerMode.values.any(
+          (InstallerMode modeOption) => modeOption.name == mode,
+        )
         ? mode
         : InstallerMode.system.name;
     prefs?.setString('installMethod', resolved);
@@ -694,6 +722,32 @@ class SettingsProvider with ChangeNotifier {
   set useBlackTheme(bool useBlackTheme) {
     if (this.useBlackTheme == useBlackTheme) return;
     prefs?.setBool('useBlackTheme', useBlackTheme);
+    notifyListeners();
+  }
+
+  String? get customFontPath {
+    return prefs?.getString('customFontPath');
+  }
+
+  set customFontPath(String? value) {
+    if (value == null) {
+      prefs?.remove('customFontPath');
+    } else {
+      prefs?.setString('customFontPath', value);
+    }
+    notifyListeners();
+  }
+
+  String? get customFontName {
+    return prefs?.getString('customFontName');
+  }
+
+  set customFontName(String? value) {
+    if (value == null) {
+      prefs?.remove('customFontName');
+    } else {
+      prefs?.setString('customFontName', value);
+    }
     notifyListeners();
   }
 

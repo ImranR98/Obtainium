@@ -1,5 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:io' show Directory, File, Platform;
+import 'dart:typed_data' show ByteData, Endian, Uint8List;
 
 import 'package:android_package_manager/android_package_manager.dart'
     show PackageInfo;
@@ -35,6 +37,8 @@ import 'package:obtainium/theme/app_form_field_styles.dart';
 import 'package:obtainium/theme/app_theme_accent.dart';
 import 'package:obtainium/theme/app_segmented_button_theme.dart';
 import 'package:obtainium/theme/m3e_expressive_list.dart';
+import 'package:file_picker/file_picker.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:provider/provider.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:shizuku_apk_installer/shizuku_apk_installer.dart';
@@ -150,6 +154,7 @@ class SettingsPageState extends State<SettingsPage> {
     if (hasUnsavedChanges) {
       final bool? discard = await showDialog<bool>(
         context: context,
+        barrierDismissible: false,
         builder: (BuildContext dialogContext) {
           return AlertDialog(
             title: Text(tr('discardUnsavedChangesQuestion')),
@@ -380,6 +385,9 @@ class SettingsPageState extends State<SettingsPage> {
                                   duration: headerTransitionDuration,
                                   curve: headerTransitionCurve,
                                   style: TextStyle(
+                                    fontFamily: Theme.of(
+                                      context,
+                                    ).textTheme.bodyLarge?.fontFamily,
                                     fontWeight: expanded
                                         ? FontWeight.w600
                                         : FontWeight.w700,
@@ -449,6 +457,9 @@ class SettingsPageState extends State<SettingsPage> {
                   child: Text(
                     tr('about'),
                     style: TextStyle(
+                      fontFamily: Theme.of(
+                        context,
+                      ).textTheme.bodyLarge?.fontFamily,
                       fontWeight: FontWeight.w600,
                       color: cs.primary,
                       fontSize: 13,
@@ -602,6 +613,9 @@ class SettingsPageState extends State<SettingsPage> {
                         child: Text(
                           title,
                           style: TextStyle(
+                            fontFamily: Theme.of(
+                              context,
+                            ).textTheme.bodyLarge?.fontFamily,
                             fontWeight: selected
                                 ? FontWeight.w600
                                 : FontWeight.w500,
@@ -654,7 +668,7 @@ class SettingsPageState extends State<SettingsPage> {
       return Theme(
         data: Theme.of(context).copyWith(
           listTileTheme: const ListTileThemeData(
-            contentPadding: EdgeInsets.only(left: 16, right: 8),
+            contentPadding: kM3eSettingsListTileContentPadding,
           ),
         ),
         child: Stack(
@@ -804,7 +818,7 @@ class SettingsPageState extends State<SettingsPage> {
     return Theme(
       data: Theme.of(context).copyWith(
         listTileTheme: const ListTileThemeData(
-          contentPadding: EdgeInsets.only(left: 16, right: 8),
+          contentPadding: kM3eSettingsListTileContentPadding,
         ),
       ),
       child: Scaffold(
@@ -1236,7 +1250,7 @@ class _RunBgUpdateCheckNowButtonState
               ? const SizedBox(
                   width: 20,
                   height: 20,
-                  child: CircularProgressIndicator(strokeWidth: 2),
+                  child: ExpressiveLoadingIndicator(),
                 )
               : Text(tr('runBgCheckNow')),
         ),
@@ -1309,7 +1323,12 @@ class _UpdateIntervalSliderState extends State<_UpdateIntervalSlider> {
     final String label = _labelForVal(sliderVal);
     final isTV = context.read<SettingsProvider>().isTV;
     return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 8, 8, 8),
+      padding: const EdgeInsets.fromLTRB(
+        kM3eSettingsCardHorizontalInset,
+        8,
+        kM3eSettingsCardHorizontalInset,
+        8,
+      ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
@@ -1348,18 +1367,13 @@ class _UpdateIntervalSliderState extends State<_UpdateIntervalSlider> {
                       trackHeight: 16,
                       trackShape: const _GappedTrackShape(),
                       thumbShape: const _VerticalBarThumbShape(),
-                      tickMarkShape: const RoundSliderTickMarkShape(
-                        tickMarkRadius: 3,
-                      ),
                       activeTickMarkColor: Theme.of(
                         context,
                       ).colorScheme.onPrimary,
                       inactiveTickMarkColor: Theme.of(
                         context,
                       ).colorScheme.primary,
-                      overlayShape: const RoundSliderOverlayShape(
-                        overlayRadius: 20,
-                      ),
+                      overlayShape: SliderComponentShape.noOverlay,
                     ),
                     child: Slider(
                       focusNode: isTV ? _sliderFocusNode : null,
@@ -1462,7 +1476,12 @@ class _SourceSpecificSectionState extends State<_SourceSpecificSection> {
       colorScheme: cs,
       items: [
         Padding(
-          padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
+          padding: const EdgeInsets.fromLTRB(
+            kM3eSettingsCardHorizontalInset,
+            12,
+            kM3eSettingsCardTrailingInset,
+            12,
+          ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
@@ -1634,7 +1653,12 @@ class _SourceSpecificSectionState extends State<_SourceSpecificSection> {
           ),
         ),
         Padding(
-          padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
+          padding: const EdgeInsets.fromLTRB(
+            kM3eSettingsCardHorizontalInset,
+            12,
+            kM3eSettingsCardHorizontalInset,
+            12,
+          ),
           child: TextField(
             controller: _hubProxyController,
             decoration:
@@ -1673,7 +1697,12 @@ class _SourceSpecificSectionState extends State<_SourceSpecificSection> {
           },
         ),
         Padding(
-          padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
+          padding: const EdgeInsets.fromLTRB(
+            kM3eSettingsCardHorizontalInset,
+            12,
+            kM3eSettingsCardTrailingInset,
+            12,
+          ),
           child: Row(
             children: [
               Expanded(
@@ -1841,6 +1870,7 @@ class _AppearanceSection extends StatelessWidget {
     sp.showAppWebpage,
     sp.highlightTouchTargets,
     sp.alwaysUsePhoneLayout,
+    sp.customFontPath,
   );
 
   @override
@@ -1853,9 +1883,15 @@ class _AppearanceSection extends StatelessWidget {
       colorScheme: cs,
       items: [
         Padding(
-          padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
+          padding: const EdgeInsets.fromLTRB(
+            kM3eSettingsCardHorizontalInset,
+            12,
+            kM3eSettingsCardHorizontalInset,
+            4,
+          ),
           child: _LocaleMenu(sp: sp),
         ),
+        _CustomFontTile(sp: sp),
         const _UiScaleSlider(),
         const _CardCornerScaleSlider(),
         SwitchListTile(
@@ -1874,6 +1910,200 @@ class _AppearanceSection extends StatelessWidget {
           onChanged: (value) => sp.highlightTouchTargets = value,
         ),
       ],
+    );
+  }
+}
+
+class _CustomFontTile extends StatelessWidget {
+  const _CustomFontTile({required this.sp});
+
+  final SettingsProvider sp;
+
+  String? _readFontName(Uint8List bytes) {
+    try {
+      final ByteData data = ByteData.view(bytes.buffer);
+      if (data.lengthInBytes < 12) return null;
+
+      final int numTables = data.getUint16(4, Endian.big);
+      if (data.lengthInBytes < 12 + (numTables * 16)) return null;
+
+      int? nameTableOffset;
+      for (int i = 0; i < numTables; i++) {
+        final int recordOffset = 12 + (i * 16);
+        final int tag1 = data.getUint8(recordOffset);
+        final int tag2 = data.getUint8(recordOffset + 1);
+        final int tag3 = data.getUint8(recordOffset + 2);
+        final int tag4 = data.getUint8(recordOffset + 3);
+        if (tag1 == 110 && tag2 == 97 && tag3 == 109 && tag4 == 101) {
+          // "name"
+          nameTableOffset = data.getUint32(recordOffset + 8, Endian.big);
+          break;
+        }
+      }
+
+      if (nameTableOffset == null || nameTableOffset >= data.lengthInBytes) {
+        return null;
+      }
+
+      final int count = data.getUint16(nameTableOffset + 2, Endian.big);
+      final int stringOffset = data.getUint16(nameTableOffset + 4, Endian.big);
+
+      final int stringStorageStart = nameTableOffset + stringOffset;
+      if (stringStorageStart >= data.lengthInBytes) return null;
+
+      String? fontFamilyName;
+      String? fullFontName;
+
+      for (int i = 0; i < count; i++) {
+        final int recordPos = nameTableOffset + 6 + (i * 12);
+        if (recordPos + 12 > data.lengthInBytes) break;
+
+        final int platformID = data.getUint16(recordPos, Endian.big);
+        final int nameID = data.getUint16(recordPos + 6, Endian.big);
+        final int length = data.getUint16(recordPos + 8, Endian.big);
+        final int offset = data.getUint16(recordPos + 10, Endian.big);
+
+        if (nameID == 4 || nameID == 1) {
+          final int start = stringStorageStart + offset;
+          if (start + length > data.lengthInBytes) continue;
+
+          final Uint8List nameBytes = bytes.sublist(start, start + length);
+          String nameStr = '';
+
+          if (platformID == 3 || platformID == 0) {
+            final buffer = StringBuffer();
+            for (int j = 0; j < nameBytes.length; j += 2) {
+              if (j + 1 < nameBytes.length) {
+                final int charCode = (nameBytes[j] << 8) | nameBytes[j + 1];
+                if (charCode != 0) {
+                  buffer.writeCharCode(charCode);
+                }
+              }
+            }
+            nameStr = buffer.toString().trim();
+          } else {
+            nameStr = utf8.decode(nameBytes, allowMalformed: true).trim();
+          }
+
+          if (nameStr.isNotEmpty) {
+            if (nameID == 4) {
+              fullFontName = nameStr;
+            } else {
+              fontFamilyName = nameStr;
+            }
+          }
+        }
+      }
+
+      return fullFontName ?? fontFamilyName;
+    } catch (_) {}
+    return null;
+  }
+
+  Future<void> _pickFont(BuildContext context) async {
+    try {
+      final bool? proceed = await showDialog<bool>(
+        context: context,
+        builder: (BuildContext dialogContext) {
+          return AlertDialog(
+            title: Text(tr('settingsCustomFontChoose')),
+            contentPadding: appDialogContentPadding,
+            content: Text(tr('settingsCustomFontChooseExplanation')),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(dialogContext).pop(false),
+                child: Text(tr('cancel')),
+              ),
+              TextButton(
+                onPressed: () => Navigator.of(dialogContext).pop(true),
+                child: Text(tr('pick')),
+              ),
+            ],
+          );
+        },
+      );
+      if (proceed != true) return;
+
+      final FilePickerResult? result = await FilePicker.pickFiles(
+        type: FileType.custom,
+        allowedExtensions: ['ttf', 'otf'],
+      );
+      if (result == null || result.files.single.path == null) return;
+      final String pickedPath = result.files.single.path!;
+
+      final Directory appDocDir = await getApplicationDocumentsDirectory();
+      final Directory fontsDir = Directory('${appDocDir.path}/fonts');
+      await fontsDir.create(recursive: true);
+      final String ext = pickedPath.split('.').last.toLowerCase();
+      final String targetPath = '${fontsDir.path}/custom_font.$ext';
+
+      final File sourceFile = File(pickedPath);
+      final Uint8List bytes = await sourceFile.readAsBytes();
+
+      // Read font name from metadata
+      final String? parsedName = _readFontName(bytes);
+      final String displayName =
+          parsedName ?? pickedPath.split(Platform.pathSeparator).last;
+
+      // Verify the font by temporarily loading it
+      final FontLoader fontLoader = FontLoader('TempCustomFontTest');
+      fontLoader.addFont(Future.value(bytes.buffer.asByteData()));
+      await fontLoader.load();
+
+      // Write font to destination
+      final File targetFile = File(targetPath);
+      await targetFile.writeAsBytes(bytes);
+
+      sp.customFontName = displayName;
+      sp.customFontPath = targetPath;
+
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(tr('settingsCustomFontSuccess')),
+            duration: const Duration(seconds: 2),
+          ),
+        );
+      }
+    } catch (_) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(tr('settingsCustomFontErrorInvalid')),
+            duration: const Duration(seconds: 4),
+          ),
+        );
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final String? currentPath = sp.customFontPath;
+    final String subtitleText = currentPath != null
+        ? (sp.customFontName ?? currentPath.split(Platform.pathSeparator).last)
+        : tr('settingsCustomFontDefault');
+
+    return ListTile(
+      title: Text(tr('settingsCustomFontTitle')),
+      subtitle: Text(subtitleText),
+      leading: const Icon(Icons.font_download_outlined),
+      trailing: currentPath != null
+          ? IconButton.filledTonal(
+              icon: const Icon(Icons.close_rounded),
+              onPressed: () {
+                sp.customFontName = null;
+                sp.customFontPath = null;
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text(tr('settingsCustomFontResetSuccess')),
+                    duration: const Duration(seconds: 2),
+                  ),
+                );
+              },
+            )
+          : null,
+      onTap: () => _pickFont(context),
     );
   }
 }
@@ -1965,7 +2195,12 @@ class _UiScaleSliderState extends State<_UiScaleSlider> {
         context.select<SettingsProvider, double>((s) => s.appUiScale);
     final isTV = context.read<SettingsProvider>().isTV;
     return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 8, 8, 8),
+      padding: const EdgeInsets.fromLTRB(
+        kM3eSettingsCardHorizontalInset,
+        8,
+        kM3eSettingsCardHorizontalInset,
+        8,
+      ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
@@ -2005,14 +2240,9 @@ class _UiScaleSliderState extends State<_UiScaleSlider> {
                       trackHeight: 16,
                       trackShape: const _GappedTrackShape(),
                       thumbShape: const _VerticalBarThumbShape(),
-                      tickMarkShape: const RoundSliderTickMarkShape(
-                        tickMarkRadius: 3,
-                      ),
                       activeTickMarkColor: cs.onPrimary,
                       inactiveTickMarkColor: cs.primary,
-                      overlayShape: const RoundSliderOverlayShape(
-                        overlayRadius: 20,
-                      ),
+                      overlayShape: SliderComponentShape.noOverlay,
                     ),
                     child: Slider(
                       focusNode: isTV ? _sliderFocusNode : null,
@@ -2078,7 +2308,12 @@ class _CardCornerScaleSliderState extends State<_CardCornerScaleSlider> {
         context.select<SettingsProvider, double>((s) => s.cardCornerScale);
     final isTV = context.read<SettingsProvider>().isTV;
     return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 8, 8, 8),
+      padding: const EdgeInsets.fromLTRB(
+        kM3eSettingsCardHorizontalInset,
+        8,
+        kM3eSettingsCardHorizontalInset,
+        8,
+      ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
@@ -2118,14 +2353,9 @@ class _CardCornerScaleSliderState extends State<_CardCornerScaleSlider> {
                       trackHeight: 16,
                       trackShape: const _GappedTrackShape(),
                       thumbShape: const _VerticalBarThumbShape(),
-                      tickMarkShape: const RoundSliderTickMarkShape(
-                        tickMarkRadius: 3,
-                      ),
                       activeTickMarkColor: cs.onPrimary,
                       inactiveTickMarkColor: cs.primary,
-                      overlayShape: const RoundSliderOverlayShape(
-                        overlayRadius: 20,
-                      ),
+                      overlayShape: SliderComponentShape.noOverlay,
                     ),
                     child: Slider(
                       focusNode: isTV ? _sliderFocusNode : null,
@@ -2259,7 +2489,12 @@ class _InteractionSection extends StatelessWidget {
           onChanged: (value) => sp.tactileFeedbackEnabled = value,
         ),
         Padding(
-          padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
+          padding: const EdgeInsets.fromLTRB(
+            kM3eSettingsCardHorizontalInset,
+            12,
+            kM3eSettingsCardHorizontalInset,
+            12,
+          ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
@@ -2543,7 +2778,12 @@ class _IntegrationsSectionState extends State<_IntegrationsSection>
           },
         ),
         Padding(
-          padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
+          padding: const EdgeInsets.fromLTRB(
+            kM3eSettingsCardHorizontalInset,
+            8,
+            kM3eSettingsCardTrailingInset,
+            12,
+          ),
           child: Row(
             children: [
               Expanded(
@@ -2675,7 +2915,12 @@ class _IntegrationsSectionState extends State<_IntegrationsSection>
           ),
         ),
         Padding(
-          padding: const EdgeInsets.fromLTRB(16, 8, 16, 4),
+          padding: const EdgeInsets.fromLTRB(
+            kM3eSettingsCardHorizontalInset,
+            8,
+            kM3eSettingsCardHorizontalInset,
+            4,
+          ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             mainAxisSize: MainAxisSize.min,
@@ -3588,16 +3833,19 @@ class _LogsDialogState extends State<LogsDialog> {
                   TextButton(
                     onPressed: () async {
                       final diagnostics = await getDiagnosticsText();
+                      final logs = logString ?? '';
+                      const int maxLogChars = 100000;
+                      final String safeLogs = logs.length > maxLogChars
+                          ? '[... Truncated ${logs.length - maxLogChars} characters. Use "Share as file" for full logs ...]\n\n${logs.substring(logs.length - maxLogChars)}'
+                          : logs;
                       unawaited(
                         SharePlus.instance.share(
                           ShareParams(
-                            text: '$diagnostics${logString ?? ''}',
+                            text: '$diagnostics$safeLogs',
                             subject: tr('appLogs'),
                           ),
                         ),
                       );
-                      if (!context.mounted) return;
-                      Navigator.of(context).pop();
                     },
                     child: Text(tr('share')),
                   ),
@@ -3623,8 +3871,6 @@ class _LogsDialogState extends State<LogsDialog> {
                           subject: tr('appLogs'),
                         ),
                       );
-                      if (!context.mounted) return;
-                      Navigator.of(context).pop();
                     },
                     child: Text(tr('shareAsFile')),
                   ),
@@ -4076,7 +4322,7 @@ class _ExternalInstallerTileState extends State<_ExternalInstallerTile> {
               leading: _targetIcon(current),
               title: Text(tr('chooseExternalInstaller')),
               subtitle: Text(subtitle),
-              trailing: const Icon(Icons.arrow_drop_down),
+              trailing: const Icon(Icons.expand_more_rounded),
               onTap: () => _choose(targets, settingsProvider),
             );
           },
