@@ -166,13 +166,13 @@ Optimizations made to legacy Obtainium features.
 <table>
 <tr>
 <td width="33%" align="center" valign="top">
-<video src="https://github.com/user-attachments/assets/59d5570b-64f7-4e2e-90f4-9ec8a8a921a6" width="300" controls muted></video>
+<video src="https://github.com/user-attachments/assets/e34820a8-6d25-4f9b-831c-9446d69fc459" width="300" controls muted></video>
 </td>
 <td width="33%" align="center" valign="top">
-<video src="https://github.com/user-attachments/assets/e9aaaa0a-9fac-4a0f-a9d9-2bf10f3bb627" width="300" controls muted></video>
+<video src="https://github.com/user-attachments/assets/24399a36-afb9-4955-944f-c0f3e3f093ac" width="300" controls muted></video>
 </td>
 <td width="33%" align="center" valign="top">
-<video src="https://github.com/user-attachments/assets/3fb396db-0bd3-40e4-a1e9-a250a2c39aa6" width="300" controls muted></video>
+<video src="https://github.com/user-attachments/assets/72c4d23e-7371-4fbd-9bc5-84a51ce54a78" width="300" controls muted></video>
 </td>
 </tr>
 </table>
