@@ -67,16 +67,13 @@ enum _AddAppLauncherDestination {
 enum _PackageIdDetectionChoice { download, trackOnly }
 
 class AddAppPage extends StatefulWidget {
-  const AddAppPage({
-    super.key,
-    this.homeFabChromeTick,
-    this.onStateChanged,
-  }) : _initialMode = _AddMode.launcher,
-       _initialUrl = null,
-       _searchAddsMultipleApps = false,
-       _onBatchSearchSaved = null,
-       _onEmbeddedAddCompleted = null,
-       _embeddedDetail = false;
+  const AddAppPage({super.key, this.homeFabChromeTick, this.onStateChanged})
+    : _initialMode = _AddMode.launcher,
+      _initialUrl = null,
+      _searchAddsMultipleApps = false,
+      _onBatchSearchSaved = null,
+      _onEmbeddedAddCompleted = null,
+      _embeddedDetail = false;
 
   const AddAppPage._flow({
     super.key,
@@ -980,12 +977,16 @@ class AddAppPageState extends State<AddAppPage> {
           initialUrl: _launcherDetailUrl,
           onEmbeddedAddCompleted: resetLauncherAfterSuccessfulAdd,
           embeddedDetail: true,
+          homeFabChromeTick: widget.homeFabChromeTick,
+          onStateChanged: widget.onStateChanged,
         ),
         _AddAppLauncherDestination.searchSources => AddAppPage._flow(
           key: _launcherSearchDetailKey,
           initialMode: _AddMode.search,
           onEmbeddedAddCompleted: resetLauncherAfterSuccessfulAdd,
           embeddedDetail: true,
+          homeFabChromeTick: widget.homeFabChromeTick,
+          onStateChanged: widget.onStateChanged,
         ),
         _AddAppLauncherDestination.batchSearch => AddAppPage._flow(
           key: _launcherBatchSearchDetailKey,
@@ -993,6 +994,8 @@ class AddAppPageState extends State<AddAppPage> {
           searchAddsMultipleApps: true,
           onBatchSearchSaved: resetLauncherAndSwitchToAppsPage,
           embeddedDetail: true,
+          homeFabChromeTick: widget.homeFabChromeTick,
+          onStateChanged: widget.onStateChanged,
         ),
         _AddAppLauncherDestination.bulkSearch => BulkAddWidget(
           key: _launcherBulkDetailKey,

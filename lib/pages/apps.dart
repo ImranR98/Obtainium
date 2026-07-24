@@ -2602,10 +2602,7 @@ class AppsPageState extends State<AppsPage> {
                         runMassObtain();
                       },
                       tooltip: null,
-                      child: const Icon(
-                        Icons.file_download_outlined,
-                        size: 20,
-                      ),
+                      child: const Icon(Icons.file_download_outlined, size: 20),
                     ),
                     if (pageUpdateCount > 0)
                       Positioned(
@@ -2613,9 +2610,7 @@ class AppsPageState extends State<AppsPage> {
                         bottom: -4,
                         child: Badge(
                           label: Text(pageUpdateCount.toString()),
-                          backgroundColor: Theme.of(
-                            context,
-                          ).colorScheme.error,
+                          backgroundColor: Theme.of(context).colorScheme.error,
                           textColor: Theme.of(context).colorScheme.onError,
                         ),
                       ),
@@ -3760,11 +3755,13 @@ class AppsPageState extends State<AppsPage> {
     }
 
     // Multi-select puts batch actions in pane 2; hide duplicate list FABs then.
-    final bool showSplitPaneListFabs = isLargeScreen &&
+    final bool showSplitPaneListFabs =
+        isLargeScreen &&
         widget.folderId == null &&
         !widget.onDemandOnlyList &&
         selectedAppIds.isEmpty;
-    final bool showFolderListFabs = isLargeScreen &&
+    final bool showFolderListFabs =
+        isLargeScreen &&
         (widget.folderId != null || widget.onDemandOnlyList) &&
         selectedAppIds.isEmpty;
 
@@ -3883,7 +3880,6 @@ class AppsPageState extends State<AppsPage> {
         (effectiveGroupBy == AppsListGroupBy.category ||
             effectiveGroupBy == AppsListGroupBy.source ||
             effectiveGroupBy == AppsListGroupBy.appType);
-
 
     final tempRenamed = <AppInMemory>[];
     final tempPinned = <AppInMemory>[];
@@ -4685,8 +4681,9 @@ class AppsPageState extends State<AppsPage> {
                 existingUpdateIds: existingUpdateIdsAllOrSelected,
                 newInstallIds: newInstallIdsAllOrSelected,
                 trackOnlyUpdateIds: trackOnlyUpdateIdsAllOrSelected,
-                initialSelectedIds:
-                    selectedAppIds.isNotEmpty ? selectedAppIds : null,
+                initialSelectedIds: selectedAppIds.isNotEmpty
+                    ? selectedAppIds
+                    : null,
               ).then((Set<String>? selectedIds) {
                 if (selectedIds == null || selectedIds.isEmpty) return;
                 unawaited(
@@ -4897,9 +4894,7 @@ class AppsPageState extends State<AppsPage> {
                               'selectedX',
                               args: [selectedAppIds.length.toString()],
                             ),
-                            style: Theme.of(context)
-                                .textTheme
-                                .titleMedium
+                            style: Theme.of(context).textTheme.titleMedium
                                 ?.copyWith(fontWeight: FontWeight.bold),
                           ),
                         ),
@@ -5878,38 +5873,43 @@ class AppsPageState extends State<AppsPage> {
                               ),
                             SliverToBoxAdapter(
                               child: SizedBox(
-                                height: MediaQuery.paddingOf(context).bottom +
+                                height:
+                                    MediaQuery.paddingOf(context).bottom +
                                     (!isLargeScreen
                                         ? 80.0
                                         : ((showSplitPaneListFabs ||
-                                              showFolderListFabs)
-                                          ? 52.0
-                                          : 0.0)),
+                                                  showFolderListFabs)
+                                              ? 52.0
+                                              : 0.0)),
                               ),
                             ),
                           ],
+                        ),
+                        if (!isLargeScreen &&
+                            (widget.folderId != null ||
+                                widget.onDemandOnlyList))
+                          _buildAppsPageSideFabOverlay(
+                            context,
+                            heroScope: widget.folderId ?? 'ondemand',
+                          ),
+                        if (showSplitPaneListFabs)
+                          _buildAppsPageSideFabOverlay(
+                            context,
+                            heroScope: 'main_split',
+                          ),
+                        if (showFolderListFabs)
+                          _buildAppsPageSideFabOverlay(
+                            context,
+                            heroScope: widget.folderId ?? 'ondemand',
+                          ),
+                      ],
                     ),
-              if (!isLargeScreen &&
-                  (widget.folderId != null || widget.onDemandOnlyList))
-                _buildAppsPageSideFabOverlay(
-                  context,
-                  heroScope: widget.folderId ?? 'ondemand',
+                  ),
                 ),
-              if (showSplitPaneListFabs)
-                _buildAppsPageSideFabOverlay(context, heroScope: 'main_split'),
-              if (showFolderListFabs)
-                _buildAppsPageSideFabOverlay(
-                  context,
-                  heroScope: widget.folderId ?? 'ondemand',
-                ),
+              ),
             ],
           ),
-        ),
-      ),
-    ),
-  ],
-),
-);
+        );
 
         if (isLargeScreen) {
           // Full-bleed page background behind both panes - prevents the master

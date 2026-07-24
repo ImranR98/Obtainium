@@ -575,9 +575,7 @@ class HomePageState extends State<HomePage> {
               vertical: 10.0,
             ),
             decoration: BoxDecoration(
-              color: isSelected
-                  ? scheme.primaryContainer
-                  : Colors.transparent,
+              color: isSelected ? scheme.primaryContainer : Colors.transparent,
               borderRadius: BorderRadius.circular(22),
             ),
             child: Row(
@@ -673,10 +671,7 @@ class HomePageState extends State<HomePage> {
         ),
         child: Align(
           alignment: Alignment.bottomCenter,
-          child: FittedBox(
-            fit: BoxFit.scaleDown,
-            child: compositeRow,
-          ),
+          child: FittedBox(fit: BoxFit.scaleDown, child: compositeRow),
         ),
       ),
     );

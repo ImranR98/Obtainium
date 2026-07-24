@@ -87,14 +87,9 @@ class _BulkUpdateSheetState extends State<BulkUpdateSheet> {
           .where(validSheetIds.contains)
           .toSet();
     } else {
-      selectedIds = {
-        ...widget.existingUpdateIds,
-        ...widget.trackOnlyUpdateIds,
-      };
+      selectedIds = {...widget.existingUpdateIds, ...widget.trackOnlyUpdateIds};
     }
-    expandedSectionIds = {
-      _BulkUpdateSectionId.updates,
-    };
+    expandedSectionIds = {_BulkUpdateSectionId.updates};
   }
 
   List<_BulkUpdateSection> get sections => [
@@ -114,7 +109,6 @@ class _BulkUpdateSheetState extends State<BulkUpdateSheet> {
       appIds: widget.trackOnlyUpdateIds,
     ),
   ];
-
 
   void setAppSelected(String appId, bool selected) {
     hapticSelection();
