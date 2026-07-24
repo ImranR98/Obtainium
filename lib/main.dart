@@ -225,35 +225,43 @@ class MyTaskHandler extends TaskHandler {
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   installDiagnosticErrorLogging();
-  await EasyLocalization.ensureInitialized();
-  if ((await DeviceInfoPlugin().androidInfo).version.sdkInt >= 29) {
+  final SettingsProvider settingsProvider = SettingsProvider();
+  final np = NotificationsProvider();
+  // These startup round-trips are independent of one another, so run them
+  // concurrently instead of serially to shorten time-to-first-frame. Settings
+  // must complete before runApp (the theme reads it); EasyLocalization,
+  // notifications and WorkManager are awaited here too but overlap. The
+  // device-info lookup (only used to choose the system-UI mode below) runs
+  // alongside rather than blocking ahead of them.
+  final androidInfoFuture = DeviceInfoPlugin().androidInfo;
+  await Future.wait([
+    EasyLocalization.ensureInitialized(),
+    settingsProvider.initializeSettings(),
+    np.initialize(),
+    Workmanager().initialize(callbackDispatcher),
+  ]);
+  if ((await androidInfoFuture).version.sdkInt >= 29) {
     SystemChrome.setSystemUIOverlayStyle(
       const SystemUiOverlayStyle(systemNavigationBarColor: Colors.transparent),
     );
     unawaited(SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge));
   }
-  final SettingsProvider settingsProvider = SettingsProvider();
-  final np = NotificationsProvider();
-  // These three native initializations are independent of one another, so run
-  // their platform-channel round-trips concurrently instead of serially to
-  // shorten time-to-first-frame. Only settings must complete before runApp
-  // (the theme reads it); np/WorkManager are awaited here too but overlap.
-  await Future.wait([
-    settingsProvider.initializeSettings(),
-    np.initialize(),
-    Workmanager().initialize(callbackDispatcher),
-  ]);
   // The system font (when enabled) is loaded lazily after the first frame in
   // [_ObtainiumState.build] rather than blocking here: reading the font file
   // from disk on the startup path delayed first paint, and FontLoader.load()
   // triggers a repaint of the affected text automatically once it completes.
   FlutterForegroundTask.initCommunicationPort();
+  // Construct AppsProvider eagerly (before runApp) so its async init — which
+  // ends in the initial loadApps() — starts overlapping the first-frame render
+  // instead of running lazily on the first build (which happens after the first
+  // frame and left the home list stuck behind a spinner). Settings are already
+  // initialized above, so the ctor's initializeSettings() call hits its fast
+  // path (no duplicate migrations / native lookups).
+  final appsProvider = AppsProvider(settingsProvider: settingsProvider);
   runApp(
     MultiProvider(
       providers: [
-        ChangeNotifierProvider(
-          create: (context) => AppsProvider(settingsProvider: settingsProvider),
-        ),
+        ChangeNotifierProvider.value(value: appsProvider),
         ChangeNotifierProvider.value(value: settingsProvider),
         Provider(create: (context) => np),
         Provider(create: (context) => LogsProvider()),

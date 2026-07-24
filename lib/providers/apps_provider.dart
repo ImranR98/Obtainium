@@ -1248,9 +1248,12 @@ class AppsProvider with ChangeNotifier {
       if (!_userAppIconsDir!.existsSync()) {
         _userAppIconsDir!.createSync(recursive: true);
       }
-      await migrateUserIconsFromLegacyCacheDir();
       if (!isBg) {
         await loadApps();
+        // One-shot legacy user-icon migration: kept OFF the cold-start critical
+        // path so it never delays the first app-list render. It also self-skips
+        // on later launches via a prefs flag (see the method).
+        unawaited(migrateUserIconsFromLegacyCacheDir());
         final cutoff = DateTime.now().subtract(const Duration(days: 7));
         await for (var entity in apkDir.list()) {
           if (entity is File &&
@@ -1261,6 +1264,8 @@ class AppsProvider with ChangeNotifier {
             }
           }
         }
+      } else {
+        await migrateUserIconsFromLegacyCacheDir();
       }
     }().catchError((e) {
       initError = e.toString();
