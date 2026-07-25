@@ -797,6 +797,11 @@ extension AppsProviderUpdates on AppsProvider {
             }
           }
           if (fetched.isNotEmpty) {
+            // Reuse cached install info: this flush runs every few seconds for
+            // the whole update check, and a refresh here costs a device-wide
+            // package enumeration per flush (also in the background isolate).
+            // Install state is refreshed by loadApps on launch and on every
+            // foreground resume, which is where external installs get picked up.
             await saveApps(fetched, updateInstalledInfo: false);
           }
         } finally {

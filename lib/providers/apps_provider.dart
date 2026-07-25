@@ -57,6 +57,17 @@ const int _bgUpdateMaxAttempts = 4;
 const int _bgUpdateMaxRetryWaitSeconds = 30;
 const int _bgClientExceptionRetryWaitSeconds = 15 * 60;
 
+/// `additionalSettings` key written by the "reset install status" action. Holds
+/// the device's `lastUpdateTime` as of the reset. While the stamp still matches
+/// the device's current install time, install-status reconciliation leaves
+/// `installedVersion` null instead of re-deriving it — without this the reset is
+/// a guaranteed no-op, because reconciliation refills a null `installedVersion`
+/// from the device (and, under pseudo versioning, refills it with
+/// `latestVersion` — exactly the value being reset). The stamp goes stale on its
+/// own the next time the app is really (re)installed, at which point normal
+/// detection resumes.
+const String installStatusResetKey = 'installStatusResetAtInstallTime';
+
 final packageManager = AndroidPackageManager();
 final packageInfoFlags = PackageInfoFlags({PMFlag.getSigningCertificates});
 final packageInfoFlagsLight = PackageInfoFlags({});

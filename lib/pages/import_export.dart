@@ -7,12 +7,14 @@ import 'package:expressive_loading_indicator/expressive_loading_indicator.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart' show ScrollCacheExtent;
 import 'package:obtainium/components/app_bottom_sheet.dart';
+import 'package:obtainium/components/backup_import_sheet.dart';
 import 'package:obtainium/components/app_dropdown_field.dart';
 import 'package:obtainium/components/custom_app_bar.dart';
 import 'package:obtainium/components/generated_form_renderer.dart';
 import 'package:obtainium/components/rippling_wavy_progress/linear.dart';
 import 'package:obtainium/custom_errors.dart';
 import 'package:obtainium/providers/apps_provider.dart';
+import 'package:obtainium/providers/apps_provider_import_export.dart';
 import 'package:obtainium/providers/settings_provider.dart';
 import 'package:obtainium/providers/source_provider.dart' show regExValidator;
 import 'package:obtainium/theme/app_dialog_theme.dart';
@@ -110,12 +112,39 @@ class _ImportExportPageState extends State<ImportExportPage> {
     }
 
     Future<void> importObtainiumBackupData(String backupData) async {
+      final BackupContent backupContent;
       try {
-        jsonDecode(backupData);
+        backupContent = appsProvider.parseBackupContent(backupData);
       } catch (err) {
         throw ObtainiumError(tr('invalidInput'));
       }
-      final importResult = await appsProvider.import(backupData);
+
+      final hasSettings = backupContent.settingsMap != null &&
+          backupContent.settingsMap!.isNotEmpty;
+      final hasSecrets = hasSecretsInSettingsMap(backupContent.settingsMap);
+
+      if (backupContent.apps.isEmpty && !hasSettings) {
+        throw ObtainiumError(tr('noResults'));
+      }
+
+      final BackupImportSelection? selection =
+          await showBackupImportPickerSheet(
+            context: context,
+            backupApps: backupContent.apps,
+            hasSettings: hasSettings,
+            hasSecrets: hasSecrets,
+            existingApps: appsProvider.apps,
+          );
+
+      if (selection == null) {
+        return;
+      }
+
+      final importResult = await appsProvider.import(
+        backupData,
+        selectedAppIds: selection.selectedAppIds,
+        importSettings: selection.importSettings,
+      );
       final cats = settingsProvider.categories;
       appsProvider.apps.forEach((key, appInMemory) {
         for (var category in appInMemory.app.categories) {

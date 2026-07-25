@@ -504,6 +504,18 @@ class APKMirror extends AppSource {
     name = 'APKMirror';
     hosts = ['apkmirror.com'];
     enforceTrackOnly = true;
+    // APKMirror's release titles rarely match the versionName inside the APK
+    // (they carry architecture/dpi/build suffixes), so shared-format matching
+    // can't reconcile the two and step 2 of
+    // getCorrectedInstallStatusAppIfPossible would otherwise never adopt the
+    // device's version — leaving a stale installedVersion that pull-to-refresh
+    // cannot correct. RockMods (also track-only) sets this for the same reason.
+    // Trade-off: the device's version now wins whenever the two differ, so if
+    // it can't be reconciled with latestVersion either, an update stays on
+    // offer. Track-only apps are excluded from the auto-disable fallback in
+    // step 4, so there's no automatic cleanup for that case — "mark updated"
+    // can also be re-overwritten on the next reconcile.
+    naiveStandardVersionDetection = true;
     showReleaseDateAsVersionToggle = true;
     appIdInferIsOptional = true;
   }

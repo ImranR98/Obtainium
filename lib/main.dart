@@ -77,6 +77,10 @@ const localeDir = 'assets/translations';
 
 final globalNavigatorKey = GlobalKey<NavigatorState>();
 final scaffoldMessengerKey = GlobalKey<ScaffoldMessengerState>();
+// Lets code outside the shell's subtree (e.g. a pushed folder/app route) reach
+// the shell to switch tabs — findAncestorStateOfType can't, since those routes
+// are siblings of HomePage under the root navigator, not descendants.
+final homePageKey = GlobalKey<HomePageState>();
 
 void installDiagnosticErrorLogging() {
   final logs = LogsProvider(runDefaultClear: false);
@@ -881,7 +885,7 @@ class _ObtainiumState extends State<Obtainium> with WidgetsBindingObserver {
                 LogicalKeySet(LogicalKeyboardKey.select):
                     const ActivateIntent(),
               },
-              child: const HomePage(),
+              child: HomePage(key: homePageKey),
             ),
           );
         },

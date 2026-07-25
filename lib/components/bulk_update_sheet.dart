@@ -211,16 +211,11 @@ class _BulkUpdateSheetState extends State<BulkUpdateSheet> {
     );
     return Material(
       color: m3eGroupedListRowFill(colorScheme),
-      elevation: isSelected ? 1 : 0,
+      elevation: 0,
       shadowColor: colorScheme.shadow.withValues(alpha: 0.06),
       shape: RoundedRectangleBorder(
         borderRadius: cardBorderRadius,
-        side: isSelected
-            ? BorderSide(
-                color: colorScheme.primary.withValues(alpha: 0.7),
-                width: 1.5,
-              )
-            : m3ePureBlackOutlineSide(colorScheme),
+        side: m3ePureBlackOutlineSide(colorScheme),
       ),
       clipBehavior: Clip.antiAlias,
       child: ListTile(
@@ -274,6 +269,11 @@ class _BulkUpdateSheetState extends State<BulkUpdateSheet> {
     final List<String> visibleAppIds = section.appIds
         .where(widget.apps.containsKey)
         .toList();
+    visibleAppIds.sort(
+      (a, b) => widget.apps[a]!.name
+          .toLowerCase()
+          .compareTo(widget.apps[b]!.name.toLowerCase()),
+    );
     if (visibleAppIds.isEmpty) return const SizedBox.shrink();
 
     final bool isExpanded = expandedSectionIds.contains(section.id);

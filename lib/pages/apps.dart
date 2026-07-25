@@ -31,6 +31,7 @@ import 'package:obtainium/components/bulk_update_sheet.dart';
 import 'package:obtainium/components/category_action_chip.dart';
 import 'package:obtainium/layout_breakpoints.dart';
 import 'package:obtainium/components/custom_app_bar.dart';
+import 'package:obtainium/components/empty_state_illustration.dart';
 import 'package:obtainium/components/rippling_wavy_progress/circular.dart';
 import 'package:obtainium/components/rippling_wavy_progress/linear.dart';
 import 'package:obtainium/components/ui_widgets.dart' show ActionListTile;
@@ -40,6 +41,7 @@ import 'package:obtainium/main.dart';
 import 'package:obtainium/pages/additional_options_page.dart';
 import 'package:obtainium/pages/page_route_slide_up.dart';
 import 'package:obtainium/pages/app.dart';
+import 'package:obtainium/pages/home.dart';
 import 'package:obtainium/pages/settings.dart';
 import 'package:obtainium/folders/app_folder.dart';
 import 'package:obtainium/providers/apps_provider.dart';
@@ -4190,15 +4192,61 @@ class AppsPageState extends State<AppsPage> {
       }
       final bool isMainAppsPage =
           !widget.onDemandOnlyList && widget.folderId == null;
-      final Widget emptyStateText = Text(
-        isMainAppsPage || appsProvider.apps.isEmpty
-            ? tr('noApps')
-            : widget.onDemandOnlyList && onDemandOnlyAppCount == 0
-            ? tr('onDemandOnlyEmpty')
-            : tr('noAppsForFilter'),
-        style: Theme.of(context).textTheme.headlineMedium,
-        textAlign: TextAlign.center,
+      final bool filterActive = !filter.isIdenticalTo(
+        neutralFilter,
+        settingsProvider,
       );
+      final Widget emptyStateContent;
+      if (filterActive && appsProvider.apps.isNotEmpty) {
+        // A filter / search matched nothing — anywhere it's applied (main
+        // page, a folder, or the on-demand list). Offer an escape hatch.
+        emptyStateContent = AppEmptyState(
+          illustration: const AppFilterEmptyIllustration(),
+          title: tr('noAppsForFilter'),
+          subtitle: tr('noAppsForFilterSubtitle'),
+          action: FilledButton.tonalIcon(
+            onPressed: () => setState(() {
+              filter = AppsFilter();
+              _searchController.clear();
+            }),
+            icon: const Icon(Icons.filter_alt_off_rounded),
+            label: Text(tr('clearFilters')),
+          ),
+        );
+      } else if (widget.onDemandOnlyList && onDemandOnlyAppCount == 0) {
+        emptyStateContent = AppEmptyState(
+          illustration: const AppArchiveEmptyIllustration(),
+          title: tr('onDemandOnlyEmptyTitle'),
+          subtitle: tr('onDemandOnlyEmpty'),
+        );
+      } else {
+        // Pristine library, or an emptied folder (no active filter): nudge the
+        // user toward adding an app. Folders use this same state — not the
+        // "clear filters" one — when they simply have no apps.
+        emptyStateContent = AppEmptyState(
+          illustration: const AppLibraryEmptyIllustration(),
+          title: tr('noApps'),
+          subtitle: tr('noAppsSubtitle'),
+          action: FilledButton.icon(
+            onPressed: () async {
+              // A folder list is a route pushed on top of the shell (HomePage
+              // is a sibling route under the root navigator, not an ancestor),
+              // so reach the shell via its global key rather than
+              // findAncestorState — which returns null from a pushed route.
+              // Pop the folder first so the tab switch isn't hidden behind it.
+              if (widget.folderId != null) {
+                await Navigator.of(context).maybePop();
+              }
+              final HomePageState? home = homePageKey.currentState;
+              if (home != null) {
+                unawaited(home.switchToPage(1));
+              }
+            },
+            icon: const Icon(Icons.add_rounded),
+            label: Text(tr('addApp')),
+          ),
+        );
+      }
       return [
         // Don't show the empty-state message when the only matches live in
         // folders — the "Found in your folders" section below carries them.
@@ -4206,30 +4254,62 @@ class AppsPageState extends State<AppsPage> {
           isMainAppsPage
               ? SliverLayoutBuilder(
                   builder: (context, constraints) {
-                    // Account for the app bar so the message itself lands at
-                    // the viewport center without reserving the lower half.
-                    final double spaceBeforeViewportCenter = math.max(
+                    // Centre the empty state in the space *above* the
+                    // bottom-pinned "Manage folders" footer (a trailing
+                    // SliverFillRemaining) + the nav pill. Reserving that room
+                    // here keeps the taller illustration from shoving the
+                    // footer down behind the pill.
+                    final double available =
+                        constraints.viewportMainAxisExtent -
+                        constraints.precedingScrollExtent;
+                    // Reserve room for whatever the bottom footer will actually
+                    // render (Manage folders + one button per folder + the
+                    // On-Demand entry, each shown conditionally) plus the nav
+                    // pill, so centring the illustration never pushes those
+                    // buttons behind the pill. Scales with folder count and the
+                    // user's font size.
+                    final double btn =
+                        48 * MediaQuery.textScalerOf(context).scale(1.0);
+                    final bool showManage =
+                        appsProvider.apps.isNotEmpty || appFolders.isNotEmpty;
+                    double footer = 0;
+                    if (showManage) footer += btn;
+                    if (appFolders.isNotEmpty) {
+                      footer += 8 + appFolders.length * (btn + 8);
+                    }
+                    if (onDemandOnlyAppCount > 0) footer += btn + 8;
+                    if (footer > 0) footer += 20; // footer's own top padding
+                    final double navClear = isLargeScreen ? 52.0 : 80.0;
+                    final double footerReserve =
+                        MediaQuery.paddingOf(context).bottom +
+                        navClear +
+                        footer;
+                    final double boxHeight = math.max(
                       0.0,
-                      constraints.viewportMainAxisExtent / 2 -
-                          constraints.precedingScrollExtent,
+                      available - footerReserve,
                     );
                     return SliverToBoxAdapter(
-                      child: Padding(
-                        padding: EdgeInsets.fromLTRB(
-                          16,
-                          spaceBeforeViewportCenter,
-                          16,
-                          0,
-                        ),
-                        child: FractionalTranslation(
-                          translation: const Offset(0, -0.5),
-                          child: emptyStateText,
-                        ),
+                      child: ConstrainedBox(
+                        constraints: BoxConstraints(minHeight: boxHeight),
+                        child: Center(child: emptyStateContent),
                       ),
                     );
                   },
                 )
-              : SliverFillRemaining(child: Center(child: emptyStateText)),
+              : SliverFillRemaining(
+                  hasScrollBody: false,
+                  child: Padding(
+                    // Exclude the floating nav pill from the centring region so
+                    // the whole block sits at the visible optical centre, not
+                    // biased low toward the screen edge.
+                    padding: EdgeInsets.only(
+                      bottom:
+                          MediaQuery.paddingOf(context).bottom +
+                          (isLargeScreen ? 52.0 : 80.0),
+                    ),
+                    child: Center(child: emptyStateContent),
+                  ),
+                ),
         // Initial empty-library loading uses the centered M3E indicator above.
         // Keep this compact bar for explicit user-initiated refreshes only.
         if (refreshingSince != null)
@@ -5786,19 +5866,25 @@ class AppsPageState extends State<AppsPage> {
                                         crossAxisAlignment:
                                             CrossAxisAlignment.stretch,
                                         children: [
-                                          // Manage Folders button
-                                          TextButton.icon(
-                                            onPressed: () {
-                                              unawaited(
-                                                _showFolderManageSheet(context),
-                                              );
-                                            },
-                                            icon: const Icon(
-                                              Icons.folder_copy_outlined,
-                                              size: 18,
+                                          // Manage Folders button — hidden on the
+                                          // empty first-run page; nothing to
+                                          // organize into folders yet.
+                                          if (appsProvider.apps.isNotEmpty ||
+                                              appFolders.isNotEmpty)
+                                            TextButton.icon(
+                                              onPressed: () {
+                                                unawaited(
+                                                  _showFolderManageSheet(
+                                                    context,
+                                                  ),
+                                                );
+                                              },
+                                              icon: const Icon(
+                                                Icons.folder_copy_outlined,
+                                                size: 18,
+                                              ),
+                                              label: Text(tr('manageFolders')),
                                             ),
-                                            label: Text(tr('manageFolders')),
-                                          ),
                                           // User-defined folder buttons
                                           if (appFolders.isNotEmpty) ...[
                                             const SizedBox(height: 8),
@@ -5876,27 +5962,29 @@ class AppsPageState extends State<AppsPage> {
                                             ),
                                             const SizedBox(height: 8),
                                           ],
-                                          // On-Demand Only button (always last)
-                                          FilledButton.icon(
-                                            onPressed: () {
-                                              Navigator.push(
-                                                context,
-                                                slideUpPageRoute(
-                                                  (_) => const AppsPage(
-                                                    onDemandOnlyList: true,
+                                          // On-Demand Only button (always last) —
+                                          // only when it actually holds apps.
+                                          if (onDemandOnlyAppCount > 0)
+                                            FilledButton.icon(
+                                              onPressed: () {
+                                                Navigator.push(
+                                                  context,
+                                                  slideUpPageRoute(
+                                                    (_) => const AppsPage(
+                                                      onDemandOnlyList: true,
+                                                    ),
                                                   ),
-                                                ),
-                                              );
-                                            },
-                                            icon: const Icon(
-                                              Icons.folder_special_outlined,
+                                                );
+                                              },
+                                              icon: const Icon(
+                                                Icons.folder_special_outlined,
+                                              ),
+                                              label: Text(
+                                                '${tr('onDemandOnly')} '
+                                                '($onDemandOnlyAppCount)',
+                                                textAlign: TextAlign.center,
+                                              ),
                                             ),
-                                            label: Text(
-                                              '${tr('onDemandOnly')} '
-                                              '($onDemandOnlyAppCount)',
-                                              textAlign: TextAlign.center,
-                                            ),
-                                          ),
                                         ],
                                       ),
                                     ),

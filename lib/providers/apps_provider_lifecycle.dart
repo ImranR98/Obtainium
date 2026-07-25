@@ -209,11 +209,32 @@ extension AppsProviderLifecycle on AppsProvider {
       app,
       installedInfo,
     );
+    // 0. Honour an explicit "reset install status" until the app is genuinely
+    // (re)installed on the device. The stamp records the device's install time
+    // at reset; once that changes the reset has been superseded by a real
+    // install, so drop it and let normal detection resume.
+    final Object? installStatusResetStamp =
+        app.additionalSettings[installStatusResetKey];
+    // Deliberately no "always live" sentinel: anything that can't be matched
+    // against a real install time must expire, or a stale stamp would pin an
+    // installed app to "not installed" forever.
+    final bool installStatusResetIsLive =
+        installStatusResetStamp != null &&
+        installStatusResetStamp == installedInfo?.lastUpdateTime;
+    if (installStatusResetStamp != null && !installStatusResetIsLive) {
+      app = app.copyWith(
+        additionalSettings: Map<String, dynamic>.from(app.additionalSettings)
+          ..remove(installStatusResetKey),
+      );
+      modded = true;
+    }
     // 1. Compare reported vs. real installed versions where one is null.
     if (installedInfo == null && app.installedVersion != null && !trackOnly) {
       app = app.copyWith(installedVersion: null);
       modded = true;
-    } else if (realInstalledVersion != null && app.installedVersion == null) {
+    } else if (realInstalledVersion != null &&
+        app.installedVersion == null &&
+        !installStatusResetIsLive) {
       // With detection disabled (non-standard), the device manifest version
       // isn't the source/release version, so mark installed = latest rather
       // than the manifest version (parity with fork main).
@@ -278,7 +299,11 @@ extension AppsProviderLifecycle on AppsProvider {
       }
     }
     // 2. Reconcile differences between reported and real installed versions.
+    // The `installedVersion != null` guard is a fork addition: a live install
+    // status reset (see [installStatusResetKey]) legitimately leaves it null
+    // while the app is still on the device, which would blow up the `!` below.
     if (realInstalledVersion != null &&
+        app.installedVersion != null &&
         realInstalledVersion != app.installedVersion &&
         versionDetectionIsStandard) {
       // App's reported version and real version don't match (and it uses standard version detection)
@@ -293,6 +318,12 @@ extension AppsProviderLifecycle on AppsProvider {
         );
         modded = true;
       } else if (naiveStandardVersionDetection) {
+        // Only sources whose version strings are known not to match the APK
+        // manifest may overwrite the stored version with the device's. Doing it
+        // unconditionally strands apps whose two version strings share no
+        // standard format: the stored value (which matched latestVersion) gets
+        // replaced by one that doesn't, and for track-only or explicitly
+        // 'standard' apps step 4 below can't clean it up.
         app = app.copyWith(installedVersion: realInstalledVersion);
         modded = true;
       }
@@ -560,7 +591,13 @@ extension AppsProviderLifecycle on AppsProvider {
                 if (correctedApp != null) {
                   app = correctedApp;
                   dataChanged = true;
-                  if (correctedApp.installedVersion == null) {
+                  // Absence from the device is the signal for "externally
+                  // uninstalled" — not a null installedVersion, which is also
+                  // the state left behind by an explicit install status reset.
+                  // Keying off installedVersion alone would let
+                  // removeOnExternalUninstall delete a still-installed app.
+                  if (correctedApp.installedVersion == null &&
+                      installedInfo == null) {
                     removedAppIds.add(correctedApp.id);
                   }
                 }

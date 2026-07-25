@@ -23,6 +23,28 @@ bool isSecretSettingKey(String key) {
       key == virusTotalValidatedApiKeyFingerprintKey;
 }
 
+bool hasSecretsInSettingsMap(Map<String, dynamic>? settingsMap) {
+  if (settingsMap == null || settingsMap.isEmpty) return false;
+  return settingsMap.entries.any(
+    (e) =>
+        isSecretSettingKey(e.key) &&
+        e.value != null &&
+        e.value.toString().isNotEmpty,
+  );
+}
+
+class BackupContent {
+  final List<App> apps;
+  final Map<String, dynamic>? settingsMap;
+  final ExportSchema? schema;
+
+  const BackupContent({
+    required this.apps,
+    this.settingsMap,
+    this.schema,
+  });
+}
+
 /// Import/export of app configurations for [AppsProvider].
 extension AppsProviderImportExport on AppsProvider {
   /// Builds an exportable JSON map containing app data and optionally settings.
@@ -158,8 +180,8 @@ extension AppsProviderImportExport on AppsProvider {
     return returnPath;
   }
 
-  /// Imports apps (and optionally settings) from a JSON string, returning the parsed apps and a settings-present flag.
-  Future<MapEntry<List<App>, bool>> import(String appsJSON) async {
+  /// Parses a backup JSON string into a [BackupContent] object.
+  BackupContent parseBackupContent(String appsJSON) {
     dynamic decodedJSON;
     try {
       decodedJSON = jsonDecode(appsJSON);
@@ -199,10 +221,34 @@ extension AppsProviderImportExport on AppsProvider {
       sharedSettings,
       settingsObtainXOverlay,
     );
+    return BackupContent(
+      apps: importedApps,
+      settingsMap: settingsMap,
+      schema: schema,
+    );
+  }
+
+  /// Imports apps (and optionally settings) from a JSON string, returning the parsed apps and a settings-present flag.
+  Future<MapEntry<List<App>, bool>> import(
+    String appsJSON, {
+    Set<String>? selectedAppIds,
+    bool importSettings = true,
+  }) async {
+    final backupContent = parseBackupContent(appsJSON);
+    List<App> importedApps = backupContent.apps;
+    final settingsMap = backupContent.settingsMap;
+
+    if (selectedAppIds != null) {
+      importedApps =
+          importedApps.where((a) => selectedAppIds.contains(a.id)).toList();
+    }
 
     // Merge backed-up folders into existing ones (by name) and remap each app's
     // folder references to the resolved IDs before saving.
-    importedApps = _reconcileImportedFolders(importedApps, settingsMap);
+    importedApps = _reconcileImportedFolders(
+      importedApps,
+      importSettings ? settingsMap : null,
+    );
 
     await waitForAppsToLoad();
     for (var i = 0; i < importedApps.length; i++) {
@@ -216,7 +262,7 @@ extension AppsProviderImportExport on AppsProvider {
     }
     await saveApps(importedApps, onlyIfExists: false);
     bool hasSettings = false;
-    if (settingsMap != null) {
+    if (importSettings && settingsMap != null) {
       hasSettings = true;
       // 'appFolders' is skipped: already merged/persisted by
       // _reconcileImportedFolders. Reload settings so the merged folder list
@@ -241,15 +287,17 @@ extension AppsProviderImportExport on AppsProvider {
     );
     final Map<String, String> backupIdToTargetId = {};
     final List<AppFolder> foldersToCreate = [];
+    final Map<String, AppFolder> backupFolders = {};
     final Map<String, String> backupFolderIdToName = {};
 
-    // Names from the backup's own folder list.
+    // Folders from the backup's own folder list.
     final dynamic backupFoldersRaw = settingsMap?['appFolders'];
     if (backupFoldersRaw is String) {
       try {
         final list = jsonDecode(backupFoldersRaw) as List<dynamic>;
         for (final e in list) {
           final folder = AppFolder.fromJson(e as Map<String, dynamic>);
+          backupFolders[folder.id] = folder;
           backupFolderIdToName[folder.id] = folder.name;
         }
       } catch (_) {}
@@ -279,7 +327,9 @@ extension AppsProviderImportExport on AppsProvider {
       if (match != null) {
         backupIdToTargetId[backupId] = match.id;
       } else {
-        foldersToCreate.add(AppFolder(id: backupId, name: name));
+        final AppFolder targetFolder =
+            backupFolders[backupId] ?? AppFolder(id: backupId, name: name);
+        foldersToCreate.add(targetFolder);
         backupIdToTargetId[backupId] = backupId;
       }
     });
