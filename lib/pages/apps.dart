@@ -4789,7 +4789,9 @@ class AppsPageState extends State<AppsPage> {
             };
     }
 
-    Future<Null> Function() launchCategorizeDialog([Iterable<App>? targetApps]) {
+    Future<Null> Function() launchCategorizeDialog([
+      Iterable<App>? targetApps,
+    ]) {
       return () async {
         try {
           final appsToCategorize = (targetApps ?? getSelectedApps()).toList();
@@ -5072,7 +5074,7 @@ class AppsPageState extends State<AppsPage> {
                     onTap: selectedAppIds.isEmpty
                         ? null
                         : () =>
-                            shareSelectedAppConfigLinks(currentSelectedApps),
+                              shareSelectedAppConfigLinks(currentSelectedApps),
                     autoPop: true,
                   ),
                   // Export JSON
@@ -5091,8 +5093,7 @@ class AppsPageState extends State<AppsPage> {
                       'downloadX',
                       args: [lowerCaseIfEnglish(tr('releaseAsset'))],
                     ),
-                    onTap: () =>
-                        downloadSelectedAppAssets(currentSelectedApps),
+                    onTap: () => downloadSelectedAppAssets(currentSelectedApps),
                     autoPop: true,
                   ),
                   // Mark as Updated
@@ -5911,8 +5912,7 @@ class AppsPageState extends State<AppsPage> {
                                                         0;
                                                     if (upd > 0) {
                                                       return Stack(
-                                                        clipBehavior:
-                                                            Clip.none,
+                                                        clipBehavior: Clip.none,
                                                         alignment:
                                                             AlignmentDirectional
                                                                 .centerStart,
@@ -5936,14 +5936,12 @@ class AppsPageState extends State<AppsPage> {
                                                             ],
                                                           ),
                                                           Badge(
-                                                            label: Text(
-                                                              '$upd',
-                                                            ),
+                                                            label: Text('$upd'),
                                                             child:
                                                                 const SizedBox(
-                                                              width: 4,
-                                                              height: 16,
-                                                            ),
+                                                                  width: 4,
+                                                                  height: 16,
+                                                                ),
                                                           ),
                                                         ],
                                                       );

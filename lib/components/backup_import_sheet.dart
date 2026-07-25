@@ -504,7 +504,7 @@ class _BackupImportSheetState extends State<BackupImportSheet> {
                 const SizedBox(height: SettingsProvider.collapsedHeaderGap),
               buildAppSection(
                 sectionId: _BackupImportSectionId.existingApps,
-                title: tr('upToDateApps'),
+                title: tr('alreadyTrackedApps'),
                 apps: existingAppsList,
                 colorScheme: colorScheme,
                 groupCardRadius: groupCardRadius,
@@ -518,7 +518,7 @@ class _BackupImportSheetState extends State<BackupImportSheet> {
                 const SizedBox(height: SettingsProvider.collapsedHeaderGap),
               buildAppSection(
                 sectionId: _BackupImportSectionId.newApps,
-                title: tr('nonInstalledApps'),
+                title: tr('newApps'),
                 apps: newAppsList,
                 colorScheme: colorScheme,
                 groupCardRadius: groupCardRadius,

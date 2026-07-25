@@ -45,6 +45,9 @@ ThemeData buildObtainiumTheme(ColorScheme colorScheme, String? fontFamily) {
     snackBarTheme: SnackBarThemeData(
       behavior: SnackBarBehavior.floating,
       shape: RoundedSuperellipseBorder(borderRadius: BorderRadius.circular(16)),
+      // Keep Flutter's default floating insets, but clear the 48dp navigation
+      // pill, its 10dp edge spacing, and an 8dp visual gap.
+      insetPadding: const EdgeInsets.fromLTRB(15, 5, 15, 66),
     ),
     bottomSheetTheme: const BottomSheetThemeData(
       shape: RoundedSuperellipseBorder(

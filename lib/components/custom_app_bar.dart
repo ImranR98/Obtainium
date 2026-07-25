@@ -126,6 +126,8 @@ class _CustomAppBarState extends State<CustomAppBar> {
     } else {
       headerBackground = ColoredBox(color: colorScheme.surface);
     }
+    final bool transparentAppBar =
+        blurEnabled || widget.matchGradientBackground;
 
     if (widget.searchWidget != null) {
       // Compact layout - draw the header background as flexibleSpace so the
@@ -140,9 +142,11 @@ class _CustomAppBarState extends State<CustomAppBar> {
         elevation: 0,
         scrolledUnderElevation: 0,
         shadowColor: Colors.transparent,
-        backgroundColor: Colors.transparent,
+        backgroundColor: transparentAppBar
+            ? Colors.transparent
+            : colorScheme.surface,
         surfaceTintColor: Colors.transparent,
-        forceMaterialTransparency: true,
+        forceMaterialTransparency: transparentAppBar,
         iconTheme: IconThemeData(color: colorScheme.onSurface),
         actionsIconTheme: IconThemeData(color: colorScheme.onSurface),
         flexibleSpace: headerBackground,
@@ -218,9 +222,11 @@ class _CustomAppBarState extends State<CustomAppBar> {
       elevation: 0,
       scrolledUnderElevation: 0,
       shadowColor: Colors.transparent,
-      backgroundColor: Colors.transparent,
+      backgroundColor: transparentAppBar
+          ? Colors.transparent
+          : colorScheme.surface,
       surfaceTintColor: Colors.transparent,
-      forceMaterialTransparency: true,
+      forceMaterialTransparency: transparentAppBar,
       iconTheme: IconThemeData(color: colorScheme.onSurface),
       actionsIconTheme: IconThemeData(color: colorScheme.onSurface),
       flexibleSpace: flexibleSpace,

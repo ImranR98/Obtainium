@@ -107,6 +107,8 @@
     "importSettingsTitle": "ObtainX Settings",
     "withSecrets": "Includes secrets",
     "noSecrets": "No secrets included",
+    "alreadyTrackedApps": "Already tracked apps",
+    "newApps": "New apps",
     "importFromURLList": "Import from URL list",
     "searchQuery": "Search query",
     "appURLList": "App URL list",
