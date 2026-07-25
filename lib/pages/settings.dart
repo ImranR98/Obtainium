@@ -739,14 +739,14 @@ class SettingsPageState extends State<SettingsPage> {
                                     ),
                                   ),
                                 ),
-                                if (sp.progressiveBlurEnabled)
-                                  SliverToBoxAdapter(
-                                    child: SizedBox(
-                                      height: MediaQuery.paddingOf(
-                                        context,
-                                      ).bottom,
-                                    ),
+                                SliverToBoxAdapter(
+                                  child: SizedBox(
+                                    height: MediaQuery.paddingOf(
+                                          context,
+                                        ).bottom +
+                                        24.0,
                                   ),
+                                ),
                               ],
                             ),
                           ),
@@ -796,12 +796,12 @@ class SettingsPageState extends State<SettingsPage> {
                                 ),
                               ),
                             ),
-                            if (sp.progressiveBlurEnabled)
-                              SliverToBoxAdapter(
-                                child: SizedBox(
-                                  height: MediaQuery.paddingOf(context).bottom,
-                                ),
+                            SliverToBoxAdapter(
+                              child: SizedBox(
+                                height: MediaQuery.paddingOf(context).bottom +
+                                    (!isLargeScreen ? 88.0 : 24.0),
                               ),
+                            ),
                           ],
                         ),
                       ],
@@ -976,12 +976,12 @@ class SettingsPageState extends State<SettingsPage> {
                           ),
                   ),
                 ),
-                if (sp.progressiveBlurEnabled)
-                  SliverToBoxAdapter(
-                    child: SizedBox(
-                      height: MediaQuery.paddingOf(context).bottom,
-                    ),
+                SliverToBoxAdapter(
+                  child: SizedBox(
+                    height: MediaQuery.paddingOf(context).bottom +
+                        (!isLargeScreen ? 88.0 : 24.0),
                   ),
+                ),
               ],
             ),
           ],
@@ -3041,7 +3041,7 @@ class AboutSectionContent extends StatelessWidget {
     return Stack(
       children: [
         Padding(
-          padding: const EdgeInsets.fromLTRB(16, 20, 16, 6),
+          padding: const EdgeInsets.fromLTRB(16, 20, 16, 16),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [

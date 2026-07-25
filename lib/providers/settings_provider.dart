@@ -204,7 +204,7 @@ class SettingsProvider with ChangeNotifier {
   void _migrateThemeAccentPrefs() {
     if (prefs == null) return;
     if (prefs!.containsKey('appAccentColorSource')) return;
-    final bool oldMaterialYou = prefs!.getBool('useMaterialYou') ?? false;
+    final bool oldMaterialYou = prefs!.getBool('useMaterialYou') ?? true;
     if (oldMaterialYou) {
       prefs!.setString(
         'appAccentColorSource',
@@ -286,6 +286,17 @@ class SettingsProvider with ChangeNotifier {
       prefs!.remove(_rightSwipeNameKey);
       prefs!.remove(_leftSwipeNameKey);
       prefs!.setInt('swipeActionEnumVersion', 3);
+      schemaVersion = 3;
+    }
+
+    if (schemaVersion < 4) {
+      if (prefs!.getString(_leftSwipeNameKey) == 'pin' ||
+          (!prefs!.containsKey(_leftSwipeNameKey) &&
+              prefs!.getInt('leftSwipeAction') == SwipeAction.pin.index)) {
+        prefs!.remove(_leftSwipeNameKey);
+        prefs!.remove('leftSwipeAction');
+      }
+      prefs!.setInt('swipeActionEnumVersion', 4);
     }
   }
 
@@ -301,7 +312,7 @@ class SettingsProvider with ChangeNotifier {
     }
 
     syncOne('rightSwipeAction', _rightSwipeNameKey, SwipeAction.update.index);
-    syncOne('leftSwipeAction', _leftSwipeNameKey, SwipeAction.pin.index);
+    syncOne('leftSwipeAction', _leftSwipeNameKey, SwipeAction.delete.index);
   }
 
   SwipeAction _swipeActionFromPrefs(
@@ -511,7 +522,7 @@ class SettingsProvider with ChangeNotifier {
       prefs?.getString('appAccentColorSource'),
     );
     if (parsed != null) return parsed;
-    return (prefs?.getBool('useMaterialYou') ?? false)
+    return (prefs?.getBool('useMaterialYou') ?? true)
         ? AppAccentColorSource.materialYou
         : AppAccentColorSource.custom;
   }
@@ -646,7 +657,7 @@ class SettingsProvider with ChangeNotifier {
   // implicit enabled default for users upgrading without an explicit pref.
   bool get progressiveBlurEnabled {
     if (reduceVisualEffects) return false;
-    return prefs?.getBool('progressiveBlurEnabled') ?? false;
+    return prefs?.getBool('progressiveBlurEnabled') ?? true;
   }
 
   set progressiveBlurEnabled(bool value) {
@@ -1558,7 +1569,7 @@ class SettingsProvider with ChangeNotifier {
   }
 
   bool get onlyCheckInstalledOrTrackOnlyApps {
-    return prefs?.getBool('onlyCheckInstalledOrTrackOnlyApps') ?? false;
+    return prefs?.getBool('onlyCheckInstalledOrTrackOnlyApps') ?? true;
   }
 
   set onlyCheckInstalledOrTrackOnlyApps(bool val) {
@@ -1602,7 +1613,7 @@ class SettingsProvider with ChangeNotifier {
   }
 
   bool get beforeNewInstallsShareToAppVerifier {
-    return prefs?.getBool('beforeNewInstallsShareToAppVerifier') ?? true;
+    return prefs?.getBool('beforeNewInstallsShareToAppVerifier') ?? false;
   }
 
   set beforeNewInstallsShareToAppVerifier(bool val) {
@@ -1655,7 +1666,7 @@ class SettingsProvider with ChangeNotifier {
     return _swipeActionFromPrefs(
       'leftSwipeAction',
       _leftSwipeNameKey,
-      SwipeAction.pin.index,
+      SwipeAction.delete.index,
     );
   }
 
