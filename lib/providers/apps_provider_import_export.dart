@@ -38,11 +38,7 @@ class BackupContent {
   final Map<String, dynamic>? settingsMap;
   final ExportSchema? schema;
 
-  const BackupContent({
-    required this.apps,
-    this.settingsMap,
-    this.schema,
-  });
+  const BackupContent({required this.apps, this.settingsMap, this.schema});
 }
 
 /// Import/export of app configurations for [AppsProvider].
@@ -239,8 +235,9 @@ extension AppsProviderImportExport on AppsProvider {
     final settingsMap = backupContent.settingsMap;
 
     if (selectedAppIds != null) {
-      importedApps =
-          importedApps.where((a) => selectedAppIds.contains(a.id)).toList();
+      importedApps = importedApps
+          .where((a) => selectedAppIds.contains(a.id))
+          .toList();
     }
 
     // Merge backed-up folders into existing ones (by name) and remap each app's

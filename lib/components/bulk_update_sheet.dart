@@ -270,9 +270,9 @@ class _BulkUpdateSheetState extends State<BulkUpdateSheet> {
         .where(widget.apps.containsKey)
         .toList();
     visibleAppIds.sort(
-      (a, b) => widget.apps[a]!.name
-          .toLowerCase()
-          .compareTo(widget.apps[b]!.name.toLowerCase()),
+      (a, b) => widget.apps[a]!.name.toLowerCase().compareTo(
+        widget.apps[b]!.name.toLowerCase(),
+      ),
     );
     if (visibleAppIds.isEmpty) return const SizedBox.shrink();
 

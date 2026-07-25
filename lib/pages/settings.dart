@@ -741,9 +741,8 @@ class SettingsPageState extends State<SettingsPage> {
                                 ),
                                 SliverToBoxAdapter(
                                   child: SizedBox(
-                                    height: MediaQuery.paddingOf(
-                                          context,
-                                        ).bottom +
+                                    height:
+                                        MediaQuery.paddingOf(context).bottom +
                                         24.0,
                                   ),
                                 ),
@@ -798,7 +797,8 @@ class SettingsPageState extends State<SettingsPage> {
                             ),
                             SliverToBoxAdapter(
                               child: SizedBox(
-                                height: MediaQuery.paddingOf(context).bottom +
+                                height:
+                                    MediaQuery.paddingOf(context).bottom +
                                     (!isLargeScreen ? 88.0 : 24.0),
                               ),
                             ),
@@ -978,7 +978,8 @@ class SettingsPageState extends State<SettingsPage> {
                 ),
                 SliverToBoxAdapter(
                   child: SizedBox(
-                    height: MediaQuery.paddingOf(context).bottom +
+                    height:
+                        MediaQuery.paddingOf(context).bottom +
                         (!isLargeScreen ? 88.0 : 24.0),
                   ),
                 ),

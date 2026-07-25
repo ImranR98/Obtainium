@@ -283,7 +283,9 @@ class _BackupImportSheetState extends State<BackupImportSheet> {
     if (apps.isEmpty) return const SizedBox.shrink();
 
     final bool isExpanded = expandedSectionIds.contains(sectionId);
-    final int selectedInGroup = apps.where((a) => selectedAppIds.contains(a.id)).length;
+    final int selectedInGroup = apps
+        .where((a) => selectedAppIds.contains(a.id))
+        .length;
     final bool allSelected = apps.every((a) => selectedAppIds.contains(a.id));
     final bool someSelected = selectedInGroup > 0 && !allSelected;
 
@@ -366,7 +368,9 @@ class _BackupImportSheetState extends State<BackupImportSheet> {
   }) {
     if (!widget.hasSettings) return const SizedBox.shrink();
 
-    final bool isExpanded = expandedSectionIds.contains(_BackupImportSectionId.settings);
+    final bool isExpanded = expandedSectionIds.contains(
+      _BackupImportSectionId.settings,
+    );
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -380,7 +384,9 @@ class _BackupImportSheetState extends State<BackupImportSheet> {
           collapsedRadius: collapsedHeaderRadius,
           colorScheme: colorScheme,
           trailingAction: Semantics(
-            label: importSettings ? tr('deselectX', args: ['1']) : tr('selectAll'),
+            label: importSettings
+                ? tr('deselectX', args: ['1'])
+                : tr('selectAll'),
             child: Checkbox(
               value: importSettings,
               onChanged: (bool? selected) {
@@ -437,10 +443,11 @@ class _BackupImportSheetState extends State<BackupImportSheet> {
       kM3eGroupCardRadius,
       cardCornerScale,
     );
-    final double collapsedHeaderRadius = SettingsProvider.cardCornerRadiusForScale(
-      SettingsProvider.baseCollapsedHeaderRadius,
-      cardCornerScale,
-    );
+    final double collapsedHeaderRadius =
+        SettingsProvider.cardCornerRadiusForScale(
+          SettingsProvider.baseCollapsedHeaderRadius,
+          cardCornerScale,
+        );
     final double itemOuterRadius = SettingsProvider.cardCornerRadiusForScale(
       kM3eOuterRadius,
       cardCornerScale,
@@ -572,10 +579,7 @@ class _BackupImportSheetState extends State<BackupImportSheet> {
 }
 
 class _BackupAppIconWidget extends StatefulWidget {
-  const _BackupAppIconWidget({
-    required this.app,
-    required this.existingApp,
-  });
+  const _BackupAppIconWidget({required this.app, required this.existingApp});
 
   final App app;
   final AppInMemory? existingApp;
@@ -603,6 +607,9 @@ class _BackupAppIconWidgetState extends State<_BackupAppIconWidget> {
   }
 
   Future<void> _loadIcon() async {
+    final AppsProvider? appsProvider = widget.existingApp != null
+        ? context.read<AppsProvider>()
+        : null;
     if (widget.existingApp?.icon != null) {
       if (mounted) {
         setState(() {
@@ -620,8 +627,7 @@ class _BackupAppIconWidgetState extends State<_BackupAppIconWidget> {
       return;
     }
 
-    if (widget.existingApp != null && context.mounted) {
-      final appsProvider = context.read<AppsProvider>();
+    if (appsProvider != null && mounted) {
       await appsProvider.updateAppIcon(widget.app.id);
       if (mounted && widget.existingApp?.icon != null) {
         setState(() {
@@ -661,7 +667,8 @@ class _BackupAppIconWidgetState extends State<_BackupAppIconWidget> {
           height: 40,
           fit: BoxFit.cover,
           gaplessPlayback: true,
-          errorBuilder: (_, __, ___) => _buildFallbackIcon(context),
+          errorBuilder: (imageContext, imageError, imageStackTrace) =>
+              _buildFallbackIcon(context),
         ),
       );
     }

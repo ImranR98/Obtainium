@@ -32,14 +32,15 @@ These are built from the ground up and are exclusive in ObtainX.
 
 ### 🛡️ Security & Integrity
 
-- **🛡️ Build Verification Checks** — Runs automated cryptographic checks (F-Droid/Izzy reproducible builds, GitHub Release Attestations) on apps you add to flag tampered binaries before install. For total integrity, ObtainX's own updates are reproducible (F-Droid) and attested (GitHub). Learn more in the [Build Verification Guide](docs/build-verification-guide.md).
+- **🛡️ Build verification checks** — Runs automated cryptographic checks (F-Droid/Izzy reproducible builds, GitHub Release Attestations) on apps you add to flag tampered binaries before install. For total integrity, ObtainX's own updates are reproducible (F-Droid) and attested (GitHub). Learn more in the [Build Verification Guide](docs/build-verification-guide.md).
 
 - **🦠 VirusTotal APK scanning** — Optionally scan downloaded APKs with VirusTotal before installation. You are in control - flagged or failed scans ask you what to do during installs.
 
 ### 🗂️ Smart Organization
 
-- **📥 Bulk Import from Device** — Select any apps already on your phone and ObtainX automatically finds their sources on stores you choose. No URL hunting one by one.
-- **🗂️ Dynamic Folders** — Group apps into folders manually or via automatic routing rules (by name, author, category, source etc.). Each folder retains its own layouts.
+- **📥 Bulk import from fevice** — Select any apps already on your phone and ObtainX automatically finds their sources on stores you choose. No URL hunting one by one.
+- **✅ Selective backup restore** — Instead of forced to blindly import entire backup file, you get to pick n choose what you want to restore from your backup. 
+- **🗂️ Dynamic folders** — Group apps into folders manually or via automatic routing rules (by name, author, category, source etc.). Each folder retains its own layouts.
 - **🕐 On-Demand Only mode** — Mark rarely updated apps so they're hidden from the main list and aren't checked during global update scans. Query them only on-demand.
 - **👆 Configurable two-way swipe gestures** — Left and right swipe actions are independently configurable per row. Choose from Update, Install, Pin, Edit, Delete, Open, App Info, or None.
 - **↩️ Undo after delete** — Revert accidental app removals instantly via a 5-second toast notification.
@@ -48,8 +49,8 @@ These are built from the ground up and are exclusive in ObtainX.
 
 ### 🚀 Advanced Update Controls
 
-- **🧩 Advanced filter / RegEx Assist** — A built-in helper walks you through building regex filters on any field that supports them. No regex knowledge required. Full details in the [Additional options guide](docs/additional-options-guide.md).
-- **⏭️ Skip Version** — Skip a specific release you don't want without marking the app as "updated." The next release will still show up normally.
+- **🧩 Advanced filter / RegEx assist** — A built-in helper walks you through building regex filters on any field that supports them. No regex knowledge required. Full details in the [Additional options guide](docs/additional-options-guide.md).
+- **⏭️ Skip version** — Skip a specific release you don't want without marking the app as "updated." The next release will still show up normally.
 - **💾 Save assets** — Option to automatically save update assets (e.g. APKs) to your chosen folder, during update process itself.
 
 ### 🎨 Interface & Experience

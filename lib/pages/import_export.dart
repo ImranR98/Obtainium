@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:convert';
 import 'dart:io';
 
 import 'package:easy_localization/easy_localization.dart' hide TextDirection;
@@ -14,7 +13,6 @@ import 'package:obtainium/components/generated_form_renderer.dart';
 import 'package:obtainium/components/rippling_wavy_progress/linear.dart';
 import 'package:obtainium/custom_errors.dart';
 import 'package:obtainium/providers/apps_provider.dart';
-import 'package:obtainium/providers/apps_provider_import_export.dart';
 import 'package:obtainium/providers/settings_provider.dart';
 import 'package:obtainium/providers/source_provider.dart' show regExValidator;
 import 'package:obtainium/theme/app_dialog_theme.dart';
@@ -119,7 +117,8 @@ class _ImportExportPageState extends State<ImportExportPage> {
         throw ObtainiumError(tr('invalidInput'));
       }
 
-      final hasSettings = backupContent.settingsMap != null &&
+      final hasSettings =
+          backupContent.settingsMap != null &&
           backupContent.settingsMap!.isNotEmpty;
       final hasSecrets = hasSecretsInSettingsMap(backupContent.settingsMap);
 
