@@ -1732,6 +1732,17 @@ class SourceProvider {
         throw NoAPKError()..url = standardUrl;
       }
     }
+    final int preferredApkIndex;
+    if (apk.apkUrls.isEmpty) {
+      preferredApkIndex = 0;
+    } else if (currentApp == null) {
+      preferredApkIndex = apk.apkUrls.length - 1;
+    } else {
+      preferredApkIndex = currentApp.preferredApkIndex.clamp(
+        0,
+        apk.apkUrls.length - 1,
+      );
+    }
     final String sourceName = apk.names.name.trim();
     // Replace the stored name with the source's readable name when the stored
     // name is missing, is exactly the app id, or merely looks like a package id
@@ -1770,9 +1781,7 @@ class SourceProvider {
       installedVersion: currentApp?.installedVersion,
       latestVersion: apk.version,
       apkUrls: apk.apkUrls,
-      preferredApkIndex:
-          currentApp?.preferredApkIndex ??
-          (apk.apkUrls.isNotEmpty ? apk.apkUrls.length - 1 : 0),
+      preferredApkIndex: preferredApkIndex,
       additionalSettings: additionalSettings,
       lastUpdateCheck: DateTime.now(),
       pinned: currentApp?.pinned ?? false,

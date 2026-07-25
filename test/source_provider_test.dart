@@ -52,10 +52,16 @@ class _StubAPKMirror extends APKMirror {
 }
 
 class _StubSource extends AppSource {
-  _StubSource() {
+  _StubSource({
+    this.apkUrls = const <MapEntry<String, String>>[
+      MapEntry('example.apk', 'https://example.com/example.apk'),
+    ],
+  }) {
     hosts = <String>['example.com'];
     name = 'Example';
   }
+
+  final List<MapEntry<String, String>> apkUrls;
 
   @override
   String sourceSpecificStandardizeURL(String url, {bool forSelection = false}) {
@@ -67,9 +73,11 @@ class _StubSource extends AppSource {
     String standardUrl,
     Map<String, dynamic> additionalSettings,
   ) async {
-    return APKDetails('2.0', const <MapEntry<String, String>>[
-      MapEntry('example.apk', 'https://example.com/example.apk'),
-    ], AppNames('Example Author', 'Readable Name'));
+    return APKDetails(
+      '2.0',
+      apkUrls,
+      AppNames('Example Author', 'Readable Name'),
+    );
   }
 
   @override
@@ -500,6 +508,40 @@ void main() {
     );
     expect(newApp.apkSizeBytes, 99999999);
   });
+
+  test(
+    'preferred APK index is clamped after filtering shrinks assets',
+    () async {
+      const List<MapEntry<String, String>> originalApkUrls = [
+        MapEntry('first.apk', 'https://example.com/first.apk'),
+        MapEntry('second.apk', 'https://example.com/second.apk'),
+        MapEntry('third.apk', 'https://example.com/third.apk'),
+        MapEntry('fourth.apk', 'https://example.com/fourth.apk'),
+        MapEntry('last.apk', 'https://example.com/last.apk'),
+      ];
+      const App currentApp = App(
+        id: 'org.example.app',
+        url: 'https://example.com/app',
+        author: 'Example Author',
+        name: 'Example App',
+        latestVersion: '1.0',
+        apkUrls: originalApkUrls,
+        preferredApkIndex: 4,
+        additionalSettings: <String, dynamic>{},
+      );
+
+      final App refreshedApp = await SourceProvider().getApp(
+        _StubSource(apkUrls: originalApkUrls),
+        currentApp.url,
+        <String, dynamic>{'apkFilterRegEx': r'^first\.apk$'},
+        currentApp: currentApp,
+      );
+
+      expect(refreshedApp.apkUrls, hasLength(1));
+      expect(refreshedApp.apkUrls.single.key, 'first.apk');
+      expect(refreshedApp.preferredApkIndex, 0);
+    },
+  );
 
   test(
     'apkSizeBytes is null on first add when source returns no size',
