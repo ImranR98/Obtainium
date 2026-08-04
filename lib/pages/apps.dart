@@ -1205,6 +1205,24 @@ class AppsPageState extends State<AppsPage> {
                       height: MediaQuery.of(context).padding.bottom + 96,
                     ),
                   ),
+                  if (settingsProvider.isTV)
+                    SliverToBoxAdapter(
+                      child: Padding(
+                        padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+                        child: SizedBox(
+                          width: double.infinity,
+                          child: Focus(
+                            autofocus: true,
+                            child: FilledButton.tonalIcon(
+                              onPressed: () =>
+                                  NavHelper.pushAddAppPage(context),
+                              icon: const Icon(Icons.add),
+                              label: Text(tr('addApp')),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
                 ],
               ),
             ),

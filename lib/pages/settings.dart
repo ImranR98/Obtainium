@@ -267,7 +267,7 @@ class _SettingsPageState extends State<SettingsPage> {
             ),
           ],
         ),
-        SizedBox(height: MediaQuery.of(context).padding.bottom),
+        SizedBox(height: MediaQuery.of(context).padding.bottom + (context.read<SettingsProvider>().isTV ? 48 : 0)),
       ],
     ),
   );

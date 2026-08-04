@@ -370,9 +370,11 @@ class _HomePageState extends State<HomePage> {
 
     final loadingApps = context.select<AppsProvider, bool>((p) => p.loadingApps);
 
-    final Widget? fab = appsSelecting
-        ? actionsFab
-        : (loadingApps ? null : createFabExtended);
+    final Widget? fab = isTV
+        ? null
+        : appsSelecting
+            ? actionsFab
+            : (loadingApps ? null : createFabExtended);
 
     final Widget content;
     if (useTwoPane) {
