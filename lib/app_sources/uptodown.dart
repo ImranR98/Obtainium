@@ -43,6 +43,10 @@ class Uptodown extends AppSource {
 
   @override
   String sourceSpecificStandardizeURL(String url, {bool forSelection = false}) {
+    url = url.replaceFirst(
+      RegExp(r'\.([a-z]{2,3})\.uptodown\.', caseSensitive: false),
+      '.en.uptodown.',
+    );
     return '${standardizeUrlWithRegex(url, subdomainPrefix: r'([^\\.]+\.)+', pathPattern: '')}/android/download';
   }
 
