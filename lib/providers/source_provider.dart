@@ -1587,6 +1587,45 @@ class VersionService {
               value2.substring(m2.start, m2.end)
         : false;
   }
+
+  /// Returns true if [versionA] is older than [versionB] when both share a
+  /// common standard version format that supports numeric comparison.
+  /// Returns null if the versions cannot be compared (no common format, or
+  /// neither is strictly newer).
+  bool? isVersionNewer(String versionA, String versionB) {
+    final aFormats = findStandardFormatsForVersion(versionA, true);
+    final bFormats = findStandardFormatsForVersion(versionB, true);
+    final common = aFormats.intersection(bFormats);
+    if (common.isEmpty) return null;
+    for (final pattern in common) {
+      final r = RegExp(pattern);
+      final aNumParts = _extractNumericParts(r.firstMatch(versionA));
+      final bNumParts = _extractNumericParts(r.firstMatch(versionB));
+      if (aNumParts == null || bNumParts == null) continue;
+      for (var i = 0; i < bNumParts.length; i++) {
+        if (i >= aNumParts.length) return true;
+        if (bNumParts[i] > aNumParts[i]) return true;
+        if (bNumParts[i] < aNumParts[i]) return false;
+      }
+      if (bNumParts.length > aNumParts.length) return true;
+      return false;
+    }
+    return null;
+  }
+
+  /// Extracts numeric groups from a regex match as a list of integers.
+  List<int>? _extractNumericParts(RegExpMatch? match) {
+    if (match == null) return null;
+    final parts = <int>[];
+    for (var i = 1; i <= match.groupCount; i++) {
+      final g = match.group(i);
+      if (g != null) {
+        final n = int.tryParse(g);
+        if (n != null) parts.add(n);
+      }
+    }
+    return parts.isNotEmpty ? parts : null;
+  }
 }
 
 // ========================================================================
