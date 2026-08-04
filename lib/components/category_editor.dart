@@ -450,7 +450,7 @@ class _CategorySelectorState extends State<CategorySelector> {
     }
 
     return Row(
-      crossAxisAlignment: CrossAxisAlignment.center,
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Expanded(
           child: Wrap(
@@ -510,7 +510,7 @@ class CategoryManager extends StatelessWidget {
       ..sort((a, b) => a.toLowerCase().compareTo(b.toLowerCase()));
     if (names.isEmpty) {
       return Row(
-        crossAxisAlignment: CrossAxisAlignment.center,
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
             tr('noCategories'),
@@ -529,7 +529,7 @@ class CategoryManager extends StatelessWidget {
       );
     }
     return Row(
-      crossAxisAlignment: CrossAxisAlignment.center,
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Expanded(
           child: Wrap(
