@@ -10,15 +10,11 @@ class Apk4Free extends AppSource {
 
   @override
   String sourceSpecificStandardizeURL(String url, {bool forSelection = false}) {
-    RegExp standardUrlRegEx = RegExp(
-      '^https?://(www\\.)?${getSourceRegex(hosts)}/[^/]+/?',
-      caseSensitive: false,
+    return standardizeUrlWithRegex(
+      url,
+      subdomainPrefix: r'(www\.)?',
+      pathPattern: r'/[^/]+/?',
     );
-    var match = standardUrlRegEx.firstMatch(url);
-    if (match == null) {
-      throw InvalidURLError(name);
-    }
-    return match.group(0)!;
   }
 
   @override
@@ -27,13 +23,13 @@ class Apk4Free extends AppSource {
     Map<String, dynamic> additionalSettings,
   ) async {
     try {
-      var res = await sourceRequest(standardUrl, additionalSettings);
+      final res = await sourceRequest(standardUrl, additionalSettings);
       if (res.statusCode != 200) {
         throw getObtainiumHttpError(res);
       }
-      var html = parse(res.body);
+      final html = parse(res.body);
 
-      var titleElement = html.querySelector('h1.main-box-title');
+      final titleElement = html.querySelector('h1.main-box-title');
       var fullTitle = titleElement?.text.trim();
 
       if (fullTitle == null || fullTitle.isEmpty) {
@@ -66,11 +62,12 @@ class Apk4Free extends AppSource {
       }
 
       var appVersion = html.querySelector('div.version')?.text.trim();
+      if (appVersion?.isNotEmpty != true) appVersion = null;
 
       if (appVersion == null) {
-        var rawTitle = titleElement?.text.trim() ?? '';
-        var versionRegex = RegExp(r'v?(\d+(\.\d+)+)');
-        var match = versionRegex.firstMatch(rawTitle);
+        final rawTitle = titleElement?.text.trim() ?? '';
+        final versionRegex = RegExp(r'v?(\d+(\.\d+)+)');
+        final match = versionRegex.firstMatch(rawTitle);
         if (match != null) {
           appVersion = match.group(1);
         }
@@ -98,29 +95,32 @@ class Apk4Free extends AppSource {
         throw NoReleasesError();
       }
 
-      var resDlPage = await sourceRequest(downloadPageLink, additionalSettings);
+      final resDlPage = await sourceRequest(
+        downloadPageLink,
+        additionalSettings,
+      );
       if (resDlPage.statusCode != 200) {
         throw getObtainiumHttpError(resDlPage);
       }
-      var htmlDlPage = parse(resDlPage.body);
+      final htmlDlPage = parse(resDlPage.body);
 
-      List<MapEntry<String, String>> apkUrls = [];
+      final List<MapEntry<String, String>> apkUrls = [];
 
-      var verifiedButtons = htmlDlPage.querySelectorAll('a.downloadAPK');
+      final verifiedButtons = htmlDlPage.querySelectorAll('a.downloadAPK');
       for (var btn in verifiedButtons) {
-        var href = btn.attributes['href'];
+        final href = btn.attributes['href'];
         if (href != null) {
           apkUrls.add(MapEntry(btn.text.trim(), href.trim()));
         }
       }
 
       if (apkUrls.isEmpty) {
-        var allLinks = htmlDlPage.querySelectorAll('a');
+        final allLinks = htmlDlPage.querySelectorAll('a');
         for (var link in allLinks) {
           var href = link.attributes['href'];
           if (href == null) continue;
           href = href.trim();
-          if (href.toLowerCase().endsWith('.apk')) {
+          if (AppSource.isApkOrContainerFile(href)) {
             var linkText = link.text.trim();
             if (linkText.isEmpty) linkText = href.split('/').last;
             apkUrls.add(MapEntry(linkText, href));
@@ -133,10 +133,10 @@ class Apk4Free extends AppSource {
       }
 
       if (appVersion == null) {
-        var versionRegex = RegExp(r'v?(\d+(\.\d+)+)');
+        final versionRegex = RegExp(r'v?(\d+(\.\d+)+)');
         for (var entry in apkUrls) {
           var match = versionRegex.firstMatch(entry.key);
-          if (match == null) match = versionRegex.firstMatch(entry.value);
+          match ??= versionRegex.firstMatch(entry.value);
           if (match != null) {
             appVersion = match.group(1);
             break;
@@ -150,8 +150,7 @@ class Apk4Free extends AppSource {
 
       return APKDetails(appVersion.trim(), apkUrls, AppNames(name, fullTitle));
     } catch (e) {
-      if (e is ObtainiumError) rethrow;
-      throw ObtainiumError('$name Error: $e');
+      rethrowOrWrapError(e);
     }
   }
 }

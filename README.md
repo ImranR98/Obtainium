@@ -9,11 +9,10 @@ Obtainium allows you to install and update apps directly from their releases pag
 More info:
 - [Obtainium Wiki](https://wiki.obtainium.imranr.dev/) ([repository](https://github.com/ImranR98/Obtainium-Wiki))
 - [Obtainium 101](https://www.youtube.com/watch?v=0MF_v2OBncw) - Tutorial video
-- [AppVerifier](https://github.com/soupslurpr/AppVerifier) - App verification tool (recommended, integrates with Obtainium)
+- ["Verified Apps"](https://github.com/privacyguides/verified-apps-android) - App verification tool (recommended, integrates with Obtainium)
 - [apps.obtainium.imranr.dev](https://apps.obtainium.imranr.dev/) - Crowdsourced app configurations ([repository](https://github.com/ImranR98/apps.obtainium.imranr.dev))
 - [Side Of Burritos - You should use this instead of F-Droid | How to use app RSS feed](https://youtu.be/FFz57zNR_M0) - Original motivation for this app
 - [Website](https://obtainium.imranr.dev) ([repository](https://github.com/ImranR98/obtainium.imranr.dev))
-- [Source code](https://github.com/ImranR98/Obtainium)
 
 Currently supported App sources:
 - Open Source - General:
@@ -28,17 +27,20 @@ Currently supported App sources:
   - [APKPure](https://apkpure.net/)
   - [Aptoide](https://aptoide.com/)
   - [Uptodown](https://uptodown.com/)
+  - [APKCombo](https://apkcombo.com/)
+  - [itch.io](https://itch.io/)
   - [Huawei AppGallery](https://appgallery.huawei.com/)
   - [Tencent App Store](https://sj.qq.com/)
   - [vivo App Store (CN)](https://h5.appstore.vivo.com.cn/)
   - [RuStore](https://rustore.ru/)
   - [Farsroid](https://www.farsroid.com)
   - [CoolApk](https://coolapk.com/)
-  - [RockMods](https://rockmods.net/)
   - [LiteAPKs](https://liteapks.com/)
   - [APK4Free](https://apk4free.net/)
+  - [SourceForge](https://sourceforge.net/)
   - Jenkins Jobs
-  - [APKMirror](https://apkmirror.com/) (Track-Only)
+  - [APKMirror](https://apkmirror.com/) *(Track-Only)*
+  - [RockMods](https://rockmods.net/) *(Track-Only)*
 - Other - App-Specific:
   - [Telegram App](https://telegram.org/)
   - [Neutron Code](https://neutroncode.com/)
@@ -49,7 +51,7 @@ Currently supported App sources:
 
 You can find crowdsourced app configurations at [apps.obtainium.imranr.dev](https://apps.obtainium.imranr.dev).
 
-If you can't find the configuration for an app you want, feel free to leave a request on the [discussions page](https://github.com/ImranR98/apps.obtainium.imranr.dev/discussions/new?category=app-requests).
+If you can't find the configuration for an app you want, feel free to leave a request on the [issues page](https://github.com/ImranR98/apps.obtainium.imranr.dev/issues).
 
 Or, contribute some configurations to the website by creating a PR at [this repo](https://github.com/ImranR98/apps.obtainium.imranr.dev).
 
@@ -66,6 +68,7 @@ Or, contribute some configurations to the website by creating a PR at [this repo
     height="80">](https://f-droid.org/packages/dev.imranr.obtainium.fdroid/)
      
 Verification info:
+
 - Package ID: `dev.imranr.obtainium`
 - SHA-256 hash of signing certificate: `B3:53:60:1F:6A:1D:5F:D6:60:3A:E2:F5:0B:E8:0C:F3:01:36:7B:86:B6:AB:8B:1F:66:24:3D:A9:6C:D5:73:62`
   - Note: The above signature is also valid for the F-Droid flavour of Obtainium, thanks to [reproducible builds](https://f-droid.org/docs/Reproducible_Builds/).
