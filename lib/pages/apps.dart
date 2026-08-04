@@ -331,7 +331,7 @@ class AppsPageState extends State<AppsPage> {
       builder: (BuildContext ctx) {
         final vals = filter.toFormValuesMap();
         return GeneratedFormModal(
-          tileMode: true,
+          tileMode: false,
           initValid: true,
           title: tr('filterApps'),
           items: [
@@ -389,17 +389,12 @@ class AppsPageState extends State<AppsPage> {
           ],
           additionalWidgets: [
             const SizedBox(height: 16),
-            ConnectedCard(
-              child: Padding(
-                padding: AppPaddings.cardInner,
-                child: CategorySelector(
-                  selected: filter.categoryFilter,
-                  allowCreate: false,
-                  onChanged: (categories) {
-                    pendingCategories = categories;
-                  },
-                ),
-              ),
+            CategorySelector(
+              selected: filter.categoryFilter,
+              allowCreate: false,
+              onChanged: (categories) {
+                pendingCategories = categories;
+              },
             ),
           ],
         );
