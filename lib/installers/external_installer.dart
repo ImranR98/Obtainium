@@ -28,7 +28,7 @@ const Duration _modalPollDelay = Duration(seconds: 30);
 
 /// After the user returns, re-check the package a few times to absorb any brief
 /// finalization lag before deciding the outcome.
-const int _confirmAttempts = 12;
+const int _confirmAttempts = 60;
 
 /// Installs by handing the downloaded file to a user-chosen installer app. All
 /// orchestration lives here in Dart; the native side only resolves a content
@@ -97,7 +97,7 @@ class ExternalInstaller extends Installer {
 
       // Set up foreground return listener BEFORE launching intent.
       final fgCompleter = Completer<FGBGType>();
-      final fgSub = FGBGEvents.instance.stream.listen((event) {
+      final fgSub = FGBGEvents.instance.stream.asBroadcastStream().listen((event) {
         if (event == FGBGType.foreground && !fgCompleter.isCompleted) {
           fgCompleter.complete(event);
         }
@@ -108,7 +108,7 @@ class ExternalInstaller extends Installer {
 
       // Set up background detection.
       final bgCompleter = Completer<FGBGType>();
-      final bgSub = FGBGEvents.instance.stream.listen((event) {
+      final bgSub = FGBGEvents.instance.stream.asBroadcastStream().listen((event) {
         if (event == FGBGType.background && !bgCompleter.isCompleted) {
           bgCompleter.complete(event);
         }
