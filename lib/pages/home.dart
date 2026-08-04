@@ -277,6 +277,12 @@ class _HomePageState extends State<HomePage> {
               );
             }
           }
+        } else if (action == 'refresh') {
+          final targetId = uri.queryParameters['id'];
+          await appsProvider.checkUpdates(
+            forceAll: targetId == null,
+            specificIds: targetId != null ? [targetId] : null,
+          );
         } else {
           throw ObtainiumError(tr('unknown'));
         }
