@@ -197,11 +197,15 @@ class _ImportSectionState extends State<ImportSection> {
                 importInProgress = true;
               });
             }
-            final path = result.files.single.path;
-            if (path == null) {
+            final file = result.files.single;
+            final String data;
+            if (file.path != null) {
+              data = await File(file.path!).readAsString();
+            } else if (file.bytes != null) {
+              data = utf8.decode(file.bytes!);
+            } else {
               throw ObtainiumError(tr('noFilePickerAvailable'));
             }
-            final String data = await File(path).readAsString();
             try {
               jsonDecode(data);
             } catch (e) {
