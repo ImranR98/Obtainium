@@ -364,7 +364,8 @@ class _AppPageState extends State<AppPage> {
     if (app != null && values != null) {
       final s = source;
       final Map<String, dynamic> originalSettings = app.app.additionalSettings;
-      app.app = app.app.copyWith(additionalSettings: values);
+      final savedValues = Map<String, dynamic>.from(values);
+      app.app = app.app.copyWith(additionalSettings: savedValues);
       if (s?.enforceTrackOnly == true) {
         app.app = app.app.copyWith(
           additionalSettings: Map<String, dynamic>.from(
