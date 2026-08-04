@@ -206,17 +206,11 @@ class AddAppPageState extends State<AddAppPage> {
   ) async {
     if (additionalSettings['releaseDateAsVersion'] != true) return true;
     if (!context.mounted) return false;
-    return await showDialog(
-          context: context,
-          builder: (BuildContext ctx) {
-            return GeneratedFormModal(
-              title: tr('releaseDateAsVersion'),
-              items: const [],
-              message: tr('releaseDateAsVersionExplanation'),
-            );
-          },
-        ) !=
-        null;
+    return await showContinueCancelDialog(
+      context,
+      title: tr('releaseDateAsVersion'),
+      message: tr('releaseDateAsVersionExplanation'),
+    );
   }
 
   Future<void> addApp(BuildContext context) async {
@@ -511,7 +505,7 @@ class AddAppPageState extends State<AddAppPage> {
 
   Widget _buildSourceSpecificForm(SettingsProvider settingsProvider) {
     final s = pickedSource!;
-    final formItems = s.combinedAppSpecificSettingFormItems;
+    final formItems = cloneFormItems(s.combinedAppSpecificSettingFormItems);
     for (var row in formItems) {
       for (var item in row) {
         if (additionalSettings[item.key] != null) {

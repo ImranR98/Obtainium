@@ -84,7 +84,7 @@ class GitLab extends AppSource {
     final Map<String, List<String>> results = {};
     for (var element in json) {
       results['https://${hosts[0]}/${element['path_with_namespace']}'] = [
-        element['name_with_namespace'],
+        element['name_with_namespace'] ?? element['path_with_namespace'] ?? '',
         element['description'] ?? tr('noDescription'),
       ];
     }
@@ -223,18 +223,20 @@ class GitLab extends AppSource {
         for (var entry in uploadedAPKsFromDescription) {
           apkUrls[entry.key] = entry.value;
         }
+        final version = e['tag_name'] ?? e['name'];
+        if (version == null) return null;
         final releaseDateString =
             e['released_at'] ?? e['created_at'] ?? e['commit']?['created_at'];
         final DateTime? releaseDate = releaseDateString != null
             ? DateTime.tryParse(releaseDateString.toString())
             : null;
         return APKDetails(
-          e['tag_name'] ?? e['name'],
+          version,
           apkUrls.entries.toList(),
           AppNames(names.author, names.name.split('/').last),
           releaseDate: releaseDate,
         );
-      });
+      }).whereType<APKDetails>();
       if (apkDetailsList.isEmpty) {
         throw NoReleasesError();
       }
@@ -258,10 +260,12 @@ class GitLab extends AppSource {
         throw NoAPKError();
       }
 
-      finalResult.apkUrls = finalResult.apkUrls.map((apkUrl) {
-        if (RegExp(
-          '^${RegExp.escape(standardUrl)}/-/jobs/[0-9]+/artifacts/file/[^/]+',
-        ).hasMatch(apkUrl.value)) {
+      final jobArtifactRegex = RegExp(
+        '^${RegExp.escape(standardUrl)}/-/jobs/[0-9]+/artifacts/file/[^/]+',
+      );
+      finalResult = finalResult.copyWith(
+        apkUrls: finalResult.apkUrls.map((apkUrl) {
+          if (jobArtifactRegex.hasMatch(apkUrl.value)) {
           return MapEntry(
             apkUrl.key,
             apkUrl.value.replaceFirst('/file/', '/raw/'),
@@ -269,7 +273,8 @@ class GitLab extends AppSource {
         } else {
           return apkUrl;
         }
-      }).toList();
+      }).toList(),
+      );
 
       return finalResult;
     } catch (e) {

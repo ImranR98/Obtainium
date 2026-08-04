@@ -23,8 +23,6 @@ const String obtainiumId = 'dev.imranr.obtainium';
 const String obtainiumUrl = 'https://github.com/ImranR98/Obtainium';
 const Color obtainiumThemeColor = Color(0xFF6438B5);
 
-String lowerCaseUnlessLang(String str, String lang) =>
-    currentLanguageCode == lang ? str : str.toLowerCase();
 
 Locale? tryParseLocale(String? localeString) {
   if (localeString == null) return null;
@@ -64,6 +62,7 @@ class SettingsProvider with ChangeNotifier {
   String? defaultAppDir;
   bool justStarted = true;
   bool isTV = false;
+  bool _silent = false;
 
   T? _get<T>(String key) {
     final value = prefs?.get(key);
@@ -759,5 +758,27 @@ class SettingsProvider with ChangeNotifier {
   set shizukuPretendToBeGooglePlay(bool val) {
     prefs?.setBool('shizukuPretendToBeGooglePlay', val);
     notifyListeners();
+  }
+
+  /// Runs [updates] with listener notifications suppressed, then calls
+  /// [notifyListeners] once at the end. Use this when multiple settings
+  /// are being changed together to avoid unnecessary rebuilds.
+  /// TODO: modify individual setter methods to skip their own
+  /// notifyListeners() calls when batched.
+  void batchUpdate(void Function() updates) {
+    _silent = true;
+    try {
+      updates();
+    } finally {
+      _silent = false;
+      notifyListeners();
+    }
+  }
+
+  @override
+  void notifyListeners() {
+    if (!_silent) {
+      super.notifyListeners();
+    }
   }
 }

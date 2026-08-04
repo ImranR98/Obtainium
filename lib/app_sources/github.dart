@@ -3,7 +3,7 @@ import 'dart:convert';
 import 'dart:io';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:http/http.dart';
-import 'package:obtainium/app_sources/html.dart';
+import 'package:obtainium/utils/string_compare.dart';
 import 'package:obtainium/components/generated_form_model.dart';
 import 'package:obtainium/custom_errors.dart';
 import 'package:obtainium/providers/apps_provider.dart';
@@ -12,6 +12,8 @@ import 'package:obtainium/providers/settings_provider.dart';
 import 'package:obtainium/providers/source_provider.dart';
 
 class GitHub extends AppSource {
+  static const int _fallbackCacheSeconds = 3600;
+
   GitHub({bool hostChanged = false}) {
     name = 'GitHub';
     hosts = ['github.com'];
@@ -457,7 +459,7 @@ class GitHub extends AppSource {
       if (isDateOnly) {
         final dateA = dates.putIfAbsent(a, () => _getReleaseDateFromRelease(a, useLatestAssetDateAsReleaseDate));
         final dateB = dates.putIfAbsent(b, () => _getReleaseDateFromRelease(b, useLatestAssetDateAsReleaseDate));
-        return (dateA ?? DateTime(1)).compareTo(dateB ?? DateTime(0));
+        return (dateA ?? DateTime(0)).compareTo(dateB ?? DateTime(0));
       }
 
       final nameA = a['tag_name'] ?? a['name'];
@@ -467,13 +469,17 @@ class GitHub extends AppSource {
       if (sortMethod == 'smartname-datefallback' && stdFormats.isEmpty) {
         final dateA = _getReleaseDateFromRelease(a, useLatestAssetDateAsReleaseDate);
         final dateB = _getReleaseDateFromRelease(b, useLatestAssetDateAsReleaseDate);
-        return (dateA ?? DateTime(1)).compareTo(dateB ?? DateTime(0));
+        return (dateA ?? DateTime(0)).compareTo(dateB ?? DateTime(0));
       }
 
       if (sortMethod != 'name' && stdFormats.isNotEmpty) {
         final sortedFormats = stdFormats.toList()
           ..sort((x, y) => y.length.compareTo(x.length));
-        final reg = RegExp(sortedFormats.first);
+        final regCache = <String, RegExp>{};
+        final reg = regCache.putIfAbsent(
+          sortedFormats.first,
+          () => RegExp(sortedFormats.first),
+        );
         final matchA = reg.firstMatch(nameA);
         final matchB = reg.firstMatch(nameB);
         if (matchA == null || matchB == null) {
@@ -519,28 +525,32 @@ class GitHub extends AppSource {
     required Map<String, dynamic> additionalSettings,
     required Map<String, String> sourceConfigSettingValues,
   }) {
-    var prereleaseSkipped = 0;
+    var releaseSkipped = 0;
+    final titleRegex =
+        regexFilter != null ? RegExp(regexFilter) : null;
+    final notesRegex =
+        regexNotesFilter != null ? RegExp(regexNotesFilter) : null;
     for (int i = 0; i < releases.length; i++) {
-      if (!fallbackToOlderReleases && i > prereleaseSkipped) break;
+      if (!fallbackToOlderReleases && i > releaseSkipped) break;
       if (!includePrereleases && releases[i]['prerelease'] == true) {
-        prereleaseSkipped++;
+        releaseSkipped++;
         continue;
       }
       if (releases[i]['draft'] == true) {
+        releaseSkipped++;
         continue;
       }
       var nameToFilter = releases[i]['name'] as String?;
       if (nameToFilter == null || nameToFilter.trim().isEmpty) {
         nameToFilter = releases[i]['tag_name']?.toString() ?? '';
       }
-      if (regexFilter != null &&
-          !RegExp(regexFilter).hasMatch(nameToFilter.trim())) {
+      if (titleRegex != null &&
+          !titleRegex.hasMatch(nameToFilter.trim())) {
         continue;
       }
-      if (regexNotesFilter != null &&
-          !RegExp(
-            regexNotesFilter,
-          ).hasMatch(((releases[i]['body'] as String?) ?? '').trim())) {
+      if (notesRegex != null &&
+          !notesRegex.hasMatch(
+              ((releases[i]['body'] as String?) ?? '').trim())) {
         continue;
       }
       final allAssetsWithUrls = _findReleaseAssetUrls(
@@ -880,7 +890,7 @@ class GitHub extends AppSource {
       final now = DateTime.now();
       final resetEpochSeconds =
           int.tryParse(res.headers['x-ratelimit-reset'] ?? '') ??
-          now.millisecondsSinceEpoch ~/ 1000 + 3600;
+          now.millisecondsSinceEpoch ~/ 1000 + _fallbackCacheSeconds;
       final nowSeconds = now.millisecondsSinceEpoch ~/ 1000;
       final remainingMinutes = ((resetEpochSeconds - nowSeconds) / 60)
           .ceil()

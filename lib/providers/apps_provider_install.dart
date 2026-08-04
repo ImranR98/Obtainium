@@ -17,6 +17,7 @@ import 'package:obtainium/installers/external_installer.dart';
 import 'package:obtainium/installers/installer.dart';
 import 'package:obtainium/installers/shizuku_installer.dart';
 import 'package:obtainium/installers/stock_installer.dart';
+import 'package:obtainium/installers/install_utils.dart';
 import 'package:obtainium/providers/apps_provider.dart';
 import 'package:obtainium/providers/logs_provider.dart';
 import 'package:obtainium/providers/notifications_provider.dart';
@@ -912,8 +913,14 @@ extension AppsProviderInstall on AppsProvider {
       obtainiumId,
       strB: obtainiumTempId,
     );
-    appsToInstall = moveStrToEnd(appsToInstall, '$obtainiumId.fdroid');
-    appsToInstall = moveStrToEnd(appsToInstall, '$obtainiumId.debug');
+    appsToInstall = moveStrToEnd(
+      appsToInstall,
+      '$obtainiumId.fdroid',
+    );
+    appsToInstall = moveStrToEnd(
+      appsToInstall,
+      '$obtainiumId.debug',
+    );
 
     final List<_InstallResult> obtainiumResults = [];
     Future<void> installChain = Future.value();

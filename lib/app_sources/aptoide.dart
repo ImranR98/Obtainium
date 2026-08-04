@@ -13,6 +13,8 @@ class Aptoide extends AppSource {
     showReleaseDateAsVersionToggle = true;
   }
 
+  static const String _apiBaseUrl = 'https://ws2.aptoide.com/api/7/getApp/app_id';
+
   @override
   String sourceSpecificStandardizeURL(String url, {bool forSelection = false}) {
     return standardizeUrlWithRegex(
@@ -51,7 +53,7 @@ class Aptoide extends AppSource {
       throw NoReleasesError();
     }
     final res2 = await sourceRequest(
-      'https://ws2.aptoide.com/api/7/getApp/app_id/$id',
+      '$_apiBaseUrl/$id',
       additionalSettings,
     );
     if (res2.statusCode != 200) {

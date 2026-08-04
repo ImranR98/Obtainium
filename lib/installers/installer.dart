@@ -1,7 +1,7 @@
 import 'package:obtainium/providers/settings_provider.dart';
 import 'package:obtainium/providers/source_provider.dart';
 
-/// Android PackageInstaller status codes: 0 = success, 3 = already installed / pending.
+/// Android PackageInstaller status codes: 0 = success, 3 = cancelled / pending.
 const int installSuccessCode = 0;
 const int installAlreadyPendingCode = 3;
 
@@ -36,7 +36,7 @@ class InstallResult {
       return InstallResult.cancelled();
     }
     if (code == installAlreadyPendingCode) {
-      return InstallResult.alreadyInstalled();
+      return InstallResult.cancelled();
     }
     if (code == installSuccessCode) {
       return InstallResult.success();

@@ -17,6 +17,11 @@ class RuStore extends AppSource {
     inferAppIdFromUrlPath = true;
   }
 
+  static const String _appInfoUrl =
+      'https://backapi.rustore.ru/applicationData/overallInfo';
+  static const String _downloadLinkUrl =
+      'https://backapi.rustore.ru/v3/showcase/apps/download-link';
+
   @override
   Future<Map<String, String>?> getRequestHeaders(
       Map<String, dynamic> additionalSettings,
@@ -57,7 +62,7 @@ class RuStore extends AppSource {
         throw NoReleasesError();
       }
       final Response overallInfoResponse = await sourceRequest(
-        'https://backapi.rustore.ru/applicationData/overallInfo/$appId',
+        '$_appInfoUrl/$appId',
         additionalSettings,
       );
       if (overallInfoResponse.statusCode != 200) {
@@ -83,7 +88,7 @@ class RuStore extends AppSource {
       }
 
       final Response downloadLinksResponse = await sourceRequest(
-        'https://backapi.rustore.ru/v3/showcase/apps/download-link',
+        _downloadLinkUrl,
         additionalSettings,
         followRedirects: false,
         postBody: {'appId': appDetails['appId'], 'firstInstall': true},
@@ -92,7 +97,10 @@ class RuStore extends AppSource {
       if (downloadLinksResponse.statusCode != 200 || downloadDetails == null) {
         throw getObtainiumHttpError(downloadLinksResponse);
       }
-      final url = downloadDetails['downloadUrls']?[0]?['url'] as String?;
+      final downloadUrls = downloadDetails['downloadUrls'];
+      final url = (downloadUrls is List && downloadUrls.isNotEmpty)
+          ? (downloadUrls[0] is Map ? downloadUrls[0]['url'] as String? : null)
+          : null;
       if (url == null) {
         throw NoAPKError();
       }

@@ -1,7 +1,5 @@
 import 'dart:async';
-import 'dart:math';
 
-import 'package:hsluv/hsluv.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -15,16 +13,6 @@ import 'package:url_launcher/url_launcher_string.dart';
 
 export 'generated_form_model.dart';
 
-Color generateRandomLightColor() {
-  final randomSeed = Random().nextInt(120);
-  final goldenAngle = 180 * (3 - sqrt(5));
-  final double hue = randomSeed * goldenAngle;
-  final List<double> rgbValuesDbl = Hsluv.hpluvToRgb([hue, 100, 70]);
-  final List<int> rgbValues = rgbValuesDbl
-      .map((rgb) => (rgb * 255).toInt())
-      .toList();
-  return Color.fromARGB(255, rgbValues[0], rgbValues[1], rgbValues[2]);
-}
 
 typedef OnValueChanges =
     void Function(Map<String, dynamic> values, bool valid, bool isBuilding);
@@ -197,11 +185,13 @@ class _GeneratedFormState extends State<GeneratedForm> {
   void notifyFormChange({bool forceInvalid = false, bool isBuilding = false}) {
     final Map<String, dynamic> returnValues = values;
     var valid = true;
-    for (final key in _fieldKeys) {
-      valid = valid && key.currentState?.isValid == true;
-    }
-    if (forceInvalid) {
-      valid = false;
+    if (!isBuilding) {
+      for (final key in _fieldKeys) {
+        valid = valid && key.currentState?.isValid == true;
+      }
+      if (forceInvalid) {
+        valid = false;
+      }
     }
     widget.onValueChanges(returnValues, valid, isBuilding);
     setState(() {});
@@ -375,6 +365,7 @@ class _GeneratedFormState extends State<GeneratedForm> {
     super.initState();
     _initFormData();
     WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
       notifyFormChange(isBuilding: true);
     });
   }
@@ -386,6 +377,7 @@ class _GeneratedFormState extends State<GeneratedForm> {
         _computeItemsHash(widget.items) != _itemsHash) {
       _initFormData();
       WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
         notifyFormChange(isBuilding: true);
       });
     }

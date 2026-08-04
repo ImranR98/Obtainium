@@ -144,10 +144,10 @@ class _ImportFromURLListPageState extends State<ImportFromURLListPage> {
                           child: Text(
                             tr('importedAppsIdDisclaimer'),
                             textAlign: TextAlign.center,
-                            style: const TextStyle(
-                              fontStyle: FontStyle.italic,
-                              fontSize: 12,
-                            ),
+                            style: Theme.of(context)
+                                .textTheme
+                                .bodySmall
+                                ?.copyWith(fontStyle: FontStyle.italic),
                           ),
                         ),
                       ],
@@ -660,10 +660,10 @@ class _SelectionModalState extends State<SelectionModal> {
         if (widget.titlesAreLinks)
           Text(
             Uri.parse(entry.key).host,
-            style: const TextStyle(
-              decoration: TextDecoration.underline,
-              fontSize: 12,
-            ),
+            style: Theme.of(context)
+                .textTheme
+                .bodySmall
+                ?.copyWith(decoration: TextDecoration.underline),
           ),
       ],
     );
@@ -676,7 +676,10 @@ class _SelectionModalState extends State<SelectionModal> {
             entry.value[1].length > 128
                 ? '${entry.value[1].substring(0, 128)}...'
                 : entry.value[1],
-            style: const TextStyle(fontStyle: FontStyle.italic, fontSize: 12),
+            style: Theme.of(context)
+                .textTheme
+                .bodySmall
+                ?.copyWith(fontStyle: FontStyle.italic),
           );
   }
 
@@ -786,20 +789,22 @@ class _SelectionModalState extends State<SelectionModal> {
     final isTV = context.read<SettingsProvider>().isTV;
     final Map<MapEntry<String, List<String>>, bool> filteredEntrySelections =
         {};
+    final filterRegexCompiled =
+        filterRegex.isEmpty ? null : RegExp(filterRegex);
+    final filterRegexCompiledCI = filterRegex.isEmpty
+        ? null
+        : RegExp(filterRegex, caseSensitive: false);
     entrySelections.forEach((key, value) {
       final searchableText = key.value.isEmpty ? key.key : key.value[0];
-      if (filterRegex.isEmpty || RegExp(filterRegex).hasMatch(searchableText)) {
+      if (filterRegexCompiled == null ||
+          filterRegexCompiled.hasMatch(searchableText)) {
         filteredEntrySelections.putIfAbsent(key, () => value);
       }
     });
     if (filterRegex.isNotEmpty && filteredEntrySelections.isEmpty) {
       entrySelections.forEach((key, value) {
         final searchableText = key.value.isEmpty ? key.key : key.value[0];
-        if (filterRegex.isEmpty ||
-            RegExp(
-              filterRegex,
-              caseSensitive: false,
-            ).hasMatch(searchableText)) {
+        if (filterRegexCompiledCI!.hasMatch(searchableText)) {
           filteredEntrySelections.putIfAbsent(key, () => value);
         }
       });

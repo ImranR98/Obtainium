@@ -7,6 +7,10 @@ import 'package:obtainium/providers/source_provider.dart';
 class VivoAppStore extends AppSource {
   static const appDetailUrl =
       'https://h5coml.vivo.com.cn/h5coml/appdetail_h5/browser_v2/index.html?appId=';
+  static const _searchApiBaseUrl =
+      'https://h5-api.appstore.vivo.com.cn/h5appstore/search/result-list?app_version=2100&page_index=1&apps_per_page=20&target=local&cfrom=2&key=';
+  static const _detailApiBaseUrl =
+      'https://h5-api.appstore.vivo.com.cn/detail/';
 
   @override
   String get name => tr('vivoAppStore');
@@ -20,7 +24,7 @@ class VivoAppStore extends AppSource {
 
   @override
   String sourceSpecificStandardizeURL(String url, {bool forSelection = false}) {
-    final vivoAppId = parseVivoAppId(url);
+    final vivoAppId = _parseVivoAppId(url);
     return '$appDetailUrl$vivoAppId';
   }
 
@@ -70,9 +74,7 @@ class VivoAppStore extends AppSource {
     String query, {
     Map<String, dynamic> querySettings = const {},
   }) async {
-    const apiBaseUrl =
-        'https://h5-api.appstore.vivo.com.cn/h5appstore/search/result-list?app_version=2100&page_index=1&apps_per_page=20&target=local&cfrom=2&key=';
-    final searchUrl = '$apiBaseUrl${Uri.encodeQueryComponent(query)}';
+    final searchUrl = '$_searchApiBaseUrl${Uri.encodeQueryComponent(query)}';
     final response = await sourceRequest(searchUrl, {});
     if (response.statusCode != 200) {
       throw getObtainiumHttpError(response);
@@ -99,10 +101,9 @@ class VivoAppStore extends AppSource {
     String standardUrl,
     Map<String, dynamic> additionalSettings,
   ) async {
-    final vivoAppId = parseVivoAppId(standardUrl);
-    const apiBaseUrl = 'https://h5-api.appstore.vivo.com.cn/detail/';
+    final vivoAppId = _parseVivoAppId(standardUrl);
     const params = '?frompage=messageh5&app_version=2100';
-    final detailUrl = '$apiBaseUrl${Uri.encodeComponent(vivoAppId)}$params';
+    final detailUrl = '$_detailApiBaseUrl${Uri.encodeComponent(vivoAppId)}$params';
     final response = await sourceRequest(detailUrl, additionalSettings);
     if (response.statusCode != 200) {
       throw getObtainiumHttpError(response);
@@ -114,10 +115,17 @@ class VivoAppStore extends AppSource {
     return json;
   }
 
-  String parseVivoAppId(String url) {
-    final appId = Uri.parse(
-      url.replaceFirst('/#', ''),
-    ).queryParameters['appId'];
+  String _parseVivoAppId(String url) {
+    final uri = Uri.parse(url);
+    String? appId = uri.queryParameters['appId'];
+    if (appId == null || appId.isEmpty) {
+      final fragment = uri.fragment;
+      if (fragment.isNotEmpty && fragment.contains('?')) {
+        final queryString = fragment.split('?').skip(1).join('?');
+        appId =
+            Uri.parse('?$queryString').queryParameters['appId'];
+      }
+    }
     if (appId == null || appId.isEmpty) {
       throw InvalidURLError(name);
     }

@@ -7,8 +7,8 @@ import 'package:obtainium/custom_errors.dart';
 import 'package:obtainium/installers/installer.dart';
 import 'package:obtainium/providers/apps_provider.dart';
 import 'package:obtainium/providers/logs_provider.dart';
-import 'package:obtainium/providers/settings_provider.dart';
 import 'package:obtainium/providers/source_provider.dart';
+import 'package:obtainium/utils/string_utils.dart';
 
 const int _androidApiLevelS = 31;
 
@@ -23,9 +23,7 @@ class StockInstaller extends Installer {
 
   @override
   Future<bool> canInstallSilently(App app) async {
-    if (app.id == obtainiumId ||
-        app.id == '$obtainiumId.fdroid' ||
-        app.id == '$obtainiumId.debug') {
+    if (isObtainiumVariant(app.id)) {
       unawaited(
         LogsProvider().add(
           'App will not be installed silently: Obtainium cannot silently install itself: ${app.id}',
@@ -49,13 +47,12 @@ class StockInstaller extends Installer {
       );
       return false;
     }
-    if (installerPackageName != obtainiumId &&
-        installerPackageName != '$obtainiumId.fdroid' &&
-        installerPackageName != '$obtainiumId.debug') {
+    if (installerPackageName == null ||
+        !isObtainiumVariant(installerPackageName)) {
       // If we did not install the app, silent install is not possible
       unawaited(
         LogsProvider().add(
-          'App will not be installed silently: Obtainium is not the installing package (current installer: ${installerPackageName ?? 'unknown'}): ${app.id}',
+          'App will not be installed silently: Obtainium is not the installing package (current installer: $installerPackageName): ${app.id}',
         ),
       );
       return false;

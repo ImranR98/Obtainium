@@ -162,3 +162,16 @@ abstract final class ExpressiveMotion {
   static const Duration short = Durations.short4;
   static const Duration medium = Durations.medium2;
 }
+
+abstract final class AppPaddings {
+  static const EdgeInsets pageHorizontal =
+      EdgeInsets.symmetric(horizontal: 16);
+  static const EdgeInsets page = EdgeInsets.fromLTRB(16, 0, 16, 0);
+  static const EdgeInsets cardInner = EdgeInsets.all(16);
+}
+
+abstract final class AppSpacings {
+  static const double sectionGap = 20;
+  static const double elementGap = 8;
+  static const double tightGap = 4;
+}

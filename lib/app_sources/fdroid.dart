@@ -13,6 +13,8 @@ import 'package:obtainium/providers/source_provider.dart';
 
 class FDroid extends AppSource {
   static const _maxChangeLogCodeUnits = 2048;
+  static const String _fdroidDataBaseUrl =
+      'https://gitlab.com/fdroid/fdroiddata/-/raw/master/metadata';
   @override
   String get name => tr('fdroid');
 
@@ -86,7 +88,7 @@ class FDroid extends AppSource {
         throw NoReleasesError();
       }
       final String host = Uri.parse(standardUrl).host;
-      final details = getAPKUrlsFromFDroidPackagesAPIResponse(
+      var details = getAPKUrlsFromFDroidPackagesAPIResponse(
         await sourceRequest(
           'https://$host/api/v1/packages/$appId',
           additionalSettings,
@@ -99,22 +101,26 @@ class FDroid extends AppSource {
       if (!hostChanged) {
         try {
           final res = await sourceRequest(
-            'https://gitlab.com/fdroid/fdroiddata/-/raw/master/metadata/$appId.yml',
+            '$_fdroidDataBaseUrl/$appId.yml',
             additionalSettings,
           );
           final lines = res.body.split('\n');
           final authorLines = lines.where((l) => l.startsWith('AuthorName: '));
           if (authorLines.isNotEmpty) {
-            details.names.author = authorLines.first
-                .split(': ')
-                .sublist(1)
-                .join(': ');
+            details = details.copyWith(
+              names: details.names.copyWith(
+                author: authorLines.first
+                    .split(': ')
+                    .sublist(1)
+                    .join(': '),
+              ),
+            );
           }
           final changelogUrls = lines
               .where((l) => l.startsWith('Changelog: '))
               .map((e) => e.split(' ').sublist(1).join(' '));
           if (changelogUrls.isNotEmpty) {
-            details.changeLog = changelogUrls.first;
+            details = details.copyWith(changeLog: changelogUrls.first);
             bool isGitHub = false;
             bool isGitLab = false;
             try {
@@ -135,10 +141,12 @@ class FDroid extends AppSource {
             }
             if ((isGitHub || isGitLab) &&
                 (details.changeLog?.indexOf('/blob/') ?? -1) >= 0) {
-              details.changeLog = (await sourceRequest(
-                details.changeLog!.replaceFirst('/blob/', '/raw/'),
-                additionalSettings,
-              )).body;
+              details = details.copyWith(
+                changeLog: (await sourceRequest(
+                  details.changeLog!.replaceFirst('/blob/', '/raw/'),
+                  additionalSettings,
+                )).body,
+              );
             }
           }
         } catch (e) {
@@ -156,7 +164,9 @@ class FDroid extends AppSource {
               cl.codeUnitAt(end - 1) <= 0xDBFF) {
             end--;
           }
-          details.changeLog = '${cl.substring(0, end)}...';
+          details = details.copyWith(
+            changeLog: '${cl.substring(0, end)}...',
+          );
         }
       }
       return details;
@@ -221,7 +231,8 @@ class FDroid extends AppSource {
         : null;
     if (res.statusCode == 200) {
       final response = jsonDecode(res.body);
-      List<dynamic> releases = response['packages'] ?? [];
+      List<dynamic> releases =
+          response is Map ? (response['packages'] ?? []) : [];
       if (apkFilterRegEx != null) {
         releases = releases.where((rel) {
           final String apk = '${apkUrlPrefix}_${rel['versionCode']}.apk';

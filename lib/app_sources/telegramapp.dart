@@ -12,6 +12,9 @@ class TelegramApp extends AppSource {
     hosts = ['telegram.org'];
   }
 
+  static const String _tgChannelUrl = 'https://t.me/s/TAndroidAPK';
+  static const String _tgDownloadUrl = 'https://telegram.org/dl/android/apk';
+
   @override
   String sourceSpecificStandardizeURL(String url, {bool forSelection = false}) {
     // Telegram has a single known APK download page — the user's exact URL
@@ -26,7 +29,7 @@ class TelegramApp extends AppSource {
   ) async {
     try {
       final Response res = await sourceRequest(
-        'https://t.me/s/TAndroidAPK',
+        _tgChannelUrl,
         additionalSettings,
       );
       if (res.statusCode == 200) {
@@ -40,10 +43,10 @@ class TelegramApp extends AppSource {
         if (version == null || version.isEmpty) {
           throw NoVersionError();
         }
-        const String apkUrl = 'https://telegram.org/dl/android/apk';
+        const String apkUrl = _tgDownloadUrl;
         return APKDetails(version, [
           MapEntry<String, String>('telegram-$version.apk', apkUrl),
-        ], AppNames('Telegram', 'Telegram'));
+        ], const AppNames('Telegram', 'Telegram'));
       } else {
         throw getObtainiumHttpError(res);
       }

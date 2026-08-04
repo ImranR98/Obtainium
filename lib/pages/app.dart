@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:convert';
 
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
@@ -10,12 +9,15 @@ import 'package:obtainium/components/category_editor.dart';
 import 'package:obtainium/components/generated_form_renderer.dart';
 import 'package:obtainium/components/ui_widgets.dart';
 import 'package:obtainium/components/app_detail_widgets.dart';
+import 'package:obtainium/theme.dart';
 import 'package:obtainium/providers/apps_provider.dart';
+import 'package:obtainium/utils/format_utils.dart';
 import 'package:obtainium/providers/notifications_provider.dart';
 import 'package:obtainium/providers/logs_provider.dart';
 import 'package:obtainium/providers/settings_provider.dart';
 import 'package:obtainium/providers/source_provider.dart';
 import 'package:obtainium/custom_errors.dart';
+import 'package:obtainium/utils/locale_utils.dart';
 import 'package:obtainium/main.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 import 'package:provider/provider.dart';
@@ -127,6 +129,8 @@ class _AppPageState extends State<AppPage> {
     // UI updates until the WebView has finished loading to avoid
     // predictive-back crashes.
     if (_initialized && oldWidget.appId != widget.appId) {
+      prevApp = null;
+      webViewLoaded = false;
       _pendingAppIdChange = true;
       if (webViewReady) {
         _pendingAppIdChange = false;
@@ -142,6 +146,7 @@ class _AppPageState extends State<AppPage> {
   }
 
   void onWebViewLoaded() {
+    if (!mounted) return;
     _webViewReady = true;
     if (_pendingAppIdChange) {
       _pendingAppIdChange = false;
@@ -169,7 +174,7 @@ class _AppPageState extends State<AppPage> {
               onWebViewLoaded();
             },
             onWebResourceError: (WebResourceError error) {
-              if (error.isForMainFrame == true) {
+              if (error.isForMainFrame == true && mounted) {
                 setState(() {
                   _webViewError = error.description;
                 });
@@ -215,7 +220,7 @@ class _AppPageState extends State<AppPage> {
       app.apkUrls.length,
       app.otherAssetUrls.length,
       app.preferredApkIndex,
-      jsonEncode(app.additionalSettings),
+      identityHashCode(app.additionalSettings),
     ]);
   }
 
@@ -570,7 +575,7 @@ class _AppPageState extends State<AppPage> {
           if (_probedDownloadSize != null)
             Text(
               formatBytes(_probedDownloadSize!),
-              style: const TextStyle(fontSize: 12),
+              style: Theme.of(context).textTheme.bodySmall,
             ),
         ],
       ),
@@ -675,11 +680,11 @@ class _AppPageState extends State<AppPage> {
   }) {
     return SliverToBoxAdapter(
       child: Padding(
-        padding: const EdgeInsets.fromLTRB(16, 0, 16, 0),
+        padding: AppPaddings.page,
         child: ConnectedCard(
           isFirst: isFirst,
           isLast: isLast,
-          padding: padding ?? const EdgeInsets.all(16),
+          padding: padding ?? AppPaddings.cardInner,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             mainAxisSize: MainAxisSize.min,
@@ -731,10 +736,10 @@ class _AppPageState extends State<AppPage> {
     final appId = app!.app.id;
     final pendingUrl = app.app.pendingRepoRenameUrl!;
     return [
-      const SliverToBoxAdapter(child: SizedBox(height: 20)),
+      const SliverToBoxAdapter(child: SizedBox(height: AppSpacings.sectionGap)),
       SliverToBoxAdapter(
         child: Padding(
-          padding: const EdgeInsets.fromLTRB(16, 0, 16, 0),
+          padding: AppPaddings.page,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             spacing: 3,
@@ -849,7 +854,6 @@ class _AppPageState extends State<AppPage> {
     final tt = Theme.of(context).textTheme;
     final trackOnly = app?.app.settings.getBool('trackOnly') == true;
     final pseudo = app?.app != null && isVersionPseudo(app!.app);
-    final realVersion = app?.installedInfo?.versionName;
     final apkCount = app?.app.apkUrls.length ?? 0;
     final changeLogFn = app != null ? getChangeLogFn(context, app.app) : null;
     return [
@@ -860,9 +864,7 @@ class _AppPageState extends State<AppPage> {
           if (trackOnly) _detailNote(tr('xIsTrackOnly', args: [tr('app')])),
           if (pseudo)
             _detailNote(
-              realVersion != null
-                  ? '${tr('pseudoVersionInUse')} (OS installed $realVersion)'
-                  : tr('pseudoVersionInUse'),
+              tr('pseudoVersionInUse'),
             ),
           () {
             String l = appInstalledVersionText(app?.app);
@@ -951,7 +953,7 @@ class _AppPageState extends State<AppPage> {
     final about = app?.app.additionalSettings['about'];
     if (about is! String || about.isEmpty) return const [];
     return [
-      const SliverToBoxAdapter(child: SizedBox(height: 20)),
+      const SliverToBoxAdapter(child: SizedBox(height: AppSpacings.sectionGap)),
       _buildSection(
         true,
         true,
@@ -990,6 +992,7 @@ class _AppPageState extends State<AppPage> {
     bool certs,
     bool hasAssets,
   ) {
+    final theme = Theme.of(context);
     final widgets = <Widget>[
       _buildSection(
         true,
@@ -1011,8 +1014,8 @@ class _AppPageState extends State<AppPage> {
           const SizedBox(height: 4),
           Text(
             app?.app.id ?? '',
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-              color: Theme.of(context).colorScheme.onSurfaceVariant,
+            style: theme.textTheme.bodyMedium?.copyWith(
+              color: theme.colorScheme.onSurfaceVariant,
             ),
           ),
         ],
@@ -1029,8 +1032,8 @@ class _AppPageState extends State<AppPage> {
             Text(
               '${plural('certificateHash', a.certificateHashes.length)}'
               '${a.hasMultipleSigners ? " (${tr('multipleSigners')})" : ""}',
-              style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                color: Theme.of(context).colorScheme.onSurfaceVariant,
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: theme.colorScheme.onSurfaceVariant,
               ),
             ),
             ...a.certificateHashes.map(
@@ -1044,7 +1047,7 @@ class _AppPageState extends State<AppPage> {
                     padding: const EdgeInsets.symmetric(vertical: 2),
                     child: Text(
                       h,
-                      style: Theme.of(context).textTheme.bodySmall,
+                      style: theme.textTheme.bodySmall,
                     ),
                   ),
                 ),
@@ -1208,7 +1211,7 @@ class _AppPageState extends State<AppPage> {
     final bool areDownloadsRunning = context.select<AppsProvider, bool>(
       (p) => p.areDownloadsRunning(),
     );
-    context.select<AppsProvider, double?>(
+    final _ = context.select<AppsProvider, double?>(
       (p) => p.apps[widget.appId]?.downloadProgress,
     );
 
@@ -1287,9 +1290,9 @@ class _AppPageState extends State<AppPage> {
                         ),
                         _buildHeaderSection(app),
                         ..._buildRepoRenameSection(app, appsProvider),
-                        const SliverToBoxAdapter(child: SizedBox(height: 20)),
+                        const SliverToBoxAdapter(child: SizedBox(height: AppSpacings.sectionGap)),
                         ..._buildVersionInfoSections(app),
-                        const SliverToBoxAdapter(child: SizedBox(height: 20)),
+                        const SliverToBoxAdapter(child: SizedBox(height: AppSpacings.sectionGap)),
                         ..._buildSourceInfoSections(
                           app,
                           appsProvider,
@@ -1297,7 +1300,7 @@ class _AppPageState extends State<AppPage> {
                           certs,
                           hasAssets,
                         ),
-                        const SliverToBoxAdapter(child: SizedBox(height: 20)),
+                        const SliverToBoxAdapter(child: SizedBox(height: AppSpacings.sectionGap)),
                         _buildCategorySection(app, appsProvider),
                         ..._buildAboutSection(app),
                         const SliverToBoxAdapter(child: SizedBox(height: 32)),

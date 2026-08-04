@@ -12,14 +12,16 @@ import 'package:obtainium/components/generated_form_renderer.dart';
 import 'package:obtainium/custom_errors.dart';
 import 'package:obtainium/main.dart';
 import 'package:obtainium/pages/import_export.dart';
+import 'package:obtainium/pages/logs.dart';
 import 'package:obtainium/providers/logs_provider.dart';
 import 'package:obtainium/providers/apps_provider.dart';
 import 'package:obtainium/providers/external_install_bridge.dart';
 import 'package:obtainium/providers/settings_provider.dart';
 import 'package:obtainium/providers/source_provider.dart';
 import 'package:obtainium/theme.dart';
+import 'package:obtainium/utils/locale_utils.dart';
+import 'package:obtainium/utils/native_features.dart';
 import 'package:provider/provider.dart';
-import 'package:share_plus/share_plus.dart';
 import 'package:url_launcher/url_launcher_string.dart';
 
 class SettingsPage extends StatefulWidget {
@@ -276,72 +278,9 @@ class _SettingsPageState extends State<SettingsPage> {
     final sourceProvider = context.read<SourceProvider>();
     final sdk = androidSdkInt ?? 0;
 
-    final colorPicker = CardTile(
-      child: ListTile(
-        contentPadding: EdgeInsets.zero,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(connectedTileBigRadius),
-        ),
-        title: Text(
-          tr('selectX', args: [lowerCaseUnlessLang(tr('colour'), 'de')]),
-        ),
-        subtitle: Text(
-          '${ColorTools.nameThatColor(settingsProvider.themeColor)} '
-          '(${ColorTools.materialNameAndCode(settingsProvider.themeColor)})',
-        ),
-        trailing: ColorIndicator(
-          width: 40,
-          height: 40,
-          borderRadius: 20,
-          color: settingsProvider.themeColor,
-          onSelectFocus: false,
-          onSelect: () async {
-            final Color colorBeforeDialog = settingsProvider.themeColor;
-            if (!(await showColorPickerDialog(
-              settingsProvider,
-              obtainiumThemeColor.toSwatch(),
-            ))) {
-              handleColorPickerCancel(colorBeforeDialog, settingsProvider);
-            }
-          },
-        ),
-      ),
-    );
-
-    final themeModeControl = CardTile(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Flexible(child: Text(tr('theme'))),
-          const SizedBox(width: 12),
-          SegmentedButton<ThemeSettings>(
-            showSelectedIcon: false,
-            segments: [
-              ButtonSegment(
-                value: ThemeSettings.system,
-                icon: const Icon(Icons.brightness_auto_outlined),
-                tooltip: tr('followSystem'),
-              ),
-              ButtonSegment(
-                value: ThemeSettings.light,
-                icon: const Icon(Icons.light_mode_outlined),
-                tooltip: tr('light'),
-              ),
-              ButtonSegment(
-                value: ThemeSettings.dark,
-                icon: const Icon(Icons.dark_mode_outlined),
-                tooltip: tr('dark'),
-              ),
-            ],
-            selected: {settingsProvider.theme},
-            onSelectionChanged: (selection) {
-              settingsProvider.selectionClick();
-              settingsProvider.theme = selection.first;
-            },
-          ),
-        ],
-      ),
+    final colorPicker = _ThemeColorPickerTile(
+      showColorPickerDialog: showColorPickerDialog,
+      handleColorPickerCancel: handleColorPickerCancel,
     );
 
     final sortDropdown = DropdownMenu<SortColumnSettings>(
@@ -402,55 +341,6 @@ class _SettingsPageState extends State<SettingsPage> {
           ),
         ],
       ),
-    );
-
-    final localeDropdown = DropdownMenu<Locale?>(
-      expandedInsets: EdgeInsets.zero,
-      label: Text(tr('language')),
-      initialSelection: settingsProvider.forcedLocale,
-      dropdownMenuEntries: [
-        DropdownMenuEntry<Locale?>(value: null, label: tr('followSystem')),
-        ...supportedLocales.map(
-          (e) => DropdownMenuEntry<Locale?>(value: e.key, label: e.value),
-        ),
-      ],
-      onSelected: (value) {
-        settingsProvider.forcedLocale = value;
-        if (value != null) {
-          context.setLocale(value);
-        } else {
-          settingsProvider.resetLocaleSafe(context);
-        }
-      },
-    );
-
-    final colourSchemeDropdown = DropdownMenu<ColourSchemeMode>(
-      expandedInsets: EdgeInsets.zero,
-      label: Text(tr('colourScheme')),
-      initialSelection: settingsProvider.colourSchemeMode,
-      dropdownMenuEntries: [
-        DropdownMenuEntry(
-          value: ColourSchemeMode.standard,
-          label: tr('standard'),
-        ),
-        DropdownMenuEntry(
-          value: ColourSchemeMode.vibrant,
-          label: tr('vibrant'),
-        ),
-        DropdownMenuEntry(
-          value: ColourSchemeMode.expressive,
-          label: tr('expressive'),
-        ),
-        DropdownMenuEntry(
-          value: ColourSchemeMode.materialYou,
-          label: tr('useMaterialYou'),
-        ),
-      ],
-      onSelected: (value) {
-        if (value != null) {
-          settingsProvider.colourSchemeMode = value;
-        }
-      },
     );
 
     final allSourceConfigItems = sourceProvider.sources
@@ -519,11 +409,8 @@ class _SettingsPageState extends State<SettingsPage> {
                         _buildAppearanceSection(
                           context,
                           colorPicker,
-                          themeModeControl,
                           sortDropdown,
                           orderControl,
-                          localeDropdown,
-                          colourSchemeDropdown,
                         ),
                         Section(
                           title: tr('categories'),
@@ -698,18 +585,15 @@ class _SettingsPageState extends State<SettingsPage> {
   Widget _buildAppearanceSection(
     BuildContext context,
     Widget colorPicker,
-    Widget themeModeControl,
     Widget sortDropdown,
     Widget orderControl,
-    Widget localeDropdown,
-    Widget colourSchemeDropdown,
   ) {
     final settingsProvider = context.read<SettingsProvider>();
     final sdk = androidSdkInt ?? 0;
     return Section(
       title: tr('appearance'),
       children: [
-        themeModeControl,
+        const _ThemeModeSegmentedButton(),
         if (settingsProvider.theme == ThemeSettings.system &&
             (androidSdkInt ?? 30) < 29)
           _caption(context, tr('followSystemThemeExplanation')),
@@ -719,12 +603,12 @@ class _SettingsPageState extends State<SettingsPage> {
             value: settingsProvider.useBlackTheme,
             onChanged: (value) => settingsProvider.useBlackTheme = value,
           ),
-        _fieldTile(context, colourSchemeDropdown),
+        _fieldTile(context, const _ColourSchemeDropdown()),
         if (settingsProvider.colourSchemeMode != ColourSchemeMode.materialYou)
           colorPicker,
         _fieldTile(context, sortDropdown),
         orderControl,
-        _fieldTile(context, localeDropdown),
+        _fieldTile(context, const _LocaleDropdown()),
         if (sdk >= 29)
           ToggleTile(
             label: tr('useSystemFont'),
@@ -1031,254 +915,6 @@ class _UpdateIntervalSliderTileState extends State<_UpdateIntervalSliderTile> {
     );
   }
 }
-
-class LogsPage extends StatefulWidget {
-  const LogsPage({super.key});
-
-  @override
-  State<LogsPage> createState() => _LogsPageState();
-}
-
-class _LogsPageState extends State<LogsPage> {
-  static const List<int> _dayOptions = [7, 5, 4, 3, 2, 1];
-
-  final ScrollController _scrollController = ScrollController();
-  List<Log> _logs = [];
-  int _days = _dayOptions.first;
-  bool _loading = true;
-
-  @override
-  void initState() {
-    super.initState();
-    _loadLogs(_days);
-  }
-
-  @override
-  void dispose() {
-    _scrollController.dispose();
-    super.dispose();
-  }
-
-  Future<void> _loadLogs(int days) async {
-    setState(() => _loading = true);
-    final value = await context.read<LogsProvider>().get(
-      after: DateTime.now().subtract(Duration(days: days)),
-    );
-    if (!mounted) return;
-    setState(() {
-      _days = days;
-      _logs = value;
-      _loading = false;
-    });
-  }
-
-  String _joinLogs() => _logs.map((e) => e.toString()).join('\n\n');
-
-  void _scrollTo(double offset) {
-    if (!_scrollController.hasClients) return;
-    _scrollController.animateTo(
-      offset,
-      duration: ExpressiveMotion.medium,
-      curve: ExpressiveMotion.emphasized,
-    );
-  }
-
-  void _scrollToTop() => _scrollTo(0);
-
-  void _scrollToBottom() {
-    if (!_scrollController.hasClients) return;
-    _scrollTo(_scrollController.position.maxScrollExtent);
-  }
-
-  Future<void> _clearLogs() async {
-    final logsProvider = context.read<LogsProvider>();
-    final cont =
-        (await showDialog<Map<String, dynamic>?>(
-          context: context,
-          builder: (BuildContext ctx) {
-            return GeneratedFormModal(
-              title: tr('appLogs'),
-              items: const [],
-              initValid: true,
-              message: tr('removeFromObtainium'),
-            );
-          },
-        )) !=
-        null;
-    if (!cont) return;
-    await logsProvider.clear();
-    if (!mounted) return;
-    await _loadLogs(_days);
-  }
-
-  void _shareLogs() {
-    unawaited(
-      SharePlus.instance.share(
-        ShareParams(text: _joinLogs(), subject: tr('appLogs')),
-      ),
-    );
-  }
-
-  Color _levelColor(BuildContext context, LogLevel level) {
-    final cs = Theme.of(context).colorScheme;
-    return switch (level) {
-      LogLevel.error => cs.error,
-      LogLevel.warning => cs.tertiary,
-      LogLevel.debug => cs.onSurfaceVariant,
-      LogLevel.info => cs.onSurface,
-    };
-  }
-
-  Widget _logTile(Log log) {
-    final color = _levelColor(context, log.level);
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            '${log.timestamp.toString()} · ${log.level.name}',
-            style: Theme.of(context).textTheme.labelSmall?.copyWith(
-              color: color.withValues(alpha: 0.8),
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          const SizedBox(height: 2),
-          Text(
-            log.message,
-            style: Theme.of(
-              context,
-            ).textTheme.bodySmall?.copyWith(color: color),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _toolbarDivider(ColorScheme cs) => Container(
-    width: 1,
-    height: 24,
-    margin: const EdgeInsets.symmetric(horizontal: 4),
-    color: cs.outlineVariant,
-  );
-
-  /// A single M3 Expressive floating toolbar that consolidates navigation
-  /// (jump to top/bottom) and actions (filter, share, clear) into one pill,
-  /// rather than scattering them across the app bar and multiple FABs.
-  Widget _buildFloatingToolbar(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
-    final hasLogs = _logs.isNotEmpty;
-    return Material(
-      elevation: 3,
-      color: cs.surfaceContainer,
-      shape: const StadiumBorder(),
-      clipBehavior: Clip.antiAlias,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 4),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            IconButton(
-              onPressed: hasLogs ? _scrollToTop : null,
-              icon: const Icon(Icons.keyboard_arrow_up_rounded),
-            ),
-            IconButton(
-              onPressed: hasLogs ? _scrollToBottom : null,
-              icon: const Icon(Icons.keyboard_arrow_down_rounded),
-            ),
-            _toolbarDivider(cs),
-            PopupMenuButton<int>(
-              icon: const Icon(Icons.filter_list_rounded),
-              tooltip: tr('filter'),
-              initialValue: _days,
-              onSelected: _loadLogs,
-              itemBuilder: (context) => _dayOptions
-                  .map(
-                    (e) => CheckedPopupMenuItem<int>(
-                      value: e,
-                      checked: e == _days,
-                      child: Text(plural('day', e)),
-                    ),
-                  )
-                  .toList(),
-            ),
-            IconButton(
-              onPressed: hasLogs ? _shareLogs : null,
-              icon: const Icon(Icons.share_rounded),
-              tooltip: tr('share'),
-            ),
-            IconButton(
-              onPressed: hasLogs ? _clearLogs : null,
-              color: cs.error,
-              icon: const Icon(Icons.delete_outline_rounded),
-              tooltip: tr('remove'),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Theme.of(context).colorScheme.surface,
-      body: Stack(
-        children: [
-          SelectionArea(
-            child: CustomScrollView(
-              controller: _scrollController,
-              slivers: [
-                SliverAppBar(
-                  pinned: true,
-                  automaticallyImplyLeading: false,
-                  title: Text(tr('appLogs')),
-                ),
-                if (_loading)
-                  const SliverFillRemaining(
-                    hasScrollBody: false,
-                    child: Center(child: CircularProgressIndicator()),
-                  )
-                else if (_logs.isEmpty)
-                  SliverFillRemaining(
-                    hasScrollBody: false,
-                    child: EmptyState(
-                      icon: Icons.bug_report_outlined,
-                      message: tr('noLogs'),
-                    ),
-                  )
-                else
-                  SliverList.builder(
-                    itemCount: _logs.length,
-                    itemBuilder: (context, index) => _logTile(_logs[index]),
-                  ),
-                const SliverToBoxAdapter(child: SizedBox(height: 96)),
-              ],
-            ),
-          ),
-          // Docked in a Stack rather than the Scaffold's floatingActionButton
-          // slot so it doesn't play the FAB scale/rotate entrance animation.
-          if (!_loading)
-            Positioned(
-              left: 0,
-              right: 0,
-              bottom: 0,
-              child: SafeArea(
-                child: Padding(
-                  padding: const EdgeInsets.only(bottom: 16),
-                  child: Align(
-                    alignment: Alignment.bottomCenter,
-                    child: _buildFloatingToolbar(context),
-                  ),
-                ),
-              ),
-            ),
-        ],
-      ),
-    );
-  }
-}
-
 class _ExternalInstallerTile extends StatefulWidget {
   const _ExternalInstallerTile();
 
@@ -1295,13 +931,12 @@ class _ExternalInstallerTileState extends State<_ExternalInstallerTile> {
     _targetsFuture = ExternalInstallerBridge.instance.listTargets();
   }
 
-  InstallerTarget? _current(
+  InstallerTarget? _findCurrent(
     List<InstallerTarget> targets,
-    SettingsProvider settingsProvider,
+    String? pkg,
+    String? activity,
   ) {
-    final pkg = settingsProvider.externalInstallerPackage;
     if (pkg == null) return null;
-    final activity = settingsProvider.externalInstallerComponent;
     for (final target in targets) {
       if (target.package == pkg && target.activity == activity) return target;
     }
@@ -1432,7 +1067,11 @@ class _ExternalInstallerTileState extends State<_ExternalInstallerTile> {
 
   @override
   Widget build(BuildContext context) {
-    final settingsProvider = context.watch<SettingsProvider>();
+    final settingsProvider = context.read<SettingsProvider>();
+    final extPkg =
+        context.select<SettingsProvider, String?>((p) => p.externalInstallerPackage);
+    final extComp =
+        context.select<SettingsProvider, String?>((p) => p.externalInstallerComponent);
     return FutureBuilder<List<InstallerTarget>>(
       future: _targetsFuture,
       builder: (context, snapshot) {
@@ -1448,7 +1087,7 @@ class _ExternalInstallerTileState extends State<_ExternalInstallerTile> {
           );
         }
         final targets = snapshot.data ?? const <InstallerTarget>[];
-        final current = _current(targets, settingsProvider);
+        final current = _findCurrent(targets, extPkg, extComp);
         final intentCount = targets
             .where((t) => t.package == current?.package)
             .map((t) => t.activity)
@@ -1458,8 +1097,7 @@ class _ExternalInstallerTileState extends State<_ExternalInstallerTile> {
             ? intentCount > 1
                   ? '${current.label} · ${current.activity.split('.').last}'
                   : current.label
-            : settingsProvider.externalInstallerPackage ??
-                  tr('externalInstallerUnset');
+            : extPkg ?? tr('externalInstallerUnset');
         return ListTile(
           contentPadding: const EdgeInsets.symmetric(horizontal: 8),
           shape: RoundedRectangleBorder(
@@ -1471,6 +1109,171 @@ class _ExternalInstallerTileState extends State<_ExternalInstallerTile> {
           trailing: const Icon(Icons.arrow_drop_down),
           onTap: () => _choose(targets, settingsProvider),
         );
+      },
+    );
+  }
+}
+
+
+class _ThemeColorPickerTile extends StatelessWidget {
+  final Future<bool> Function(SettingsProvider, ColorSwatch<Object>)
+      showColorPickerDialog;
+  final void Function(Color, SettingsProvider) handleColorPickerCancel;
+
+  const _ThemeColorPickerTile({
+    required this.showColorPickerDialog,
+    required this.handleColorPickerCancel,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final settingsProvider = context.read<SettingsProvider>();
+    final themeColor =
+        context.select<SettingsProvider, Color>((p) => p.themeColor);
+    return CardTile(
+      child: ListTile(
+        contentPadding: EdgeInsets.zero,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(connectedTileBigRadius),
+        ),
+        title: Text(
+          tr('selectX', args: [lowerCaseUnlessLang(tr('colour'), 'de')]),
+        ),
+        subtitle: Text(
+          '${ColorTools.nameThatColor(themeColor)} '
+          '(${ColorTools.materialNameAndCode(themeColor)})',
+        ),
+        trailing: ColorIndicator(
+          width: 40,
+          height: 40,
+          borderRadius: 20,
+          color: themeColor,
+          onSelectFocus: false,
+          onSelect: () async {
+            final Color colorBeforeDialog = themeColor;
+            if (!(await showColorPickerDialog(
+              settingsProvider,
+              obtainiumThemeColor.toSwatch(),
+            ))) {
+              handleColorPickerCancel(colorBeforeDialog, settingsProvider);
+            }
+          },
+        ),
+      ),
+    );
+  }
+}
+
+class _ThemeModeSegmentedButton extends StatelessWidget {
+  const _ThemeModeSegmentedButton();
+
+  @override
+  Widget build(BuildContext context) {
+    final settingsProvider = context.read<SettingsProvider>();
+    final themeValue =
+        context.select<SettingsProvider, ThemeSettings>((p) => p.theme);
+    return CardTile(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Flexible(child: Text(tr('theme'))),
+          const SizedBox(width: 12),
+          SegmentedButton<ThemeSettings>(
+            showSelectedIcon: false,
+            segments: [
+              ButtonSegment(
+                value: ThemeSettings.system,
+                icon: const Icon(Icons.brightness_auto_outlined),
+                tooltip: tr('followSystem'),
+              ),
+              ButtonSegment(
+                value: ThemeSettings.light,
+                icon: const Icon(Icons.light_mode_outlined),
+                tooltip: tr('light'),
+              ),
+              ButtonSegment(
+                value: ThemeSettings.dark,
+                icon: const Icon(Icons.dark_mode_outlined),
+                tooltip: tr('dark'),
+              ),
+            ],
+            selected: {themeValue},
+            onSelectionChanged: (selection) {
+              settingsProvider.selectionClick();
+              settingsProvider.theme = selection.first;
+            },
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _LocaleDropdown extends StatelessWidget {
+  const _LocaleDropdown();
+
+  @override
+  Widget build(BuildContext context) {
+    final settingsProvider = context.read<SettingsProvider>();
+    final forcedLocale =
+        context.select<SettingsProvider, Locale?>((p) => p.forcedLocale);
+    return DropdownMenu<Locale?>(
+      expandedInsets: EdgeInsets.zero,
+      label: Text(tr('language')),
+      initialSelection: forcedLocale,
+      dropdownMenuEntries: [
+        DropdownMenuEntry<Locale?>(value: null, label: tr('followSystem')),
+        ...supportedLocales.map(
+          (e) => DropdownMenuEntry<Locale?>(value: e.key, label: e.value),
+        ),
+      ],
+      onSelected: (value) {
+        settingsProvider.forcedLocale = value;
+        if (value != null) {
+          context.setLocale(value);
+        } else {
+          settingsProvider.resetLocaleSafe(context);
+        }
+      },
+    );
+  }
+}
+
+class _ColourSchemeDropdown extends StatelessWidget {
+  const _ColourSchemeDropdown();
+
+  @override
+  Widget build(BuildContext context) {
+    final colourSchemeMode =
+        context.select<SettingsProvider, ColourSchemeMode>((p) => p.colourSchemeMode);
+    final settingsProvider = context.read<SettingsProvider>();
+    return DropdownMenu<ColourSchemeMode>(
+      expandedInsets: EdgeInsets.zero,
+      label: Text(tr('colourScheme')),
+      initialSelection: colourSchemeMode,
+      dropdownMenuEntries: [
+        DropdownMenuEntry(
+          value: ColourSchemeMode.standard,
+          label: tr('standard'),
+        ),
+        DropdownMenuEntry(
+          value: ColourSchemeMode.vibrant,
+          label: tr('vibrant'),
+        ),
+        DropdownMenuEntry(
+          value: ColourSchemeMode.expressive,
+          label: tr('expressive'),
+        ),
+        DropdownMenuEntry(
+          value: ColourSchemeMode.materialYou,
+          label: tr('useMaterialYou'),
+        ),
+      ],
+      onSelected: (value) {
+        if (value != null) {
+          settingsProvider.colourSchemeMode = value;
+        }
       },
     );
   }

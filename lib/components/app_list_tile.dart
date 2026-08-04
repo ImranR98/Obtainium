@@ -8,13 +8,14 @@ import 'package:flutter_markdown_plus/flutter_markdown_plus.dart';
 import 'package:markdown/markdown.dart' as md;
 import 'package:obtainium/components/generated_form_renderer.dart';
 import 'package:obtainium/main.dart';
-import 'package:obtainium/pages/app.dart';
 import 'package:obtainium/theme.dart';
 import 'package:obtainium/components/ui_widgets.dart';
 import 'package:obtainium/providers/apps_provider.dart';
+import 'package:obtainium/utils/format_utils.dart';
 import 'package:obtainium/providers/notifications_provider.dart';
 import 'package:obtainium/providers/settings_provider.dart';
 import 'package:obtainium/providers/source_provider.dart';
+import 'package:obtainium/utils/nav_helper.dart';
 // AppsFilter and AppListBuilder are defined below in this file.
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher_string.dart';
@@ -128,23 +129,21 @@ class AppIconWidget extends StatefulWidget {
   @override
   State<AppIconWidget> createState() => _AppIconWidgetState();
 }
-
 class _AppIconWidgetState extends State<AppIconWidget> {
   late Future<void> _iconFuture;
-  String? _lastAppId;
 
   @override
   void initState() {
     super.initState();
-    _lastAppId = widget.appId;
     _iconFuture = widget.appsProvider.updateAppIcon(widget.appId);
   }
 
   @override
   void didUpdateWidget(AppIconWidget oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (widget.appId != _lastAppId) {
-      _lastAppId = widget.appId;
+    if (widget.appId != oldWidget.appId ||
+        widget.appsProvider.apps[widget.appId]?.icon !=
+            widget.appsProvider.apps[oldWidget.appId]?.icon) {
       _iconFuture = widget.appsProvider.updateAppIcon(widget.appId);
     }
   }
@@ -159,13 +158,8 @@ class _AppIconWidgetState extends State<AppIconWidget> {
           ? () => packageManager.openApp(widget.appId)
           : null,
       onLongPress: () {
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (context) =>
-                AppPage(appId: widget.appId, showOppositeOfPreferredView: true),
-          ),
-        );
+        NavHelper.pushAppPage(context, widget.appId,
+            showOppositeOfPreferredView: true);
       },
       child: InkWell(
         child: FutureBuilder(
@@ -182,15 +176,8 @@ class _AppIconWidgetState extends State<AppIconWidget> {
           }
         },
         onLongPress: () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (context) => AppPage(
-                appId: widget.appId,
-                showOppositeOfPreferredView: true,
-              ),
-            ),
-          );
+          NavHelper.pushAppPage(context, widget.appId,
+              showOppositeOfPreferredView: true);
         },
       ),
     );
@@ -389,6 +376,9 @@ class AppListTile extends StatelessWidget {
           )
         : null;
 
+    // TODO: Consider using the `child` parameter of ValueListenableBuilder
+    // to cache the built widget tree and avoid rebuilds when only the
+    // downloadProgress changes.
     return ValueListenableBuilder<double?>(
       valueListenable: appInMemory.downloadProgressNotifier,
       builder: (context, downloadProgress, child) {
@@ -533,7 +523,6 @@ class AppListTile extends StatelessWidget {
                     return appsProvider.removeAppsWithModal(context, [_app]);
                   }
                 },
-                onDismissed: (direction) {},
                 child: tileChild,
               );
       },
@@ -608,8 +597,6 @@ class DownloadProgressTrailing extends StatelessWidget {
   }
 }
 
-String capitalizeFirst(String s) =>
-    s.isEmpty ? s : s[0].toUpperCase() + s.substring(1);
 
 /// A collapsible section header + its app tiles, used when the list is grouped
 /// (by category or source). [title] is the already-resolved display label.
@@ -881,6 +868,7 @@ class AppListBuilder {
 }
 
 class _VersionLabel extends StatelessWidget {
+  static final DateFormat _dateFmt = DateFormat('yyyy-MM-dd');
   final AppInMemory appInMemory;
   final SettingsProvider settingsProvider;
   final double maxWidth;
@@ -977,6 +965,6 @@ class _VersionLabel extends StatelessWidget {
         ? hasChangeLogFn
             ? tr('changes')
             : ''
-        : DateFormat('yyyy-MM-dd').format(app.releaseDate!.toLocal());
+        : _dateFmt.format(app.releaseDate!.toLocal());
   }
 }

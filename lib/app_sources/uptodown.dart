@@ -6,7 +6,7 @@ import 'package:obtainium/custom_errors.dart';
 import 'package:obtainium/providers/logs_provider.dart';
 import 'package:obtainium/providers/source_provider.dart';
 
-DateTime? parseUptodownDate(String? dateString) {
+DateTime? _parseUptodownDate(String? dateString) {
   if (dateString == null) return null;
   try {
     return DateFormat('MMM dd, yyyy').parse(dateString);
@@ -127,7 +127,7 @@ class Uptodown extends AppSource {
       final String? dateStr = appDetails['dateStr'];
       DateTime? relDate;
       if (dateStr != null) {
-        relDate = parseUptodownDate(dateStr);
+        relDate = _parseUptodownDate(dateStr);
       }
       return APKDetails(
         version,

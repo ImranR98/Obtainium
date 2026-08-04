@@ -9,7 +9,7 @@ import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:obtainium/main.dart';
-import 'package:obtainium/providers/apps_provider.dart' show formatDownloadSize;
+import 'package:obtainium/utils/format_utils.dart' show formatDownloadSize;
 import 'package:obtainium/providers/settings_provider.dart';
 import 'package:obtainium/providers/source_provider.dart';
 
@@ -33,6 +33,7 @@ const int downloadNotificationIdRange = 2000000000;
 /// Name under which the main isolate registers a port to receive download-cancel
 /// requests forwarded from the notification-action background isolate.
 const String _downloadCancelPortName = 'obtainium_download_cancel';
+ReceivePort? _downloadCancelPort;
 
 /// The app ID targeted by a download-cancel notification action, or null if
 /// [actionId] isn't a download-cancel action.
@@ -325,16 +326,22 @@ class NotificationsProvider {
     if (prevPort != null) {
       IsolateNameServer.removePortNameMapping(_downloadCancelPortName);
     }
-    final port = ReceivePort();
+    _downloadCancelPort?.close();
+    _downloadCancelPort = ReceivePort();
     IsolateNameServer.registerPortWithName(
-      port.sendPort,
+      _downloadCancelPort!.sendPort,
       _downloadCancelPortName,
     );
-    port.listen((message) {
+    _downloadCancelPort!.listen((message) {
       if (message is String && message.isNotEmpty) {
         onDownloadCancelRequested?.call(message);
       }
     });
+  }
+
+  static void dispose() {
+    _downloadCancelPort?.close();
+    _downloadCancelPort = null;
   }
 
   Future<void> checkLaunchByNotif() async {
