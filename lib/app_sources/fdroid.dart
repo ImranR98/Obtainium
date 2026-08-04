@@ -306,6 +306,9 @@ class FDroid extends AppSource {
       if (releaseChoices.isEmpty) {
         throw NoReleasesError();
       }
+      if (additionalSettings['useVersionCodeAsOSVersion'] == true) {
+        version = releaseChoices.first['versionCode']?.toString() ?? version;
+      }
       final List<String> apkUrls = releaseChoices
           .map((e) => '${apkUrlPrefix}_${e['versionCode']}.apk')
           .toList();

@@ -280,8 +280,10 @@ class FDroidRepo extends AppSource {
         if (selectedReleases.isEmpty) {
           throw NoReleasesError();
         }
+        final useVersionCode =
+            additionalSettings['useVersionCodeAsOSVersion'] == true;
         final String? selectedVersion = selectedReleases[0]
-            .querySelector('version')
+            .querySelector(useVersionCode ? 'versioncode' : 'version')
             ?.innerHtml;
         if (selectedVersion == null) {
           throw NoVersionError();
