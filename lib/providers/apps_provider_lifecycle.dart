@@ -229,6 +229,7 @@ extension AppsProviderLifecycle on AppsProvider {
           if (i.packageName != null) i.packageName!: i,
       };
       final List<String> removedAppIds = [];
+      final List<App> correctedApps = [];
       await Future.wait(
         // TODO: Replace listSync() with async list().toList()
         (await getAppsDir()) // Parse Apps from JSON
@@ -287,6 +288,7 @@ extension AppsProviderLifecycle on AppsProvider {
                   );
                   if (moddedApp != null) {
                     app = moddedApp;
+                    correctedApps.add(app!);
                     // Note the app ID if it was uninstalled externally
                     if (moddedApp.installedVersion == null) {
                       removedAppIds.add(moddedApp.id);
@@ -342,6 +344,13 @@ extension AppsProviderLifecycle on AppsProvider {
       if (removedAppIds.isNotEmpty &&
           settingsProvider.removeOnExternalUninstall) {
         await removeApps(removedAppIds);
+      }
+      if (correctedApps.isNotEmpty) {
+        await saveApps(
+          correctedApps,
+          attemptToCorrectInstallStatus: false,
+          reuseInstalledInfo: true,
+        );
       }
     } finally {
       loadingApps = false;
