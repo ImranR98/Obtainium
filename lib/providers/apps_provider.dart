@@ -989,7 +989,9 @@ class AppsProvider with ChangeNotifier {
     final Map<String, dynamic> errorsMap = results[1];
     for (var app in pps) {
       if (apps.containsKey(app.id)) {
-        errorsMap.addAll({app.id: tr('appAlreadyAdded')});
+        errorsMap.addAll({
+          app.id: '${tr('appAlreadyAdded')}: ${apps[app.id]?.app.name ?? app.id}',
+        });
       } else {
         await saveApps([app], onlyIfExists: false);
       }

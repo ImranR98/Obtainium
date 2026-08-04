@@ -1236,7 +1236,7 @@ class SourceProvider {
         batch.map((url) async {
           try {
             if (alreadyAddedUrls.contains(url)) {
-              throw ObtainiumError(tr('appAlreadyAdded'));
+              throw ObtainiumError('${tr('appAlreadyAdded')} ($url)');
             }
             final source = sourceOverride ?? getSource(url);
             return await getApp(

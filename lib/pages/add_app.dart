@@ -274,7 +274,10 @@ class AddAppPageState extends State<AddAppPage> {
           app = app.copyWith(id: downloadedFile?.appId ?? downloadedDir!.appId);
         }
         if (appsProvider.apps.containsKey(app.id)) {
-          throw ObtainiumError(tr('appAlreadyAdded'));
+          final existing = appsProvider.apps[app.id];
+          throw ObtainiumError(
+            '${tr('appAlreadyAdded')}: ${existing?.app.name ?? app.id} (${app.id})',
+          );
         }
         if (app.settings.getBool('trackOnly') ||
             !app.settings.getBool('versionDetection')) {
