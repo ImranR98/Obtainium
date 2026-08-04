@@ -446,7 +446,7 @@ class _SettingsPageState extends State<SettingsPage> {
         ),
         if (showBgSection) ...[
           ToggleTile(
-            label: tr('enableBackgroundUpdates'),
+            label: tr('enableBackgroundSilentInstalls'),
             value: settingsProvider.enableBackgroundUpdates,
             onChanged: (value) =>
                 settingsProvider.enableBackgroundUpdates = value,
@@ -456,21 +456,19 @@ class _SettingsPageState extends State<SettingsPage> {
               Text(tr('backgroundUpdateLimitsExplanation')),
             ],
           ),
-          if (settingsProvider.enableBackgroundUpdates)
+          if (settingsProvider.updateInterval != 0) ...[
             ToggleTile(
               label: tr('bgUpdatesOnWiFiOnly'),
               value: settingsProvider.bgUpdatesOnWiFiOnly,
               onChanged: (value) =>
                   settingsProvider.bgUpdatesOnWiFiOnly = value,
             ),
-          if (settingsProvider.enableBackgroundUpdates)
             ToggleTile(
               label: tr('bgUpdatesWhileChargingOnly'),
               value: settingsProvider.bgUpdatesWhileChargingOnly,
               onChanged: (value) =>
                   settingsProvider.bgUpdatesWhileChargingOnly = value,
             ),
-          if (settingsProvider.enableBackgroundUpdates)
             CardTile(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
               child: SizedBox(
@@ -487,7 +485,7 @@ class _SettingsPageState extends State<SettingsPage> {
                 ),
               ),
             ),
-        ],
+          ],
         ToggleTile(
           label: tr('checkOnStart'),
           value: settingsProvider.checkOnStart,

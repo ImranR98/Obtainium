@@ -1081,8 +1081,7 @@ Future<void> bgUpdateCheck(
     return;
   }
 
-  if (!appsProvider.settingsProvider.enableBackgroundUpdates ||
-      appsProvider.settingsProvider.updateInterval == 0) {
+  if (appsProvider.settingsProvider.updateInterval == 0) {
     if (!forceAll) {
       unawaited(
         bgLogs.add(
@@ -1207,7 +1206,7 @@ Future<void> bgUpdateCheck(
   } else {
     unawaited(bgLogs.add('BG update task: No apps due for checking.'));
   }
-  if (canInstall && params['toCheck'] == null) {
+  if (canInstall && appsProvider.settingsProvider.enableBackgroundUpdates && params['toCheck'] == null) {
     final discovered = appsProvider.findAppIdsWithPendingUpdates(
       installedOnly: true,
     );
