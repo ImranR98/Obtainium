@@ -58,6 +58,7 @@
   "authorName": "Author/name",
   "autoApkFilterByArch": "Attempt to filter APKs by CPU architecture if possible",
   "autoExportOnChanges": "Automatically export on changes",
+  "exportInstalledOnly": "Export installed apps only",
   "autoLinkFilterByArch": "Attempt to filter links by CPU architecture if possible",
   "autoSelectHighestVersionCode": "Auto-select highest versionCode APK",
   "backgroundUpdateLimitsExplanation": "The success of a background install can only be determined when Obtainium is opened.",

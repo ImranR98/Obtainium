@@ -446,6 +446,16 @@ class _ExportSectionState extends State<ExportSection> {
             ),
             ConnectedCard(
               isFirst: false,
+              isLast: false,
+              child: ToggleTile(
+                label: tr('exportInstalledOnly'),
+                value: settingsProvider.exportInstalledOnly,
+                onChanged: (value) =>
+                    settingsProvider.exportInstalledOnly = value,
+              ),
+            ),
+            ConnectedCard(
+              isFirst: false,
               isLast: true,
               child: DropdownMenu<String>(
                 expandedInsets: EdgeInsets.zero,

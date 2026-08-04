@@ -703,6 +703,15 @@ class SettingsProvider with ChangeNotifier {
     notifyListeners();
   }
 
+  bool get exportInstalledOnly {
+    return _getBool('exportInstalledOnly') ?? false;
+  }
+
+  set exportInstalledOnly(bool val) {
+    prefs?.setBool('exportInstalledOnly', val);
+    notifyListeners();
+  }
+
   bool get parallelDownloads {
     return _getBool('parallelDownloads') ?? true;
   }
