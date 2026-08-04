@@ -2,7 +2,7 @@
     "APKLinkHash": "APK-Link-Hash",
     "GHReqPrefix": "sky22333/hubproxy'-Instanz für GitHub-Anfragen",
     "about": "Weitere Informationen",
-    "actionBanner": "Action banner",
+    "actionBanner": "Aktionsleiste",
     "add": "Hinzufügen",
     "addApp": "App hinzufügen",
     "addCategory": "Kategorie hinzufügen",
@@ -440,8 +440,8 @@
         "other": "{} und {} weitere Apps wurden möglicherweise aktualisiert."
     },
     "action": {
-        "one": "Action",
-        "other": "Actions"
+        "one": "Aktion",
+        "other": "Aktionen"
     },
     "xHasAnUpdate": "{} hat eine Aktualisierung.",
     "xIsTrackOnly": "{} ist nur zur Nachverfolgung",
