@@ -163,9 +163,9 @@ extension AppsProviderUpdates on AppsProvider {
           }
         } on HandshakeException {
           // Concurrent TLS handshakes to the same host can fail on
-          // certain devices/networks. Retry up to 5 times with
+          // certain devices/networks. Retry up to 2 times with
           // staggered random delays to avoid all retries colliding.
-          const maxRetries = 5;
+          const maxRetries = 2;
           final rng = Random();
           for (var attempt = 0; attempt < maxRetries; attempt++) {
             await Future.delayed(

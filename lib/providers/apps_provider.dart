@@ -1286,7 +1286,8 @@ _bgRunUpdateCheck(
               : err is ClientException
               ? (_bgClientExceptionRetryWaitSeconds)
               : (toCheckApp.value + 1);
-          if (minRetryIntervalForThisApp > _bgUpdateMaxRetryWaitSeconds) {
+          if (minRetryIntervalForThisApp > _bgUpdateMaxRetryWaitSeconds &&
+              err is! RateLimitError) {
             minRetryIntervalForThisApp = _bgUpdateMaxRetryWaitSeconds;
           }
           if (minRetryIntervalForThisApp > retryAfterXSeconds) {
