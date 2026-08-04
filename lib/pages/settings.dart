@@ -486,6 +486,7 @@ class _SettingsPageState extends State<SettingsPage> {
               ),
             ),
           ],
+        ],
         ToggleTile(
           label: tr('checkOnStart'),
           value: settingsProvider.checkOnStart,

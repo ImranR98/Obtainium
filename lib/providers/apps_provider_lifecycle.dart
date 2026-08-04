@@ -288,7 +288,7 @@ extension AppsProviderLifecycle on AppsProvider {
                   );
                   if (moddedApp != null) {
                     app = moddedApp;
-                    correctedApps.add(app!);
+                    correctedApps.add(app);
                     // Note the app ID if it was uninstalled externally
                     if (moddedApp.installedVersion == null) {
                       removedAppIds.add(moddedApp.id);

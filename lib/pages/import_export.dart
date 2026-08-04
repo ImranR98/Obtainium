@@ -201,10 +201,13 @@ class _ImportSectionState extends State<ImportSection> {
             final String data;
             if (file.path != null) {
               data = await File(file.path!).readAsString();
-            } else if (file.bytes != null) {
-              data = utf8.decode(file.bytes!);
             } else {
-              throw ObtainiumError(tr('noFilePickerAvailable'));
+              final bytesData = await file.readAsBytes();
+              if (bytesData.isNotEmpty) {
+                data = utf8.decode(bytesData);
+              } else {
+                throw ObtainiumError(tr('noFilePickerAvailable'));
+              }
             }
             try {
               jsonDecode(data);
