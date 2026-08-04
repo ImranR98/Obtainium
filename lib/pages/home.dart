@@ -220,7 +220,7 @@ class _HomePageState extends State<HomePage> {
             await goToAddApp(data);
           }
         } else if (action == 'app' || action == 'apps') {
-          final dataStr = Uri.decodeComponent(data);
+          final dataStr = data;
           if (!context.mounted) return;
           if (await showDialog(
                 context: context,
