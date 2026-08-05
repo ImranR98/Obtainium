@@ -326,81 +326,114 @@ class AppsPageState extends State<AppsPage> {
 
   Future<void> showFilterDialog(BuildContext context) async {
     var pendingCategories = {...filter.categoryFilter};
-    final values = await showDialog<Map<String, dynamic>?>(
+    Map<String, dynamic> values = {};
+    final result = await showModalBottomSheet<bool>(
       context: context,
+      isScrollControlled: true,
+      showDragHandle: true,
       builder: (BuildContext ctx) {
         final vals = filter.toFormValuesMap();
-        return GeneratedFormModal(
-          tileMode: false,
-          initValid: true,
-          title: tr('filterApps'),
-          items: [
-            [
-              GeneratedFormTextField(
-                'appName',
-                label: tr('appName'),
-                required: false,
-                value: vals['appName'],
-              ),
-            ],
-            [
-              GeneratedFormTextField(
-                'author',
-                label: tr('author'),
-                required: false,
-                value: vals['author'],
-              ),
-            ],
-            [
-              GeneratedFormTextField(
-                'appId',
-                label: tr('appId'),
-                required: false,
-                value: vals['appId'],
-              ),
-            ],
-            [
-              GeneratedFormSwitch(
-                'upToDateApps',
-                label: tr('upToDateApps'),
-                value: vals['upToDateApps'],
-              ),
-            ],
-            [
-              GeneratedFormSwitch(
-                'nonInstalledApps',
-                label: tr('nonInstalledApps'),
-                value: vals['nonInstalledApps'],
-              ),
-            ],
-            [
-              GeneratedFormDropdown(
-                'sourceFilter',
-                label: tr('appSource'),
-                value: filter.sourceFilter,
-                [
-                  MapEntry('', tr('none')),
-                  ...ctx.read<SourceProvider>().sources.map(
-                    (e) => MapEntry(e.sourceIdentifier, e.name),
-                  ),
-                ],
-              ),
-            ],
-          ],
-          additionalWidgets: [
-            const SizedBox(height: 16),
-            CategorySelector(
-              selected: filter.categoryFilter,
-              allowCreate: false,
-              onChanged: (categories) {
-                pendingCategories = categories;
-              },
+        return SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Text(
+                  tr('filterApps'),
+                  style: Theme.of(ctx).textTheme.titleLarge,
+                ),
+                const SizedBox(height: 16),
+                GeneratedForm(
+                  tileMode: true,
+                  items: [
+                    [
+                      GeneratedFormTextField(
+                        'appName',
+                        label: tr('appName'),
+                        required: false,
+                        value: vals['appName'],
+                      ),
+                    ],
+                    [
+                      GeneratedFormTextField(
+                        'author',
+                        label: tr('author'),
+                        required: false,
+                        value: vals['author'],
+                      ),
+                    ],
+                    [
+                      GeneratedFormTextField(
+                        'appId',
+                        label: tr('appId'),
+                        required: false,
+                        value: vals['appId'],
+                      ),
+                    ],
+                    [
+                      GeneratedFormSwitch(
+                        'upToDateApps',
+                        label: tr('upToDateApps'),
+                        value: vals['upToDateApps'],
+                      ),
+                    ],
+                    [
+                      GeneratedFormSwitch(
+                        'nonInstalledApps',
+                        label: tr('nonInstalledApps'),
+                        value: vals['nonInstalledApps'],
+                      ),
+                    ],
+                    [
+                      GeneratedFormDropdown(
+                        'sourceFilter',
+                        label: tr('appSource'),
+                        value: filter.sourceFilter,
+                        [
+                          MapEntry('', tr('none')),
+                          ...ctx.read<SourceProvider>().sources.map(
+                            (e) => MapEntry(e.sourceIdentifier, e.name),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ],
+                  onValueChanges: (v, valid, isBuilding) {
+                    values = v;
+                  },
+                ),
+                const SizedBox(height: 16),
+                CategorySelector(
+                  selected: filter.categoryFilter,
+                  allowCreate: false,
+                  onChanged: (categories) {
+                    pendingCategories = categories;
+                  },
+                ),
+                const SizedBox(height: 24),
+                Row(
+                  children: [
+                    const Spacer(),
+                    TextButton(
+                      onPressed: () => Navigator.of(ctx).pop(false),
+                      child: Text(tr('cancel')),
+                    ),
+                    const SizedBox(width: 8),
+                    FilledButton(
+                      onPressed: () => Navigator.of(ctx).pop(true),
+                      child: Text(tr('continue')),
+                    ),
+                  ],
+                ),
+              ],
             ),
-          ],
+          ),
         );
       },
     );
-    if (values != null) {
+    if (result == true) {
       _searchDebounce?.cancel();
       filter.setFormValuesFromMap(values);
       filter.categoryFilter = pendingCategories;
