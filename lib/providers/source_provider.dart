@@ -833,10 +833,12 @@ abstract class AppSource {
     for (var e in sourceConfigSettingFormItems) {
       var val = hostChanged && !hostIdenticalDespiteAnyChange
           ? additionalSettings[e.key]
-          : additionalSettings[e.key] ??
-                (e is GeneratedFormSwitch
-                    ? settingsProvider.getSettingBool(e.key).toString()
-                    : settingsProvider.getSettingString(e.key));
+          : (additionalSettings[e.key] is String &&
+                  (additionalSettings[e.key] as String).isNotEmpty)
+              ? additionalSettings[e.key]
+              : (e is GeneratedFormSwitch
+                  ? settingsProvider.getSettingBool(e.key).toString()
+                  : settingsProvider.getSettingString(e.key));
       if (val != null) {
         if (e is GeneratedFormSwitch) {
           val = val.toString();
