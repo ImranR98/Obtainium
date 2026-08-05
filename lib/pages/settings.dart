@@ -218,8 +218,7 @@ class _SettingsPageState extends State<SettingsPage> {
     child: field,
   );
 
-  Widget _buildFooter(BuildContext context) => SliverToBoxAdapter(
-    child: Column(
+  Widget _buildFooter(BuildContext context) => Column(
       children: [
         const Divider(height: 32),
         Row(
@@ -269,8 +268,7 @@ class _SettingsPageState extends State<SettingsPage> {
         ),
         SizedBox(height: MediaQuery.of(context).padding.bottom + (context.read<SettingsProvider>().isTV ? 48 : 0)),
       ],
-    ),
-  );
+    );
 
   @override
   Widget build(BuildContext context) {
@@ -381,12 +379,15 @@ class _SettingsPageState extends State<SettingsPage> {
 
     return Scaffold(
       backgroundColor: Theme.of(context).colorScheme.surface,
-      body: CustomScrollView(
-        slivers: <Widget>[
-          CustomAppBar(title: tr('settings')),
-          SliverPadding(
-            padding: const EdgeInsets.fromLTRB(16, 0, 16, 0),
-            sliver: SliverToBoxAdapter(
+      body: Column(
+        children: [
+          Expanded(
+            child: CustomScrollView(
+              slivers: <Widget>[
+                CustomAppBar(title: tr('settings')),
+                SliverPadding(
+                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 0),
+                  sliver: SliverToBoxAdapter(
               child: settingsProvider.prefs == null
                   ? const Padding(
                       padding: EdgeInsets.symmetric(vertical: 48),
@@ -463,6 +464,9 @@ class _SettingsPageState extends State<SettingsPage> {
                     ),
             ),
           ),
+        ],
+      ),
+            ),
           _buildFooter(context),
         ],
       ),
