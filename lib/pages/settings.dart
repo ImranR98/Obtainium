@@ -487,7 +487,10 @@ class _SettingsPageState extends State<SettingsPage> {
           backgroundColor: Theme.of(context).colorScheme.surface,
           body: CustomScrollView(
             slivers: [
-              child,
+              SliverPadding(
+                padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+                sliver: SliverToBoxAdapter(child: child),
+              ),
             ],
           ),
         ),
