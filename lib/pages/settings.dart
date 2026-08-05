@@ -345,52 +345,47 @@ class _SettingsPageState extends State<SettingsPage> {
                             context,
                             icon: Icons.upload_file_outlined,
                             title: tr('obtainiumExport'),
-                            onTap: () => _pushPage(
-                              context,
-                              title: tr('obtainiumExport'),
-                              child: const ExportSection(),
-                            ),
-                          ),
-                          _settingsRow(
-                            context,
-                            icon: Icons.update_outlined,
-                            title: tr('updates'),
-                            onTap: () => _pushPage(
-                              context,
-                              title: tr('updates'),
-                              child: _buildUpdatesSection(
-                                context,
-                                showBgSection,
-                                sdk,
-                              ),
-                            ),
-                          ),
-                          if (sourceSpecificForm != null)
-                            _settingsRow(
-                              context,
-                              icon: Icons.tune_outlined,
-                              title: tr('sourceSpecific'),
-                              onTap: () => _pushPage(
-                                context,
-                                title: tr('sourceSpecific'),
-                                child: sourceSpecificForm,
-                              ),
-                            ),
-                          _settingsRow(
-                            context,
-                            icon: Icons.palette_outlined,
-                            title: tr('appearance'),
-                            onTap: () => _pushPage(
-                              context,
-                              title: tr('appearance'),
-                              child: _buildAppearanceSection(
-                                context,
-                                colorPicker,
-                                sortDropdown,
-                                orderControl,
-                              ),
-                            ),
-                          ),
+              onTap: () => _pushPage(
+                context,
+                title: tr('obtainiumExport'),
+                childBuilder: (_) => const ExportSection(),
+              ),
+            ),
+            _settingsRow(
+              context,
+              icon: Icons.update_outlined,
+              title: tr('updates'),
+              onTap: () => _pushPage(
+                context,
+                title: tr('updates'),
+                childBuilder: (ctx) => _buildUpdatesSection(
+                  ctx, showBgSection, sdk,
+                ),
+              ),
+            ),
+            if (sourceSpecificForm != null)
+              _settingsRow(
+                context,
+                icon: Icons.tune_outlined,
+                title: tr('sourceSpecific'),
+                onTap: () => _pushPage(
+                  context,
+                  title: tr('sourceSpecific'),
+                  childBuilder: (_) => sourceSpecificForm,
+                ),
+              ),
+            _settingsRow(
+              context,
+              icon: Icons.palette_outlined,
+              title: tr('appearance'),
+              onTap: () => _pushPage(
+                context,
+                title: tr('appearance'),
+                childBuilder: (ctx) => _buildAppearanceSection(
+                  ctx, colorPicker, sortDropdown, orderControl,
+                ),
+              ),
+            ),
                           CardTile(
                             child: ListTile(
                               leading: Icon(
@@ -523,23 +518,27 @@ class _SettingsPageState extends State<SettingsPage> {
   void _pushPage(
     BuildContext context, {
     required String title,
-    required Widget child,
+    required Widget Function(BuildContext) childBuilder,
   }) {
     Navigator.of(context).push(
       MaterialPageRoute(
-        builder: (_) => Scaffold(
-          backgroundColor: Theme.of(context).colorScheme.surface,
-          body: CustomScrollView(
-            slivers: [
-              CustomAppBar(title: title),
-              SliverPadding(
-                padding: const EdgeInsets.fromLTRB(16, 0, 16, 0),
-                sliver: SliverToBoxAdapter(child: child),
-              ),
-              SliverToBoxAdapter(
-                child: SizedBox(height: MediaQuery.of(context).padding.bottom),
-              ),
-            ],
+        builder: (_) => Consumer<SettingsProvider>(
+          builder: (ctx, sp, _) => Scaffold(
+            backgroundColor: Theme.of(context).colorScheme.surface,
+            body: CustomScrollView(
+              slivers: [
+                CustomAppBar(title: title),
+                SliverPadding(
+                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 0),
+                  sliver: SliverToBoxAdapter(child: childBuilder(ctx)),
+                ),
+                SliverToBoxAdapter(
+                  child: SizedBox(
+                    height: MediaQuery.of(ctx).padding.bottom,
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       ),
@@ -1258,14 +1257,13 @@ class _ExternalInstallerTileState extends State<_ExternalInstallerTile> {
       future: _targetsFuture,
       builder: (context, snapshot) {
         if (snapshot.connectionState != ConnectionState.done) {
-          return const ListTile(
-            contentPadding: EdgeInsets.symmetric(horizontal: 8),
-            leading: SizedBox(
+          return ListTile(
+            contentPadding: const EdgeInsets.symmetric(horizontal: 8),
+            leading: const SizedBox(
               width: 24,
               height: 24,
               child: CircularProgressIndicator(),
             ),
-            title: Text('…'),
           );
         }
         final targets = snapshot.data ?? const <InstallerTarget>[];
@@ -1341,53 +1339,6 @@ class _ThemeColorPickerTile extends StatelessWidget {
             }
           },
         ),
-      ),
-    );
-  }
-}
-
-class _ThemeModeSegmentedButton extends StatelessWidget {
-  const _ThemeModeSegmentedButton();
-
-  @override
-  Widget build(BuildContext context) {
-    final settingsProvider = context.read<SettingsProvider>();
-    final themeValue = context.select<SettingsProvider, ThemeSettings>(
-      (p) => p.theme,
-    );
-    return CardTile(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Flexible(child: Text(tr('theme'))),
-          const SizedBox(width: 12),
-          SegmentedButton<ThemeSettings>(
-            showSelectedIcon: false,
-            segments: [
-              ButtonSegment(
-                value: ThemeSettings.system,
-                icon: const Icon(Icons.brightness_auto_outlined),
-                tooltip: tr('followSystem'),
-              ),
-              ButtonSegment(
-                value: ThemeSettings.light,
-                icon: const Icon(Icons.light_mode_outlined),
-                tooltip: tr('light'),
-              ),
-              ButtonSegment(
-                value: ThemeSettings.dark,
-                icon: const Icon(Icons.dark_mode_outlined),
-                tooltip: tr('dark'),
-              ),
-            ],
-            selected: {themeValue},
-            onSelectionChanged: (selection) {
-              settingsProvider.selectionClick();
-              settingsProvider.theme = selection.first;
-            },
-          ),
-        ],
       ),
     );
   }
