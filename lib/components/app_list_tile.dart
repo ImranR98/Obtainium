@@ -425,8 +425,8 @@ class AppListTile extends StatelessWidget {
                 tileColor: _app.pinned
                     ? Theme.of(context)
                         .colorScheme
-                        .onSurface
-                        .withValues(alpha: 0.06)
+                        .primaryContainer
+                        .withValues(alpha: 0.35)
                     : Colors.transparent,
                 selectedTileColor: Theme.of(context)
                     .colorScheme
