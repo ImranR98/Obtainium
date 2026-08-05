@@ -347,6 +347,7 @@ class _SettingsPageState extends State<SettingsPage> {
                             title: tr('obtainiumExport'),
               onTap: () => _pushPage(
                 context,
+                title: tr('obtainiumExport'),
                 child: const ExportSection(),
               ),
             ),
@@ -356,6 +357,7 @@ class _SettingsPageState extends State<SettingsPage> {
               title: tr('updates'),
               onTap: () => _pushPage(
                 context,
+                title: tr('updates'),
                 child: _buildUpdatesSection(context, showBgSection, sdk),
               ),
             ),
@@ -366,6 +368,7 @@ class _SettingsPageState extends State<SettingsPage> {
                 title: tr('sourceSpecific'),
                 onTap: () => _pushPage(
                   context,
+                  title: tr('sourceSpecific'),
                   child: sourceSpecificForm,
                 ),
               ),
@@ -375,6 +378,7 @@ class _SettingsPageState extends State<SettingsPage> {
               title: tr('appearance'),
               onTap: () => _pushPage(
                 context,
+                title: tr('appearance'),
                 child: _buildAppearanceSection(
                   context, colorPicker, sortDropdown, orderControl),
               ),
@@ -479,6 +483,7 @@ class _SettingsPageState extends State<SettingsPage> {
 
   void _pushPage(
     BuildContext context, {
+    required String title,
     required Widget child,
   }) {
     Navigator.of(context).push(
@@ -487,8 +492,9 @@ class _SettingsPageState extends State<SettingsPage> {
           backgroundColor: Theme.of(context).colorScheme.surface,
           body: CustomScrollView(
             slivers: [
+              CustomAppBar(title: title),
               SliverPadding(
-                padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+                padding: const EdgeInsets.fromLTRB(16, 0, 16, 0),
                 sliver: SliverToBoxAdapter(child: child),
               ),
             ],
@@ -504,9 +510,7 @@ class _SettingsPageState extends State<SettingsPage> {
     int sdk,
   ) {
     final settingsProvider = context.read<SettingsProvider>();
-    return Section(
-      title: tr('updates'),
-      children: [
+    final children = <Widget>[
         const CardTile(
           padding: EdgeInsets.fromLTRB(16, 8, 16, 8),
           child: _UpdateIntervalSliderTile(),
@@ -644,8 +648,12 @@ class _SettingsPageState extends State<SettingsPage> {
           ),
         if (settingsProvider.installerMode == InstallerMode.external.name)
           const CardTile(child: _ExternalInstallerTile()),
-      ],
-    );
+      ];
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        spacing: 3,
+        children: shapeCardTiles(children),
+      );
   }
 
   Widget _buildAppearanceSection(
@@ -656,9 +664,7 @@ class _SettingsPageState extends State<SettingsPage> {
   ) {
     final settingsProvider = context.read<SettingsProvider>();
     final sdk = androidSdkInt ?? 0;
-    return Section(
-      title: tr('appearance'),
-      children: [
+    final children = <Widget>[
         const _ThemeModeSegmentedButton(),
         if (settingsProvider.theme == ThemeSettings.system &&
             (androidSdkInt ?? 30) < 29)
@@ -797,8 +803,12 @@ class _SettingsPageState extends State<SettingsPage> {
           padding: EdgeInsets.all(12),
           child: CategoryManager(),
         ),
-      ],
-    );
+      ];
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        spacing: 3,
+        children: shapeCardTiles(children),
+      );
   }
 }
 
