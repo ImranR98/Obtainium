@@ -262,7 +262,16 @@ extension AppsProviderUpdates on AppsProvider {
               (app.additionalSettings['versionExtractionRegEx'] as String?) ?? '';
           if (regex.isEmpty) {
             if (app.installedVersion != app.latestVersion) {
-              updateAppIds.add(app.id);
+              if (settingsProvider.showAppDowngradeError &&
+                  app.settings.getBool('versionDetection')) {
+                final isNewer = VersionService()
+                    .isVersionNewer(app.installedVersion!, app.latestVersion);
+                if (isNewer != false) {
+                  updateAppIds.add(app.id);
+                }
+              } else {
+                updateAppIds.add(app.id);
+              }
             }
           } else if (!doStringsMatchUnderRegEx(
             regex,
