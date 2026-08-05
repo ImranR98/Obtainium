@@ -739,27 +739,6 @@ class GitHub extends AppSource {
         throw NoVersionError();
       }
       final changeLog = (targetRelease['body'] ?? '').toString();
-      try {
-        final token = await getTokenIfAny(additionalSettings);
-        if (token != null && token.isNotEmpty) {
-          final readmeUrl =
-              '${await convertStandardUrlToAPIUrl(standardUrl, additionalSettings)}/readme';
-          final readmeRes = await sourceRequest(readmeUrl, additionalSettings);
-          if (readmeRes.statusCode == 200) {
-            final readmeJson = jsonDecode(readmeRes.body);
-            final content = readmeJson['content'] as String?;
-            if (content != null) {
-              additionalSettings['about'] = utf8.decode(
-                base64.decode(
-                  content.replaceAll('\n', ''),
-                ),
-              );
-            }
-          }
-        }
-      } catch (_) {
-        // README fetch is best-effort; don't block releases on it.
-      }
       return APKDetails(
         version,
         targetRelease['apkUrls'] as List<MapEntry<String, String>>,
