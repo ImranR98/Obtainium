@@ -218,61 +218,6 @@ class _SettingsPageState extends State<SettingsPage> {
     child: field,
   );
 
-  Widget _buildFooter(BuildContext context) => Column(
-      children: [
-        const SizedBox(height: 16),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            IconButton.filledTonal(
-              onPressed: () {
-                unawaited(
-                  launchUrlString(
-                    context.read<SettingsProvider>().sourceUrl,
-                    mode: LaunchMode.externalApplication,
-                  ),
-                );
-              },
-              icon: const Icon(Icons.code),
-              tooltip: tr('appSource'),
-            ),
-            const SizedBox(width: 12),
-            IconButton.filledTonal(
-              onPressed: () {
-                unawaited(
-                  launchUrlString(
-                    'https://wiki.obtainium.imranr.dev/',
-                    mode: LaunchMode.externalApplication,
-                  ),
-                );
-              },
-              icon: const Icon(Icons.help_outline_rounded),
-              tooltip: tr('wiki'),
-            ),
-            const SizedBox(width: 12),
-            IconButton.filledTonal(
-              onPressed: () {
-                context.read<LogsProvider>().get().then((logs) {
-                  if (!context.mounted) return;
-                  if (logs.isEmpty) {
-                    showMessage(ObtainiumError(tr('noLogs')), context);
-                  } else {
-                    Navigator.of(context).push(
-                      MaterialPageRoute(
-                          builder: (context) => const LogsPage()),
-                    );
-                  }
-                });
-              },
-              icon: const Icon(Icons.bug_report_outlined),
-              tooltip: tr('appLogs'),
-            ),
-          ],
-        ),
-        SizedBox(height: MediaQuery.of(context).padding.bottom + (context.read<SettingsProvider>().isTV ? 48 : 0)),
-      ],
-    );
-
   @override
   Widget build(BuildContext context) {
     final SettingsProvider settingsProvider = context.watch<SettingsProvider>();
@@ -382,95 +327,136 @@ class _SettingsPageState extends State<SettingsPage> {
 
     return Scaffold(
       backgroundColor: Theme.of(context).colorScheme.surface,
-      body: Column(
-        children: [
-          Expanded(
-            child: CustomScrollView(
-              slivers: <Widget>[
-                CustomAppBar(title: tr('settings')),
-                SliverPadding(
-                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 0),
-                  sliver: SliverToBoxAdapter(
+      body: CustomScrollView(
+        slivers: <Widget>[
+          CustomAppBar(title: tr('settings')),
+          SliverPadding(
+            padding: const EdgeInsets.fromLTRB(16, 0, 16, 0),
+            sliver: SliverToBoxAdapter(
               child: settingsProvider.prefs == null
                   ? const Padding(
                       padding: EdgeInsets.symmetric(vertical: 48),
                       child: Center(child: CircularProgressIndicator()),
                     )
-                  : Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      spacing: 4,
-                      children: [
-                        _settingsRow(
-                          context,
-                          icon: Icons.upload_file_outlined,
-                          title: tr('obtainiumExport'),
-                          onTap: () => _pushPage(
-                            context,
-                            title: tr('obtainiumExport'),
-                            child: const ExportSection(),
-                          ),
-                        ),
-                        _settingsRow(
-                          context,
-                          icon: Icons.update_outlined,
-                          title: tr('updates'),
-                          onTap: () => _pushPage(
-                            context,
-                            title: tr('updates'),
-                            child: _buildUpdatesSection(
-                              context,
-                              showBgSection,
-                              sdk,
-                            ),
-                          ),
-                        ),
-                        if (sourceSpecificForm != null)
+                  : Builder(
+                      builder: (ctx) {
+                        final rows = <Widget>[
                           _settingsRow(
                             context,
-                            icon: Icons.tune_outlined,
-                            title: tr('sourceSpecific'),
+                            icon: Icons.upload_file_outlined,
+                            title: tr('obtainiumExport'),
                             onTap: () => _pushPage(
                               context,
-                              title: tr('sourceSpecific'),
-                              child: sourceSpecificForm,
+                              title: tr('obtainiumExport'),
+                              child: const ExportSection(),
                             ),
                           ),
-                        _settingsRow(
-                          context,
-                          icon: Icons.palette_outlined,
-                          title: tr('appearance'),
-                          onTap: () => _pushPage(
+                          _settingsRow(
                             context,
-                            title: tr('appearance'),
-                            child: _buildAppearanceSection(
+                            icon: Icons.update_outlined,
+                            title: tr('updates'),
+                            onTap: () => _pushPage(
                               context,
-                              colorPicker,
-                              sortDropdown,
-                              orderControl,
+                              title: tr('updates'),
+                              child: _buildUpdatesSection(context, showBgSection, sdk),
                             ),
                           ),
-                        ),
-                        _settingsRow(
-                          context,
-                          icon: Icons.category_outlined,
-                          title: tr('categories'),
-                          onTap: () => _pushPage(
+                          if (sourceSpecificForm != null)
+                            _settingsRow(
+                              context,
+                              icon: Icons.tune_outlined,
+                              title: tr('sourceSpecific'),
+                              onTap: () => _pushPage(
+                                context,
+                                title: tr('sourceSpecific'),
+                                child: sourceSpecificForm,
+                              ),
+                            ),
+                          _settingsRow(
                             context,
-                            title: tr('categories'),
-                            child: const CardTile(
-                              padding: EdgeInsets.all(12),
-                              child: CategoryManager(),
+                            icon: Icons.palette_outlined,
+                            title: tr('appearance'),
+                            onTap: () => _pushPage(
+                              context,
+                              title: tr('appearance'),
+                              child: _buildAppearanceSection(
+                                context, colorPicker, sortDropdown, orderControl),
                             ),
                           ),
-                        ),
-                      ],
+                          _settingsRow(
+                            context,
+                            icon: Icons.category_outlined,
+                            title: tr('categories'),
+                            onTap: () => _pushPage(
+                              context,
+                              title: tr('categories'),
+                              child: const CardTile(
+                                padding: EdgeInsets.all(12),
+                                child: CategoryManager(),
+                              ),
+                            ),
+                          ),
+                          ListTile(
+                            leading: Icon(Icons.code, color: Theme.of(context).colorScheme.primary),
+                            title: Text(tr('appSource')),
+                            trailing: Icon(Icons.open_in_new, color: Theme.of(context).colorScheme.onSurfaceVariant, size: 20),
+                            onTap: () => launchUrlString(
+                              context.read<SettingsProvider>().sourceUrl,
+                              mode: LaunchMode.externalApplication,
+                            ),
+                            shape: RoundedSuperellipseBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                          ),
+                          ListTile(
+                            leading: Icon(Icons.help_outline_rounded, color: Theme.of(context).colorScheme.primary),
+                            title: Text(tr('wiki')),
+                            trailing: Icon(Icons.open_in_new, color: Theme.of(context).colorScheme.onSurfaceVariant, size: 20),
+                            onTap: () => launchUrlString(
+                              'https://wiki.obtainium.imranr.dev/',
+                              mode: LaunchMode.externalApplication,
+                            ),
+                            shape: RoundedSuperellipseBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                          ),
+                          ListTile(
+                            leading: Icon(Icons.bug_report_outlined, color: Theme.of(context).colorScheme.primary),
+                            title: Text(tr('appLogs')),
+                            trailing: Icon(Icons.chevron_right, color: Theme.of(context).colorScheme.onSurfaceVariant),
+                            onTap: () {
+                              context.read<LogsProvider>().get().then((logs) {
+                                if (!context.mounted) return;
+                                if (logs.isEmpty) {
+                                  showMessage(ObtainiumError(tr('noLogs')), context);
+                                } else {
+                                  Navigator.of(context).push(
+                                    MaterialPageRoute(builder: (context) => const LogsPage()),
+                                  );
+                                }
+                              });
+                            },
+                            shape: RoundedSuperellipseBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                          ),
+                        ];
+                        final n = rows.length;
+                        return Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          spacing: 0,
+                          children: List.generate(n, (i) {
+                            return ConnectedCard(
+                              isFirst: i == 0,
+                              isLast: i == n - 1,
+                              child: rows[i],
+                            );
+                          }),
+                        );
+                      },
                     ),
             ),
           ),
-        ],
-      ),
-            ),
-          _buildFooter(context),
         ],
       ),
     );
@@ -483,15 +469,13 @@ class _SettingsPageState extends State<SettingsPage> {
     required VoidCallback onTap,
   }) {
     final cs = Theme.of(context).colorScheme;
-    return ConnectedCard(
-      child: ListTile(
-        leading: Icon(icon, color: cs.primary),
-        title: Text(title),
-        trailing: Icon(Icons.chevron_right, color: cs.onSurfaceVariant),
-        onTap: onTap,
-        shape: RoundedSuperellipseBorder(
-          borderRadius: BorderRadius.circular(12),
-        ),
+    return ListTile(
+      leading: Icon(icon, color: cs.primary),
+      title: Text(title),
+      trailing: Icon(Icons.chevron_right, color: cs.onSurfaceVariant),
+      onTap: onTap,
+      shape: RoundedSuperellipseBorder(
+        borderRadius: BorderRadius.circular(12),
       ),
     );
   }
