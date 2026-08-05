@@ -1595,8 +1595,8 @@ class VersionService {
   /// Returns null if the versions cannot be compared (no common format, or
   /// neither is strictly newer).
   bool? isVersionNewer(String versionA, String versionB) {
-    final aFormats = findStandardFormatsForVersion(versionA, true);
-    final bFormats = findStandardFormatsForVersion(versionB, true);
+    final aFormats = findStandardFormatsForVersion(versionA, false);
+    final bFormats = findStandardFormatsForVersion(versionB, false);
     final common = aFormats.intersection(bFormats);
     if (common.isEmpty) return null;
     for (final pattern in common) {
@@ -1619,10 +1619,19 @@ class VersionService {
   List<int>? _extractNumericParts(RegExpMatch? match) {
     if (match == null) return null;
     final parts = <int>[];
-    for (var i = 1; i <= match.groupCount; i++) {
-      final g = match.group(i);
-      if (g != null) {
-        final n = int.tryParse(g);
+    if (match.groupCount > 0) {
+      for (var i = 1; i <= match.groupCount; i++) {
+        final g = match.group(i);
+        if (g != null) {
+          final n = int.tryParse(g);
+          if (n != null) parts.add(n);
+        }
+      }
+    } else {
+      // No capture groups — split the matched text by dots/dashes.
+      final matched = match.group(0)!;
+      for (final seg in matched.split(RegExp(r'[\.\-\+]'))) {
+        final n = int.tryParse(seg);
         if (n != null) parts.add(n);
       }
     }

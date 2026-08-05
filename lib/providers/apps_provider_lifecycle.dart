@@ -171,6 +171,7 @@ extension AppsProviderLifecycle on AppsProvider {
       app = app.copyWith(
         additionalSettings: Map<String, dynamic>.from(app.additionalSettings)
           ..['versionDetection'] = false,
+        installedVersion: app.latestVersion,
       );
       unawaited(logs.add('Could not reconcile version formats for: ${app.id}'));
       modded = true;
