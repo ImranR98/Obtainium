@@ -445,10 +445,18 @@ class _SettingsPageState extends State<SettingsPage> {
                         final footerTiles = rows.sublist(rows.length - 3);
                         return Column(
                           crossAxisAlignment: CrossAxisAlignment.stretch,
-                          spacing: 3,
+                          spacing: 20,
                           children: [
-                            ..._wrapConnectedGroup(settingTiles),
-                            ..._wrapConnectedGroup(footerTiles),
+                            Column(
+                              crossAxisAlignment: CrossAxisAlignment.stretch,
+                              spacing: 3,
+                              children: shapeCardTiles(settingTiles),
+                            ),
+                            Column(
+                              crossAxisAlignment: CrossAxisAlignment.stretch,
+                              spacing: 3,
+                              children: shapeCardTiles(footerTiles),
+                            ),
                           ],
                         );
                       },
@@ -458,18 +466,6 @@ class _SettingsPageState extends State<SettingsPage> {
         ],
       ),
     );
-  }
-
-  List<Widget> _wrapConnectedGroup(List<Widget> items) {
-    if (items.isEmpty) return [];
-    final n = items.length;
-    return List.generate(n, (i) {
-      return ConnectedCard(
-        isFirst: i == 0,
-        isLast: i == n - 1,
-        child: items[i],
-      );
-    });
   }
 
   Widget _settingsRow(
