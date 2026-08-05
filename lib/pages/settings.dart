@@ -394,32 +394,70 @@ class _SettingsPageState extends State<SettingsPage> {
                     )
                   : Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
-                      spacing: 20,
+                      spacing: 4,
                       children: [
-                        Section(
-                          title: tr('obtainiumExport'),
-                          children: const [ExportSection()],
-                        ),
-                        _buildUpdatesSection(context, showBgSection, sdk),
-                        if (sourceSpecificForm != null)
-                          Section(
-                            title: tr('sourceSpecific'),
-                            children: [sourceSpecificForm],
-                          ),
-                        _buildAppearanceSection(
+                        _settingsRow(
                           context,
-                          colorPicker,
-                          sortDropdown,
-                          orderControl,
+                          icon: Icons.upload_file_outlined,
+                          title: tr('obtainiumExport'),
+                          onTap: () => _pushPage(
+                            context,
+                            title: tr('obtainiumExport'),
+                            child: const ExportSection(),
+                          ),
                         ),
-                        Section(
+                        _settingsRow(
+                          context,
+                          icon: Icons.update_outlined,
+                          title: tr('updates'),
+                          onTap: () => _pushPage(
+                            context,
+                            title: tr('updates'),
+                            child: _buildUpdatesSection(
+                              context,
+                              showBgSection,
+                              sdk,
+                            ),
+                          ),
+                        ),
+                        if (sourceSpecificForm != null)
+                          _settingsRow(
+                            context,
+                            icon: Icons.tune_outlined,
+                            title: tr('sourceSpecific'),
+                            onTap: () => _pushPage(
+                              context,
+                              title: tr('sourceSpecific'),
+                              child: sourceSpecificForm,
+                            ),
+                          ),
+                        _settingsRow(
+                          context,
+                          icon: Icons.palette_outlined,
+                          title: tr('appearance'),
+                          onTap: () => _pushPage(
+                            context,
+                            title: tr('appearance'),
+                            child: _buildAppearanceSection(
+                              context,
+                              colorPicker,
+                              sortDropdown,
+                              orderControl,
+                            ),
+                          ),
+                        ),
+                        _settingsRow(
+                          context,
+                          icon: Icons.category_outlined,
                           title: tr('categories'),
-                          children: const [
-                            CardTile(
+                          onTap: () => _pushPage(
+                            context,
+                            title: tr('categories'),
+                            child: const CardTile(
                               padding: EdgeInsets.all(12),
                               child: CategoryManager(),
                             ),
-                          ],
+                          ),
                         ),
                       ],
                     ),
@@ -427,6 +465,49 @@ class _SettingsPageState extends State<SettingsPage> {
           ),
           _buildFooter(context),
         ],
+      ),
+    );
+  }
+
+  Widget _settingsRow(
+    BuildContext context, {
+    required IconData icon,
+    required String title,
+    required VoidCallback onTap,
+  }) {
+    final cs = Theme.of(context).colorScheme;
+    return ConnectedCard(
+      child: ListTile(
+        leading: Icon(icon, color: cs.primary),
+        title: Text(title),
+        trailing: Icon(Icons.chevron_right, color: cs.onSurfaceVariant),
+        onTap: onTap,
+        shape: RoundedSuperellipseBorder(
+          borderRadius: BorderRadius.circular(12),
+        ),
+      ),
+    );
+  }
+
+  void _pushPage(
+    BuildContext context, {
+    required String title,
+    required Widget child,
+  }) {
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => Scaffold(
+          backgroundColor: Theme.of(context).colorScheme.surface,
+          body: CustomScrollView(
+            slivers: [
+              CustomAppBar(title: title),
+              SliverPadding(
+                padding: const EdgeInsets.fromLTRB(16, 0, 16, 0),
+                sliver: SliverToBoxAdapter(child: child),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }
