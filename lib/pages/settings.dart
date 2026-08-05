@@ -208,8 +208,8 @@ class _SettingsPageState extends State<SettingsPage> {
     }
   }
 
-  Widget _caption(BuildContext context, String text) => Padding(
-    padding: const EdgeInsets.fromLTRB(16, 2, 16, 6),
+  Widget _caption(BuildContext context, String text) => CardTile(
+    padding: const EdgeInsets.fromLTRB(16, 4, 16, 6),
     child: Text(text, style: Theme.of(context).textTheme.labelSmall),
   );
 
@@ -496,6 +496,11 @@ class _SettingsPageState extends State<SettingsPage> {
               SliverPadding(
                 padding: const EdgeInsets.fromLTRB(16, 0, 16, 0),
                 sliver: SliverToBoxAdapter(child: child),
+              ),
+              SliverToBoxAdapter(
+                child: SizedBox(
+                  height: MediaQuery.of(context).padding.bottom + 96,
+                ),
               ),
             ],
           ),
