@@ -345,57 +345,40 @@ class _SettingsPageState extends State<SettingsPage> {
                             context,
                             icon: Icons.upload_file_outlined,
                             title: tr('obtainiumExport'),
-                            onTap: () => _pushPage(
-                              context,
-                              title: tr('obtainiumExport'),
-                              child: const ExportSection(),
-                            ),
-                          ),
-                          _settingsRow(
-                            context,
-                            icon: Icons.update_outlined,
-                            title: tr('updates'),
-                            onTap: () => _pushPage(
-                              context,
-                              title: tr('updates'),
-                              child: _buildUpdatesSection(context, showBgSection, sdk),
-                            ),
-                          ),
-                          if (sourceSpecificForm != null)
-                            _settingsRow(
-                              context,
-                              icon: Icons.tune_outlined,
-                              title: tr('sourceSpecific'),
-                              onTap: () => _pushPage(
-                                context,
-                                title: tr('sourceSpecific'),
-                                child: sourceSpecificForm,
-                              ),
-                            ),
-                          _settingsRow(
-                            context,
-                            icon: Icons.palette_outlined,
-                            title: tr('appearance'),
-                            onTap: () => _pushPage(
-                              context,
-                              title: tr('appearance'),
-                              child: _buildAppearanceSection(
-                                context, colorPicker, sortDropdown, orderControl),
-                            ),
-                          ),
-                          _settingsRow(
-                            context,
-                            icon: Icons.category_outlined,
-                            title: tr('categories'),
-                            onTap: () => _pushPage(
-                              context,
-                              title: tr('categories'),
-                              child: const CardTile(
-                                padding: EdgeInsets.all(12),
-                                child: CategoryManager(),
-                              ),
-                            ),
-                          ),
+              onTap: () => _pushPage(
+                context,
+                child: const ExportSection(),
+              ),
+            ),
+            _settingsRow(
+              context,
+              icon: Icons.update_outlined,
+              title: tr('updates'),
+              onTap: () => _pushPage(
+                context,
+                child: _buildUpdatesSection(context, showBgSection, sdk),
+              ),
+            ),
+            if (sourceSpecificForm != null)
+              _settingsRow(
+                context,
+                icon: Icons.tune_outlined,
+                title: tr('sourceSpecific'),
+                onTap: () => _pushPage(
+                  context,
+                  child: sourceSpecificForm,
+                ),
+              ),
+            _settingsRow(
+              context,
+              icon: Icons.palette_outlined,
+              title: tr('appearance'),
+              onTap: () => _pushPage(
+                context,
+                child: _buildAppearanceSection(
+                  context, colorPicker, sortDropdown, orderControl),
+              ),
+            ),
                           CardTile(
                             child: ListTile(
                               leading: Icon(Icons.code, color: Theme.of(context).colorScheme.primary),
@@ -496,7 +479,6 @@ class _SettingsPageState extends State<SettingsPage> {
 
   void _pushPage(
     BuildContext context, {
-    required String title,
     required Widget child,
   }) {
     Navigator.of(context).push(
@@ -505,11 +487,7 @@ class _SettingsPageState extends State<SettingsPage> {
           backgroundColor: Theme.of(context).colorScheme.surface,
           body: CustomScrollView(
             slivers: [
-              CustomAppBar(title: title),
-              SliverPadding(
-                padding: const EdgeInsets.fromLTRB(16, 0, 16, 0),
-                sliver: SliverToBoxAdapter(child: child),
-              ),
+              child,
             ],
           ),
         ),
@@ -811,6 +789,10 @@ class _SettingsPageState extends State<SettingsPage> {
           label: tr('tactileFeedbackEnabled'),
           value: settingsProvider.tactileFeedbackEnabled,
           onChanged: (value) => settingsProvider.tactileFeedbackEnabled = value,
+        ),
+        const CardTile(
+          padding: EdgeInsets.all(12),
+          child: CategoryManager(),
         ),
       ],
     );
