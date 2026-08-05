@@ -266,7 +266,7 @@ extension AppsProviderUpdates on AppsProvider {
                   app.settings.getBool('versionDetection')) {
                 final isNewer = VersionService()
                     .isVersionNewer(app.installedVersion!, app.latestVersion);
-                if (isNewer == true) {
+                if (isNewer != false) {
                   updateAppIds.add(app.id);
                 }
               } else {
