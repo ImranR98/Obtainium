@@ -396,34 +396,39 @@ class _SettingsPageState extends State<SettingsPage> {
                               ),
                             ),
                           ),
-                          ListTile(
-                            leading: Icon(Icons.code, color: Theme.of(context).colorScheme.primary),
-                            title: Text(tr('appSource')),
-                            trailing: Icon(Icons.open_in_new, color: Theme.of(context).colorScheme.onSurfaceVariant, size: 20),
-                            onTap: () => launchUrlString(
-                              context.read<SettingsProvider>().sourceUrl,
-                              mode: LaunchMode.externalApplication,
-                            ),
-                            shape: RoundedSuperellipseBorder(
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                          ),
-                          ListTile(
-                            leading: Icon(Icons.help_outline_rounded, color: Theme.of(context).colorScheme.primary),
-                            title: Text(tr('wiki')),
-                            trailing: Icon(Icons.open_in_new, color: Theme.of(context).colorScheme.onSurfaceVariant, size: 20),
-                            onTap: () => launchUrlString(
-                              'https://wiki.obtainium.imranr.dev/',
-                              mode: LaunchMode.externalApplication,
-                            ),
-                            shape: RoundedSuperellipseBorder(
-                              borderRadius: BorderRadius.circular(12),
+                          CardTile(
+                            child: ListTile(
+                              leading: Icon(Icons.code, color: Theme.of(context).colorScheme.primary),
+                              title: Text(tr('appSource')),
+                              trailing: Icon(Icons.open_in_new, color: Theme.of(context).colorScheme.onSurfaceVariant, size: 20),
+                              onTap: () => launchUrlString(
+                                context.read<SettingsProvider>().sourceUrl,
+                                mode: LaunchMode.externalApplication,
+                              ),
+                              shape: RoundedSuperellipseBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
                             ),
                           ),
-                          ListTile(
-                            leading: Icon(Icons.bug_report_outlined, color: Theme.of(context).colorScheme.primary),
-                            title: Text(tr('appLogs')),
-                            trailing: Icon(Icons.chevron_right, color: Theme.of(context).colorScheme.onSurfaceVariant),
+                          CardTile(
+                            child: ListTile(
+                              leading: Icon(Icons.help_outline_rounded, color: Theme.of(context).colorScheme.primary),
+                              title: Text(tr('wiki')),
+                              trailing: Icon(Icons.open_in_new, color: Theme.of(context).colorScheme.onSurfaceVariant, size: 20),
+                              onTap: () => launchUrlString(
+                                'https://wiki.obtainium.imranr.dev/',
+                                mode: LaunchMode.externalApplication,
+                              ),
+                              shape: RoundedSuperellipseBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                            ),
+                          ),
+                          CardTile(
+                            child: ListTile(
+                              leading: Icon(Icons.bug_report_outlined, color: Theme.of(context).colorScheme.primary),
+                              title: Text(tr('appLogs')),
+                              trailing: Icon(Icons.chevron_right, color: Theme.of(context).colorScheme.onSurfaceVariant),
                             onTap: () {
                               context.read<LogsProvider>().get().then((logs) {
                                 if (!context.mounted) return;
@@ -440,6 +445,7 @@ class _SettingsPageState extends State<SettingsPage> {
                               borderRadius: BorderRadius.circular(12),
                             ),
                           ),
+                        ),
                         ];
                         final settingTiles = rows.sublist(0, rows.length - 3);
                         final footerTiles = rows.sublist(rows.length - 3);
@@ -475,13 +481,15 @@ class _SettingsPageState extends State<SettingsPage> {
     required VoidCallback onTap,
   }) {
     final cs = Theme.of(context).colorScheme;
-    return ListTile(
-      leading: Icon(icon, color: cs.primary),
-      title: Text(title),
-      trailing: Icon(Icons.chevron_right, color: cs.onSurfaceVariant),
-      onTap: onTap,
-      shape: RoundedSuperellipseBorder(
-        borderRadius: BorderRadius.circular(12),
+    return CardTile(
+      child: ListTile(
+        leading: Icon(icon, color: cs.primary),
+        title: Text(title),
+        trailing: Icon(Icons.chevron_right, color: cs.onSurfaceVariant),
+        onTap: onTap,
+        shape: RoundedSuperellipseBorder(
+          borderRadius: BorderRadius.circular(12),
+        ),
       ),
     );
   }
