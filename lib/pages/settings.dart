@@ -220,62 +220,54 @@ class _SettingsPageState extends State<SettingsPage> {
 
   Widget _buildFooter(BuildContext context) => Column(
       children: [
-        const Divider(height: 32),
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16),
-          child: Row(
-            children: [
-              Expanded(
-                child: FilledButton.tonalIcon(
-                  onPressed: () {
-                    unawaited(
-                      launchUrlString(
-                        context.read<SettingsProvider>().sourceUrl,
-                        mode: LaunchMode.externalApplication,
-                      ),
+        const SizedBox(height: 16),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            IconButton.filledTonal(
+              onPressed: () {
+                unawaited(
+                  launchUrlString(
+                    context.read<SettingsProvider>().sourceUrl,
+                    mode: LaunchMode.externalApplication,
+                  ),
+                );
+              },
+              icon: const Icon(Icons.code),
+              tooltip: tr('appSource'),
+            ),
+            const SizedBox(width: 12),
+            IconButton.filledTonal(
+              onPressed: () {
+                unawaited(
+                  launchUrlString(
+                    'https://wiki.obtainium.imranr.dev/',
+                    mode: LaunchMode.externalApplication,
+                  ),
+                );
+              },
+              icon: const Icon(Icons.help_outline_rounded),
+              tooltip: tr('wiki'),
+            ),
+            const SizedBox(width: 12),
+            IconButton.filledTonal(
+              onPressed: () {
+                context.read<LogsProvider>().get().then((logs) {
+                  if (!context.mounted) return;
+                  if (logs.isEmpty) {
+                    showMessage(ObtainiumError(tr('noLogs')), context);
+                  } else {
+                    Navigator.of(context).push(
+                      MaterialPageRoute(
+                          builder: (context) => const LogsPage()),
                     );
-                  },
-                  icon: const Icon(Icons.code),
-                  label: Text(tr('appSource')),
-                ),
-              ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: FilledButton.tonalIcon(
-                  onPressed: () {
-                    unawaited(
-                      launchUrlString(
-                        'https://wiki.obtainium.imranr.dev/',
-                        mode: LaunchMode.externalApplication,
-                      ),
-                    );
-                  },
-                  icon: const Icon(Icons.help_outline_rounded),
-                  label: Text(tr('wiki')),
-                ),
-              ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: FilledButton.tonalIcon(
-                  onPressed: () {
-                    context.read<LogsProvider>().get().then((logs) {
-                      if (!context.mounted) return;
-                      if (logs.isEmpty) {
-                        showMessage(ObtainiumError(tr('noLogs')), context);
-                      } else {
-                        Navigator.of(context).push(
-                          MaterialPageRoute(
-                              builder: (context) => const LogsPage()),
-                        );
-                      }
-                    });
-                  },
-                  icon: const Icon(Icons.bug_report_outlined),
-                  label: Text(tr('appLogs')),
-                ),
-              ),
-            ],
-          ),
+                  }
+                });
+              },
+              icon: const Icon(Icons.bug_report_outlined),
+              tooltip: tr('appLogs'),
+            ),
+          ],
         ),
         SizedBox(height: MediaQuery.of(context).padding.bottom + (context.read<SettingsProvider>().isTV ? 48 : 0)),
       ],
