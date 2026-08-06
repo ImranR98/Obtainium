@@ -7,7 +7,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:obtainium/custom_errors.dart';
 import 'package:obtainium/components/generated_form_model.dart';
-import 'package:obtainium/components/settings_widgets.dart';
+import 'package:obtainium/components/ui_widgets.dart';
 import 'package:obtainium/providers/settings_provider.dart';
 import 'package:flutter_typeahead/flutter_typeahead.dart';
 import 'package:provider/provider.dart';
@@ -35,12 +35,14 @@ class GeneratedForm extends StatefulWidget {
     required this.items,
     required this.onValueChanges,
     this.tileMode = false,
+    this.noTilePadding = false,
   });
 
   final List<List<GeneratedFormItem>> items;
   final OnValueChanges onValueChanges;
 
   final bool tileMode;
+  final bool noTilePadding;
 
   @override
   State<GeneratedForm> createState() => _GeneratedFormState();
@@ -140,40 +142,6 @@ class _TvTextFieldFocusState extends State<TvTextFieldFocus> {
   }
 }
 
-class _FormSwitchRow extends StatelessWidget {
-  const _FormSwitchRow({
-    required this.item,
-    required this.value,
-    required this.onChanged,
-  });
-
-  final GeneratedFormSwitch item;
-  final bool value;
-  final ValueChanged<bool>? onChanged;
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        Flexible(
-          child: Text(
-            tr(item.label),
-            style: Theme.of(context).textTheme.bodyLarge,
-          ),
-        ),
-        const SizedBox(width: 8),
-        Switch(
-          value: value,
-          onChanged: item.disabled
-              ? null
-              : hapticSwitchOnChanged(context, onChanged!),
-        ),
-      ],
-    );
-  }
-}
-
 class _GeneratedFormState extends State<GeneratedForm> {
   Map<String, dynamic> values = {};
   late List<List<Widget>> formInputs;
@@ -191,11 +159,10 @@ class _GeneratedFormState extends State<GeneratedForm> {
     return InputDecoration(
       labelText: labelText,
       hintText: hintText,
-      filled: widget.tileMode ? false : null,
-      border: widget.tileMode ? InputBorder.none : null,
-      enabledBorder: widget.tileMode ? InputBorder.none : null,
-      focusedBorder: widget.tileMode ? InputBorder.none : null,
       suffixIcon: suffixIcon,
+      suffixIconConstraints: widget.tileMode
+          ? const BoxConstraints(minWidth: 0, minHeight: 0)
+          : null,
     );
   }
 
@@ -266,22 +233,24 @@ class _GeneratedFormState extends State<GeneratedForm> {
           decoration: _fieldDecoration(
             labelText: tr(formItem.label) + (formItem.required ? ' *' : ''),
             hintText: formItem.hint,
-            suffixIcon: _buildHelpSuffixIcon(
-              tr(formItem.label),
-              formItem.helpUrl,
-              formItem.belowWidgets,
-            ),
+            suffixIcon:
+                formItem.trailing ??
+                _buildHelpSuffixIcon(
+                  tr(formItem.label),
+                  formItem.helpUrl,
+                  formItem.belowWidgets,
+                ),
           ),
           minLines: formItem.max <= 1 ? null : formItem.max,
           maxLines: formItem.max <= 1 ? 1 : formItem.max,
           validator: (value) {
             if (formItem.required && (value == null || value.trim().isEmpty)) {
-              return '${tr(formItem.label)} ${tr('requiredInBrackets')}';
+              return '${tr(formItem.label)} ${tr('requiredInBrackets')}\n';
             }
             for (var validator in formItem.additionalValidators) {
               final String? result = validator(value);
               if (result != null) {
-                return result;
+                return '$result\n';
               }
             }
             return null;
@@ -357,19 +326,10 @@ class _GeneratedFormState extends State<GeneratedForm> {
 
   int _computeItemsHash(List<List<GeneratedFormItem>> items) {
     return Object.hashAll(
-      items.expand(
-        (row) => row.map(
-          // Text fields are driven by their own TextEditingController; folding
-          // their live value into this hash would reinitialize the form (and
-          // drop keyboard focus) on every keystroke, since the parent mirrors
-          // the typed value back into the item's `value`. Structural changes
-          // still reinitialize via a changed widget key. Other item types keep
-          // their value in the hash so external changes are reflected.
-          (e) => e is GeneratedFormTextField
-              ? Object.hash(e.key, e.runtimeType)
-              : Object.hash(e.key, e.value),
-        ),
-      ),
+      items.expand((row) => row.map((e) {
+        return Object.hash(e.key, e.runtimeType,
+            e is GeneratedFormTextField ? e.trailingKey : null);
+      })),
     );
   }
 
@@ -440,102 +400,151 @@ class _GeneratedFormState extends State<GeneratedForm> {
     super.dispose();
   }
 
-  Widget _buildSubForm(GeneratedFormSubForm item, String fieldKey) {
-    final List<Widget> subformColumn = [];
+  Widget _buildSubForm(GeneratedFormSubForm item, String fieldKey,
+      {bool isFirst = true, bool isLast = true}) {
     final compact = item.items.length == 1 && item.items[0].length == 1;
-    for (int i = 0; i < values[fieldKey].length; i++) {
+    final n = values[fieldKey].length;
+    final List<Widget> cards = [];
+    for (int i = 0; i < n; i++) {
       final internalFormKey = ValueKey(
         generateDeterministicId(
-          values[fieldKey].length,
+          n,
           seed2: i,
           seed3: _subFormGenerationCount,
         ),
       );
-      subformColumn.add(
-        Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            if (!compact) const SizedBox(height: 16),
-            if (!compact)
-              Text(
-                '${tr(item.label)} (${i + 1})',
-                style: Theme.of(
-                  context,
-                ).textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.bold),
-              ),
-            if (!compact) const SizedBox(height: 16),
-            GeneratedForm(
-              key: internalFormKey,
-              items: cloneFormItems(item.items)
-                  .map(
-                    (x) => x.map((y) {
-                      y.value = values[fieldKey]?[i]?[y.key];
-                      y.key = '${y.key.toString()},$internalFormKey';
-                      return y;
-                    }).toList(),
-                  )
-                  .toList(),
-              onValueChanges: (subValues, valid, isBuilding) {
-                final cleaned = subValues.map(
-                  (key, value) => MapEntry(key.split(',')[0], value),
-                );
-                if (valid) {
-                  values[fieldKey]?[i] = cleaned;
-                }
-                notifyFormChange(forceInvalid: !valid, isBuilding: isBuilding);
-              },
-            ),
-            const SizedBox(height: 8),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.end,
-              children: [
-                TextButton.icon(
-                  style: TextButton.styleFrom(
-                    foregroundColor: Theme.of(context).colorScheme.error,
+      final isLastEntry = i == n - 1;
+      cards.add(
+        ConnectedCard(
+          isFirst: i == 0 ? isFirst : false,
+          isLast: isLastEntry ? isLast : false,
+          padding: null,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              if (!compact) ...[
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+                  child: Text(
+                    '${tr(item.label)} (${i + 1})',
+                    style: Theme.of(context)
+                        .textTheme
+                        .bodyLarge
+                        ?.copyWith(fontWeight: FontWeight.bold),
                   ),
-                  onPressed: (values[fieldKey].length > 0)
-                      ? () {
-                          final temp = List.from(values[fieldKey]);
-                          temp.removeAt(i);
-                          values[fieldKey] = List.from(temp);
+                ),
+                const SizedBox(height: 8),
+              ],
+              GeneratedForm(
+                key: internalFormKey,
+                noTilePadding: widget.noTilePadding,
+                items: cloneFormItems(item.items)
+                    .map(
+                      (x) => x.map((y) {
+                        y.value = values[fieldKey]?[i]?[y.key];
+                        y.key = '${y.key.toString()},$internalFormKey';
+                        return y;
+                      }).toList(),
+                    )
+                    .toList(),
+                onValueChanges: (subValues, valid, isBuilding) {
+                  final cleaned = subValues.map(
+                    (key, value) => MapEntry(key.split(',')[0], value),
+                  );
+                  if (valid) {
+                    values[fieldKey]?[i] = cleaned;
+                  }
+                  notifyFormChange(
+                    forceInvalid: !valid,
+                    isBuilding: isBuilding,
+                  );
+                },
+              ),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 8),
+                child: Row(
+                  children: [
+                    IconButton(
+                      style: IconButton.styleFrom(
+                        foregroundColor:
+                            Theme.of(context).colorScheme.error,
+                      ),
+                      visualDensity: VisualDensity.compact,
+                      tooltip: tr('remove'),
+                      icon: const Icon(Icons.delete_outline_rounded),
+                      onPressed: n > 0
+                          ? () {
+                              final temp =
+                                  List.from(values[fieldKey]);
+                              temp.removeAt(i);
+                              values[fieldKey] = List.from(temp);
+                              _subFormGenerationCount++;
+                              notifyFormChange();
+                            }
+                          : null,
+                    ),
+                    const Spacer(),
+                    if (isLastEntry)
+                      TextButton.icon(
+                        style: TextButton.styleFrom(
+                          foregroundColor:
+                              Theme.of(context).colorScheme.primary,
+                        ),
+                        onPressed: () {
+                          values[fieldKey].add(
+                            getDefaultValuesFromFormItems(
+                                item.items),
+                          );
                           _subFormGenerationCount++;
                           notifyFormChange();
-                        }
-                      : null,
-                  label: Text('${tr(item.label)} (${i + 1})'),
-                  icon: const Icon(Icons.delete_outline_rounded),
+                        },
+                        icon: const Icon(Icons.add),
+                        label: Text(tr(item.label)),
+                      ),
+                  ],
                 ),
-              ],
-            ),
-          ],
+              ),
+            ],
+          ),
         ),
       );
     }
-    subformColumn.add(
-      Padding(
-        padding: const EdgeInsets.only(bottom: 0, top: 12),
-        child: Row(
-          children: [
-            Expanded(
-              child: FilledButton.tonalIcon(
-                onPressed: () {
-                  values[fieldKey].add(
-                    getDefaultValuesFromFormItems(item.items),
-                  );
-                  _subFormGenerationCount++;
-                  notifyFormChange();
-                },
-                icon: const Icon(Icons.add),
-                label: Text(tr(item.label)),
-              ),
+    if (n == 0) {
+      cards.add(
+        ConnectedCard(
+          isFirst: isFirst,
+          isLast: isLast,
+          padding: null,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 8),
+            child: Row(
+              children: [
+                const Spacer(),
+                TextButton.icon(
+                  style: TextButton.styleFrom(
+                    foregroundColor:
+                        Theme.of(context).colorScheme.primary,
+                  ),
+                  onPressed: () {
+                    values[fieldKey].add(
+                      getDefaultValuesFromFormItems(item.items),
+                    );
+                    _subFormGenerationCount++;
+                    notifyFormChange();
+                  },
+                  icon: const Icon(Icons.add),
+                  label: Text(tr(item.label)),
+                ),
+              ],
             ),
-          ],
+          ),
         ),
-      ),
-    );
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8),
-      child: Column(children: subformColumn),
+      );
+    }
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      spacing: 3,
+      children: cards,
     );
   }
 
@@ -549,9 +558,10 @@ class _GeneratedFormState extends State<GeneratedForm> {
         final item = widget.items[r][e];
         final String fieldKey = item.key;
         if (item is GeneratedFormSwitch) {
-          renderedInputs[r][e] = _FormSwitchRow(
-            item: item,
+          renderedInputs[r][e] = ToggleTile(
+            label: tr(item.label),
             value: values[fieldKey] as bool,
+            noPadding: widget.noTilePadding,
             onChanged: item.disabled
                 ? null
                 : (value) {
@@ -562,7 +572,12 @@ class _GeneratedFormState extends State<GeneratedForm> {
                   },
           );
         } else if (item is GeneratedFormSubForm) {
-          renderedInputs[r][e] = _buildSubForm(item, fieldKey);
+          renderedInputs[r][e] = _buildSubForm(
+            item,
+            fieldKey,
+            isFirst: r == 0,
+            isLast: r == widget.items.length - 1,
+          );
         }
       }
     }
@@ -590,35 +605,39 @@ class _GeneratedFormState extends State<GeneratedForm> {
           widget.items[r].isNotEmpty &&
           (widget.items[r][0] is GeneratedFormTextField ||
               widget.items[r][0] is GeneratedFormDropdown);
+      bool isSubFormRow(int r) =>
+          widget.items[r].isNotEmpty &&
+          widget.items[r][0] is GeneratedFormSubForm;
       final colorScheme = Theme.of(context).colorScheme;
       final n = inputRowWidgets.length;
       final List<Widget> rawTiles = [];
       for (var r = 0; r < n; r++) {
-        final EdgeInsets padding = isFieldRow(r)
-            ? EdgeInsets.zero
-            : const EdgeInsets.symmetric(horizontal: 20, vertical: 8);
-        rawTiles.add(
-          SettingsTile(
-            color: isFieldRow(r)
-                ? colorScheme.surfaceContainerHighest
-                : colorScheme.surfaceContainerLow,
-            padding: padding,
-            child: inputRowWidgets[r],
-          ),
-        );
+        if (isSubFormRow(r)) {
+          rawTiles.add(inputRowWidgets[r]);
+        } else {
+          rawTiles.add(
+            ConnectedCard(
+              isFirst: r == 0,
+              isLast: r == n - 1,
+              color: isFieldRow(r)
+                  ? colorScheme.surfaceContainerHighest
+                  : colorScheme.surfaceContainerLow,
+              child: inputRowWidgets[r],
+            ),
+          );
+        }
       }
-      final children = shapeSettingsTiles(rawTiles);
       return Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         spacing: 3,
-        children: children,
+        children: rawTiles,
       );
     }
 
     final List<Widget> children = [];
     for (var r = 0; r < inputRowWidgets.length; r++) {
       if (r > 0) {
-        children.add(const SizedBox(height: 24));
+        children.add(const SizedBox(height: 8));
       }
       children.add(inputRowWidgets[r]);
     }
@@ -675,6 +694,7 @@ class _GeneratedFormModalState extends State<GeneratedFormModal> {
           if (widget.message.isNotEmpty) const SizedBox(height: 16),
           GeneratedForm(
             tileMode: widget.tileMode,
+            noTilePadding: true,
             items: widget.items,
             onValueChanges: (values, valid, isBuilding) {
               // The callback fires from a post-frame callback (not during

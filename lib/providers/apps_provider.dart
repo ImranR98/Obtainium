@@ -833,7 +833,12 @@ class AppsProvider with ChangeNotifier {
   /// atomic guard (preventing concurrent batches) and a deduplication
   /// mechanism: subsequent callers receive the existing completer's future.
   Completer<List<App>>? updateCheckCompleter;
-  double? refreshProgress;
+
+  /// Update-check progress (0..1), or null when no check is running. Exposed as
+  /// a [ValueNotifier] so the progress bar can rebuild on frequent ticks
+  /// WITHOUT triggering a full [notify] (which would rerun the expensive app
+  /// list pipeline on every listener each tick and stutter the UI).
+  final ValueNotifier<double?> refreshProgress = ValueNotifier<double?>(null);
   LogsProvider logs = LogsProvider();
 
   // Serializes concurrent loadApps() calls without busy-waiting.
@@ -861,6 +866,7 @@ class AppsProvider with ChangeNotifier {
   late final SettingsProvider settingsProvider;
   Directory? _apkDir;
   Directory? _iconsCacheDir;
+  Directory? cachedAppsDir;
 
   Directory get apkDir {
     if (_apkDir == null) {
@@ -1001,6 +1007,8 @@ class AppsProvider with ChangeNotifier {
         }
       }
       if (!isBg) {
+        loadingApps = true;
+        notify();
         await loadApps();
         final cutoff = DateTime.now().subtract(const Duration(days: 7));
         await for (var entity in apkDir.list()) {
@@ -1027,6 +1035,7 @@ class AppsProvider with ChangeNotifier {
     foregroundSubscription?.cancel();
     _autoExportDebounce?.cancel();
     _eventSubscription?.cancel();
+    refreshProgress.dispose();
     super.dispose();
   }
 
@@ -1259,7 +1268,7 @@ Future<void> bgUpdateCheck(
   } else {
     unawaited(bgLogs.add('BG update task: No apps due for checking.'));
   }
-  if (canInstall) {
+  if (canInstall && params['toCheck'] == null) {
     final discovered = appsProvider.findAppIdsWithPendingUpdates(
       installedOnly: true,
     );
@@ -1278,12 +1287,14 @@ Future<void> bgUpdateCheck(
       ),
     );
   }
-  await _runBGInstallMode(
-    silentlyInstallable,
-    appsProvider,
-    notificationsProvider,
-    bgLogs,
-  );
+  if (params['toCheck'] == null) {
+    await _runBGInstallMode(
+      silentlyInstallable,
+      appsProvider,
+      notificationsProvider,
+      bgLogs,
+    );
+  }
   unawaited(bgLogs.add('BG task completed $taskId.'));
   AppsProvider._eventsController.add(null);
 }

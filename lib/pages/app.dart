@@ -83,13 +83,18 @@ class _AppPageState extends State<AppPage> {
           app.app.url,
           overrideSource: app.app.overrideSource,
         );
+        final resolvedUrl = await source.assetUrlPrefetchModifier(
+          url,
+          app.app.url,
+          app.app.additionalSettings,
+        );
         final headers = await source.getRequestHeaders(
           app.app.additionalSettings,
-          url,
+          resolvedUrl,
           forAPKDownload: true,
         );
         final size = await getDownloadSize(
-          url,
+          resolvedUrl,
           headers: headers,
           allowInsecure: app.app.settings.getBool('allowInsecure'),
         );
@@ -314,15 +319,21 @@ class _AppPageState extends State<AppPage> {
             backgroundColor: Theme.of(context).colorScheme.surface,
             body: CustomScrollView(
               slivers: [
-                SliverAppBar.large(
+                SliverAppBar(
                   pinned: true,
+                  automaticallyImplyLeading: false,
                   title: Text(
                     tr('additionalOptsFor', args: [app?.name ?? tr('app')]),
                   ),
                 ),
                 SliverToBoxAdapter(
                   child: Padding(
-                    padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
+                    padding: EdgeInsets.fromLTRB(
+                      16,
+                      0,
+                      16,
+                      MediaQuery.of(context).padding.bottom,
+                    ),
                     child: GeneratedForm(
                       tileMode: true,
                       items: items,
@@ -516,12 +527,13 @@ class _AppPageState extends State<AppPage> {
   }
 
   AppBar _appScreenAppBar() => AppBar(
-    leading: IconButton(
-      icon: Icon(
-        widget.onClose != null ? Icons.close_rounded : Icons.arrow_back,
-      ),
-      onPressed: _closePage,
-    ),
+    automaticallyImplyLeading: false,
+    leading: widget.onClose != null
+        ? IconButton(
+            icon: const Icon(Icons.close_rounded),
+            onPressed: _closePage,
+          )
+        : null,
   );
 
   Widget _getPrimaryButton(
@@ -545,12 +557,22 @@ class _AppPageState extends State<AppPage> {
             ? Icons.download_outlined
             : Icons.system_update_alt_rounded,
       ),
-      label: Text(
-        installed == null
-            ? (!trackOnly ? tr('install') : tr('markInstalled'))
-            : !trackOnly
-            ? tr('update')
-            : tr('markUpdated'),
+      label: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(
+            installed == null
+                ? (!trackOnly ? tr('install') : tr('markInstalled'))
+                : !trackOnly
+                ? tr('update')
+                : tr('markUpdated'),
+          ),
+          if (_probedDownloadSize != null)
+            Text(
+              formatBytes(_probedDownloadSize!),
+              style: const TextStyle(fontSize: 12),
+            ),
+        ],
       ),
     );
   }
@@ -649,6 +671,7 @@ class _AppPageState extends State<AppPage> {
     bool isFirst,
     bool isLast, {
     required List<Widget> children,
+    EdgeInsetsGeometry? padding,
   }) {
     return SliverToBoxAdapter(
       child: Padding(
@@ -656,6 +679,7 @@ class _AppPageState extends State<AppPage> {
         child: ConnectedCard(
           isFirst: isFirst,
           isLast: isLast,
+          padding: padding ?? const EdgeInsets.all(16),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             mainAxisSize: MainAxisSize.min,
@@ -766,29 +790,6 @@ class _AppPageState extends State<AppPage> {
         ),
       ),
     ];
-  }
-
-  Widget _buildBackButton() {
-    return SliverToBoxAdapter(
-      child: Padding(
-        padding: EdgeInsets.fromLTRB(
-          8,
-          MediaQuery.of(context).padding.top + 8,
-          0,
-          0,
-        ),
-        child: Row(
-          children: [
-            IconButton(
-              onPressed: _closePage,
-              icon: Icon(
-                widget.onClose != null ? Icons.close_rounded : Icons.arrow_back,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
   }
 
   Widget _buildAppIcon(AppInMemory? app) {
@@ -1059,10 +1060,10 @@ class _AppPageState extends State<AppPage> {
         _buildSection(
           false,
           true,
+          padding: const EdgeInsets.all(0),
           children: [
             Center(
-              child: HighlightableButton(
-                highlight: settingsProvider.highlightTouchTargets,
+              child: TextButton.icon(
                 onPressed: app?.app == null || updating
                     ? null
                     : () async {
@@ -1125,40 +1126,9 @@ class _AppPageState extends State<AppPage> {
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisSize: MainAxisSize.min,
       children: [
-        Row(
-          children: [
-            ..._getSecondaryActions(
-              context,
-              app,
-              source,
-              appsProvider,
-              settingsProvider,
-              showAppWebpageFinal,
-              isVersionDetectionStandard,
-              trackOnly,
-            ),
-            const Spacer(),
-            _getPrimaryButton(context, app, appsProvider, areDownloadsRunning),
-          ],
-        ),
-        Padding(
-          padding: const EdgeInsets.only(top: 8),
-          child: Opacity(
-            opacity:
-                app?.downloadProgress == null && _probedDownloadSize != null
-                ? 1.0
-                : 0.0,
-            child: Text(
-              _probedDownloadSize != null
-                  ? '${tr('downloadSize')}: ${formatBytes(_probedDownloadSize!)}'
-                  : '-',
-              style: Theme.of(context).textTheme.bodySmall,
-            ),
-          ),
-        ),
         if (app?.downloadProgress != null)
           Padding(
-            padding: const EdgeInsets.only(top: 12),
+            padding: const EdgeInsets.only(bottom: 8),
             child: Row(
               children: [
                 Expanded(
@@ -1198,6 +1168,30 @@ class _AppPageState extends State<AppPage> {
               style: Theme.of(context).textTheme.bodySmall,
             ),
           ),
+        Padding(
+          padding: const EdgeInsets.only(top: 4),
+          child: Row(
+            children: [
+              ..._getSecondaryActions(
+                context,
+                app,
+                source,
+                appsProvider,
+                settingsProvider,
+                showAppWebpageFinal,
+                isVersionDetectionStandard,
+                trackOnly,
+              ),
+              const Spacer(),
+              _getPrimaryButton(
+                context,
+                app,
+                appsProvider,
+                areDownloadsRunning,
+              ),
+            ],
+          ),
+        ),
       ],
     );
   }
@@ -1221,7 +1215,13 @@ class _AppPageState extends State<AppPage> {
     final AppInMemory? app = cachedApp(
       context.select<AppsProvider, AppInMemory?>((p) => p.apps[widget.appId]),
     );
-    if (app != null && app.downloadProgress == null) {
+    final installed = app?.app.installedVersion;
+    final latest = app?.app.latestVersion;
+    if (app != null &&
+        app.downloadProgress == null &&
+        !updating &&
+        !areDownloadsRunning &&
+        (installed == null || installed != latest)) {
       _maybeProbeDownloadSize(app);
     }
     final source = this.source;
@@ -1280,7 +1280,11 @@ class _AppPageState extends State<AppPage> {
                     },
                     child: CustomScrollView(
                       slivers: [
-                        _buildBackButton(),
+                        SliverToBoxAdapter(
+                          child: SizedBox(
+                            height: MediaQuery.of(context).padding.top + 8,
+                          ),
+                        ),
                         _buildHeaderSection(app),
                         ..._buildRepoRenameSection(app, appsProvider),
                         const SliverToBoxAdapter(child: SizedBox(height: 20)),

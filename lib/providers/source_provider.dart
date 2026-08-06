@@ -1404,7 +1404,7 @@ class VersionService {
         }
       }
     }
-    return results;
+    return results.toSet().toList();
   }
 
   String? regExValidator(String? value) {
@@ -1472,7 +1472,15 @@ class VersionService {
     }
   }
 
+  static final Map<String, Set<String>> _strictFormatCache = {};
+  static final Map<String, Set<String>> _looseFormatCache = {};
+  static const int _maxFormatCacheSize = 4096;
+
   Set<String> findStandardFormatsForVersion(String version, bool strict) {
+    final cache = strict ? _strictFormatCache : _looseFormatCache;
+    final cached = cache[version];
+    if (cached != null) return cached;
+
     final Set<String> results = {};
     final patterns = strict
         ? strictStandardVersionRegExes
@@ -1482,6 +1490,8 @@ class VersionService {
         results.add(entry.key);
       }
     }
+    if (cache.length >= _maxFormatCacheSize) cache.clear();
+    cache[version] = results;
     return results;
   }
 

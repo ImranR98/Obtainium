@@ -18,6 +18,17 @@ class RuStore extends AppSource {
   }
 
   @override
+  Future<Map<String, String>?> getRequestHeaders(
+      Map<String, dynamic> additionalSettings,
+      String url, {
+        bool forAPKDownload = false,
+      }) async {
+    return {
+      'ruStoreVerCode': '1105002',
+    };
+  }
+
+  @override
   String sourceSpecificStandardizeURL(
     String url, {
     bool forSelection = false,
@@ -45,14 +56,14 @@ class RuStore extends AppSource {
       if (appId == null) {
         throw NoReleasesError();
       }
-      final Response res0 = await sourceRequest(
+      final Response overallInfoResponse = await sourceRequest(
         'https://backapi.rustore.ru/applicationData/overallInfo/$appId',
         additionalSettings,
       );
-      if (res0.statusCode != 200) {
-        throw getObtainiumHttpError(res0);
+      if (overallInfoResponse.statusCode != 200) {
+        throw getObtainiumHttpError(overallInfoResponse);
       }
-      final decoded = await decodeJsonBody(res0.bodyBytes);
+      final decoded = await decodeJsonBody(overallInfoResponse.bodyBytes);
       final appDetails = decoded is Map ? decoded['body'] : null;
       if (appDetails is! Map || appDetails['appId'] == null) {
         throw NoReleasesError();
@@ -71,18 +82,15 @@ class RuStore extends AppSource {
         relDate = DateTime.tryParse(dateStr);
       }
 
-      final Response res1 = await sourceRequest(
-        'https://backapi.rustore.ru/applicationData/v2/download-link',
+      final Response downloadLinksResponse = await sourceRequest(
+        'https://backapi.rustore.ru/v3/showcase/apps/download-link',
         additionalSettings,
         followRedirects: false,
         postBody: {'appId': appDetails['appId'], 'firstInstall': true},
       );
-      final downloadDecoded = await decodeJsonBody(res1.bodyBytes);
-      final downloadDetails = downloadDecoded is Map
-          ? downloadDecoded['body']
-          : null;
-      if (res1.statusCode != 200 || downloadDetails == null) {
-        throw getObtainiumHttpError(res1);
+      final downloadDetails = await decodeJsonBody(downloadLinksResponse.bodyBytes);
+      if (downloadLinksResponse.statusCode != 200 || downloadDetails == null) {
+        throw getObtainiumHttpError(downloadLinksResponse);
       }
       final url = downloadDetails['downloadUrls']?[0]?['url'] as String?;
       if (url == null) {

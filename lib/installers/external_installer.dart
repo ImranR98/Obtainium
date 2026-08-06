@@ -14,10 +14,17 @@ import 'package:obtainium/providers/source_provider.dart';
 const String _apkMime = 'application/vnd.android.package-archive';
 const String _bundleMime = 'application/zip';
 
-/// Fallback ceiling for how long we wait for the user to come back from the
-/// external installer. FGBG is reliable, so this only guards against the rare
-/// case where a foreground event is never delivered.
+/// Ceiling for how long we wait for the user to return after the external
+/// installer took them away from Obtainium.
 const Duration _foregroundReturnFallback = Duration(hours: 2);
+
+/// If the external installer doesn't take the user away from Obtainium
+/// (modal overlay), we won't see a background event. This timeout caps how
+/// long we wait before falling through to the install-confirmation poll.
+const Duration _backgroundDetectionWindow = Duration(seconds: 30);
+
+/// When the installer was a modal, wait this long before polling.
+const Duration _modalPollDelay = Duration(seconds: 30);
 
 /// After the user returns, re-check the package a few times to absorb any brief
 /// finalization lag before deciding the outcome.
@@ -87,18 +94,32 @@ class ExternalInstaller extends Installer {
           Flag.FLAG_ACTIVITY_NEW_TASK,
         ],
       );
-      // Subscribe to the foreground-return event before launching so we don't
-      // miss it, and use a fresh future per launch (a single shared future
-      // would resolve instantly for every path after the first).
-      final foregroundReturn = FGBGEvents.instance.stream
-          .firstWhere((event) => event == FGBGType.foreground)
+
+      // Detect whether the installer took the user away or is a modal.
+      // Subscribe to both events before launch so we don't miss either.
+      final wentAway = FGBGEvents.instance.stream
+          .firstWhere((event) => event == FGBGType.background)
           .timeout(
-            _foregroundReturnFallback,
+            _backgroundDetectionWindow,
             onTimeout: () => FGBGType.foreground,
           );
       await intent.launch();
 
-      await foregroundReturn;
+      if (await wentAway == FGBGType.background) {
+        // The external installer opened as a separate app. Wait for the
+        // user to return, with a generous fallback for long interactions.
+        final returned = FGBGEvents.instance.stream
+            .firstWhere((event) => event == FGBGType.foreground)
+            .timeout(
+              _foregroundReturnFallback,
+              onTimeout: () => FGBGType.foreground,
+            );
+        await returned;
+      } else {
+        // The installer is a modal — we never left Obtainium. Give the
+        // user time to interact with the modal before polling.
+        await Future.delayed(_modalPollDelay);
+      }
     }
 
     // The external installer app never reports a status code back to us, so

@@ -5,8 +5,10 @@ import 'package:obtainium/custom_errors.dart';
 import 'package:obtainium/providers/source_provider.dart';
 
 class Tencent extends AppSource {
+  @override
+  String get name => tr('tencentAppStore');
+
   Tencent() {
-    name = tr('tencentAppStore');
     hosts = ['sj.qq.com'];
     naiveStandardVersionDetection = true;
     showReleaseDateAsVersionToggle = true;
