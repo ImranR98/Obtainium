@@ -1636,15 +1636,15 @@ class VersionService {
 /// installed version differs from its latest version and is not numerically
 /// newer than it. Numeric comparison only applies when both versions share a
 /// common non-strict standard format (see
-/// [VersionService.compareVersionsNumerically]) and the "show downgrade error"
-/// setting is off — otherwise a downgrade is still presented as an update.
+/// [VersionService.compareVersionsNumerically]) and the "hide downgrades"
+/// setting is enabled — otherwise a downgrade is still presented as an update.
 bool isAppUpdateable(App app, SettingsProvider settingsProvider) {
   final installed = app.installedVersion;
   final latest = app.latestVersion;
   if (installed == null || installed == latest) {
     return false;
   }
-  if (settingsProvider.showAppDowngradeError) {
+  if (!settingsProvider.hideDowngrades) {
     return true;
   }
   final comparison = VersionService().compareVersionsNumerically(

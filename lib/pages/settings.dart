@@ -632,6 +632,11 @@ class _SettingsPageState extends State<SettingsPage> {
         onChanged: (value) => settingsProvider.showAppDowngradeError = value,
       ),
       ToggleTile(
+        label: tr('hideDowngrades'),
+        value: settingsProvider.hideDowngrades,
+        onChanged: (value) => settingsProvider.hideDowngrades = value,
+      ),
+      ToggleTile(
         label: tr('parallelDownloads'),
         value: settingsProvider.parallelDownloads,
         onChanged: (value) => settingsProvider.parallelDownloads = value,

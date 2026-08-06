@@ -524,6 +524,15 @@ class SettingsProvider with ChangeNotifier {
     notifyListeners();
   }
 
+  bool get hideDowngrades {
+    return _getBool('hideDowngrades') ?? true;
+  }
+
+  set hideDowngrades(bool hide) {
+    prefs?.setBool('hideDowngrades', hide);
+    notifyListeners();
+  }
+
   bool get tactileFeedbackEnabled {
     return _getBool('tactileFeedbackEnabled') ?? true;
   }
