@@ -158,7 +158,8 @@ extension AppsProviderUpdates on AppsProvider {
           if (newApp != null) {
             final isUpdate =
                 currentApp != null &&
-                newApp.latestVersion != currentApp.latestVersion;
+                newApp.latestVersion != currentApp.latestVersion &&
+                isAppUpdateable(currentApp, settingsProvider);
             return MapEntry(newApp, isUpdate);
           }
         } on HandshakeException {
@@ -176,7 +177,8 @@ extension AppsProviderUpdates on AppsProvider {
               if (newApp != null) {
                 final isUpdate =
                     currentApp != null &&
-                    newApp.latestVersion != currentApp.latestVersion;
+                    newApp.latestVersion != currentApp.latestVersion &&
+                    isAppUpdateable(currentApp, settingsProvider);
                 return MapEntry(newApp, isUpdate);
               }
               break;
@@ -259,16 +261,19 @@ extension AppsProviderUpdates on AppsProvider {
       if (installedOnly) {
         if (app.installedVersion != null) {
           final regex =
-              (app.additionalSettings['versionExtractionRegEx'] as String?) ?? '';
+              (app.additionalSettings['versionExtractionRegEx'] as String?) ??
+              '';
           if (regex.isEmpty) {
-            if (app.installedVersion != app.latestVersion) {
+            if (app.installedVersion != app.latestVersion &&
+                isAppUpdateable(app, settingsProvider)) {
               updateAppIds.add(app.id);
             }
           } else if (!doStringsMatchUnderRegEx(
-            regex,
-            app.installedVersion!,
-            app.latestVersion,
-          )) {
+                regex,
+                app.installedVersion!,
+                app.latestVersion,
+              ) &&
+              isAppUpdateable(app, settingsProvider)) {
             updateAppIds.add(app.id);
           }
         }
@@ -281,7 +286,8 @@ extension AppsProviderUpdates on AppsProvider {
           updateAppIds.add(app.id);
         } else {
           final regex =
-              (app.additionalSettings['versionExtractionRegEx'] as String?) ?? '';
+              (app.additionalSettings['versionExtractionRegEx'] as String?) ??
+              '';
           if (regex.isNotEmpty &&
               doStringsMatchUnderRegEx(
                 regex,
@@ -290,7 +296,9 @@ extension AppsProviderUpdates on AppsProvider {
               )) {
             continue;
           }
-          updateAppIds.add(app.id);
+          if (isAppUpdateable(app, settingsProvider)) {
+            updateAppIds.add(app.id);
+          }
         }
       }
     }

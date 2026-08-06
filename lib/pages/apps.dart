@@ -127,7 +127,7 @@ class AppsPageState extends State<AppsPage> {
     List<AppInMemory> listedApps,
     Set<String> existingUpdates,
   ) {
-    var result = AppListBuilder.filter(listedApps, filter);
+    var result = AppListBuilder.filter(listedApps, filter, settingsProvider);
     result = AppListBuilder.sort(
       result,
       settingsProvider.sortColumn,
@@ -589,8 +589,7 @@ class AppsPageState extends State<AppsPage> {
     final existingUpdateIds = selectedApps
         .where(
           (a) =>
-              a.installedVersion != null &&
-              a.installedVersion != a.latestVersion &&
+              isAppUpdateable(a, settingsProvider) &&
               a.settings.getBool('trackOnly') != true,
         )
         .map((a) => a.id)
@@ -606,8 +605,7 @@ class AppsPageState extends State<AppsPage> {
     final trackOnlyUpdateIds = selectedApps
         .where(
           (a) =>
-              a.installedVersion != null &&
-              a.installedVersion != a.latestVersion &&
+              isAppUpdateable(a, settingsProvider) &&
               a.settings.getBool('trackOnly') == true,
         )
         .map((a) => a.id)

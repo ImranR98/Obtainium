@@ -301,9 +301,7 @@ class AppListTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final showChangesFn = getChangeLogFn(context, _app);
-    final hasUpdate =
-        _app.installedVersion != null &&
-        _app.installedVersion != _app.latestVersion;
+    final hasUpdate = isAppUpdateable(_app, settingsProvider);
     final Widget trailingRow = LayoutBuilder(
       builder: (context, constraints) => Row(
         mainAxisSize: MainAxisSize.min,
@@ -331,10 +329,9 @@ class AppListTile extends StatelessWidget {
     ];
     final appId = _app.id;
     final installed = _app.installedVersion;
-    final latest = _app.latestVersion;
     final trackOnly = _app.settings.getBool('trackOnly');
     final canInstall = installed == null && !trackOnly;
-    final canUpdate = installed != null && installed != latest && !trackOnly;
+    final canUpdate = hasUpdate && !trackOnly;
     final cs = Theme.of(context).colorScheme;
 
     final swipeBackground = canInstall
@@ -727,7 +724,11 @@ class AppsFilter {
 }
 
 class AppListBuilder {
-  static List<AppInMemory> filter(List<AppInMemory> apps, AppsFilter filter) {
+  static List<AppInMemory> filter(
+    List<AppInMemory> apps,
+    AppsFilter filter,
+    SettingsProvider settingsProvider,
+  ) {
     final nameTokens = filter.nameFilter.isNotEmpty
         ? filter.nameFilter
               .split(' ')
@@ -743,6 +744,12 @@ class AppListBuilder {
 
     return apps.where((app) {
       if (app.app.installedVersion == app.app.latestVersion &&
+          !(filter.includeUptodate)) {
+        return false;
+      }
+      if (app.app.installedVersion != null &&
+          app.app.installedVersion != app.app.latestVersion &&
+          !isAppUpdateable(app.app, settingsProvider) &&
           !(filter.includeUptodate)) {
         return false;
       }
@@ -884,9 +891,7 @@ class _VersionLabel extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final app = appInMemory.app;
-    final hasUpdate =
-        app.installedVersion != null &&
-        app.installedVersion != app.latestVersion;
+    final hasUpdate = isAppUpdateable(app, settingsProvider);
     final updateColor = hasUpdate
         ? Theme.of(context).colorScheme.primary
         : Theme.of(context).colorScheme.onSurfaceVariant;

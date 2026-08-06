@@ -1589,6 +1589,69 @@ class VersionService {
               value2.substring(m2.start, m2.end)
         : false;
   }
+
+  /// Compares two versions numerically when they share a common non-strict
+  /// standard format. Returns a negative value if [version1] is older than
+  /// [version2], a positive value if it is newer, 0 if they are numerically
+  /// equal, and null if they cannot be compared in a valid way.
+  int? compareVersionsNumerically(String version1, String version2) {
+    final commonFormats = findStandardFormatsForVersion(
+      version1,
+      false,
+    ).intersection(findStandardFormatsForVersion(version2, false));
+    if (commonFormats.isEmpty) {
+      return null;
+    }
+    final digitRunRegex = RegExp('[0-9]+');
+    String mostSpecific = commonFormats.first;
+    var mostSpecificRuns = digitRunRegex.allMatches(mostSpecific).length;
+    for (final format in commonFormats) {
+      final runs = digitRunRegex.allMatches(format).length;
+      if (runs > mostSpecificRuns ||
+          (runs == mostSpecificRuns && format.length > mostSpecific.length)) {
+        mostSpecific = format;
+        mostSpecificRuns = runs;
+      }
+    }
+    List<int> extractNumericRuns(String version) {
+      final match = RegExp(mostSpecific).firstMatch(version);
+      return digitRunRegex
+          .allMatches(match!.group(0)!)
+          .map((e) => int.parse(e.group(0)!))
+          .toList();
+    }
+
+    final runs1 = extractNumericRuns(version1);
+    final runs2 = extractNumericRuns(version2);
+    for (var i = 0; i < runs1.length; i++) {
+      if (runs1[i] != runs2[i]) {
+        return runs1[i] > runs2[i] ? 1 : -1;
+      }
+    }
+    return 0;
+  }
+}
+
+/// Whether [app] should be presented as having an update available: its
+/// installed version differs from its latest version and is not numerically
+/// newer than it. Numeric comparison only applies when both versions share a
+/// common non-strict standard format (see
+/// [VersionService.compareVersionsNumerically]) and the "show downgrade error"
+/// setting is off — otherwise a downgrade is still presented as an update.
+bool isAppUpdateable(App app, SettingsProvider settingsProvider) {
+  final installed = app.installedVersion;
+  final latest = app.latestVersion;
+  if (installed == null || installed == latest) {
+    return false;
+  }
+  if (settingsProvider.showAppDowngradeError) {
+    return true;
+  }
+  final comparison = VersionService().compareVersionsNumerically(
+    installed,
+    latest,
+  );
+  return comparison == null || comparison <= 0;
 }
 
 // ========================================================================
