@@ -159,7 +159,7 @@ extension AppsProviderUpdates on AppsProvider {
             final isUpdate =
                 currentApp != null &&
                 newApp.latestVersion != currentApp.latestVersion &&
-                isAppUpdateable(currentApp, settingsProvider);
+                isAppUpdateable(newApp, settingsProvider);
             return MapEntry(newApp, isUpdate);
           }
         } on HandshakeException {
@@ -178,7 +178,7 @@ extension AppsProviderUpdates on AppsProvider {
                 final isUpdate =
                     currentApp != null &&
                     newApp.latestVersion != currentApp.latestVersion &&
-                    isAppUpdateable(currentApp, settingsProvider);
+                    isAppUpdateable(newApp, settingsProvider);
                 return MapEntry(newApp, isUpdate);
               }
               break;
