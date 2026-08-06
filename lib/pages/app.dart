@@ -574,9 +574,13 @@ class _AppPageState extends State<AppPage> {
                 : tr('markUpdated'),
           ),
           if (_probedDownloadSize != null)
-            Text(
-              formatBytes(_probedDownloadSize!),
-              style: Theme.of(context).textTheme.bodySmall,
+            Builder(
+              builder: (context) => Text(
+                formatBytes(_probedDownloadSize!),
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  color: DefaultTextStyle.of(context).style.color,
+                ),
+              ),
             ),
         ],
       ),
@@ -1219,13 +1223,10 @@ class _AppPageState extends State<AppPage> {
     final AppInMemory? app = cachedApp(
       context.select<AppsProvider, AppInMemory?>((p) => p.apps[widget.appId]),
     );
-    final installed = app?.app.installedVersion;
-    final latest = app?.app.latestVersion;
     if (app != null &&
         app.downloadProgress == null &&
         !updating &&
-        !areDownloadsRunning &&
-        (installed == null || installed != latest)) {
+        !areDownloadsRunning) {
       _maybeProbeDownloadSize(app);
     }
     final source = this.source;
