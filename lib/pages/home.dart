@@ -220,7 +220,6 @@ class _HomePageState extends State<HomePage> {
             await goToAddApp(data);
           }
         } else if (action == 'app' || action == 'apps') {
-          final dataStr = data;
           if (!context.mounted) return;
           if (await showDialog(
                 context: context,
@@ -239,7 +238,7 @@ class _HomePageState extends State<HomePage> {
                         title: Text(tr('rawJson')),
                         children: [
                           Text(
-                            dataStr,
+                            data,
                             style: const TextStyle(fontFamily: 'monospace'),
                           ),
                         ],
@@ -253,7 +252,7 @@ class _HomePageState extends State<HomePage> {
             final ap = appsProvider;
             dynamic parsedData;
             try {
-              parsedData = jsonDecode(dataStr);
+              parsedData = jsonDecode(data);
             } catch (e) {
               unawaited(
                 LogsProvider().add(
