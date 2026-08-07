@@ -497,6 +497,11 @@ class _SettingsPageState extends State<SettingsPage> {
                     ),
             ),
           ),
+          SliverToBoxAdapter(
+            child: SizedBox(
+              height: MediaQuery.of(context).padding.bottom,
+            ),
+          ),
         ],
       ),
     );
