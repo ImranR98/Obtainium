@@ -23,6 +23,13 @@ import 'package:webview_flutter/webview_flutter.dart';
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher_string.dart';
 
+/// Whether two URIs share the same origin (scheme, host, and port — Dart
+/// normalizes default ports for http/https).
+bool _isSameOrigin(Uri a, Uri b) =>
+    a.scheme.toLowerCase() == b.scheme.toLowerCase() &&
+    a.host.toLowerCase() == b.host.toLowerCase() &&
+    a.port == b.port;
+
 class AppPage extends StatefulWidget {
   const AppPage({
     super.key,
@@ -180,13 +187,26 @@ class _AppPageState extends State<AppPage> {
                 });
               }
             },
-            onNavigationRequest: (NavigationRequest request) =>
-                !(request.url.startsWith('http://') ||
-                    request.url.startsWith('https://') ||
-                    request.url.startsWith('ftp://') ||
-                    request.url.startsWith('ftps://'))
-                ? NavigationDecision.prevent
-                : NavigationDecision.navigate,
+            onNavigationRequest: (NavigationRequest request) {
+              final uri = Uri.tryParse(request.url);
+              if (uri == null ||
+                  !(uri.isScheme('http') || uri.isScheme('https'))) {
+                return NavigationDecision.prevent;
+              }
+              final sourceUri = Uri.tryParse(url);
+              if (sourceUri != null && !_isSameOrigin(uri, sourceUri)) {
+                // Cross-origin navigations leave the in-app WebView and open
+                // in the external browser instead.
+                unawaited(
+                  launchUrlString(
+                    request.url,
+                    mode: LaunchMode.externalApplication,
+                  ),
+                );
+                return NavigationDecision.prevent;
+              }
+              return NavigationDecision.navigate;
+            },
           ),
         );
       webViewController = wvc;
