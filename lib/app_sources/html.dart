@@ -9,38 +9,8 @@ import 'package:obtainium/custom_errors.dart';
 import 'package:obtainium/providers/apps_provider.dart';
 import 'package:obtainium/providers/logs_provider.dart';
 import 'package:obtainium/providers/source_provider.dart';
+import 'package:obtainium/utils/string_compare.dart';
 
-int compareAlphaNumeric(String a, String b) {
-  final List<String> aParts = _splitAlphaNumeric(a);
-  final List<String> bParts = _splitAlphaNumeric(b);
-
-  for (int i = 0; i < aParts.length && i < bParts.length; i++) {
-    final String aPart = aParts[i];
-    final String bPart = bParts[i];
-
-    final bool aIsNumber = _isDigit(aPart);
-    final bool bIsNumber = _isDigit(bPart);
-
-    if (aIsNumber && bIsNumber) {
-      final int aNumber = int.parse(aPart);
-      final int bNumber = int.parse(bPart);
-      final int cmp = aNumber.compareTo(bNumber);
-      if (cmp != 0) {
-        return cmp;
-      }
-    } else if (!aIsNumber && !bIsNumber) {
-      final int cmp = aPart.compareTo(bPart);
-      if (cmp != 0) {
-        return cmp;
-      }
-    } else {
-      // Alphanumeric strings come before numeric strings
-      return aIsNumber ? 1 : -1;
-    }
-  }
-
-  return aParts.length.compareTo(bParts.length);
-}
 
 List<String> collectAllStringsFromJSONObject(dynamic obj) {
   List<String> extractor(dynamic obj) {
@@ -63,35 +33,6 @@ List<String> collectAllStringsFromJSONObject(dynamic obj) {
   return extractor(obj);
 }
 
-List<String> _splitAlphaNumeric(String s) {
-  if (s.isEmpty) return [];
-  final List<String> parts = [];
-  final StringBuffer sb = StringBuffer();
-
-  bool isNumeric = _isDigit(s[0]);
-  sb.write(s[0]);
-
-  for (int i = 1; i < s.length; i++) {
-    final bool currentIsNumeric = _isDigit(s[i]);
-    if (currentIsNumeric == isNumeric) {
-      sb.write(s[i]);
-    } else {
-      parts.add(sb.toString());
-      sb.clear();
-      sb.write(s[i]);
-      isNumeric = currentIsNumeric;
-    }
-  }
-
-  parts.add(sb.toString());
-
-  return parts;
-}
-
-bool _isDigit(String s) {
-  if (s.isEmpty) return false;
-  return s.codeUnitAt(0) >= 48 && s.codeUnitAt(0) <= 57;
-}
 
 List<MapEntry<String, String>> getLinksInLines(String lines) =>
     RegExp(r'(?:(?:http|https|ftp)://)\S+')
@@ -138,27 +79,30 @@ Future<List<MapEntry<String, String>>> grabLinksCommon(
       .map((e) => MapEntry(ensureAbsoluteUrl(e.key, reqUrl), e.value))
       .toList();
   if (allLinks.isEmpty || matchLinksOutsideATags) {
-    // Decode the body if the response is a JSON
-    try {
-      final jsonStrings = collectAllStringsFromJSONObject(jsonDecode(rawBody));
-      allLinks = getLinksInLines(jsonStrings.join('\n'));
-      if (allLinks.isEmpty) {
-        allLinks = getLinksInLines(
-          jsonStrings
-              .map((l) {
-                return ensureAbsoluteUrl(l, reqUrl);
-              })
-              .join('\n'),
-        );
-      }
-    } catch (e) {
-      unawaited(
-        LogsProvider().add(
-          'Failed to parse HTML links: ${e.toString()}',
-          level: LogLevel.warning,
-        ),
-      );
+    if (allLinks.isNotEmpty && matchLinksOutsideATags) {
       allLinks = getLinksInLines(rawBody);
+    } else {
+      try {
+        final jsonStrings = collectAllStringsFromJSONObject(jsonDecode(rawBody));
+        allLinks = getLinksInLines(jsonStrings.join('\n'));
+        if (allLinks.isEmpty) {
+          allLinks = getLinksInLines(
+            jsonStrings
+                .map((l) {
+                  return ensureAbsoluteUrl(l, reqUrl);
+                })
+                .join('\n'),
+          );
+        }
+      } catch (e) {
+        unawaited(
+          LogsProvider().add(
+            'Failed to parse HTML links: ${e.toString()}',
+            level: LogLevel.warning,
+          ),
+        );
+        allLinks = getLinksInLines(rawBody);
+      }
     }
   }
   List<MapEntry<String, String>> links = [];
@@ -409,12 +353,12 @@ class HTML extends AppSource {
           await sourceRequest(currentUrl, additionalSettings),
           intermediateLinks[i],
         );
+        if (intermediateLinks[i]['autoLinkFilterByArch'] == true) {
+          intLinks = await filterApksByArch(intLinks);
+        }
         if (intLinks.isEmpty) {
           throw NoReleasesError(note: currentUrl);
         } else {
-          if (intermediateLinks[i]['autoLinkFilterByArch'] == true) {
-            intLinks = await filterApksByArch(intLinks);
-          }
           currentUrl = intLinks.last.key;
         }
       }

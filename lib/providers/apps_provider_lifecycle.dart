@@ -11,6 +11,7 @@ import 'package:obtainium/custom_errors.dart';
 import 'package:obtainium/providers/logs_provider.dart';
 import 'package:obtainium/app_sources/html.dart';
 import 'package:obtainium/components/generated_form_renderer.dart';
+import 'package:obtainium/utils/color_utils.dart';
 import 'package:obtainium/providers/apps_provider.dart';
 import 'package:obtainium/providers/notifications_provider.dart';
 import 'package:obtainium/providers/settings_provider.dart';
@@ -125,6 +126,7 @@ extension AppsProviderLifecycle on AppsProvider {
     }
     // 2. Reconcile differences between reported and real installed versions.
     if (realInstalledVersion != null &&
+        app.installedVersion != null &&
         realInstalledVersion != app.installedVersion &&
         versionDetectionIsStandard) {
       // App's reported version and real version don't match (and it uses standard version detection)
@@ -169,7 +171,6 @@ extension AppsProviderLifecycle on AppsProvider {
       app = app.copyWith(
         additionalSettings: Map<String, dynamic>.from(app.additionalSettings)
           ..['versionDetection'] = false,
-        installedVersion: app.latestVersion,
       );
       unawaited(logs.add('Could not reconcile version formats for: ${app.id}'));
       modded = true;
@@ -228,7 +229,9 @@ extension AppsProviderLifecycle on AppsProvider {
           if (i.packageName != null) i.packageName!: i,
       };
       final List<String> removedAppIds = [];
+      final List<App> correctedApps = [];
       await Future.wait(
+        // TODO: Replace listSync() with async list().toList()
         (await getAppsDir()) // Parse Apps from JSON
             .listSync()
             .map((item) async {
@@ -285,6 +288,7 @@ extension AppsProviderLifecycle on AppsProvider {
                   );
                   if (moddedApp != null) {
                     app = moddedApp;
+                    correctedApps.add(app);
                     // Note the app ID if it was uninstalled externally
                     if (moddedApp.installedVersion == null) {
                       removedAppIds.add(moddedApp.id);
@@ -340,6 +344,13 @@ extension AppsProviderLifecycle on AppsProvider {
       if (removedAppIds.isNotEmpty &&
           settingsProvider.removeOnExternalUninstall) {
         await removeApps(removedAppIds);
+      }
+      if (correctedApps.isNotEmpty) {
+        await saveApps(
+          correctedApps,
+          attemptToCorrectInstallStatus: false,
+          reuseInstalledInfo: true,
+        );
       }
     } finally {
       loadingApps = false;
@@ -445,7 +456,7 @@ extension AppsProviderLifecycle on AppsProvider {
 
   /// Deletes app JSON files, cached APKs, and icons for the given app IDs, then updates state.
   Future<void> removeApps(List<String> appIds) async {
-    final apkFiles = apkDir.listSync();
+    final apkFiles = await apkDir.list().toList();
     await Future.wait(
       appIds.map((appId) async {
         final File file = File('${(await getAppsDir()).path}/$appId.json');

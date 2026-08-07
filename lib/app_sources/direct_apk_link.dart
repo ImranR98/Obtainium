@@ -50,7 +50,8 @@ class DirectAPKLink extends AppSource {
     if (!forSelection) {
       return Uri.tryParse(url)?.toString() ?? url;
     }
-    final RegExp standardUrlRegExA = RegExp('.+\\.apk\$', caseSensitive: false);
+    final RegExp standardUrlRegExA =
+        RegExp(r'.+\.apk([?#].*)?$', caseSensitive: false);
     final match = standardUrlRegExA.firstMatch(url);
     if (match == null) {
       throw InvalidURLError(name);

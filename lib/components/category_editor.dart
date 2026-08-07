@@ -2,11 +2,12 @@ import 'package:easy_localization/easy_localization.dart';
 import 'package:flex_color_picker/flex_color_picker.dart';
 import 'package:flutter/foundation.dart' show setEquals;
 import 'package:flutter/material.dart';
-import 'package:obtainium/components/generated_form_renderer.dart'
+import 'package:obtainium/utils/color_utils.dart'
     show generateRandomLightColor;
 import 'package:obtainium/components/ui_widgets.dart';
 import 'package:obtainium/providers/apps_provider.dart';
 import 'package:obtainium/providers/settings_provider.dart';
+import 'package:obtainium/utils/locale_utils.dart';
 import 'package:obtainium/providers/source_provider.dart';
 import 'package:provider/provider.dart';
 
@@ -449,7 +450,7 @@ class _CategorySelectorState extends State<CategorySelector> {
     }
 
     return Row(
-      crossAxisAlignment: CrossAxisAlignment.center,
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Expanded(
           child: Wrap(
@@ -504,12 +505,12 @@ class CategoryManager extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
-    final categories = context.watch<SettingsProvider>().categories;
+    final categories = context.select<SettingsProvider, Map<String, int>>((p) => p.categories);
     final names = categories.keys.toList()
       ..sort((a, b) => a.toLowerCase().compareTo(b.toLowerCase()));
     if (names.isEmpty) {
       return Row(
-        crossAxisAlignment: CrossAxisAlignment.center,
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
             tr('noCategories'),
@@ -528,7 +529,7 @@ class CategoryManager extends StatelessWidget {
       );
     }
     return Row(
-      crossAxisAlignment: CrossAxisAlignment.center,
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Expanded(
           child: Wrap(

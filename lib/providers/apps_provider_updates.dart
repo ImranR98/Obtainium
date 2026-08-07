@@ -148,7 +148,7 @@ extension AppsProviderUpdates on AppsProvider {
       // on the UI isolate. Firing every check at once saturates the event loop
       // and freezes the UI for the whole refresh. Bound the number of in-flight
       // checks so the isolate has room to render frames between them.
-      const maxConcurrent = 4;
+      const maxConcurrent = kDefaultFetchConcurrency;
       var nextIndex = 0;
 
       Future<MapEntry<App, bool>?> fetchOne(String appId) async {
@@ -158,14 +158,15 @@ extension AppsProviderUpdates on AppsProvider {
           if (newApp != null) {
             final isUpdate =
                 currentApp != null &&
-                newApp.latestVersion != currentApp.latestVersion;
+                newApp.latestVersion != currentApp.latestVersion &&
+                isAppUpdateable(newApp, settingsProvider);
             return MapEntry(newApp, isUpdate);
           }
         } on HandshakeException {
           // Concurrent TLS handshakes to the same host can fail on
-          // certain devices/networks. Retry up to 5 times with
+          // certain devices/networks. Retry up to 2 times with
           // staggered random delays to avoid all retries colliding.
-          const maxRetries = 5;
+          const maxRetries = 2;
           final rng = Random();
           for (var attempt = 0; attempt < maxRetries; attempt++) {
             await Future.delayed(
@@ -176,7 +177,8 @@ extension AppsProviderUpdates on AppsProvider {
               if (newApp != null) {
                 final isUpdate =
                     currentApp != null &&
-                    newApp.latestVersion != currentApp.latestVersion;
+                    newApp.latestVersion != currentApp.latestVersion &&
+                    isAppUpdateable(newApp, settingsProvider);
                 return MapEntry(newApp, isUpdate);
               }
               break;
@@ -257,16 +259,47 @@ extension AppsProviderUpdates on AppsProvider {
     for (final appId in apps.keys) {
       final app = apps[appId]!.app;
       if (installedOnly) {
-        if (app.installedVersion != null &&
-            app.installedVersion != app.latestVersion) {
-          updateAppIds.add(app.id);
+        if (app.installedVersion != null) {
+          final regex =
+              (app.additionalSettings['versionExtractionRegEx'] as String?) ??
+              '';
+          if (regex.isEmpty) {
+            if (app.installedVersion != app.latestVersion &&
+                isAppUpdateable(app, settingsProvider)) {
+              updateAppIds.add(app.id);
+            }
+          } else if (!doStringsMatchUnderRegEx(
+                regex,
+                app.installedVersion!,
+                app.latestVersion,
+              ) &&
+              isAppUpdateable(app, settingsProvider)) {
+            updateAppIds.add(app.id);
+          }
         }
       } else if (nonInstalledOnly) {
         if (app.installedVersion == null) {
           updateAppIds.add(app.id);
         }
       } else if (app.installedVersion != app.latestVersion) {
-        updateAppIds.add(app.id);
+        if (app.installedVersion == null) {
+          updateAppIds.add(app.id);
+        } else {
+          final regex =
+              (app.additionalSettings['versionExtractionRegEx'] as String?) ??
+              '';
+          if (regex.isNotEmpty &&
+              doStringsMatchUnderRegEx(
+                regex,
+                app.installedVersion!,
+                app.latestVersion,
+              )) {
+            continue;
+          }
+          if (isAppUpdateable(app, settingsProvider)) {
+            updateAppIds.add(app.id);
+          }
+        }
       }
     }
     return updateAppIds;

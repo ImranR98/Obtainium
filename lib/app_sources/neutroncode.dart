@@ -36,18 +36,18 @@ class NeutronCode extends AppSource {
     'december': '12',
   };
 
-  String monthNameToNumberString(String s) =>
+  String _monthNameToNumberString(String s) =>
       _monthMap[s.toLowerCase()] ??
       (throw ArgumentError('Invalid month name: $s'));
 
-  String? formatDateForParsing(String dateString) {
+  String? _formatDateForParsing(String dateString) {
     final List<String> parts = dateString.split(' ');
     if (parts.length != 3) {
       return null;
     }
     final monthIdx = parts.indexWhere((s) => int.tryParse(s) == null);
     if (monthIdx < 0) return null;
-    final month = monthNameToNumberString(parts[monthIdx]);
+    final month = _monthNameToNumberString(parts[monthIdx]);
     final numericParts = [
       for (var i = 0; i < 3; i++)
         if (i != monthIdx) int.tryParse(parts[i]),
@@ -69,9 +69,10 @@ class NeutronCode extends AppSource {
       if (res.statusCode == 200) {
         final http = parse(res.body);
         final name = http.querySelector('.pd-title')?.innerHtml;
-        final filename = http
+        final filenameRaw = http
             .querySelector('.pd-filename .pd-float')
             ?.innerHtml;
+        final filename = filenameRaw?.trim();
         if (filename == null) {
           throw NoReleasesError();
         }
@@ -88,7 +89,7 @@ class NeutronCode extends AppSource {
             ?.nextElementSibling
             ?.innerHtml;
         final dateString = dateStringOriginal != null
-            ? (formatDateForParsing(dateStringOriginal))
+            ? (_formatDateForParsing(dateStringOriginal))
             : null;
         final changeLogElements = http.querySelectorAll('.pd-fdesc p');
         return APKDetails(

@@ -24,8 +24,10 @@ class SourceForge extends AppSource {
     );
     RegExpMatch? match = standardUrlRegExC.firstMatch(url);
     if (match != null) {
-      url =
-          'https://${Uri.parse(match.group(0)!).host}/projects/${url.substring(Uri.parse(match.group(0)!).host.length + '/projects/'.length + 1)}';
+      final parsed = Uri.parse(match.group(0)!);
+      final segments = parsed.pathSegments;
+      final project = segments.length > 1 ? segments[1] : '';
+      url = 'https://${parsed.host}/projects/$project';
     }
     final RegExp standardUrlRegExB = RegExp(
       '^https?://(www\\.)?$sourceRegex/projects/[^/]+',
@@ -93,15 +95,12 @@ class SourceForge extends AppSource {
               } catch (e) {
                 if (e is NoVersionError) {
                   version = null;
-                } else {
-                  rethrowOrWrapError(e);
                 }
               }
             }
             return version;
           } catch (e) {
-            // Any parsing/extraction failure just skips this release (matches
-            // main), rather than aborting the whole update check.
+            if (e is! FormatException && e is! NoVersionError) rethrow;
             return null;
           }
         }

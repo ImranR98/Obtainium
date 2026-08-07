@@ -155,8 +155,8 @@ class ItchIO extends AppSource {
     for (var abbrElement in abbrElements) {
       final title = abbrElement.attributes['title'];
       if (title == null) continue;
-      final DateTime abbrDate = abbrTimeFormat.parseUtc(title);
-      abbrDates.add(abbrDate);
+      final DateTime? abbrDate = abbrTimeFormat.tryParseUtc(title);
+      if (abbrDate != null) abbrDates.add(abbrDate);
     }
 
     if (abbrDates.isEmpty) return null;
@@ -274,18 +274,13 @@ class ItchIO extends AppSource {
     try {
       final String baseUrl = standardUrl.replaceAll(RegExp(r'/$'), '');
 
-      // Retrieve the body for parsing
       final res = await sourceRequest(standardUrl, additionalSettings);
       if (res.statusCode != 200) {
         throw getObtainiumHttpError(res);
       }
       final body = res.body;
-
-      // Retrieve CSRF token and cookies
-      final (csrfToken, cookies) = await _setupDownload(
-        standardUrl,
-        additionalSettings,
-      );
+      final csrfToken = _findCsrf(body);
+      final cookies = res.headers['set-cookie'];
 
       final Document storePage = parse(body);
       final String title = _parseTitle(storePage);

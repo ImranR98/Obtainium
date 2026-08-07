@@ -15,7 +15,7 @@ dependencies:
   cupertino_icons: ^1.0.9
   path_provider: ^2.1.6
   flutter_fgbg: ^0.8.0
-  flutter_local_notifications: ^22.0.1
+  flutter_local_notifications: ^22.2.0
   provider: ^6.1.5+1
   http: ^1.6.0
   webview_flutter: ^4.14.1
@@ -23,8 +23,8 @@ dependencies:
   html: ^0.15.6
   shared_preferences: ^2.5.5
   url_launcher: ^6.3.2
-  permission_handler: ^12.0.3
-  fluttertoast: ^9.1.0
+  permission_handler: ^13.0.0
+  fluttertoast: ^10.0.0
   device_info_plus: ^13.2.0
   file_picker: ^12.0.0-beta.7
   animations: ^2.2.0
@@ -36,15 +36,15 @@ dependencies:
     git:
       url: https://github.com/ImranR98/android_package_manager
       ref: 98661a5824c94ae990ae0f7bf0bdb1478300c4f7
-  share_plus: ^13.2.0
+  share_plus: ^13.3.0
   sqflite: ^2.4.3
   easy_localization: ^3.0.8
   intl: ^0.20.2
-  android_intent_plus: ^6.0.0
+  android_intent_plus: ^6.1.0
   flutter_archive: ^6.3.1
   archive: ^4.0.9
   hsluv: ^1.1.3
-  connectivity_plus: ^7.2.0
+  connectivity_plus: ^7.3.1
   shared_storage: # TODO: Upstream maintenance uncertain; consider alternatives or fork to org
     git:
       url: https://github.com/AlexBacich/shared-storage
@@ -64,10 +64,10 @@ dependencies:
       ref: 3ef7f8fbf904848d144304556b0f80c91fee82a5
   markdown: ^7.3.1
   flutter_typeahead: ^6.0.0
-  battery_plus: ^7.1.0
+  battery_plus: ^7.1.1
   flutter_charset_detector: ^6.0.0
   flutter_markdown_plus: ^1.0.12
-  workmanager: ^0.9.0+3
+  workmanager: ^0.10.7
 
 dev_dependencies:
   flutter_lints: ^6.0.0

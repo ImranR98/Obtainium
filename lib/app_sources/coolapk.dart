@@ -28,6 +28,8 @@ class CoolApk extends AppSource {
     inferAppIdFromUrlPath = true;
   }
 
+  static const String _apiBaseUrl = 'https://api2.coolapk.com';
+
   @override
   String sourceSpecificStandardizeURL(
     String url, {
@@ -48,9 +50,7 @@ class CoolApk extends AppSource {
       if (appId == null) {
         throw NoReleasesError();
       }
-      const String apiUrl = 'https://api2.coolapk.com';
-
-      final detailUrl = '$apiUrl/v6/apk/detail?id=$appId';
+      final detailUrl = '$_apiBaseUrl/v6/apk/detail?id=$appId';
       final res = await sourceRequest(detailUrl, additionalSettings);
 
       if (res.statusCode != 200) {
@@ -89,7 +89,7 @@ class CoolApk extends AppSource {
       final String aid = detail['id'].toString();
 
       final String apkUrl = await _getLatestApkUrl(
-        apiUrl,
+        _apiBaseUrl,
         appId,
         aid,
         version,

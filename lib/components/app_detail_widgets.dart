@@ -2,6 +2,7 @@ import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:obtainium/components/ui_widgets.dart';
 import 'package:obtainium/custom_errors.dart';
+import 'package:obtainium/utils/locale_utils.dart';
 import 'package:obtainium/providers/apps_provider.dart';
 import 'package:obtainium/providers/settings_provider.dart';
 import 'package:obtainium/providers/source_provider.dart';
@@ -130,10 +131,12 @@ class _AppFilePickerState extends State<AppFilePicker> {
               groupValue: fileUrl!.value,
               onChanged: (String? val) {
                 setState(() {
-                  fileUrl = urlsToSelectFrom.firstWhere(
-                    (e) => e.value == val,
-                    orElse: () => urlsToSelectFrom.first,
-                  );
+                  fileUrl = urlsToSelectFrom.isNotEmpty
+                      ? urlsToSelectFrom.firstWhere(
+                          (e) => e.value == val,
+                          orElse: () => urlsToSelectFrom.first,
+                        )
+                      : fileUrl;
                 });
               },
               child: Column(
@@ -177,10 +180,10 @@ class _AppFilePickerState extends State<AppFilePicker> {
                                 list2FriendlyString(
                                   widget.archs!.map((e) => '\'$e\'').toList(),
                                 ),
-                      style: const TextStyle(
-                        fontStyle: FontStyle.italic,
-                        fontSize: 12,
-                      ),
+                      style: Theme.of(context)
+                          .textTheme
+                          .bodySmall
+                          ?.copyWith(fontStyle: FontStyle.italic),
                     ),
                 ],
               ),

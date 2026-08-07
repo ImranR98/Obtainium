@@ -9,8 +9,6 @@ import 'package:obtainium/providers/logs_provider.dart';
 import 'package:obtainium/providers/source_provider.dart';
 
 class FDroidRepo extends AppSource {
-  bool _appIdFoundInUrl = false;
-
   @override
   String get name => tr('fdroidThirdPartyRepo');
 
@@ -29,7 +27,7 @@ class FDroidRepo extends AppSource {
         'appIdOrName',
         label: tr('appIdOrName'),
         hint: tr('reposHaveMultipleApps'),
-        required: !_appIdFoundInUrl,
+        required: true,
       ),
     ],
     [
@@ -48,7 +46,7 @@ class FDroidRepo extends AppSource {
     ],
   ];
 
-  String removeQueryParamsFromUrl(String url, {List<String> keep = const []}) {
+  String _removeQueryParamsFromUrl(String url, {List<String> keep = const []}) {
     final uri = Uri.parse(url);
     final Map<String, dynamic> resultParams = {};
     uri.queryParameters.forEach((key, value) {
@@ -71,7 +69,7 @@ class FDroidRepo extends AppSource {
       pathSegments.removeLast();
       standardUri = standardUri.replace(path: pathSegments.join('/'));
     }
-    return removeQueryParamsFromUrl(standardUri.toString(), keep: ['appId']);
+    return _removeQueryParamsFromUrl(standardUri.toString(), keep: ['appId']);
   }
 
   @override
@@ -83,7 +81,7 @@ class FDroidRepo extends AppSource {
     if (url == null) {
       throw NoReleasesError();
     }
-    url = removeQueryParamsFromUrl(standardizeUrl(url));
+    url = _removeQueryParamsFromUrl(standardizeUrl(url));
     final res = await sourceRequestWithURLVariants(url, {});
     if (res.statusCode == 200) {
       final body = parse(res.body);
@@ -110,8 +108,7 @@ class FDroidRepo extends AppSource {
   @override
   void runOnAddAppInputChange(String inputUrl) {
     try {
-      final appId = Uri.parse(inputUrl).queryParameters['appId'];
-      _appIdFoundInUrl = appId != null;
+      Uri.parse(inputUrl).queryParameters['appId'];
     } catch (e) {
       unawaited(LogsProvider().add('Failed to parse appId from URL: $e'));
     }
@@ -180,7 +177,7 @@ class FDroidRepo extends AppSource {
       if (standardUri.queryParameters['appId'] != null) {
         appIdOrName = standardUri.queryParameters['appId'];
       }
-      standardUrl = removeQueryParamsFromUrl(standardUrl);
+      standardUrl = _removeQueryParamsFromUrl(standardUrl);
       final bool pickHighestVersionCode =
           additionalSettings['pickHighestVersionCode'] == true;
       final bool trySelectingSuggestedVersionCode =
@@ -280,8 +277,13 @@ class FDroidRepo extends AppSource {
             selectedReleases = [selectedReleases[0]];
           }
         }
+        if (selectedReleases.isEmpty) {
+          throw NoReleasesError();
+        }
+        final useVersionCode =
+            additionalSettings['useVersionCodeAsOSVersion'] == true;
         final String? selectedVersion = selectedReleases[0]
-            .querySelector('version')
+            .querySelector(useVersionCode ? 'versioncode' : 'version')
             ?.innerHtml;
         if (selectedVersion == null) {
           throw NoVersionError();
@@ -290,7 +292,7 @@ class FDroidRepo extends AppSource {
             .querySelector('added')
             ?.innerHtml;
         final DateTime? releaseDate = added != null
-            ? DateTime.parse(added)
+            ? DateTime.tryParse(added)
             : null;
         final List<String> apkUrls = selectedReleases
             .map((e) {
