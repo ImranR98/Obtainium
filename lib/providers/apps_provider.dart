@@ -432,9 +432,12 @@ Future<File> downloadFile(
   } else if (ext == 'attachment') {
     ext = 'apk';
   }
-  fileName = fileNameHasExt
-      ? fileName
-      : fileName.split('/').last; // Ensure the fileName is a file name
+  // Never trust a source-provided fileName: always reduce it to a plain
+  // basename so it cannot escape destDir, whatever the caller passed.
+  fileName = fileName.replaceAll('\\', '/').split('/').last;
+  if (fileName.isEmpty || fileName == '.' || fileName == '..') {
+    throw ObtainiumError(tr('unexpectedError'));
+  }
   File downloadedFile = File('$destDir/$fileName.$ext');
   if (fileNameHasExt) {
     // If the user says the filename already has an ext, ignore whatever you inferred from above
