@@ -288,8 +288,11 @@ class App {
           jsonDecode((json['apkUrls'] ?? '[["placeholder", "placeholder"]]')),
         ),
         preferredApkIndex: (json['preferredApkIndex'] ?? -1) as int,
-        additionalSettings:
-            jsonDecode(json['additionalSettings']) as Map<String, dynamic>,
+        additionalSettings: json['additionalSettings'] is String
+            ? jsonDecode(json['additionalSettings']) as Map<String, dynamic>
+            : Map<String, dynamic>.from(
+                (json['additionalSettings'] as Map?) ?? {},
+              ),
         lastUpdateCheck: json['lastUpdateCheck'] == null
             ? null
             : DateTime.fromMicrosecondsSinceEpoch(json['lastUpdateCheck']),

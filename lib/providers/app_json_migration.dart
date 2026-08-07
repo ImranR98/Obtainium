@@ -253,8 +253,12 @@ Map<String, dynamic> appJSONCompatibilityModifiers(Map<String, dynamic> json) {
   ]);
   Map<String, dynamic> originalAdditionalSettings = {};
   if (json['additionalSettings'] != null) {
+    // Tolerate both shapes: a JSON-encoded string (exports) or an already
+    // decoded map (deep-link imports).
     originalAdditionalSettings = Map<String, dynamic>.from(
-      jsonDecode(json['additionalSettings']),
+      json['additionalSettings'] is String
+          ? jsonDecode(json['additionalSettings'])
+          : json['additionalSettings'] as Map,
     );
     additionalSettings.addEntries(originalAdditionalSettings.entries);
   }

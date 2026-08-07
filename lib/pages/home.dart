@@ -9,6 +9,7 @@ import 'package:obtainium/components/ui_widgets.dart';
 import 'package:obtainium/custom_errors.dart';
 import 'package:obtainium/pages/app.dart';
 import 'package:obtainium/pages/apps.dart';
+import 'package:obtainium/pages/import_export.dart';
 import 'package:obtainium/providers/apps_provider.dart';
 import 'package:obtainium/providers/logs_provider.dart';
 import 'package:obtainium/providers/settings_provider.dart';
@@ -265,6 +266,16 @@ class _HomePageState extends State<HomePage> {
             final importPayload = jsonEncode(<String, dynamic>{
               'apps': action == 'app' ? <dynamic>[parsedData] : parsedData,
             });
+            final importWarnings = await ap.getImportWarnings(importPayload);
+            if (!mounted) return;
+            if (importWarnings.isNotEmpty) {
+              final proceed = await confirmImportDespiteWarnings(
+                context,
+                importWarnings,
+              );
+              if (!proceed) return;
+            }
+            if (!context.mounted) return;
             final result = await ap.import(importPayload);
             if (mounted) {
               showMessage(
