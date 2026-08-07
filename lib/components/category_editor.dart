@@ -2,8 +2,7 @@ import 'package:easy_localization/easy_localization.dart';
 import 'package:flex_color_picker/flex_color_picker.dart';
 import 'package:flutter/foundation.dart' show setEquals;
 import 'package:flutter/material.dart';
-import 'package:obtainium/utils/color_utils.dart'
-    show generateRandomLightColor;
+import 'package:obtainium/utils/color_utils.dart' show generateRandomLightColor;
 import 'package:obtainium/components/ui_widgets.dart';
 import 'package:obtainium/providers/apps_provider.dart';
 import 'package:obtainium/providers/settings_provider.dart';
@@ -506,7 +505,9 @@ class CategoryManager extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
-    final categories = context.select<SettingsProvider, Map<String, int>>((p) => p.categories);
+    final categories = context.select<SettingsProvider, Map<String, int>>(
+      (p) => p.categories,
+    );
     final names = categories.keys.toList()
       ..sort((a, b) => a.toLowerCase().compareTo(b.toLowerCase()));
     if (names.isEmpty) {

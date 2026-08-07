@@ -27,7 +27,8 @@ class APKPure extends AppSource {
     inferAppIdFromUrlPath = true;
   }
 
-  static const String _apiBaseUrl = 'https://tapi.pureapk.com/v3/get_app_his_version?package_name';
+  static const String _apiBaseUrl =
+      'https://tapi.pureapk.com/v3/get_app_his_version?package_name';
 
   @override
   List<List<GeneratedFormItem>>
@@ -169,10 +170,7 @@ class APKPure extends AppSource {
               '{"device_info":{"os_ver":"${androidInfo.version.sdkInt}"}}',
         };
       } catch (e) {
-        AppLogger.error(
-          'Failed to get device info headers: $e',
-          message: 'Failed to get device info headers: $e',
-        );
+        AppLogger.error(e, message: 'Failed to get device info headers');
         return null;
       }
     }
@@ -193,10 +191,7 @@ class APKPure extends AppSource {
       try {
         supportedArchs = (await DeviceInfoPlugin().androidInfo).supportedAbis;
       } catch (e) {
-        AppLogger.error(
-          'Failed to get supported ABIs: $e',
-          message: 'Failed to get supported ABIs: $e',
-        );
+        AppLogger.error(e, message: 'Failed to get supported ABIs');
         supportedArchs = [];
       }
 
@@ -212,10 +207,7 @@ class APKPure extends AppSource {
         apks = (jsonDecode(res.body)['version_list'] as List<dynamic>)
             .cast<Map<String, dynamic>>();
       } catch (e) {
-        AppLogger.error(
-          'Failed to parse version list: $e',
-          message: 'Failed to parse version list: $e',
-        );
+        AppLogger.error(e, message: 'Failed to parse version list');
         throw NoReleasesError();
       }
 

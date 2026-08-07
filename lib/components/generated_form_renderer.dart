@@ -13,7 +13,6 @@ import 'package:url_launcher/url_launcher_string.dart';
 
 export 'generated_form_model.dart';
 
-
 typedef OnValueChanges =
     void Function(Map<String, dynamic> values, bool valid, bool isBuilding);
 

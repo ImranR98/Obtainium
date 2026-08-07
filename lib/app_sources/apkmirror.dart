@@ -120,8 +120,9 @@ class APKMirror extends AppSource {
         }
         String? version;
         if (titleString != null) {
-          final match =
-              RegExp(r'\b(\d[\d.]*(?:[- ]?\d[\d.]*)*)\b').firstMatch(titleString);
+          final match = RegExp(
+            r'\b(\d[\d.]*(?:[- ]?\d[\d.]*)*)\b',
+          ).firstMatch(titleString);
           version = match?.group(1);
         }
         if (version == null || version.isEmpty) {

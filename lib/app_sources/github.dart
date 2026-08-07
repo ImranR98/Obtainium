@@ -532,10 +532,10 @@ class GitHub extends AppSource {
     required Map<String, String> sourceConfigSettingValues,
   }) {
     var releaseSkipped = 0;
-    final titleRegex =
-        regexFilter != null ? RegExp(regexFilter) : null;
-    final notesRegex =
-        regexNotesFilter != null ? RegExp(regexNotesFilter) : null;
+    final titleRegex = regexFilter != null ? RegExp(regexFilter) : null;
+    final notesRegex = regexNotesFilter != null
+        ? RegExp(regexNotesFilter)
+        : null;
     for (int i = 0; i < releases.length; i++) {
       if (!fallbackToOlderReleases && i > releaseSkipped) break;
       if (!includePrereleases && releases[i]['prerelease'] == true) {
@@ -550,13 +550,13 @@ class GitHub extends AppSource {
       if (nameToFilter == null || nameToFilter.trim().isEmpty) {
         nameToFilter = releases[i]['tag_name']?.toString() ?? '';
       }
-      if (titleRegex != null &&
-          !titleRegex.hasMatch(nameToFilter.trim())) {
+      if (titleRegex != null && !titleRegex.hasMatch(nameToFilter.trim())) {
         continue;
       }
       if (notesRegex != null &&
           !notesRegex.hasMatch(
-              ((releases[i]['body'] as String?) ?? '').trim())) {
+            ((releases[i]['body'] as String?) ?? '').trim(),
+          )) {
         continue;
       }
       final allAssetsWithUrls = _findReleaseAssetUrls(

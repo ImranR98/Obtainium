@@ -11,7 +11,6 @@ import 'package:obtainium/core/logging/app_logger.dart';
 import 'package:obtainium/providers/source_provider.dart';
 import 'package:obtainium/utils/string_compare.dart';
 
-
 List<String> collectAllStringsFromJSONObject(dynamic obj) {
   List<String> extractor(dynamic obj) {
     final results = <String>[];
@@ -32,7 +31,6 @@ List<String> collectAllStringsFromJSONObject(dynamic obj) {
 
   return extractor(obj);
 }
-
 
 List<MapEntry<String, String>> getLinksInLines(String lines) =>
     RegExp(r'(?:(?:http|https|ftp)://)\S+')
@@ -83,7 +81,9 @@ Future<List<MapEntry<String, String>>> grabLinksCommon(
       allLinks = getLinksInLines(rawBody);
     } else {
       try {
-        final jsonStrings = collectAllStringsFromJSONObject(jsonDecode(rawBody));
+        final jsonStrings = collectAllStringsFromJSONObject(
+          jsonDecode(rawBody),
+        );
         allLinks = getLinksInLines(jsonStrings.join('\n'));
         if (allLinks.isEmpty) {
           allLinks = getLinksInLines(
@@ -121,7 +121,9 @@ Future<List<MapEntry<String, String>>> grabLinksCommon(
       try {
         link = Uri.decodeFull(element.key);
       } catch (e) {
-        AppLogger.debug('Failed to decode URI in HTML APK filter: ${e.toString()}');
+        AppLogger.debug(
+          'Failed to decode URI in HTML APK filter: ${e.toString()}',
+        );
       }
       return AppSource.isApkOrContainerFile(
         Uri.parse((filterLinkByText ? element.value : link).trim()).path,
@@ -377,7 +379,9 @@ class HTML extends AppSource {
       try {
         relDecoded = Uri.decodeFull(rel);
       } catch (e) {
-        AppLogger.debug('Failed to decode URI for version extraction: ${e.toString()}');
+        AppLogger.debug(
+          'Failed to decode URI for version extraction: ${e.toString()}',
+        );
       }
       String? version;
       version = extractVersion(

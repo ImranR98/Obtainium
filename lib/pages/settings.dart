@@ -10,7 +10,6 @@ import 'package:flutter/material.dart';
 import 'package:obtainium/components/ui_widgets.dart';
 import 'package:obtainium/components/generated_form_renderer.dart';
 import 'package:obtainium/custom_errors.dart';
-import 'package:obtainium/core/logging/app_log_db.dart';
 import 'package:obtainium/core/logging/app_logger.dart';
 import 'package:obtainium/main.dart';
 import 'package:obtainium/pages/import_export.dart';
@@ -206,7 +205,6 @@ class _SettingsPageState extends State<SettingsPage> {
     child: field,
   );
 
-
   @override
   Widget build(BuildContext context) {
     final SettingsProvider settingsProvider = context.watch<SettingsProvider>();
@@ -347,41 +345,43 @@ class _SettingsPageState extends State<SettingsPage> {
                               ),
                             ),
                           ),
-            _settingsRow(
-              context,
-              icon: Icons.update_outlined,
-              title: tr('updates'),
-              onTap: () => _pushPage(
-                context,
-                title: tr('updates'),
-                childBuilder: (ctx) => _buildUpdatesSection(
-                  ctx, showBgSection, sdk,
-                ),
-              ),
-            ),
-            if (sourceSpecificForm != null)
-              _settingsRow(
-                context,
-                icon: Icons.tune_outlined,
-                title: tr('sourceSpecific'),
-                onTap: () => _pushPage(
-                  context,
-                  title: tr('sourceSpecific'),
-                  childBuilder: (_) => sourceSpecificForm,
-                ),
-              ),
-            _settingsRow(
-              context,
-              icon: Icons.palette_outlined,
-              title: tr('appearance'),
-              onTap: () => _pushPage(
-                context,
-                title: tr('appearance'),
-                childBuilder: (ctx) => _buildAppearanceSection(
-                  ctx, colorPicker, sortDropdown, orderControl,
-                ),
-              ),
-            ),
+                          _settingsRow(
+                            context,
+                            icon: Icons.update_outlined,
+                            title: tr('updates'),
+                            onTap: () => _pushPage(
+                              context,
+                              title: tr('updates'),
+                              childBuilder: (ctx) =>
+                                  _buildUpdatesSection(ctx, showBgSection, sdk),
+                            ),
+                          ),
+                          if (sourceSpecificForm != null)
+                            _settingsRow(
+                              context,
+                              icon: Icons.tune_outlined,
+                              title: tr('sourceSpecific'),
+                              onTap: () => _pushPage(
+                                context,
+                                title: tr('sourceSpecific'),
+                                childBuilder: (_) => sourceSpecificForm,
+                              ),
+                            ),
+                          _settingsRow(
+                            context,
+                            icon: Icons.palette_outlined,
+                            title: tr('appearance'),
+                            onTap: () => _pushPage(
+                              context,
+                              title: tr('appearance'),
+                              childBuilder: (ctx) => _buildAppearanceSection(
+                                ctx,
+                                colorPicker,
+                                sortDropdown,
+                                orderControl,
+                              ),
+                            ),
+                          ),
                           CardTile(
                             child: ListTile(
                               leading: Icon(
@@ -487,9 +487,7 @@ class _SettingsPageState extends State<SettingsPage> {
             ),
           ),
           SliverToBoxAdapter(
-            child: SizedBox(
-              height: MediaQuery.of(context).padding.bottom,
-            ),
+            child: SizedBox(height: MediaQuery.of(context).padding.bottom),
           ),
         ],
       ),
@@ -537,9 +535,7 @@ class _SettingsPageState extends State<SettingsPage> {
                   sliver: SliverToBoxAdapter(child: childBuilder(ctx)),
                 ),
                 SliverToBoxAdapter(
-                  child: SizedBox(
-                    height: MediaQuery.of(ctx).padding.bottom,
-                  ),
+                  child: SizedBox(height: MediaQuery.of(ctx).padding.bottom),
                 ),
               ],
             ),
@@ -768,8 +764,7 @@ class _SettingsPageState extends State<SettingsPage> {
               borderRadius: BorderRadius.circular(connectedTileBigRadius),
             ),
             title: Text(
-              tr('selectX',
-                  args: [lowerCaseUnlessLang(tr('colour'), 'de')]),
+              tr('selectX', args: [lowerCaseUnlessLang(tr('colour'), 'de')]),
             ),
             subtitle: Text(
               '${ColorTools.nameThatColor(settingsProvider.themeColor)} '
@@ -787,8 +782,7 @@ class _SettingsPageState extends State<SettingsPage> {
                   settingsProvider,
                   obtainiumThemeColor.toSwatch(),
                 ))) {
-                  handleColorPickerCancel(
-                      colorBeforeDialog, settingsProvider);
+                  handleColorPickerCancel(colorBeforeDialog, settingsProvider);
                 }
               },
             ),
@@ -1102,8 +1096,6 @@ class _UpdateIntervalSliderTileState extends State<_UpdateIntervalSliderTile> {
     );
   }
 }
-
-
 
 class _ExternalInstallerTile extends StatefulWidget {
   const _ExternalInstallerTile();

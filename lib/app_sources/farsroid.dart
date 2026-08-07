@@ -78,10 +78,7 @@ class Farsroid extends AppSource {
       try {
         farsroidJson = jsonDecode(res2.body) as Map<String, dynamic>?;
       } catch (e) {
-        AppLogger.error(
-          'Failed to decode Farsroid JSON: $e',
-          message: 'Failed to decode Farsroid JSON: $e',
-        );
+        AppLogger.error(e, message: 'Failed to decode Farsroid JSON');
         throw NoAPKError();
       }
       final html2 = farsroidJson?['data']?['content'] as String? ?? '';

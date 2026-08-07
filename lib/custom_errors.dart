@@ -177,8 +177,7 @@ class CheckUpdatesException extends ObtainiumError {
     : super.withCode('CHECK_UPDATES_FAILED', unexpected: true);
   @override
   String toString() {
-    final base =
-        url != null && url!.isNotEmpty ? '$message ($url)' : message;
+    final base = url != null && url!.isNotEmpty ? '$message ($url)' : message;
     return '$base\n${errors.toString()}';
   }
 }

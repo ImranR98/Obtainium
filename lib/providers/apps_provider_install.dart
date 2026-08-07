@@ -886,14 +886,8 @@ extension AppsProviderInstall on AppsProvider {
       obtainiumId,
       strB: obtainiumTempId,
     );
-    appsToInstall = moveStrToEnd(
-      appsToInstall,
-      '$obtainiumId.fdroid',
-    );
-    appsToInstall = moveStrToEnd(
-      appsToInstall,
-      '$obtainiumId.debug',
-    );
+    appsToInstall = moveStrToEnd(appsToInstall, '$obtainiumId.fdroid');
+    appsToInstall = moveStrToEnd(appsToInstall, '$obtainiumId.debug');
 
     final List<_InstallResult> obtainiumResults = [];
     Future<void> installChain = Future.value();

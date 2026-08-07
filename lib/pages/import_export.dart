@@ -157,9 +157,7 @@ class _ImportFromURLListPageState extends State<ImportFromURLListPage> {
                           child: Text(
                             tr('importedAppsIdDisclaimer'),
                             textAlign: TextAlign.center,
-                            style: Theme.of(context)
-                                .textTheme
-                                .bodySmall
+                            style: Theme.of(context).textTheme.bodySmall
                                 ?.copyWith(fontStyle: FontStyle.italic),
                           ),
                         ),
@@ -687,10 +685,9 @@ class _SelectionModalState extends State<SelectionModal> {
         if (widget.titlesAreLinks)
           Text(
             Uri.parse(entry.key).host,
-            style: Theme.of(context)
-                .textTheme
-                .bodySmall
-                ?.copyWith(decoration: TextDecoration.underline),
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+              decoration: TextDecoration.underline,
+            ),
           ),
       ],
     );
@@ -703,10 +700,9 @@ class _SelectionModalState extends State<SelectionModal> {
             entry.value[1].length > 128
                 ? '${entry.value[1].substring(0, 128)}...'
                 : entry.value[1],
-            style: Theme.of(context)
-                .textTheme
-                .bodySmall
-                ?.copyWith(fontStyle: FontStyle.italic),
+            style: Theme.of(
+              context,
+            ).textTheme.bodySmall?.copyWith(fontStyle: FontStyle.italic),
           );
   }
 
@@ -816,8 +812,9 @@ class _SelectionModalState extends State<SelectionModal> {
     final isTV = context.read<SettingsProvider>().isTV;
     final Map<MapEntry<String, List<String>>, bool> filteredEntrySelections =
         {};
-    final filterRegexCompiled =
-        filterRegex.isEmpty ? null : RegExp(filterRegex);
+    final filterRegexCompiled = filterRegex.isEmpty
+        ? null
+        : RegExp(filterRegex);
     final filterRegexCompiledCI = filterRegex.isEmpty
         ? null
         : RegExp(filterRegex, caseSensitive: false);
@@ -969,10 +966,7 @@ class ImportFromURLListController extends ChangeNotifier {
                 sourceProvider.getSource(url);
                 return true;
               } catch (e) {
-                AppLogger.error(
-                  'URL parse error in filter: $e',
-                  message: 'URL parse error in filter: $e',
-                );
+                AppLogger.error(e, message: 'URL parse error in filter');
                 return false;
               }
             })

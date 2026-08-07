@@ -95,7 +95,9 @@ class ExternalInstaller extends Installer {
 
       // Set up foreground return listener BEFORE launching intent.
       final fgCompleter = Completer<FGBGType>();
-      final fgSub = FGBGEvents.instance.stream.asBroadcastStream().listen((event) {
+      final fgSub = FGBGEvents.instance.stream.asBroadcastStream().listen((
+        event,
+      ) {
         if (event == FGBGType.foreground && !fgCompleter.isCompleted) {
           fgCompleter.complete(event);
         }
@@ -106,7 +108,9 @@ class ExternalInstaller extends Installer {
 
       // Set up background detection.
       final bgCompleter = Completer<FGBGType>();
-      final bgSub = FGBGEvents.instance.stream.asBroadcastStream().listen((event) {
+      final bgSub = FGBGEvents.instance.stream.asBroadcastStream().listen((
+        event,
+      ) {
         if (event == FGBGType.background && !bgCompleter.isCompleted) {
           bgCompleter.complete(event);
         }

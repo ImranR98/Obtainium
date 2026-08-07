@@ -109,10 +109,7 @@ class FDroid extends AppSource {
           if (authorLines.isNotEmpty) {
             details = details.copyWith(
               names: details.names.copyWith(
-                author: authorLines.first
-                    .split(': ')
-                    .sublist(1)
-                    .join(': '),
+                author: authorLines.first.split(': ').sublist(1).join(': '),
               ),
             );
           }
@@ -162,9 +159,7 @@ class FDroid extends AppSource {
               cl.codeUnitAt(end - 1) <= 0xDBFF) {
             end--;
           }
-          details = details.copyWith(
-            changeLog: '${cl.substring(0, end)}...',
-          );
+          details = details.copyWith(changeLog: '${cl.substring(0, end)}...');
         }
       }
       return details;
@@ -229,8 +224,9 @@ class FDroid extends AppSource {
         : null;
     if (res.statusCode == 200) {
       final response = jsonDecode(res.body);
-      List<dynamic> releases =
-          response is Map ? (response['packages'] ?? []) : [];
+      List<dynamic> releases = response is Map
+          ? (response['packages'] ?? [])
+          : [];
       if (apkFilterRegEx != null) {
         releases = releases.where((rel) {
           final String apk = '${apkUrlPrefix}_${rel['versionCode']}.apk';

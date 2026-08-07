@@ -256,10 +256,7 @@ class _HomePageState extends State<HomePage> {
             try {
               parsedData = jsonDecode(data);
             } catch (e) {
-              AppLogger.error(
-                'Failed to decode deep-link JSON: $e',
-                message: 'Failed to decode deep-link JSON: $e',
-              );
+              AppLogger.error(e, message: 'Failed to decode deep-link JSON');
               throw ObtainiumError(tr('invalidInput'));
             }
             final importPayload = jsonEncode(<String, dynamic>{
@@ -379,8 +376,8 @@ class _HomePageState extends State<HomePage> {
     final Widget? fab = isTV
         ? null
         : appsSelecting
-            ? actionsFab
-            : (loadingApps ? null : createFabExtended);
+        ? actionsFab
+        : (loadingApps ? null : createFabExtended);
 
     final Widget content;
     if (useTwoPane) {

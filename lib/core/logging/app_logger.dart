@@ -75,14 +75,12 @@ class AppLogger {
     StackTrace? stackTrace,
   }) {
     _logToConsole(level, message, error: error, stackTrace: stackTrace);
-    if (level != AppLogLevel.debug) {
-      _persist(
-        LogEntry(
-          message: _formatPersistedMessage(message, error),
-          level: level,
-        ),
-      );
-    }
+    _persist(
+      LogEntry(
+        message: _formatPersistedMessage(message, error),
+        level: level,
+      ),
+    );
   }
 
   static void _logToConsole(
@@ -91,15 +89,33 @@ class AppLogger {
     Object? error,
     StackTrace? stackTrace,
   }) {
+    // Avoid duplicating the message when the error's text is identical to it.
+    final includeError = error != null && error.toString() != message;
     switch (level) {
       case AppLogLevel.debug:
-        _logger.d(message, error: error, stackTrace: stackTrace);
+        _logger.d(
+          message,
+          error: includeError ? error : null,
+          stackTrace: stackTrace,
+        );
       case AppLogLevel.info:
-        _logger.i(message, error: error, stackTrace: stackTrace);
+        _logger.i(
+          message,
+          error: includeError ? error : null,
+          stackTrace: stackTrace,
+        );
       case AppLogLevel.warning:
-        _logger.w(message, error: error, stackTrace: stackTrace);
+        _logger.w(
+          message,
+          error: includeError ? error : null,
+          stackTrace: stackTrace,
+        );
       case AppLogLevel.error:
-        _logger.e(message, error: error, stackTrace: stackTrace);
+        _logger.e(
+          message,
+          error: includeError ? error : null,
+          stackTrace: stackTrace,
+        );
     }
   }
 
@@ -111,10 +127,10 @@ class AppLogger {
 
   static String _formatPersistedMessage(String message, Object? error) {
     if (error == null) return message;
-    return '$message: $error';
+    return error.toString() == message ? message : '$message: $error';
   }
 
   static String _formatPersistedError(String message, Object error) {
-    return '$message: $error';
+    return error.toString() == message ? message : '$message: $error';
   }
 }

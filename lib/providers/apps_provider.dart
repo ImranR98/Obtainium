@@ -676,7 +676,6 @@ Future<int?> getDownloadSize(
   }
 }
 
-
 Future<List<PackageInfo>> getAllInstalledInfo() async {
   return await packageManager.getInstalledPackages(flags: packageInfoFlags) ??
       [];
@@ -948,7 +947,8 @@ class AppsProvider with ChangeNotifier {
     for (var app in pps) {
       if (apps.containsKey(app.id)) {
         errorsMap.addAll({
-          app.id: '${tr('appAlreadyAdded')}: ${apps[app.id]?.app.name ?? app.id}',
+          app.id:
+              '${tr('appAlreadyAdded')}: ${apps[app.id]?.app.name ?? app.id}',
         });
       } else {
         await saveApps([app], onlyIfExists: false);
@@ -1150,7 +1150,9 @@ Future<void> bgUpdateCheck(
   } else {
     AppLogger.info('BG update task: No apps due for checking.');
   }
-  if (canInstall && appsProvider.settingsProvider.enableBackgroundUpdates && params['toCheck'] == null) {
+  if (canInstall &&
+      appsProvider.settingsProvider.enableBackgroundUpdates &&
+      params['toCheck'] == null) {
     final discovered = appsProvider.findAppIdsWithPendingUpdates(
       installedOnly: true,
     );
@@ -1291,4 +1293,3 @@ class CancellationToken {
     if (_cancelled) throw CancellationException();
   }
 }
-

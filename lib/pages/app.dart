@@ -868,10 +868,7 @@ class _AppPageState extends State<AppPage> {
         false,
         children: [
           if (trackOnly) _detailNote(tr('xIsTrackOnly', args: [tr('app')])),
-          if (pseudo)
-            _detailNote(
-              tr('pseudoVersionInUse'),
-            ),
+          if (pseudo) _detailNote(tr('pseudoVersionInUse')),
           () {
             String l = appInstalledVersionText(app?.app);
             final upToDate =
@@ -1051,10 +1048,7 @@ class _AppPageState extends State<AppPage> {
                   },
                   child: Padding(
                     padding: const EdgeInsets.symmetric(vertical: 2),
-                    child: Text(
-                      h,
-                      style: theme.textTheme.bodySmall,
-                    ),
+                    child: Text(h, style: theme.textTheme.bodySmall),
                   ),
                 ),
               ),
@@ -1293,9 +1287,13 @@ class _AppPageState extends State<AppPage> {
                         ),
                         _buildHeaderSection(app),
                         ..._buildRepoRenameSection(app, appsProvider),
-                        const SliverToBoxAdapter(child: SizedBox(height: AppSpacings.sectionGap)),
+                        const SliverToBoxAdapter(
+                          child: SizedBox(height: AppSpacings.sectionGap),
+                        ),
                         ..._buildVersionInfoSections(app),
-                        const SliverToBoxAdapter(child: SizedBox(height: AppSpacings.sectionGap)),
+                        const SliverToBoxAdapter(
+                          child: SizedBox(height: AppSpacings.sectionGap),
+                        ),
                         ..._buildSourceInfoSections(
                           app,
                           appsProvider,
@@ -1303,7 +1301,9 @@ class _AppPageState extends State<AppPage> {
                           certs,
                           hasAssets,
                         ),
-                        const SliverToBoxAdapter(child: SizedBox(height: AppSpacings.sectionGap)),
+                        const SliverToBoxAdapter(
+                          child: SizedBox(height: AppSpacings.sectionGap),
+                        ),
                         _buildCategorySection(app, appsProvider),
                         ..._buildAboutSection(app),
                         const SliverToBoxAdapter(child: SizedBox(height: 32)),

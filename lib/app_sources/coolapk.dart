@@ -61,10 +61,7 @@ class CoolApk extends AppSource {
       try {
         json = jsonDecode(res.body);
       } catch (e) {
-        AppLogger.error(
-          'Failed to decode JSON response: $e',
-          message: 'Failed to decode JSON response: $e',
-        );
+        AppLogger.error(e, message: 'Failed to decode JSON response');
         throw NoReleasesError();
       }
       if (json['status'] == -2 || json['data'] == null) {

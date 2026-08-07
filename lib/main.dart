@@ -52,7 +52,9 @@ List<MapEntry<Locale, String>> supportedLocales = const [
   MapEntry(Locale('gl'), 'Galego'),
 ];
 const fallbackLocale = Locale('en');
-final Set<Locale> supportedLocaleSet = supportedLocales.map((e) => e.key).toSet();
+final Set<Locale> supportedLocaleSet = supportedLocales
+    .map((e) => e.key)
+    .toSet();
 const localeDir = 'assets/translations';
 bool isFdroidBuild = false;
 
@@ -278,17 +280,21 @@ class _ObtainiumState extends State<Obtainium> {
 
   @override
   Widget build(BuildContext context) {
-    final themeColor =
-        context.select<SettingsProvider, Color>((p) => p.themeColor);
-    final colourSchemeMode =
-        context.select<SettingsProvider, ColourSchemeMode>(
-            (p) => p.colourSchemeMode);
-    final useBlackTheme =
-        context.select<SettingsProvider, bool>((p) => p.useBlackTheme);
-    final themeSetting =
-        context.select<SettingsProvider, ThemeSettings>((p) => p.theme);
-    final useSystemFont =
-        context.select<SettingsProvider, bool>((p) => p.useSystemFont);
+    final themeColor = context.select<SettingsProvider, Color>(
+      (p) => p.themeColor,
+    );
+    final colourSchemeMode = context.select<SettingsProvider, ColourSchemeMode>(
+      (p) => p.colourSchemeMode,
+    );
+    final useBlackTheme = context.select<SettingsProvider, bool>(
+      (p) => p.useBlackTheme,
+    );
+    final themeSetting = context.select<SettingsProvider, ThemeSettings>(
+      (p) => p.theme,
+    );
+    final useSystemFont = context.select<SettingsProvider, bool>(
+      (p) => p.useSystemFont,
+    );
 
     return DynamicColorBuilder(
       builder: (ColorScheme? lightDynamic, ColorScheme? darkDynamic) {
@@ -318,9 +324,9 @@ class _ObtainiumState extends State<Obtainium> {
         }
 
         if (useBlackTheme) {
-          darkColorScheme = darkColorScheme
-              .harmonized()
-              .copyWith(surface: Colors.black);
+          darkColorScheme = darkColorScheme.harmonized().copyWith(
+            surface: Colors.black,
+          );
         }
 
         if (useSystemFont) {

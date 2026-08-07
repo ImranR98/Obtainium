@@ -132,7 +132,12 @@ class Uptodown extends AppSource {
       }
       return APKDetails(
         version,
-        [MapEntry('$appId.${(extension != null && extension.isNotEmpty) ? extension : 'apk'}', apkUrl)],
+        [
+          MapEntry(
+            '$appId.${(extension != null && extension.isNotEmpty) ? extension : 'apk'}',
+            apkUrl,
+          ),
+        ],
         AppNames(author, appName),
         releaseDate: relDate,
       );

@@ -62,10 +62,7 @@ class AppNames {
   const AppNames(this.author, this.name);
 
   AppNames copyWith({String? author, String? name}) {
-    return AppNames(
-      author ?? this.author,
-      name ?? this.name,
-    );
+    return AppNames(author ?? this.author, name ?? this.name);
   }
 }
 
@@ -102,8 +99,9 @@ class APKDetails {
       version ?? this.version,
       apkUrls ?? this.apkUrls,
       names ?? this.names,
-      releaseDate:
-          releaseDate == _sentinel ? this.releaseDate : releaseDate as DateTime?,
+      releaseDate: releaseDate == _sentinel
+          ? this.releaseDate
+          : releaseDate as DateTime?,
       changeLog: changeLog == _sentinel ? this.changeLog : changeLog as String?,
       allAssetUrls: allAssetUrls ?? this.allAssetUrls,
     );
@@ -830,11 +828,11 @@ abstract class AppSource {
       var val = hostChanged && !hostIdenticalDespiteAnyChange
           ? additionalSettings[e.key]
           : (additionalSettings[e.key] is String &&
-                  (additionalSettings[e.key] as String).isNotEmpty)
-              ? additionalSettings[e.key]
-              : (e is GeneratedFormSwitch
-                  ? settingsProvider.getSettingBool(e.key).toString()
-                  : settingsProvider.getSettingString(e.key));
+                (additionalSettings[e.key] as String).isNotEmpty)
+          ? additionalSettings[e.key]
+          : (e is GeneratedFormSwitch
+                ? settingsProvider.getSettingBool(e.key).toString()
+                : settingsProvider.getSettingString(e.key));
       if (val != null) {
         if (e is GeneratedFormSwitch) {
           val = val.toString();
@@ -1172,9 +1170,7 @@ class SourceProvider {
       throw NoAPKError()..url = standardUrl;
     }
     if (additionalSettings['autoApkFilterByArch'] == true) {
-      apk = apk.copyWith(
-        apkUrls: await filterApksByArch(apk.apkUrls),
-      );
+      apk = apk.copyWith(apkUrls: await filterApksByArch(apk.apkUrls));
       if (apk.apkUrls.isEmpty && !trackOnly) {
         throw NoAPKError()..url = standardUrl;
       }
@@ -1725,4 +1721,3 @@ class ApkFilterService {
     return apkUrls;
   }
 }
-
