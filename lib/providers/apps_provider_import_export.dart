@@ -7,9 +7,62 @@ import 'package:easy_localization/easy_localization.dart';
 import 'package:obtainium/custom_errors.dart';
 
 import 'package:obtainium/providers/apps_provider.dart';
+import 'package:obtainium/providers/logs_provider.dart';
 import 'package:obtainium/providers/settings_provider.dart';
 import 'package:obtainium/providers/source_provider.dart';
 import 'package:shared_storage/shared_storage.dart' as saf;
+
+/// Settings keys that may be applied from an imported backup. Anything else
+/// is ignored, so a crafted backup cannot hijack behavior: credentials
+/// (`-creds`), the external installer identity (`externalInstallerPackage` /
+/// `externalInstallerComponent`), device-specific state (`exportDir`) and
+/// onboarding flags are deliberately excluded.
+const Set<String> importableSettingsKeys = {
+  'actionBannerMode',
+  'alwaysUsePhoneLayout',
+  'autoExportOnChanges',
+  'beforeNewInstallsShareToAppVerifier',
+  'bgUpdatesOnWiFiOnly',
+  'bgUpdatesWhileChargingOnly',
+  'buryNonInstalled',
+  'categories',
+  'checkOnStart',
+  'checkUpdateOnDetailPage',
+  'colourSchemeMode',
+  'disableSwipeActions',
+  'enableBackgroundUpdates',
+  'exportInstalledOnly',
+  'exportSettings',
+  'forcedLocale',
+  'groupBy',
+  'groupByCategory',
+  'hideAPKOriginWarning',
+  'hideDowngrades',
+  'hideTrackOnlyWarning',
+  'highlightTouchTargets',
+  'includePrereleasesByDefault',
+  'installMethod',
+  'onlyCheckInstalledOrTrackOnlyApps',
+  'parallelDownloads',
+  'pinUpdates',
+  'removeOnExternalUninstall',
+  'searchDeselected',
+  'shizukuPretendToBeGooglePlay',
+  'showActionBannerForUpdateOnly',
+  'showAppDowngradeError',
+  'showAppWebpage',
+  'sortColumn',
+  'sortOrder',
+  'tactileFeedbackEnabled',
+  'theme',
+  'themeColor',
+  'updateInterval',
+  'updateIntervalSliderVal',
+  'useBlackTheme',
+  'useMaterialYou',
+  'useShizuku',
+  'useSystemFont',
+};
 
 /// Import/export of app configurations for [AppsProvider].
 extension AppsProviderImportExport on AppsProvider {
@@ -156,6 +209,15 @@ extension AppsProviderImportExport on AppsProvider {
 
   void _applyImportedSettings(Map<String, dynamic> settingsMap) {
     settingsMap.forEach((key, value) {
+      if (!importableSettingsKeys.contains(key)) {
+        unawaited(
+          LogsProvider().add(
+            'Ignored setting on import (not allowlisted): $key',
+            level: LogLevel.warning,
+          ),
+        );
+        return;
+      }
       if (value is int) {
         settingsProvider.prefs?.setInt(key, value);
       } else if (value is double) {
