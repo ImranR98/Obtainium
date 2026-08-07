@@ -467,8 +467,9 @@ class _CategorySelectorState extends State<CategorySelector> {
                       onLongPress: () => _edit(name),
                       child: FilterChip(
                         avatar: CircleAvatar(
-                          backgroundColor:
-                              Color(categories[name] ?? 0xFFCCCCCC),
+                          backgroundColor: Color(
+                            categories[name] ?? 0xFFCCCCCC,
+                          ),
                           radius: 7,
                         ),
                         label: Text(name),
@@ -514,10 +515,9 @@ class CategoryManager extends StatelessWidget {
         children: [
           Text(
             tr('noCategories'),
-            style: Theme.of(context)
-                .textTheme
-                .bodyMedium
-                ?.copyWith(color: cs.onSurfaceVariant),
+            style: Theme.of(
+              context,
+            ).textTheme.bodyMedium?.copyWith(color: cs.onSurfaceVariant),
           ),
           const Spacer(),
           ActionChip(

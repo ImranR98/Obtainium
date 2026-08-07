@@ -24,13 +24,11 @@ class RuStore extends AppSource {
 
   @override
   Future<Map<String, String>?> getRequestHeaders(
-      Map<String, dynamic> additionalSettings,
-      String url, {
-        bool forAPKDownload = false,
-      }) async {
-    return {
-      'ruStoreVerCode': '1105002',
-    };
+    Map<String, dynamic> additionalSettings,
+    String url, {
+    bool forAPKDownload = false,
+  }) async {
+    return {'ruStoreVerCode': '1105002'};
   }
 
   @override
@@ -93,7 +91,9 @@ class RuStore extends AppSource {
         followRedirects: false,
         postBody: {'appId': appDetails['appId'], 'firstInstall': true},
       );
-      final downloadDetails = await decodeJsonBody(downloadLinksResponse.bodyBytes);
+      final downloadDetails = await decodeJsonBody(
+        downloadLinksResponse.bodyBytes,
+      );
       if (downloadLinksResponse.statusCode != 200 || downloadDetails == null) {
         throw getObtainiumHttpError(downloadLinksResponse);
       }

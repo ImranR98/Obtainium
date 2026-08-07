@@ -9,7 +9,7 @@ import 'package:obtainium/components/generated_form_renderer.dart';
 import 'package:obtainium/components/ui_widgets.dart';
 import 'package:obtainium/custom_errors.dart';
 import 'package:obtainium/providers/apps_provider.dart';
-import 'package:obtainium/providers/logs_provider.dart';
+import 'package:obtainium/core/logging/app_logger.dart';
 import 'package:obtainium/providers/settings_provider.dart';
 import 'package:obtainium/providers/source_provider.dart';
 import 'package:provider/provider.dart';
@@ -106,15 +106,16 @@ class _ImportFromURLListPageState extends State<ImportFromURLListPage> {
                       spacing: 16,
                       children: [
                         ConnectedCard(
-                          color: Theme.of(context)
-                              .colorScheme
-                              .surfaceContainerHighest,
+                          color: Theme.of(
+                            context,
+                          ).colorScheme.surfaceContainerHighest,
                           child: TextFormField(
                             controller: controller.urlController,
                             maxLines: null,
                             minLines: 8,
                             decoration: InputDecoration(
-                                labelText: tr('appURLList')),
+                              labelText: tr('appURLList'),
+                            ),
                             validator: controller.validate,
                             autovalidateMode:
                                 AutovalidateMode.onUserInteraction,
@@ -472,20 +473,15 @@ class _ExportSectionState extends State<ExportSection> {
               child: DropdownMenu<String>(
                 expandedInsets: EdgeInsets.zero,
                 label: Text(tr('includeSettings')),
-                initialSelection:
-                    settingsProvider.exportSettings.toString(),
+                initialSelection: settingsProvider.exportSettings.toString(),
                 dropdownMenuEntries: [
-                  DropdownMenuEntry(
-                      value: '0', label: tr('none')),
-                  DropdownMenuEntry(
-                      value: '1', label: tr('excludeSecrets')),
-                  DropdownMenuEntry(
-                      value: '2', label: tr('all')),
+                  DropdownMenuEntry(value: '0', label: tr('none')),
+                  DropdownMenuEntry(value: '1', label: tr('excludeSecrets')),
+                  DropdownMenuEntry(value: '2', label: tr('all')),
                 ],
                 onSelected: (value) {
                   if (value != null) {
-                    settingsProvider.exportSettings =
-                        int.tryParse(value) ?? 1;
+                    settingsProvider.exportSettings = int.tryParse(value) ?? 1;
                   }
                 },
               ),
@@ -973,11 +969,9 @@ class ImportFromURLListController extends ChangeNotifier {
                 sourceProvider.getSource(url);
                 return true;
               } catch (e) {
-                unawaited(
-                  LogsProvider().add(
-                    'URL parse error in filter: $e',
-                    level: LogLevel.error,
-                  ),
+                AppLogger.error(
+                  'URL parse error in filter: $e',
+                  message: 'URL parse error in filter: $e',
                 );
                 return false;
               }

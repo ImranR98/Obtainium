@@ -7,8 +7,8 @@ import 'package:http/http.dart';
 import 'package:obtainium/app_sources/github.dart';
 import 'package:obtainium/app_sources/gitlab.dart';
 import 'package:obtainium/components/generated_form_model.dart';
+import 'package:obtainium/core/logging/app_logger.dart';
 import 'package:obtainium/custom_errors.dart';
-import 'package:obtainium/providers/logs_provider.dart';
 import 'package:obtainium/providers/source_provider.dart';
 
 class FDroid extends AppSource {
@@ -150,10 +150,8 @@ class FDroid extends AppSource {
             }
           }
         } catch (e) {
-          unawaited(
-            LogsProvider().add(
-              'Failed to process changelog for F-Droid app: ${e.toString()}',
-            ),
+          AppLogger.info(
+            'Failed to process changelog for F-Droid app: ${e.toString()}',
           );
         }
         if ((details.changeLog?.length ?? 0) > _maxChangeLogCodeUnits) {

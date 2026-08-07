@@ -316,10 +316,15 @@ class _GeneratedFormState extends State<GeneratedForm> {
 
   int _computeItemsHash(List<List<GeneratedFormItem>> items) {
     return Object.hashAll(
-      items.expand((row) => row.map((e) {
-        return Object.hash(e.key, e.runtimeType,
-            e is GeneratedFormTextField ? e.trailingKey : null);
-      })),
+      items.expand(
+        (row) => row.map((e) {
+          return Object.hash(
+            e.key,
+            e.runtimeType,
+            e is GeneratedFormTextField ? e.trailingKey : null,
+          );
+        }),
+      ),
     );
   }
 
@@ -392,18 +397,18 @@ class _GeneratedFormState extends State<GeneratedForm> {
     super.dispose();
   }
 
-  Widget _buildSubForm(GeneratedFormSubForm item, String fieldKey,
-      {bool isFirst = true, bool isLast = true}) {
+  Widget _buildSubForm(
+    GeneratedFormSubForm item,
+    String fieldKey, {
+    bool isFirst = true,
+    bool isLast = true,
+  }) {
     final compact = item.items.length == 1 && item.items[0].length == 1;
     final n = values[fieldKey].length;
     final List<Widget> cards = [];
     for (int i = 0; i < n; i++) {
       final internalFormKey = ValueKey(
-        generateDeterministicId(
-          n,
-          seed2: i,
-          seed3: _subFormGenerationCount,
-        ),
+        generateDeterministicId(n, seed2: i, seed3: _subFormGenerationCount),
       );
       final isLastEntry = i == n - 1;
       cards.add(
@@ -419,10 +424,9 @@ class _GeneratedFormState extends State<GeneratedForm> {
                   padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
                   child: Text(
                     '${tr(item.label)} (${i + 1})',
-                    style: Theme.of(context)
-                        .textTheme
-                        .bodyLarge
-                        ?.copyWith(fontWeight: FontWeight.bold),
+                    style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                 ),
                 const SizedBox(height: 8),
@@ -458,16 +462,14 @@ class _GeneratedFormState extends State<GeneratedForm> {
                   children: [
                     IconButton(
                       style: IconButton.styleFrom(
-                        foregroundColor:
-                            Theme.of(context).colorScheme.error,
+                        foregroundColor: Theme.of(context).colorScheme.error,
                       ),
                       visualDensity: VisualDensity.compact,
                       tooltip: tr('remove'),
                       icon: const Icon(Icons.delete_outline_rounded),
                       onPressed: n > 0
                           ? () {
-                              final temp =
-                                  List.from(values[fieldKey]);
+                              final temp = List.from(values[fieldKey]);
                               temp.removeAt(i);
                               values[fieldKey] = List.from(temp);
                               _subFormGenerationCount++;
@@ -479,13 +481,13 @@ class _GeneratedFormState extends State<GeneratedForm> {
                     if (isLastEntry)
                       TextButton.icon(
                         style: TextButton.styleFrom(
-                          foregroundColor:
-                              Theme.of(context).colorScheme.primary,
+                          foregroundColor: Theme.of(
+                            context,
+                          ).colorScheme.primary,
                         ),
                         onPressed: () {
                           values[fieldKey].add(
-                            getDefaultValuesFromFormItems(
-                                item.items),
+                            getDefaultValuesFromFormItems(item.items),
                           );
                           _subFormGenerationCount++;
                           notifyFormChange();
@@ -514,8 +516,7 @@ class _GeneratedFormState extends State<GeneratedForm> {
                 const Spacer(),
                 TextButton.icon(
                   style: TextButton.styleFrom(
-                    foregroundColor:
-                        Theme.of(context).colorScheme.primary,
+                    foregroundColor: Theme.of(context).colorScheme.primary,
                   ),
                   onPressed: () {
                     values[fieldKey].add(

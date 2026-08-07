@@ -7,7 +7,7 @@ import 'package:http/http.dart';
 import 'package:obtainium/components/generated_form_model.dart';
 import 'package:obtainium/custom_errors.dart';
 import 'package:obtainium/providers/apps_provider.dart';
-import 'package:obtainium/providers/logs_provider.dart';
+import 'package:obtainium/core/logging/app_logger.dart';
 import 'package:obtainium/providers/source_provider.dart';
 import 'package:obtainium/utils/string_compare.dart';
 
@@ -95,12 +95,7 @@ Future<List<MapEntry<String, String>>> grabLinksCommon(
           );
         }
       } catch (e) {
-        unawaited(
-          LogsProvider().add(
-            'Failed to parse HTML links: ${e.toString()}',
-            level: LogLevel.warning,
-          ),
-        );
+        AppLogger.warn('Failed to parse HTML links: ${e.toString()}');
         allLinks = getLinksInLines(rawBody);
       }
     }
@@ -116,12 +111,7 @@ Future<List<MapEntry<String, String>>> grabLinksCommon(
       try {
         link = Uri.decodeFull(element.key);
       } catch (e) {
-        unawaited(
-          LogsProvider().add(
-            'Failed to decode URI in HTML filter: ${e.toString()}',
-            level: LogLevel.debug,
-          ),
-        );
+        AppLogger.debug('Failed to decode URI in HTML filter: ${e.toString()}');
       }
       return reg.hasMatch(filterLinkByText ? element.value : link);
     }).toList();
@@ -131,12 +121,7 @@ Future<List<MapEntry<String, String>>> grabLinksCommon(
       try {
         link = Uri.decodeFull(element.key);
       } catch (e) {
-        unawaited(
-          LogsProvider().add(
-            'Failed to decode URI in HTML APK filter: ${e.toString()}',
-            level: LogLevel.debug,
-          ),
-        );
+        AppLogger.debug('Failed to decode URI in HTML APK filter: ${e.toString()}');
       }
       return AppSource.isApkOrContainerFile(
         Uri.parse((filterLinkByText ? element.value : link).trim()).path,
@@ -392,12 +377,7 @@ class HTML extends AppSource {
       try {
         relDecoded = Uri.decodeFull(rel);
       } catch (e) {
-        unawaited(
-          LogsProvider().add(
-            'Failed to decode URI for version extraction: ${e.toString()}',
-            level: LogLevel.debug,
-          ),
-        );
+        AppLogger.debug('Failed to decode URI for version extraction: ${e.toString()}');
       }
       String? version;
       version = extractVersion(

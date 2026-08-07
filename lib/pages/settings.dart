@@ -10,10 +10,11 @@ import 'package:flutter/material.dart';
 import 'package:obtainium/components/ui_widgets.dart';
 import 'package:obtainium/components/generated_form_renderer.dart';
 import 'package:obtainium/custom_errors.dart';
+import 'package:obtainium/core/logging/app_log_db.dart';
+import 'package:obtainium/core/logging/app_logger.dart';
 import 'package:obtainium/main.dart';
 import 'package:obtainium/pages/import_export.dart';
 import 'package:obtainium/pages/logs.dart';
-import 'package:obtainium/providers/logs_provider.dart';
 import 'package:obtainium/providers/apps_provider.dart';
 import 'package:obtainium/providers/external_install_bridge.dart';
 import 'package:obtainium/providers/settings_provider.dart';
@@ -50,24 +51,16 @@ class _SettingsPageState extends State<SettingsPage> {
   Future<void> _triggerManualBgCheck() async {
     if (_isRunningBgCheck) return;
     setState(() => _isRunningBgCheck = true);
-    final logs = context.read<LogsProvider>();
-    await logs.add(
-      'Manual BG update check triggered from settings',
-      level: LogLevel.info,
-    );
+    AppLogger.info('Manual BG update check triggered from settings');
     try {
       final taskId = 'manual_${DateTime.now().millisecondsSinceEpoch}';
       await bgUpdateCheck(taskId, null, forceAll: true);
-      await logs.add(
-        'Manual BG update check completed successfully',
-        level: LogLevel.info,
-      );
+      AppLogger.info('Manual BG update check completed successfully');
     } catch (e, stack) {
-      unawaited(
-        logs.add(
-          'Manual BG update check crashed: $e\n$stack',
-          level: LogLevel.error,
-        ),
+      AppLogger.error(
+        e,
+        stackTrace: stack,
+        message: 'Manual BG update check crashed',
       );
     }
     if (!mounted) return;
@@ -81,12 +74,7 @@ class _SettingsPageState extends State<SettingsPage> {
       if (mounted) setState(() {});
     } catch (e) {
       if (!mounted) return;
-      unawaited(
-        context.read<LogsProvider>().add(
-          'Failed to get Android SDK info: $e',
-          level: LogLevel.error,
-        ),
-      );
+      AppLogger.error(e, message: 'Failed to get Android SDK info');
     }
   }
 
@@ -217,6 +205,7 @@ class _SettingsPageState extends State<SettingsPage> {
     color: Theme.of(context).colorScheme.surfaceContainerHighest,
     child: field,
   );
+
 
   @override
   Widget build(BuildContext context) {
@@ -453,7 +442,7 @@ class _SettingsPageState extends State<SettingsPage> {
                                 ).colorScheme.onSurfaceVariant,
                               ),
                               onTap: () {
-                                context.read<LogsProvider>().get().then((logs) {
+                                AppLogger.getLogs().then((logs) {
                                   if (!context.mounted) return;
                                   if (logs.isEmpty) {
                                     showMessage(
@@ -1113,6 +1102,8 @@ class _UpdateIntervalSliderTileState extends State<_UpdateIntervalSliderTile> {
     );
   }
 }
+
+
 
 class _ExternalInstallerTile extends StatefulWidget {
   const _ExternalInstallerTile();

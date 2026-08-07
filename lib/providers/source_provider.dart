@@ -44,7 +44,7 @@ import 'package:obtainium/app_sources/vivoappstore.dart';
 import 'package:obtainium/components/generated_form_model.dart';
 import 'package:obtainium/custom_errors.dart';
 import 'package:obtainium/app_sources/githubstars.dart';
-import 'package:obtainium/providers/logs_provider.dart';
+import 'package:obtainium/core/logging/app_logger.dart';
 import 'package:obtainium/providers/settings_provider.dart';
 
 part 'app_json_migration.dart';
@@ -267,11 +267,8 @@ class App {
       // Fall back to the unmigrated JSON so the app still loads rather than
       // being lost (e.g. when its saved URL no longer matches any source).
       json = originalJson;
-      unawaited(
-        LogsProvider().add(
-          'Error running JSON compat modifiers (using original JSON): ${e.toString()}',
-          level: LogLevel.warning,
-        ),
+      AppLogger.warn(
+        'Error running JSON compat modifiers (using original JSON): ${e.toString()}',
       );
     }
     try {
@@ -315,11 +312,10 @@ class App {
         pendingRepoRenameUrl: json['pendingRepoRenameUrl'] as String?,
       );
     } on TypeError catch (e) {
-      unawaited(
-        LogsProvider().add(
-          'Type mismatch in App.fromJson: ${e.toString()}',
-          level: LogLevel.error,
-        ),
+      AppLogger.error(
+        e,
+        stackTrace: e.stackTrace,
+        message: 'Type mismatch in App.fromJson',
       );
       rethrow;
     }

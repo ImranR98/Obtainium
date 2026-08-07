@@ -6,7 +6,7 @@ import 'package:bcrypt/bcrypt.dart';
 import 'package:crypto/crypto.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:obtainium/custom_errors.dart';
-import 'package:obtainium/providers/logs_provider.dart';
+import 'package:obtainium/core/logging/app_logger.dart';
 import 'package:obtainium/providers/source_provider.dart';
 
 /// CoolApk app source.
@@ -61,11 +61,9 @@ class CoolApk extends AppSource {
       try {
         json = jsonDecode(res.body);
       } catch (e) {
-        unawaited(
-          LogsProvider().add(
-            'Failed to decode JSON response: $e',
-            level: LogLevel.error,
-          ),
+        AppLogger.error(
+          'Failed to decode JSON response: $e',
+          message: 'Failed to decode JSON response: $e',
         );
         throw NoReleasesError();
       }

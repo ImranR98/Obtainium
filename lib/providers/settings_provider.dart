@@ -11,7 +11,7 @@ import 'package:obtainium/custom_errors.dart';
 import 'package:obtainium/main.dart';
 
 import 'package:obtainium/providers/apps_provider.dart';
-import 'package:obtainium/providers/logs_provider.dart';
+import 'package:obtainium/core/logging/app_logger.dart';
 import 'package:obtainium/providers/source_provider.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:device_info_plus/device_info_plus.dart';
@@ -437,12 +437,7 @@ class SettingsProvider with ChangeNotifier {
       try {
         _categoriesCache = Map<String, int>.from(jsonDecode(raw));
       } catch (e) {
-        unawaited(
-          LogsProvider().add(
-            'Corrupted categories data, resetting: $e',
-            level: LogLevel.error,
-          ),
-        );
+        AppLogger.error(e, message: 'Corrupted categories data, resetting');
         _categoriesCache = <String, int>{};
       }
     }
@@ -468,11 +463,9 @@ class SettingsProvider with ChangeNotifier {
           .toList();
       if (changedApps.isNotEmpty) {
         appsProvider.saveApps(changedApps).catchError((e) {
-          unawaited(
-            LogsProvider().add(
-              'Failed to save apps during category update: $e',
-              level: LogLevel.error,
-            ),
+          AppLogger.error(
+            e,
+            message: 'Failed to save apps during category update',
           );
         });
       }
@@ -659,12 +652,7 @@ class SettingsProvider with ChangeNotifier {
       try {
         newOneWayDataSyncDir = (await saf.openDocumentTree());
       } catch (e) {
-        unawaited(
-          LogsProvider().add(
-            'Failed to open document tree: $e',
-            level: LogLevel.error,
-          ),
-        );
+        AppLogger.error(e, message: 'Failed to open document tree');
         throw ObtainiumError(tr('noFilePickerAvailable'));
       }
     }
@@ -748,9 +736,7 @@ class SettingsProvider with ChangeNotifier {
     }
     final legacyBool = _getBool('showActionBannerForUpdateOnly');
     if (legacyBool != null) {
-      return legacyBool
-          ? ActionBannerMode.updatesOnly
-          : ActionBannerMode.all;
+      return legacyBool ? ActionBannerMode.updatesOnly : ActionBannerMode.all;
     }
     return ActionBannerMode.updatesOnly;
   }

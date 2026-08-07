@@ -13,7 +13,7 @@ import 'package:obtainium/theme.dart';
 import 'package:obtainium/providers/apps_provider.dart';
 import 'package:obtainium/utils/format_utils.dart';
 import 'package:obtainium/providers/notifications_provider.dart';
-import 'package:obtainium/providers/logs_provider.dart';
+import 'package:obtainium/core/logging/app_logger.dart';
 import 'package:obtainium/providers/settings_provider.dart';
 import 'package:obtainium/providers/source_provider.dart';
 import 'package:obtainium/custom_errors.dart';
@@ -105,7 +105,7 @@ class _AppPageState extends State<AppPage> {
         }
       } catch (e) {
         // Best-effort only: leave the size unknown when it can't be resolved.
-        unawaited(LogsProvider().add('Size probe failed for $url: $e'));
+        AppLogger.info('Size probe failed for $url: $e');
       }
     }();
   }
