@@ -64,6 +64,71 @@ const Set<String> importableSettingsKeys = {
   'useSystemFont',
 };
 
+/// additionalSettings keys (per app) that hold regular expressions.
+const List<String> regexSettingKeys = [
+  'versionExtractionRegEx',
+  'apkFilterRegEx',
+  'customLinkFilterRegex',
+];
+
+/// Best-effort ReDoS guard: compiles the pattern and times it against short
+/// adversarial probes. Catastrophic-backtracking patterns blow their time
+/// budget even on tiny inputs, while safe patterns answer in microseconds.
+bool isRegExSafe(String pattern) {
+  final RegExp re;
+  try {
+    re = RegExp(pattern);
+  } catch (_) {
+    return false;
+  }
+  const probes = [
+    'aaaaaaaaaaaaaaaaaaaaaa!',
+    'ababababababababababab!',
+    'https://example.com/releases/download/v1.2.3/app-release.apk',
+  ];
+  final sw = Stopwatch()..start();
+  for (final probe in probes) {
+    re.hasMatch(probe);
+    if (sw.elapsedMilliseconds > 250) {
+      return false;
+    }
+  }
+  return true;
+}
+
+/// Returns a copy of [additionalSettings] with unsafe regex values removed,
+/// or null if nothing needed changing.
+Map<String, dynamic>? withoutUnsafeRegexes(
+  Map<String, dynamic> additionalSettings,
+) {
+  var changed = false;
+  final cleaned = Map<String, dynamic>.from(additionalSettings);
+  for (final key in regexSettingKeys) {
+    final value = cleaned[key];
+    if (value is String && value.isNotEmpty && !isRegExSafe(value)) {
+      cleaned.remove(key);
+      changed = true;
+    }
+  }
+  final intermediate = cleaned['intermediateLink'];
+  if (intermediate is List) {
+    for (final item in intermediate) {
+      if (item is Map) {
+        final value = item['customLinkFilterRegex'];
+        if (value is String && value.isNotEmpty && !isRegExSafe(value)) {
+          item['customLinkFilterRegex'] = '';
+          changed = true;
+        }
+      }
+    }
+  }
+  return changed ? cleaned : null;
+}
+
+/// Whether [additionalSettings] contains at least one unsafe regex.
+bool hasUnsafeRegex(Map<String, dynamic> additionalSettings) =>
+    withoutUnsafeRegexes(additionalSettings) != null;
+
 /// Import/export of app configurations for [AppsProvider].
 extension AppsProviderImportExport on AppsProvider {
   /// Builds an exportable JSON map containing app data and optionally settings.
@@ -205,6 +270,59 @@ extension AppsProviderImportExport on AppsProvider {
       _applyImportedSettings(decodedJSON['settings'] as Map<String, Object?>);
     }
     return MapEntry<List<App>, bool>(importedApps, hasSettings);
+  }
+
+  /// Returns human-readable warnings about an import payload: existing apps
+  /// that would be overwritten (with URL changes) and security-relevant
+  /// content (cleartext HTTP URLs, insecure per-app settings, unsafe
+  /// regexes). Best-effort: unparseable entries are skipped.
+  Future<List<String>> getImportWarnings(String appsJSON) async {
+    final warnings = <String>[];
+    dynamic decoded;
+    try {
+      decoded = jsonDecode(appsJSON);
+    } catch (_) {
+      return warnings;
+    }
+    final appsList = decoded is List
+        ? decoded
+        : (decoded is Map ? decoded['apps'] : null);
+    if (appsList is! List) return warnings;
+    for (final e in appsList) {
+      if (e is! Map) continue;
+      final entry = Map<String, dynamic>.from(e);
+      // Tolerate both additionalSettings shapes (string or map).
+      if (entry['additionalSettings'] is Map) {
+        entry['additionalSettings'] = jsonEncode(entry['additionalSettings']);
+      }
+      final App app;
+      try {
+        app = App.fromJson(entry);
+      } catch (_) {
+        continue;
+      }
+      final existing = apps[app.id];
+      if (existing != null) {
+        warnings.add(
+          existing.app.url != app.url
+              ? tr(
+                  'importWarningOverwriteUrl',
+                  args: [app.id, existing.app.url, app.url],
+                )
+              : tr('importWarningOverwrite', args: [app.id]),
+        );
+      }
+      if (app.url.toLowerCase().startsWith('http://')) {
+        warnings.add(tr('importWarningHttp', args: [app.id]));
+      }
+      if (app.settings.getBool('allowInsecure')) {
+        warnings.add(tr('importWarningAllowInsecure', args: [app.id]));
+      }
+      if (hasUnsafeRegex(app.additionalSettings)) {
+        warnings.add(tr('importWarningUnsafeRegex', args: [app.id]));
+      }
+    }
+    return warnings;
   }
 
   void _applyImportedSettings(Map<String, dynamic> settingsMap) {

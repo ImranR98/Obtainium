@@ -15,6 +15,47 @@ import 'package:obtainium/providers/source_provider.dart';
 import 'package:provider/provider.dart';
 import 'package:file_picker/file_picker.dart';
 
+/// Shows a blocking dialog listing [warnings] about an import payload.
+/// Returns true if the user chooses to proceed anyway.
+Future<bool> confirmImportDespiteWarnings(
+  BuildContext context,
+  List<String> warnings,
+) async {
+  final proceed = await showDialog<bool>(
+    context: context,
+    builder: (BuildContext ctx) {
+      return AlertDialog(
+        title: Text(tr('importWarnings')),
+        scrollable: true,
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: warnings
+              .map(
+                (w) => Padding(
+                  padding: const EdgeInsets.only(bottom: 8),
+                  child: Text('• $w'),
+                ),
+              )
+              .toList(),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(false),
+            child: Text(tr('cancel')),
+          ),
+          FilledButton.tonal(
+            autofocus: true,
+            onPressed: () => Navigator.of(ctx).pop(true),
+            child: Text(tr('continue')),
+          ),
+        ],
+      );
+    },
+  );
+  return proceed == true;
+}
+
 class ImportFromURLListPage extends StatefulWidget {
   const ImportFromURLListPage({super.key});
 
@@ -226,6 +267,20 @@ class _ImportSectionState extends State<ImportSection> {
             } catch (e) {
               throw ObtainiumError(tr('invalidInput'));
             }
+            final importWarnings = await appsProvider.getImportWarnings(data);
+            if (!context.mounted) return;
+            if (importWarnings.isNotEmpty) {
+              final proceed = await confirmImportDespiteWarnings(
+                context,
+                importWarnings,
+              );
+              if (!proceed) {
+                if (!context.mounted) return;
+                showMessage(tr('cancelled'), context);
+                return;
+              }
+            }
+            if (!context.mounted) return;
             final value = await appsProvider.import(data);
             appsProvider.addMissingCategories(settingsProvider);
             if (!context.mounted) return;
