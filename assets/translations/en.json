@@ -216,6 +216,7 @@
     "intermediateLink": "Intermediate link",
     "intermediateLinkNotFound": "Intermediate link not found",
     "intermediateLinkRegex": "Filter for an 'intermediate' link to visit",
+    "invalidArchive": "Archive contains a file with an unsafe path",
     "invalidInput": "Invalid input",
     "invalidRegEx": "Invalid regular expression",
     "invalidURLForSource": "Not a valid {} app URL",

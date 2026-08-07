@@ -460,14 +460,21 @@ extension AppsProviderInstall on AppsProvider {
     if (!destDir.existsSync()) {
       destDir.createSync(recursive: true);
     }
+    final destRoot = Uri.file(
+      destDir.absolute.path,
+    ).normalizePath().toFilePath();
     for (final file in tarArchive.files) {
-      if (file.isFile) {
-        final content = file.content;
-        final outPath = '${destDir.path}/${file.name}';
-        final outFile = File(outPath);
-        outFile.createSync(recursive: true);
-        outFile.writeAsBytesSync(content);
+      if (!file.isFile) continue;
+      // Reject entries whose path would escape the destination directory.
+      final outPath = Uri.file(
+        '$destRoot/${file.name}',
+      ).normalizePath().toFilePath();
+      if (outPath != destRoot && !outPath.startsWith('$destRoot/')) {
+        throw ObtainiumError(tr('invalidArchive'));
       }
+      final outFile = File(outPath);
+      outFile.createSync(recursive: true);
+      outFile.writeAsBytesSync(file.content);
     }
   }
 
