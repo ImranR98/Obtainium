@@ -163,8 +163,8 @@ class _ImportFromURLListPageState extends State<ImportFromURLListPage> {
   }
 }
 
-/// The app-import controls (file import, source search, URL-list import, mass
-/// sources). Embedded in the Add App page (shown while no URL is entered).
+/// The app-import controls (file import, URL-list import, mass sources).
+/// Embedded in the Settings → Import/Export page.
 class ImportSection extends StatefulWidget {
   const ImportSection({super.key});
 
@@ -358,7 +358,7 @@ class _ImportSectionState extends State<ImportSection> {
 }
 
 /// The app-export controls (export dir picker, export action, auto-export and
-/// settings-inclusion options). Embedded in the Settings page.
+/// settings-inclusion options). Embedded in the Settings → Import/Export page.
 class ExportSection extends StatefulWidget {
   const ExportSection({super.key});
 

@@ -343,14 +343,21 @@ class _SettingsPageState extends State<SettingsPage> {
                         final rows = <Widget>[
                           _settingsRow(
                             context,
-                            icon: Icons.upload_file_outlined,
-                            title: tr('obtainiumExport'),
-              onTap: () => _pushPage(
-                context,
-                title: tr('obtainiumExport'),
-                childBuilder: (_) => const ExportSection(),
-              ),
-            ),
+                            icon: Icons.import_export,
+                            title: tr('importExport'),
+                            onTap: () => _pushPage(
+                              context,
+                              title: tr('importExport'),
+                              childBuilder: (_) => const Column(
+                                crossAxisAlignment: CrossAxisAlignment.stretch,
+                                children: [
+                                  ExportSection(),
+                                  SizedBox(height: 14),
+                                  ImportSection(),
+                                ],
+                              ),
+                            ),
+                          ),
             _settingsRow(
               context,
               icon: Icons.update_outlined,

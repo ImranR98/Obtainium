@@ -869,10 +869,6 @@ class AddAppPageState extends State<AddAppPage> {
                       ],
                     ),
                   ],
-                  if (pickedSource == null && userInput.isEmpty) ...[
-                    if (shouldShowSearchBar) const SizedBox(height: 13),
-                    const ImportSection(),
-                  ],
                   if (pickedSource != null)
                     FutureBuilder(
                       future: _sourceNoteFuture,
