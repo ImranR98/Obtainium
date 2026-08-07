@@ -15,6 +15,33 @@ import 'package:obtainium/providers/source_provider.dart';
 import 'package:provider/provider.dart';
 import 'package:file_picker/file_picker.dart';
 
+/// Shows a blocking dialog warning that an "include all settings" export
+/// embeds potentially sensitive values in cleartext.
+/// Returns true if the user chooses to export anyway.
+Future<bool> confirmExportIncludesSecrets(BuildContext context) async {
+  final proceed = await showDialog<bool>(
+    context: context,
+    builder: (BuildContext ctx) {
+      return AlertDialog(
+        title: Text(tr('warning')),
+        content: Text(tr('exportIncludesSecretsWarning')),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(false),
+            child: Text(tr('cancel')),
+          ),
+          FilledButton.tonal(
+            autofocus: true,
+            onPressed: () => Navigator.of(ctx).pop(true),
+            child: Text(tr('continue')),
+          ),
+        ],
+      );
+    },
+  );
+  return proceed == true;
+}
+
 class ImportFromURLListPage extends StatefulWidget {
   const ImportFromURLListPage({super.key});
 
@@ -395,6 +422,10 @@ class _ExportSectionState extends State<ExportSection> {
 
     Future<void> runObtainiumExport({bool pickOnly = false}) async {
       settingsProvider.selectionClick();
+      if (!pickOnly && settingsProvider.exportSettings >= 2) {
+        final proceed = await confirmExportIncludesSecrets(context);
+        if (!proceed) return;
+      }
       unawaited(
         appsProvider
             .export(
