@@ -19,6 +19,8 @@ class APKMirror extends AppSource {
     showReleaseDateAsVersionToggle = true;
   }
 
+  static const String _fallbackVersion = '1.0.0';
+
   @override
   List<List<GeneratedFormItem>>
   get additionalSourceAppSpecificSettingFormItems => [
@@ -45,7 +47,7 @@ class APKMirror extends AppSource {
   }) async {
     return {
       'User-Agent':
-          "Obtainium/${(await getInstalledInfo(obtainiumId))?.versionName ?? '1.0.0'}",
+          'Obtainium/${(await getInstalledInfo(obtainiumId))?.versionName ?? _fallbackVersion}',
     };
   }
 
@@ -121,15 +123,9 @@ class APKMirror extends AppSource {
         }
         String? version;
         if (titleString != null) {
-          final byMatches = RegExp(' by ').allMatches(titleString);
-          version = byMatches.isEmpty
-              ? titleString
-              : titleString
-                    .substring(
-                      RegExp('[0-9]').firstMatch(titleString)?.start ?? 0,
-                      byMatches.last.start,
-                    )
-                    .trim();
+          final match =
+              RegExp(r'\b(\d[\d.]*(?:[- ]?\d[\d.]*)*)\b').firstMatch(titleString);
+          version = match?.group(1);
         }
         if (version == null || version.isEmpty) {
           version = titleString;

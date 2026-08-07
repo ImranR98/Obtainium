@@ -27,6 +27,8 @@ class APKPure extends AppSource {
     inferAppIdFromUrlPath = true;
   }
 
+  static const String _apiBaseUrl = 'https://tapi.pureapk.com/v3/get_app_his_version?package_name';
+
   @override
   List<List<GeneratedFormItem>>
   get additionalSourceAppSpecificSettingFormItems => [
@@ -82,8 +84,10 @@ class APKPure extends AppSource {
             return null;
           }
 
-          List<String> architectures =
-              e['native_code']?.cast<String>() ?? <String>[];
+          final rawArch = e['native_code'];
+          List<String> architectures = rawArch is List
+              ? rawArch.map((a) => a.toString()).toList()
+              : <String>[];
           final String architectureString = architectures.join(',');
           if (architectures.contains('universal') ||
               architectures.contains('unlimited')) {
@@ -201,7 +205,7 @@ class APKPure extends AppSource {
       }
 
       final res = await sourceRequest(
-        'https://tapi.pureapk.com/v3/get_app_his_version?package_name=$appId&hl=en',
+        '$_apiBaseUrl=$appId&hl=en',
         additionalSettings,
       );
       if (res.statusCode != 200) {
@@ -259,7 +263,7 @@ class APKPure extends AppSource {
         } catch (e) {
           if (additionalSettings['fallbackToOlderReleases'] != true ||
               i == versions.length - 1) {
-            rethrowOrWrapError(e);
+            rethrow;
           }
         }
       }

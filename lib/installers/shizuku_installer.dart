@@ -25,6 +25,10 @@ class ShizukuInstaller extends Installer {
   @override
   Future<void> ensurePermission() async {
     switch ((await ShizukuApkInstaller().checkPermission())) {
+      case 'granted_owner':
+      case 'granted_root':
+      case 'granted_adb':
+        break;
       case 'services_not_found':
         throw ObtainiumError(tr('shizukuBinderNotFound'));
       case 'old_shizuku':
@@ -32,6 +36,8 @@ class ShizukuInstaller extends Installer {
       case 'old_android_with_adb':
         throw ObtainiumError(tr('shizukuOldAndroidWithADB'));
       case 'denied':
+        throw ObtainiumError(tr('cancelled'));
+      default:
         throw ObtainiumError(tr('cancelled'));
     }
   }

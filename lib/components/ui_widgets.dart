@@ -4,6 +4,7 @@ import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:obtainium/theme.dart';
+import 'package:obtainium/components/generated_form_renderer.dart';
 import 'package:obtainium/custom_errors.dart';
 import 'package:obtainium/providers/logs_provider.dart';
 import 'package:obtainium/providers/settings_provider.dart';
@@ -48,7 +49,27 @@ Future<bool> showConfirmDialog(
   return confirmed ?? false;
 }
 
+Future<bool> showContinueCancelDialog(
+  BuildContext context, {
+  required String title,
+  String? message,
+  String? continueText,
+}) async {
+  final result = await showDialog<Map<String, dynamic>?>(
+    context: context,
+    builder: (ctx) => GeneratedFormModal(
+      title: title,
+      items: const [],
+      initValid: true,
+      message: message ?? '',
+      singleNullReturnButton: continueText ?? tr('continue'),
+    ),
+  );
+  return result != null;
+}
+
 void showMessage(dynamic e, BuildContext context, {bool isError = false}) {
+  if (isError) context.read<SettingsProvider>().heavyImpact();
   context.read<LogsProvider>().add(
     e.toString(),
     level: isError ? LogLevel.error : LogLevel.info,
@@ -151,55 +172,6 @@ class AppIcon extends StatelessWidget {
                 ),
               ),
       ),
-    );
-  }
-}
-
-class HighlightableButton extends StatelessWidget {
-  final bool highlight;
-  final VoidCallback? onPressed;
-  final VoidCallback? onLongPress;
-  final Widget? icon;
-  final Widget label;
-
-  const HighlightableButton({
-    super.key,
-    required this.highlight,
-    required this.onPressed,
-    this.onLongPress,
-    this.icon,
-    required this.label,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    if (highlight) {
-      if (icon != null) {
-        return FilledButton.icon(
-          onPressed: onPressed,
-          onLongPress: onLongPress,
-          icon: icon!,
-          label: label,
-        );
-      }
-      return FilledButton(
-        onPressed: onPressed,
-        onLongPress: onLongPress,
-        child: label,
-      );
-    }
-    if (icon != null) {
-      return TextButton.icon(
-        onPressed: onPressed,
-        onLongPress: onLongPress,
-        icon: icon!,
-        label: label,
-      );
-    }
-    return TextButton(
-      onPressed: onPressed,
-      onLongPress: onLongPress,
-      child: label,
     );
   }
 }

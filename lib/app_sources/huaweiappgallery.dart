@@ -23,7 +23,7 @@ class HuaweiAppGallery extends AppSource {
     pathPattern: r'(/#)?/(app|appdl)/[^/]+',
   );
 
-  String getDlUrl(String standardUrl) {
+  String _getDlUrl(String standardUrl) {
     final dlHost = hosts.length > 1 ? hosts[1] : hosts[0];
     return 'https://$dlHost/appdl/${standardUrl.split('/').last}';
   }
@@ -44,7 +44,7 @@ class HuaweiAppGallery extends AppSource {
     }
   }
 
-  String appIdFromRedirectDlUrl(String redirectDlUrl) {
+  String _appIdFromRedirectDlUrl(String redirectDlUrl) {
     final parts = redirectDlUrl
         .split('?')[0]
         .split('/')
@@ -65,10 +65,10 @@ class HuaweiAppGallery extends AppSource {
     String standardUrl, {
     Map<String, dynamic> additionalSettings = const {},
   }) async {
-    final String dlUrl = getDlUrl(standardUrl);
+    final String dlUrl = _getDlUrl(standardUrl);
     final Response res = await requestAppdlRedirect(dlUrl, additionalSettings);
     return res.headers['location'] != null
-        ? appIdFromRedirectDlUrl(res.headers['location']!)
+        ? _appIdFromRedirectDlUrl(res.headers['location']!)
         : null;
   }
 
@@ -78,7 +78,7 @@ class HuaweiAppGallery extends AppSource {
     Map<String, dynamic> additionalSettings,
   ) async {
     try {
-      final String dlUrl = getDlUrl(standardUrl);
+      final String dlUrl = _getDlUrl(standardUrl);
       final Response res = await requestAppdlRedirect(
         dlUrl,
         additionalSettings,
@@ -86,7 +86,7 @@ class HuaweiAppGallery extends AppSource {
       if (res.headers['location'] == null) {
         throw NoReleasesError();
       }
-      final String appId = appIdFromRedirectDlUrl(res.headers['location']!);
+      final String appId = _appIdFromRedirectDlUrl(res.headers['location']!);
       if (appId.isEmpty) {
         throw NoReleasesError();
       }
@@ -103,17 +103,11 @@ class HuaweiAppGallery extends AppSource {
       }
       // The date string is a 10-digit compact format (YYMMDDHHMM).
       // Insert hyphens to produce YY-MM-DD-HH-MM for DateFormat parsing.
-      final relDateStrAdj = relDateStr.split('');
-      final tempLen = relDateStrAdj.length;
-      var i = 2;
-      while (i < tempLen) {
-        relDateStrAdj.insert((i + i ~/ 2 - 1), '-');
-        i += 2;
-      }
+      final formatted = '${relDateStr.substring(0, 2)}-${relDateStr.substring(2, 4)}-${relDateStr.substring(4, 6)}-${relDateStr.substring(6, 8)}-${relDateStr.substring(8, 10)}';
       final relDate = DateFormat(
         'yy-MM-dd-HH-mm',
         'en_US',
-      ).parse(relDateStrAdj.join(''));
+      ).parse(formatted);
       return APKDetails(
         relDateStr,
         [MapEntry('$appId.apk', dlUrl)],

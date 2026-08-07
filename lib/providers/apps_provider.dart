@@ -8,14 +8,12 @@ import 'dart:io';
 import 'dart:math';
 import 'dart:typed_data';
 
-import 'package:android_system_font/android_system_font.dart';
 import 'package:android_package_manager/android_package_manager.dart';
 import 'package:battery_plus/battery_plus.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:crypto/crypto.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:http/io_client.dart';
 import 'package:obtainium/custom_errors.dart';
 import 'package:obtainium/providers/logs_provider.dart';
@@ -26,16 +24,13 @@ import 'package:flutter_fgbg/flutter_fgbg.dart';
 import 'package:obtainium/providers/source_provider.dart';
 import 'package:http/http.dart';
 import 'package:workmanager/workmanager.dart';
-import 'package:obtainium/main.dart';
-// ignore: implementation_imports
-import 'package:easy_localization/src/easy_localization_controller.dart';
-// ignore: implementation_imports
-import 'package:easy_localization/src/localization.dart';
 
 import 'package:obtainium/providers/apps_provider_import_export.dart';
 import 'package:obtainium/providers/apps_provider_install.dart';
 import 'package:obtainium/providers/apps_provider_lifecycle.dart';
 import 'package:obtainium/providers/apps_provider_updates.dart';
+
+import 'package:obtainium/utils/translation_loader.dart';
 
 export 'apps_provider_import_export.dart';
 export 'apps_provider_install.dart';
@@ -189,13 +184,6 @@ List<T> _moveToEnd<T extends Object>(List<T> arr, bool Function(T) match) {
 
 List<String> moveStrToEnd(List<String> arr, String str, {String? strB}) =>
     _moveToEnd(arr, (e) => e == str || e == strB);
-
-/// See [_moveToEnd] for semantic details.
-List<MapEntry<String, int>> moveStrToEndMapEntryWithCount(
-  List<MapEntry<String, int>> arr,
-  MapEntry<String, int> str, {
-  MapEntry<String, int>? strB,
-}) => _moveToEnd(arr, (e) => e.key == str.key || e.key == strB?.key);
 
 Future<File> downloadFileWithRetry(
   String url,
@@ -714,30 +702,6 @@ Future<int?> getDownloadSize(
   }
 }
 
-/// Formats a byte count as a short human-readable string (e.g. "5.0 MB").
-String formatBytes(int bytes) {
-  if (bytes <= 0) return '0 B';
-  const units = ['B', 'KB', 'MB', 'GB', 'TB'];
-  var size = bytes.toDouble();
-  var unit = 0;
-  while (size >= 1024 && unit < units.length - 1) {
-    size /= 1024;
-    unit++;
-  }
-  final value = unit == 0 ? size.toStringAsFixed(0) : size.toStringAsFixed(1);
-  return '$value ${units[unit]}';
-}
-
-/// Formats download progress as "received / total" (e.g. "5.0 MB / 20.0 MB"),
-/// or just the received amount when the total is unknown. Returns null when no
-/// bytes have been received yet.
-String? formatDownloadSize(int? receivedBytes, int? totalBytes) {
-  if (receivedBytes == null) return null;
-  if (totalBytes != null && totalBytes > 0) {
-    return '${formatBytes(receivedBytes)} / ${formatBytes(totalBytes)}';
-  }
-  return formatBytes(receivedBytes);
-}
 
 Future<List<PackageInfo>> getAllInstalledInfo() async {
   return await packageManager.getInstalledPackages(flags: packageInfoFlags) ??
@@ -754,47 +718,6 @@ Future<PackageInfo?> getInstalledInfo(String? packageName) async {
     } catch (_) {}
   }
   return null;
-}
-
-/// Snapshot of a package's install state, taken before an install so that
-/// [waitForPackageInstall] can later tell whether the install landed.
-class InstallBaseline {
-  final bool wasInstalled;
-  final int? updateTime;
-  const InstallBaseline(this.wasInstalled, this.updateTime);
-}
-
-/// Captures the current install state of [appId] to compare against later.
-Future<InstallBaseline> captureInstallBaseline(String appId) async {
-  final info = await getInstalledInfo(appId);
-  return InstallBaseline(info != null, info?.lastUpdateTime);
-}
-
-/// Polls for an install that can't report completion synchronously (a silent
-/// background install, or a hand-off to an external installer). Returns true as
-/// soon as the package appears (when it wasn't installed before) or its update
-/// timestamp changes relative to [baseline] — a version-agnostic signal that
-/// also works with pseudo-versions — or false if neither happens within
-/// [attempts] × [interval].
-Future<bool> waitForPackageInstall(
-  String appId,
-  InstallBaseline baseline, {
-  required int attempts,
-  Duration interval = const Duration(milliseconds: 500),
-}) async {
-  for (var attempt = 0; attempt < attempts; attempt++) {
-    final info = await getInstalledInfo(appId);
-    if (info != null) {
-      if (!baseline.wasInstalled) return true;
-      final updateTimeAfter = info.lastUpdateTime;
-      if (baseline.updateTime == null ||
-          (updateTimeAfter != null && updateTimeAfter != baseline.updateTime)) {
-        return true;
-      }
-    }
-    await Future.delayed(interval);
-  }
-  return false;
 }
 
 Future<Directory> getAppStorageDir() async {
@@ -850,6 +773,8 @@ class AppsProvider with ChangeNotifier {
   // Set in dispose() to guard against deferred callbacks running post-disposal.
   bool _disposed = false;
 
+  final Completer<void> _readyCompleter = Completer<void>();
+
   // Tracks whether a background save occurred since the last load.
   bool _needsBgReload = false;
   StreamSubscription<void>? _eventSubscription;
@@ -885,6 +810,8 @@ class AppsProvider with ChangeNotifier {
     }
     return _iconsCacheDir!;
   }
+
+  Future<void> get ready => _readyCompleter.future;
 
   Iterable<AppInMemory> getAppValues() {
     _reloadIfBgSaved();
@@ -922,6 +849,7 @@ class AppsProvider with ChangeNotifier {
 
   /// Requests cancellation of an ongoing download for [appId], if any.
   void cancelDownload(String appId) {
+    if (_disposed) return;
     _downloadCancellations[appId]?.cancel();
     final entry = apps[appId];
     if (entry != null && entry.downloadProgress != null) {
@@ -1020,8 +948,10 @@ class AppsProvider with ChangeNotifier {
             }
           }
         }
+        _readyCompleter.complete();
       }
     }().catchError((e) {
+      if (!_readyCompleter.isCompleted) _readyCompleter.completeError(e);
       initError = e.toString();
       unawaited(
         logs.add('AppsProvider async init error: $e', level: LogLevel.error),
@@ -1031,6 +961,13 @@ class AppsProvider with ChangeNotifier {
 
   @override
   void dispose() {
+    if (NotificationsProvider.onDownloadCancelRequested == cancelDownload) {
+      NotificationsProvider.onDownloadCancelRequested = null;
+    }
+    for (final token in _downloadCancellations.values) {
+      token.cancel();
+    }
+    _downloadCancellations.clear();
     _disposed = true;
     foregroundSubscription?.cancel();
     _autoExportDebounce?.cancel();
@@ -1052,7 +989,9 @@ class AppsProvider with ChangeNotifier {
     final Map<String, dynamic> errorsMap = results[1];
     for (var app in pps) {
       if (apps.containsKey(app.id)) {
-        errorsMap.addAll({app.id: tr('appAlreadyAdded')});
+        errorsMap.addAll({
+          app.id: '${tr('appAlreadyAdded')}: ${apps[app.id]?.app.name ?? app.id}',
+        });
       } else {
         await saveApps([app], onlyIfExists: false);
       }
@@ -1142,8 +1081,7 @@ Future<void> bgUpdateCheck(
     return;
   }
 
-  if (!appsProvider.settingsProvider.enableBackgroundUpdates ||
-      appsProvider.settingsProvider.updateInterval == 0) {
+  if (appsProvider.settingsProvider.updateInterval == 0) {
     if (!forceAll) {
       unawaited(
         bgLogs.add(
@@ -1259,7 +1197,7 @@ Future<void> bgUpdateCheck(
               id:
                   errorCheckingUpdatesNotificationId +
                   100 +
-                  Random().nextInt(9900),
+                  element.key.hashCode.abs(),
             ),
           ),
         );
@@ -1268,7 +1206,7 @@ Future<void> bgUpdateCheck(
   } else {
     unawaited(bgLogs.add('BG update task: No apps due for checking.'));
   }
-  if (canInstall && params['toCheck'] == null) {
+  if (canInstall && appsProvider.settingsProvider.enableBackgroundUpdates && params['toCheck'] == null) {
     final discovered = appsProvider.findAppIdsWithPendingUpdates(
       installedOnly: true,
     );
@@ -1348,7 +1286,8 @@ _bgRunUpdateCheck(
               : err is ClientException
               ? (_bgClientExceptionRetryWaitSeconds)
               : (toCheckApp.value + 1);
-          if (minRetryIntervalForThisApp > _bgUpdateMaxRetryWaitSeconds) {
+          if (minRetryIntervalForThisApp > _bgUpdateMaxRetryWaitSeconds &&
+              err is! RateLimitError) {
             minRetryIntervalForThisApp = _bgUpdateMaxRetryWaitSeconds;
           }
           if (minRetryIntervalForThisApp > retryAfterXSeconds) {
@@ -1417,53 +1356,3 @@ class CancellationToken {
   }
 }
 
-/// Isolates the implementation-level `easy_localization/src/` imports to a
-/// single file so the rest of the codebase only depends on the public API.
-class TranslationLoader {
-  static Future<void> load() async {
-    await EasyLocalizationController.initEasyLocation();
-    final s = SettingsProvider();
-    await s.initializeSettings();
-    final forceLocale = s.forcedLocale;
-    final controller = EasyLocalizationController(
-      saveLocale: true,
-      forceLocale: forceLocale,
-      fallbackLocale: fallbackLocale,
-      supportedLocales: supportedLocales.map((e) => e.key).toList(),
-      assetLoader: const RootBundleAssetLoader(),
-      useOnlyLangCode: false,
-      useFallbackTranslations: true,
-      path: localeDir,
-      onLoadError: (FlutterError e) {
-        throw e;
-      },
-    );
-    await controller.loadTranslations();
-    Localization.load(
-      controller.locale,
-      translations: controller.translations,
-      fallbackTranslations: controller.fallbackTranslations,
-    );
-  }
-}
-// Platform channel helpers for native OS features (e.g. system font loading).
-
-class NativeFeatures {
-  static bool _systemFontLoaded = false;
-
-  static Future<ByteData> _readFileBytes(String path) async {
-    final file = File(path);
-    final bytes = await file.readAsBytes();
-    return ByteData.sublistView(bytes);
-  }
-
-  static Future<void> loadSystemFont() async {
-    if (_systemFontLoaded) return;
-    final fontLoader = FontLoader('SystemFont');
-    final fontFilePath = await AndroidSystemFont().getFilePath();
-    if (fontFilePath == null) return;
-    fontLoader.addFont(_readFileBytes(fontFilePath));
-    await fontLoader.load();
-    _systemFontLoaded = true;
-  }
-}

@@ -57,20 +57,23 @@ class LogsProvider {
   // Shared singleton: many call sites construct LogsProvider() ad-hoc just to
   // log a line. A factory avoids doing DB work (the 7-day cleanup DELETE) on
   // every such construction - the cleanup runs at most once per process.
-  factory LogsProvider({bool runDefaultClear = true}) {
-    if (runDefaultClear && !_defaultClearScheduled) {
-      _defaultClearScheduled = true;
-      _instance
-          .clear(before: DateTime.now().subtract(const Duration(days: 7)))
-          .catchError((e) {
-            debugPrint('Failed to clear old logs: $e');
-            return 0;
-          });
-    }
+  factory LogsProvider() {
     return _instance;
   }
 
   LogsProvider._();
+
+  static Future<void> runStartupCleanup() async {
+    if (_defaultClearScheduled) return;
+    _defaultClearScheduled = true;
+    try {
+      await _instance.clear(
+        before: DateTime.now().subtract(const Duration(days: 7)),
+      );
+    } catch (e) {
+      debugPrint('Failed to clear old logs: $e');
+    }
+  }
 
   Future<Database> getDB() async {
     _db ??= await openDatabase(

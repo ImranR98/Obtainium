@@ -206,17 +206,11 @@ class AddAppPageState extends State<AddAppPage> {
   ) async {
     if (additionalSettings['releaseDateAsVersion'] != true) return true;
     if (!context.mounted) return false;
-    return await showDialog(
-          context: context,
-          builder: (BuildContext ctx) {
-            return GeneratedFormModal(
-              title: tr('releaseDateAsVersion'),
-              items: const [],
-              message: tr('releaseDateAsVersionExplanation'),
-            );
-          },
-        ) !=
-        null;
+    return await showContinueCancelDialog(
+      context,
+      title: tr('releaseDateAsVersion'),
+      message: tr('releaseDateAsVersionExplanation'),
+    );
   }
 
   Future<void> addApp(BuildContext context) async {
@@ -280,7 +274,10 @@ class AddAppPageState extends State<AddAppPage> {
           app = app.copyWith(id: downloadedFile?.appId ?? downloadedDir!.appId);
         }
         if (appsProvider.apps.containsKey(app.id)) {
-          throw ObtainiumError(tr('appAlreadyAdded'));
+          final existing = appsProvider.apps[app.id];
+          throw ObtainiumError(
+            '${tr('appAlreadyAdded')}: ${existing?.app.name ?? app.id} (${app.id})',
+          );
         }
         if (app.settings.getBool('trackOnly') ||
             !app.settings.getBool('versionDetection')) {
@@ -304,6 +301,7 @@ class AddAppPageState extends State<AddAppPage> {
   }
 
   Future<void> runSearch(BuildContext context) async {
+    settingsProvider.lightImpact();
     searching = true;
     setState(() {});
     final sourceStrings = <String, List<String>>{};
@@ -511,7 +509,7 @@ class AddAppPageState extends State<AddAppPage> {
 
   Widget _buildSourceSpecificForm(SettingsProvider settingsProvider) {
     final s = pickedSource!;
-    final formItems = s.combinedAppSpecificSettingFormItems;
+    final formItems = cloneFormItems(s.combinedAppSpecificSettingFormItems);
     for (var row in formItems) {
       for (var item in row) {
         if (additionalSettings[item.key] != null) {
@@ -871,10 +869,6 @@ class AddAppPageState extends State<AddAppPage> {
                               ),
                       ],
                     ),
-                  ],
-                  if (pickedSource == null && userInput.isEmpty) ...[
-                    if (shouldShowSearchBar) const SizedBox(height: 13),
-                    const ImportSection(),
                   ],
                   if (pickedSource != null)
                     FutureBuilder(

@@ -7,14 +7,13 @@ import 'package:flutter/material.dart';
 import 'package:obtainium/components/generated_form_renderer.dart';
 import 'package:obtainium/components/ui_widgets.dart';
 import 'package:obtainium/custom_errors.dart';
-import 'package:obtainium/pages/add_app.dart';
 import 'package:obtainium/pages/app.dart';
 import 'package:obtainium/pages/apps.dart';
-import 'package:obtainium/pages/settings.dart';
 import 'package:obtainium/providers/apps_provider.dart';
 import 'package:obtainium/providers/logs_provider.dart';
 import 'package:obtainium/providers/settings_provider.dart';
 import 'package:obtainium/providers/source_provider.dart';
+import 'package:obtainium/utils/nav_helper.dart';
 import 'package:provider/provider.dart';
 
 class HomePage extends StatefulWidget {
@@ -32,16 +31,26 @@ class _HomePageState extends State<HomePage> {
   late AppLinks _appLinks;
   StreamSubscription<Uri>? _linkSubscription;
 
+  bool _providersInitialized = false;
+
   final GlobalKey<AppsPageState> appsPageKey = GlobalKey<AppsPageState>();
   String? selectedAppId;
   bool appsSelecting = false;
 
   @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (!_providersInitialized) {
+      sourceProvider = context.read<SourceProvider>();
+      settingsProvider = context.read<SettingsProvider>();
+      appsProvider = context.read<AppsProvider>();
+      _providersInitialized = true;
+    }
+  }
+
+  @override
   void initState() {
     super.initState();
-    sourceProvider = context.read<SourceProvider>();
-    settingsProvider = context.read<SettingsProvider>();
-    appsProvider = context.read<AppsProvider>();
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       if (!mounted) return;
       await showWelcomeDialogs();
@@ -79,15 +88,11 @@ class _HomePageState extends State<HomePage> {
   }
 
   void pushAddApp({String? initialUrl}) {
-    Navigator.of(context).push(
-      MaterialPageRoute(builder: (_) => AddAppPage(initialUrl: initialUrl)),
-    );
+    NavHelper.pushAddAppPage(context, initialUrl: initialUrl);
   }
 
   void pushSettings() {
-    Navigator.of(context).push(
-      MaterialPageRoute(builder: (_) => const SettingsPage()),
-    );
+    NavHelper.pushSettingsPage(context);
   }
 
   Future<void> showWelcomeDialogs() async {
@@ -215,7 +220,7 @@ class _HomePageState extends State<HomePage> {
             await goToAddApp(data);
           }
         } else if (action == 'app' || action == 'apps') {
-          final dataStr = Uri.decodeComponent(data);
+          final dataStr = data;
           if (!context.mounted) return;
           if (await showDialog(
                 context: context,
@@ -272,6 +277,12 @@ class _HomePageState extends State<HomePage> {
               );
             }
           }
+        } else if (action == 'refresh') {
+          final targetId = uri.queryParameters['id'];
+          await appsProvider.checkUpdates(
+            forceAll: targetId == null,
+            specificIds: targetId != null ? [targetId] : null,
+          );
         } else {
           throw ObtainiumError(tr('unknown'));
         }
@@ -287,6 +298,7 @@ class _HomePageState extends State<HomePage> {
       await interpretLink(initialLink);
     }
 
+    if (!mounted) return;
     var dedupeInitial = initialLink != null;
     _linkSubscription = _appLinks.uriLinkStream.listen((uri) async {
       if (dedupeInitial) {
@@ -364,9 +376,11 @@ class _HomePageState extends State<HomePage> {
 
     final loadingApps = context.select<AppsProvider, bool>((p) => p.loadingApps);
 
-    final Widget? fab = appsSelecting
-        ? actionsFab
-        : (loadingApps ? null : createFabExtended);
+    final Widget? fab = isTV
+        ? null
+        : appsSelecting
+            ? actionsFab
+            : (loadingApps ? null : createFabExtended);
 
     final Widget content;
     if (useTwoPane) {

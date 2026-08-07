@@ -13,10 +13,11 @@ import 'package:flutter_fgbg/flutter_fgbg.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:obtainium/components/app_detail_widgets.dart';
 import 'package:obtainium/custom_errors.dart';
+import 'package:obtainium/installers/external_installer.dart';
 import 'package:obtainium/installers/installer.dart';
 import 'package:obtainium/installers/shizuku_installer.dart';
 import 'package:obtainium/installers/stock_installer.dart';
-import 'package:obtainium/installers/external_installer.dart';
+import 'package:obtainium/installers/install_utils.dart';
 import 'package:obtainium/providers/apps_provider.dart';
 import 'package:obtainium/providers/logs_provider.dart';
 import 'package:obtainium/providers/notifications_provider.dart';
@@ -658,6 +659,7 @@ extension AppsProviderInstall on AppsProvider {
         installedVersion: apps[file.appId]!.app.latestVersion,
       );
       unawaited(file.file.delete(recursive: true));
+      if (!isBg) settingsProvider.heavyImpact();
     }
     // Cancelled or already-installed/pending: keep the file so a retry can
     // reuse it without re-downloading (matches main).
@@ -912,40 +914,73 @@ extension AppsProviderInstall on AppsProvider {
       obtainiumId,
       strB: obtainiumTempId,
     );
-    appsToInstall = moveStrToEnd(appsToInstall, '$obtainiumId.fdroid');
-    appsToInstall = moveStrToEnd(appsToInstall, '$obtainiumId.debug');
+    appsToInstall = moveStrToEnd(
+      appsToInstall,
+      '$obtainiumId.fdroid',
+    );
+    appsToInstall = moveStrToEnd(
+      appsToInstall,
+      '$obtainiumId.debug',
+    );
 
-    List<_InstallResult> downloadResults = [];
+    final List<_InstallResult> obtainiumResults = [];
+    Future<void> installChain = Future.value();
+
+    Future<void> handleAppDownloadAndQueueInstall(String id) async {
+      final res = await _downloadAppForInstall(
+        id,
+        // ignore: use_build_context_synchronously
+        context,
+        notificationsProvider,
+        useExisting,
+        errors,
+      );
+      if (!errors.appIdNames.containsKey(res.id)) {
+        final isObtainium =
+            res.id == obtainiumId ||
+            res.id == obtainiumTempId ||
+            res.id == '$obtainiumId.fdroid' ||
+            res.id == '$obtainiumId.debug';
+        if (isObtainium) {
+          obtainiumResults.add(res);
+        } else {
+          installChain = installChain.then((_) async {
+            try {
+              await _installDownloadedApp(
+                res.id,
+                res.willBeSilent,
+                res.downloadedFile,
+                res.downloadedDir,
+                installedIds,
+                errors,
+                // ignore: use_build_context_synchronously
+                context,
+                notificationsProvider,
+              );
+            } catch (e) {
+              final appId = res.id;
+              errors.add(appId, e, appName: apps[appId]?.name);
+            }
+          });
+        }
+      }
+    }
+
     try {
       // Background tasks (forceParallelDownloads) run serially like main,
       // otherwise the parallelDownloads setting controls concurrency.
       if (forceParallelDownloads || !settingsProvider.parallelDownloads) {
         for (var id in appsToInstall) {
-          downloadResults.add(
-            await _downloadAppForInstall(
-              id,
-              // ignore: use_build_context_synchronously
-              context,
-              notificationsProvider,
-              useExisting,
-              errors,
-            ),
-          );
+          await handleAppDownloadAndQueueInstall(id);
         }
       } else {
-        downloadResults = await Future.wait(
-          appsToInstall.map(
-            (id) => _downloadAppForInstall(
-              id,
-              context,
-              notificationsProvider,
-              useExisting,
-              errors,
-            ),
-          ),
+        await Future.wait(
+          appsToInstall.map((id) => handleAppDownloadAndQueueInstall(id)),
         );
       }
-      for (var res in downloadResults) {
+      await installChain;
+
+      for (var res in obtainiumResults) {
         if (!errors.appIdNames.containsKey(res.id)) {
           try {
             await _installDownloadedApp(
@@ -1267,6 +1302,7 @@ extension AppsProviderInstall on AppsProvider {
       // doesn't report "Installing" before installation actually begins.
       apps[id]?.downloadProgress = _downloadCompleteProgress.toDouble();
       notify();
+      if (!isBg) settingsProvider.lightImpact();
       willBeSilent = await canInstallSilently(apps[id]!.app);
       final installer = getInstaller();
       await installer.ensurePermission();
