@@ -993,9 +993,7 @@ class _AppPageState extends State<AppPage> {
             ),
             onTapLink: (text, href, title) {
               if (href != null) {
-                unawaited(
-                  launchUrlString(href, mode: LaunchMode.externalApplication),
-                );
+                launchExternalUrlSafe(href);
               }
             },
             extensionSet: md.ExtensionSet(

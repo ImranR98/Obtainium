@@ -11,6 +11,31 @@ import 'package:obtainium/providers/settings_provider.dart';
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher_string.dart';
 
+/// Returns [href] as a launchable external URI, restricted to safe schemes
+/// (http, https, mailto); anything else (javascript:, intent:, file:, …)
+/// yields null. Scheme-less URLs are resolved against [baseOrigin] if given.
+Uri? safeExternalUrl(String href, {String? baseOrigin}) {
+  var uri = Uri.tryParse(href);
+  if (uri == null) return null;
+  if (uri.scheme.isEmpty) {
+    if (baseOrigin == null) return null;
+    uri = Uri.tryParse('$baseOrigin/$href');
+    if (uri == null) return null;
+  }
+  const allowedSchemes = {'http', 'https', 'mailto'};
+  if (!allowedSchemes.contains(uri.scheme.toLowerCase())) return null;
+  return uri;
+}
+
+/// Launches [href] in an external browser if [safeExternalUrl] allows it.
+void launchExternalUrlSafe(String href, {String? baseOrigin}) {
+  final uri = safeExternalUrl(href, baseOrigin: baseOrigin);
+  if (uri == null) return;
+  unawaited(
+    launchUrlString(uri.toString(), mode: LaunchMode.externalApplication),
+  );
+}
+
 Future<void> copyToClipboard(BuildContext context, String text) async {
   await Clipboard.setData(ClipboardData(text: text));
   if (context.mounted) {
