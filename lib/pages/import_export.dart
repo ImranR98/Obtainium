@@ -123,12 +123,24 @@ class _ImportFromURLListPageState extends State<ImportFromURLListPage> {
                         OutlinedButton.icon(
                           onPressed: controller.isImporting
                               ? null
-                              : () => controller.importFromFile(context),
+                              : () {
+                                  context
+                                      .read<SettingsProvider>()
+                                      .selectionClick();
+                                  controller.importFromFile(context);
+                                },
                           icon: const Icon(Icons.upload_file_outlined),
                           label: Text(tr('importFromURLsInFile')),
                         ),
                         FilledButton(
-                          onPressed: controller.isImporting ? null : _import,
+                          onPressed: controller.isImporting
+                              ? null
+                              : () {
+                                  context
+                                      .read<SettingsProvider>()
+                                      .selectionClick();
+                                  _import();
+                                },
                           child: controller.isImporting
                               ? const SizedBox(
                                   width: 20,
@@ -601,6 +613,7 @@ class _SelectionModalState extends State<SelectionModal> {
   }
 
   void selectAll({bool deselect = false}) {
+    context.read<SettingsProvider>().selectionClick();
     for (var e in entrySelections.keys) {
       entrySelections[e] = !deselect;
     }
@@ -648,6 +661,7 @@ class _SelectionModalState extends State<SelectionModal> {
   }
 
   void _selectThis(MapEntry<String, List<String>> entry, bool? value) {
+    context.read<SettingsProvider>().selectionClick();
     setState(() {
       value ??= false;
       if (value! && widget.onlyOneSelectionAllowed) {
@@ -833,6 +847,7 @@ class _SelectionModalState extends State<SelectionModal> {
         .firstOrNull;
     void onRadioChanged(String? value) {
       if (value == null) return;
+      context.read<SettingsProvider>().selectionClick();
       if (isTV) {
         Navigator.of(context).pop([value]);
       } else {

@@ -301,6 +301,7 @@ class AddAppPageState extends State<AddAppPage> {
   }
 
   Future<void> runSearch(BuildContext context) async {
+    settingsProvider.lightImpact();
     searching = true;
     setState(() {});
     final sourceStrings = <String, List<String>>{};

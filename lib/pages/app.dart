@@ -656,6 +656,7 @@ class _AppPageState extends State<AppPage> {
           onPressed: updating
               ? null
               : () {
+                  settingsProvider.selectionClick();
                   resetInstallStatus(app);
                 },
           icon: const Icon(Icons.restore_rounded),

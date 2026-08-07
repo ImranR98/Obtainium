@@ -437,7 +437,10 @@ class AppListTile extends StatelessWidget {
                         installed: appInMemory.installedInfo != null,
                         appsProvider: appsProvider,
                       ),
-                onLongPress: onToggleSelected,
+                onLongPress: () {
+                  settingsProvider.selectionClick();
+                  onToggleSelected();
+                },
                 title: Text(
                   maxLines: 1,
                   appInMemory.name,
@@ -473,6 +476,7 @@ class AppListTile extends StatelessWidget {
                     Checkbox(
                       value: multiSelected,
                       onChanged: (_) {
+                        settingsProvider.selectionClick();
                         onToggleSelected();
                       },
                     ),

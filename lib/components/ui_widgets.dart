@@ -69,6 +69,7 @@ Future<bool> showContinueCancelDialog(
 }
 
 void showMessage(dynamic e, BuildContext context, {bool isError = false}) {
+  if (isError) context.read<SettingsProvider>().heavyImpact();
   context.read<LogsProvider>().add(
     e.toString(),
     level: isError ? LogLevel.error : LogLevel.info,

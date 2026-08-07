@@ -657,7 +657,10 @@ class AppsPageState extends State<AppsPage> {
                 optionTile(
                   icon: isPinned ? Icons.push_pin : Icons.push_pin_outlined,
                   label: isPinned ? tr('unpinFromTop') : tr('pinToTop'),
-                  onTap: () => pinSelectedApps(selectedApps),
+                  onTap: () {
+                    settingsProvider.selectionClick();
+                    pinSelectedApps(selectedApps);
+                  },
                 ),
                 if (hasObtainActions && !appsProvider.areDownloadsRunning())
                   optionTile(
@@ -1396,6 +1399,7 @@ class _BulkUpdateDialogState extends State<_BulkUpdateDialog> {
       visualDensity: VisualDensity.compact,
       value: selectedIds.contains(id),
       onChanged: (checked) {
+        context.read<SettingsProvider>().selectionClick();
         setState(() {
           if (checked == true) {
             selectedIds.add(id);

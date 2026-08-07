@@ -514,7 +514,10 @@ class _SettingsPageState extends State<SettingsPage> {
         leading: Icon(icon, color: cs.primary),
         title: Text(title),
         trailing: Icon(Icons.chevron_right, color: cs.onSurfaceVariant),
-        onTap: onTap,
+        onTap: () {
+          context.read<SettingsProvider>().selectionClick();
+          onTap();
+        },
         shape: RoundedSuperellipseBorder(
           borderRadius: BorderRadius.circular(12),
         ),

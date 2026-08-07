@@ -659,6 +659,7 @@ extension AppsProviderInstall on AppsProvider {
         installedVersion: apps[file.appId]!.app.latestVersion,
       );
       unawaited(file.file.delete(recursive: true));
+      if (!isBg) settingsProvider.heavyImpact();
     }
     // Cancelled or already-installed/pending: keep the file so a retry can
     // reuse it without re-downloading (matches main).
@@ -1301,6 +1302,7 @@ extension AppsProviderInstall on AppsProvider {
       // doesn't report "Installing" before installation actually begins.
       apps[id]?.downloadProgress = _downloadCompleteProgress.toDouble();
       notify();
+      if (!isBg) settingsProvider.lightImpact();
       willBeSilent = await canInstallSilently(apps[id]!.app);
       final installer = getInstaller();
       await installer.ensurePermission();

@@ -4,6 +4,7 @@ import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:obtainium/components/ui_widgets.dart';
 import 'package:obtainium/providers/logs_provider.dart';
+import 'package:obtainium/providers/settings_provider.dart';
 import 'package:obtainium/theme.dart';
 import 'package:provider/provider.dart';
 import 'package:share_plus/share_plus.dart';
@@ -171,12 +172,22 @@ class _LogsPageState extends State<LogsPage> {
                   .toList(),
             ),
             IconButton(
-              onPressed: hasLogs ? _shareLogs : null,
+              onPressed: hasLogs
+                  ? () {
+                      context.read<SettingsProvider>().selectionClick();
+                      _shareLogs();
+                    }
+                  : null,
               icon: const Icon(Icons.share_rounded),
               tooltip: tr('share'),
             ),
             IconButton(
-              onPressed: hasLogs ? _clearLogs : null,
+              onPressed: hasLogs
+                  ? () {
+                      context.read<SettingsProvider>().selectionClick();
+                      _clearLogs();
+                    }
+                  : null,
               color: cs.error,
               icon: const Icon(Icons.delete_outline_rounded),
               tooltip: tr('remove'),

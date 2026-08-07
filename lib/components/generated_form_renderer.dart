@@ -556,12 +556,12 @@ class _GeneratedFormState extends State<GeneratedForm> {
             noPadding: widget.noTilePadding,
             onChanged: item.disabled
                 ? null
-                : (value) {
+                : hapticSwitchOnChanged(context, (value) {
                     setState(() {
                       values[fieldKey] = value;
                       notifyFormChange();
                     });
-                  },
+                  }),
           );
         } else if (item is GeneratedFormSubForm) {
           renderedInputs[r][e] = _buildSubForm(
