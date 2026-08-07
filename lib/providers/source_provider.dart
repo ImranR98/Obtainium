@@ -1320,6 +1320,13 @@ class TypedSettings {
 class HttpService {
   static const int maxRedirects = 10;
 
+  /// Headers that must never be forwarded to a different origin on redirect.
+  static const Set<String> sensitiveRedirectHeaders = {
+    'authorization',
+    'proxy-authorization',
+    'cookie',
+  };
+
   HttpClient createHttpClient(bool insecure) {
     final client = HttpClient();
     if (insecure) {
@@ -1328,6 +1335,14 @@ class HttpService {
     }
     return client;
   }
+
+  /// Whether two URIs share the same origin (scheme, host, and port — Dart
+  /// normalizes default ports for http/https, so explicit and implicit
+  /// default ports compare equal).
+  static bool isSameOrigin(Uri a, Uri b) =>
+      a.scheme.toLowerCase() == b.scheme.toLowerCase() &&
+      a.host.toLowerCase() == b.host.toLowerCase() &&
+      a.port == b.port;
 
   String ensureAbsoluteUrl(String ambiguousUrl, Uri referenceAbsoluteUrl) {
     try {
@@ -1377,9 +1392,28 @@ class HttpService {
           (response.statusCode >= 300 && response.statusCode <= 399)) {
         final location = response.headers.value(HttpHeaders.locationHeader);
         if (location != null) {
-          currentUrl = Uri.parse(ensureAbsoluteUrl(location, currentUrl));
+          final nextUrl = Uri.parse(ensureAbsoluteUrl(location, currentUrl));
+          if (currentUrl.scheme == 'https' && nextUrl.scheme == 'http') {
+            // Never follow a redirect that downgrades to cleartext HTTP.
+            httpClient.close();
+            throw ObtainiumError(tr('insecureRedirect'));
+          }
+          if (!isSameOrigin(currentUrl, nextUrl)) {
+            // Do not forward credentials or session cookies to a
+            // different origin.
+            requestHeaders = requestHeaders == null
+                ? null
+                : (Map<String, String>.from(requestHeaders)
+                  ..removeWhere(
+                    (key, _) =>
+                        sensitiveRedirectHeaders.contains(key.toLowerCase()),
+                  ));
+            cookies = [];
+          } else {
+            cookies = response.cookies;
+          }
+          currentUrl = nextUrl;
           redirectCount++;
-          cookies = response.cookies;
           httpClient.close();
           httpClient = null;
           continue;

@@ -212,6 +212,7 @@
     "installX": "Install {}",
     "installed": "Installed",
     "installedVersionX": "Installed: {}",
+    "insecureRedirect": "Refused to follow a redirect from HTTPS to insecure HTTP",
     "installing": "Installing",
     "intermediateLink": "Intermediate link",
     "intermediateLinkNotFound": "Intermediate link not found",
