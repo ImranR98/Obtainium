@@ -248,6 +248,26 @@ extension AppsProviderImportExport on AppsProvider {
     } catch (e) {
       throw ObtainiumError('${tr('failedToImport')}: ${e.toString()}');
     }
+    // Strip potentially unsafe (ReDoS-prone) regexes from imported configs —
+    // they would otherwise run on every update check.
+    var strippedUnsafe = false;
+    for (var i = 0; i < importedApps.length; i++) {
+      final cleaned = withoutUnsafeRegexes(importedApps[i].additionalSettings);
+      if (cleaned != null) {
+        importedApps[i] = importedApps[i].copyWith(
+          additionalSettings: cleaned,
+        );
+        strippedUnsafe = true;
+      }
+    }
+    if (strippedUnsafe) {
+      unawaited(
+        LogsProvider().add(
+          'Stripped potentially unsafe regular expressions from imported apps',
+          level: LogLevel.warning,
+        ),
+      );
+    }
     await waitForAppsToLoad();
     for (var i = 0; i < importedApps.length; i++) {
       final a = importedApps[i];
