@@ -6,6 +6,7 @@ import 'dart:convert';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:obtainium/custom_errors.dart';
 import 'package:obtainium/main.dart';
@@ -64,6 +65,13 @@ class SettingsProvider with ChangeNotifier {
   bool isTV = false;
   bool _silent = false;
 
+  /// Credentials (keys ending in `-creds`) live in secure storage, not in
+  /// cleartext SharedPreferences.
+  static const FlutterSecureStorage _secureStorage = FlutterSecureStorage();
+
+  /// Whether [key] holds a credential that must live in secure storage.
+  static bool isCredentialKey(String key) => key.endsWith('-creds');
+
   T? _get<T>(String key) {
     final value = prefs?.get(key);
     if (value is T) return value;
@@ -97,6 +105,7 @@ class SettingsProvider with ChangeNotifier {
     _migrateLegacyExportSetting();
     _normalizeInstallPreference();
     _migrateGroupBySetting();
+    await migrateCredentialsToSecureStorage();
     notifyListeners();
   }
 
@@ -416,6 +425,64 @@ class SettingsProvider with ChangeNotifier {
   void setSettingString(String settingId, String value) {
     prefs?.setString(settingId, value);
     notifyListeners();
+  }
+
+  /// Reads a credential from secure storage, migrating any legacy
+  /// SharedPreferences copy on first access.
+  Future<String?> getCredential(String key) async {
+    final legacy = prefs?.getString(key);
+    if (legacy != null && legacy.isNotEmpty) {
+      await _secureStorage.write(key: key, value: legacy);
+      await prefs?.remove(key);
+      notifyListeners();
+      return legacy;
+    }
+    final value = await _secureStorage.read(key: key);
+    return value != null && value.isNotEmpty ? value : null;
+  }
+
+  /// Writes a credential to secure storage (empty value deletes it) and
+  /// ensures no cleartext copy remains in SharedPreferences.
+  Future<void> setCredential(String key, String value) async {
+    if (value.isEmpty) {
+      await _secureStorage.delete(key: key);
+    } else {
+      await _secureStorage.write(key: key, value: value);
+    }
+    if (prefs?.containsKey(key) == true) {
+      await prefs?.remove(key);
+    }
+    notifyListeners();
+  }
+
+  /// Moves every `-creds` key found in SharedPreferences to secure storage.
+  /// Runs once at settings initialization; [getCredential] also migrates
+  /// lazily as a fallback.
+  Future<void> migrateCredentialsToSecureStorage() async {
+    final keys =
+        prefs?.getKeys().where(isCredentialKey).toList() ?? <String>[];
+    for (final key in keys) {
+      final value = prefs?.getString(key);
+      if (value != null && value.isNotEmpty) {
+        await _secureStorage.write(key: key, value: value);
+      }
+      await prefs?.remove(key);
+    }
+  }
+
+  /// Reads a setting that may be a credential (`-creds` keys are served
+  /// from secure storage).
+  Future<String?> getSettingStringOrCredential(String key) async =>
+      isCredentialKey(key) ? getCredential(key) : getSettingString(key);
+
+  /// Writes a setting that may be a credential (`-creds` keys go to secure
+  /// storage).
+  Future<void> setSettingStringOrCredential(String key, String value) async {
+    if (isCredentialKey(key)) {
+      await setCredential(key, value);
+    } else {
+      setSettingString(key, value);
+    }
   }
 
   bool getSettingBool(String settingId) {
