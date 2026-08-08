@@ -703,7 +703,7 @@ class AppsPageState extends State<AppsPage> {
                     appsProvider
                         .downloadAppAssets(
                           selectedApps.map((e) => e.id).toList(),
-                          context,
+                          context
                         )
                         .catchError((e) {
                           if (context.mounted) showError(e, context);

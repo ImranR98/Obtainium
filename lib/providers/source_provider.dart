@@ -12,6 +12,7 @@ import 'dart:typed_data';
 import 'package:crypto/crypto.dart';
 import 'package:device_info_plus/device_info_plus.dart';
 import 'package:easy_localization/easy_localization.dart';
+import 'package:flutter/services.dart';
 import 'package:http/http.dart' as http;
 import 'package:obtainium/app_sources/apkcombo.dart';
 import 'package:obtainium/app_sources/apkmirror.dart';
@@ -411,8 +412,8 @@ String getSourceRegex(List<String> hosts) {
 }
 
 /// Delegates to [HttpService.createHttpClient].
-HttpClient createHttpClient(bool insecure) =>
-    HttpService().createHttpClient(insecure);
+Future<HttpClient> createHttpClient(Map<String, dynamic> additionalSettings) async =>
+    await HttpService().createHttpClient(additionalSettings);
 
 // ------------------------------------------------------------------------
 // More top-level delegation helpers (continued)
@@ -422,14 +423,12 @@ HttpClient createHttpClient(bool insecure) =>
 Future<MapEntry<Uri, MapEntry<HttpClient, HttpClientResponse>>>
 sourceRequestStreamResponse(
   String method,
-  String url,
   Map<String, String>? requestHeaders,
   Map<String, dynamic> additionalSettings, {
   bool followRedirects = true,
   Object? postBody,
 }) => HttpService().sourceRequestStreamResponse(
   method,
-  url,
   requestHeaders,
   additionalSettings,
   followRedirects: followRedirects,
@@ -526,6 +525,8 @@ abstract class AppSource {
       url,
       additionalSettingsPlusSourceConfig,
     );
+    additionalSettingsPlusSourceConfig['url'] = url;
+    additionalSettingsPlusSourceConfig['enableCertificatePinning'] = sp.enableCertificatePinning;
     final method = postBody == null ? 'GET' : 'POST';
     final requestHeaders = await getRequestHeaders(
       additionalSettingsPlusSourceConfig,
@@ -534,7 +535,6 @@ abstract class AppSource {
     final streamedResponseUrlWithResponseAndClient =
         await sourceRequestStreamResponse(
           method,
-          url,
           requestHeaders,
           additionalSettingsPlusSourceConfig,
           followRedirects: followRedirects,
@@ -1414,19 +1414,19 @@ class HttpService {
   Future<MapEntry<Uri, MapEntry<HttpClient, HttpClientResponse>>>
   sourceRequestStreamResponse(
     String method,
-    String url,
     Map<String, String>? requestHeaders,
     Map<String, dynamic> additionalSettings, {
     bool followRedirects = true,
     Object? postBody,
   }) async {
+    final url = additionalSettings['url'] as String;
     var currentUrl = Uri.parse(url);
     var redirectCount = 0;
     List<Cookie> cookies = [];
     HttpClient? httpClient;
     while (redirectCount < maxRedirects) {
-      httpClient = createHttpClient(
-        additionalSettings['allowInsecure'] == true,
+      httpClient = await createHttpClient(
+        additionalSettings,
       );
       final request = await httpClient.openUrl(method, currentUrl);
       if (requestHeaders != null) {
