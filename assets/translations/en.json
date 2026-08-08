@@ -153,6 +153,7 @@
     "dropdownNoOptsError": "ERROR: DROPDOWN MUST HAVE AT LEAST ONE OPT",
     "editCategory": "Edit category",
     "enableBackgroundUpdates": "Enable background updates",
+    "enableCertificatePinning": "Enable certificate pinning",
     "enableBackgroundSilentInstalls": "Enable background silent installs",
     "error": "Error",
     "errorCheckingUpdates": "Error checking for updates",
