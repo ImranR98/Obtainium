@@ -456,5 +456,8 @@
     "yes": "അതെ",
     "yesMarkUpdated": "അതെ, അപ്‌ഡേറ്റ് ചെയ്തതായി അടയാളപ്പെടുത്തുക",
     "youPickedTrackOnly": "നിങ്ങൾ 'ട്രാക്ക്-മാത്രം' ഓപ്ഷൻ തിരഞ്ഞെടുത്തു.",
-    "zippedApkFilterRegEx": "Filter APKs inside ZIP"
+    "zippedApkFilterRegEx": "Filter APKs inside ZIP",
+    "installMethodRoot": "റൂട്ട്",
+    "rootNotFound": "PATH-ൽ su കണ്ടെത്തിയില്ല - ആപ്പിന് റൂട്ട് അനുമതികൾ നൽകുക",
+    "rootFailed": "റൂട്ട് എക്സിക്യൂഷൻ പരാജയപ്പെട്ടു - നിങ്ങളുടെ റൂട്ട് മാനേജർ പരിശോധിക്കുക"
 }

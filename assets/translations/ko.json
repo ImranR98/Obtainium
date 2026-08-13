@@ -456,5 +456,8 @@
     "yes": "예",
     "yesMarkUpdated": "예, 업데이트됨으로 표시",
     "youPickedTrackOnly": "당신은 '추적 전용' 옵션을 선택했습니다.",
-    "zippedApkFilterRegEx": "ZIP 내 APK 필터링"
+    "zippedApkFilterRegEx": "ZIP 내 APK 필터링",
+    "installMethodRoot": "루트",
+    "rootNotFound": "PATH에서 su를 찾을 수 없음 - 앱에 루트 권한 부여",
+    "rootFailed": "루트 실행 실패 - 루트 관리자 확인"
 }

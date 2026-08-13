@@ -456,5 +456,8 @@
     "yes": "Oui",
     "yesMarkUpdated": "Oui, marquer comme étant à jour",
     "youPickedTrackOnly": "Vous avez sélectionné l'option 'suivi uniquement'.",
-    "zippedApkFilterRegEx": "Filtrer les APK dans un fichier ZIP"
+    "zippedApkFilterRegEx": "Filtrer les APK dans un fichier ZIP",
+    "installMethodRoot": "Root",
+    "rootNotFound": "su introuvable dans le PATH - Accordez les permissions root à l'application",
+    "rootFailed": "L'exécution root a échoué - vérifiez votre gestionnaire root"
 }

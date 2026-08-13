@@ -468,5 +468,8 @@
     "yes": "Да",
     "yesMarkUpdated": "Да, отметить как обновлённое",
     "youPickedTrackOnly": "Выбрана настройка «только для отслеживания»",
-    "zippedApkFilterRegEx": "Фильтр APK внутри ZIP"
+    "zippedApkFilterRegEx": "Фильтр APK внутри ZIP",
+    "installMethodRoot": "Root",
+    "rootNotFound": "Root не найден в PATH - установите Magisk или SuperSU",
+    "rootFailed": "Ошибка выполнения Root - проверьте права root"
 }

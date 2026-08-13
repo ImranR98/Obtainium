@@ -490,5 +490,8 @@
     "yes": "Tak",
     "yesMarkUpdated": "Tak, oznacz jako zaktualizowaną",
     "youPickedTrackOnly": "Wybrano opcję \"Tylko do obserwacji\".",
-    "zippedApkFilterRegEx": "Filtruj pliki APK w .zip (RegEx)"
+    "zippedApkFilterRegEx": "Filtruj pliki APK w .zip (RegEx)",
+    "installMethodRoot": "Root",
+    "rootNotFound": "nie znaleziono su w PATH - Przyznaj aplikacji uprawnienia root",
+    "rootFailed": "Wykonanie root nie powiodło się - sprawdź swojego menedżera root"
 }

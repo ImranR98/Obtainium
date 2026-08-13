@@ -456,5 +456,8 @@
     "yes": "Ya",
     "yesMarkUpdated": "Ya, tandai bahwa sudah diperbarui",
     "youPickedTrackOnly": "Anda telah memilih opsi Pelacakan Saja.",
-    "zippedApkFilterRegEx": "Saring APK di dalam ZIP"
+    "zippedApkFilterRegEx": "Saring APK di dalam ZIP",
+    "installMethodRoot": "Root",
+    "rootNotFound": "su tidak ditemukan di PATH - Berikan izin root ke aplikasi",
+    "rootFailed": "Eksekusi root gagal - periksa manajer root Anda"
 }

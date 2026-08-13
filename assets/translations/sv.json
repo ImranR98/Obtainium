@@ -456,5 +456,8 @@
     "yes": "Ja",
     "yesMarkUpdated": "Ja, Märk som Uppdaterad",
     "youPickedTrackOnly": "Du har markerat 'Följ-Endast'-alternativet",
-    "zippedApkFilterRegEx": "Filtrera APK:er inuti ZIP"
+    "zippedApkFilterRegEx": "Filtrera APK:er inuti ZIP",
+    "installMethodRoot": "Root",
+    "rootNotFound": "su hittades inte i PATH - Ge appen root-behörigheter",
+    "rootFailed": "Root-körning misslyckades - kontrollera din root-hanterare"
 }

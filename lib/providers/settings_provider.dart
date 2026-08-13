@@ -43,7 +43,7 @@ Locale? tryParseLocale(String? localeString) {
   return null;
 }
 
-enum InstallerMode { system, shizuku, external }
+enum InstallerMode { system, shizuku, external, root }
 
 enum GroupByMode { none, category, source }
 
@@ -164,6 +164,14 @@ class SettingsProvider with ChangeNotifier {
   set useShizuku(bool useShizuku) {
     installerMode = useShizuku
         ? InstallerMode.shizuku.name
+        : InstallerMode.system.name;
+  }
+
+  bool get useRoot => installerMode == InstallerMode.root.name;
+
+  set useRoot(bool useRoot) {
+    installerMode = useRoot
+        ? InstallerMode.root.name
         : InstallerMode.system.name;
   }
 

@@ -456,5 +456,8 @@
     "yes": "Так",
     "yesMarkUpdated": "Так, позначити як оновлене",
     "youPickedTrackOnly": "Ви вибрали опцію лише для відстежування.",
-    "zippedApkFilterRegEx": "Фільтруйте APK-файли всередині ZIP"
+    "zippedApkFilterRegEx": "Фільтруйте APK-файли всередині ZIP",
+    "installMethodRoot": "Root",
+    "rootNotFound": "su не знайдено в PATH - Надайте додатку root права",
+    "rootFailed": "Помилка виконання Root - перевірте ваш менеджер"
 }

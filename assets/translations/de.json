@@ -456,5 +456,8 @@
     "yes": "Ja",
     "yesMarkUpdated": "Ja, als aktualisiert markieren",
     "youPickedTrackOnly": "Sie haben die Option „Nur nachverfolgen“ gewählt.",
-    "zippedApkFilterRegEx": "APKs in ZIP filtern"
+    "zippedApkFilterRegEx": "APKs in ZIP filtern",
+    "installMethodRoot": "Root",
+    "rootNotFound": "su nicht im PATH gefunden - Gewähren Sie der App Root-Rechte",
+    "rootFailed": "Root-Ausführung fehlgeschlagen - überprüfen Sie Ihren Root-Manager"
 }

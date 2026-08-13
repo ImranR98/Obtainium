@@ -456,5 +456,8 @@
     "yes": "Igen",
     "yesMarkUpdated": "Igen, megjelölés frissítettként",
     "youPickedTrackOnly": "„Csak nyomon követés” beállítást választotta.",
-    "zippedApkFilterRegEx": "APK-fájlok szűrése a ZIP-fájlon belül"
+    "zippedApkFilterRegEx": "APK-fájlok szűrése a ZIP-fájlon belül",
+    "installMethodRoot": "Root",
+    "rootNotFound": "su nem található a PATH-ban - Adj root jogosultságot az alkalmazásnak",
+    "rootFailed": "Root végrehajtás sikertelen - ellenőrizze a root kezelőt"
 }

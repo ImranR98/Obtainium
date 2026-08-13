@@ -456,5 +456,8 @@
     "yes": "Sim",
     "yesMarkUpdated": "Sim, marcar como atualizado",
     "youPickedTrackOnly": "Você selecionou a opção 'Apenas monitorar'.",
-    "zippedApkFilterRegEx": "Filtrar APKs dentro do ZIP"
+    "zippedApkFilterRegEx": "Filtrar APKs dentro do ZIP",
+    "installMethodRoot": "Root",
+    "rootNotFound": "su não encontrado no PATH - Conceda permissões root ao aplicativo",
+    "rootFailed": "Falha na execução do Root - verifique seu gerenciador root"
 }

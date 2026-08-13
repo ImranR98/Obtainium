@@ -456,5 +456,8 @@
     "yes": "بله",
     "yesMarkUpdated": "بله، علامت گذاری به عنوان به روز شده",
     "youPickedTrackOnly": "شما گزینه ی «فقط ردیابی» را انتخاب کرده اید",
-    "zippedApkFilterRegEx": "فیلتر APK در داخل Zip"
+    "zippedApkFilterRegEx": "فیلتر APK در داخل Zip",
+    "installMethodRoot": "ریشه",
+    "rootNotFound": "su در PATH یافت نشد - به برنامه دسترسی ریشه بدهید",
+    "rootFailed": "اجرای ریشه ناموفق بود - مدیر ریشه خود را بررسی کنید"
 }

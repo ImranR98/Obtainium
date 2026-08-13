@@ -456,5 +456,8 @@
     "yes": "是",
     "yesMarkUpdated": "是，标记为已更新",
     "youPickedTrackOnly": "您选择了“仅追踪”。",
-    "zippedApkFilterRegEx": "过滤 ZIP 内的 APK"
+    "zippedApkFilterRegEx": "过滤 ZIP 内的 APK",
+    "installMethodRoot": "Root",
+    "rootNotFound": "在PATH中未找到su - 授予应用Root权限",
+    "rootFailed": "Root执行失败 - 请检查您的Root管理器"
 }

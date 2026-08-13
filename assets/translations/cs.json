@@ -469,5 +469,8 @@
     "yes": "Ano",
     "yesMarkUpdated": "Ano, označit jako aktualizované",
     "youPickedTrackOnly": "Vybrali jste možnost „pouze sledovat“.",
-    "zippedApkFilterRegEx": "Filtrování souborů APK uvnitř ZIP"
+    "zippedApkFilterRegEx": "Filtrování souborů APK uvnitř ZIP",
+    "installMethodRoot": "Root",
+    "rootNotFound": "su nebyl nalezen v PATH - Udělte aplikaci root oprávnění",
+    "rootFailed": "Spuštění root selhalo - zkontrolujte svého root správce"
 }

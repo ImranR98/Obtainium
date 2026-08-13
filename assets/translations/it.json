@@ -456,5 +456,8 @@
     "yes": "Sì",
     "yesMarkUpdated": "Sì, contrassegna come aggiornata",
     "youPickedTrackOnly": "È stata selezionata l'opzione 'Solo-Monitoraggio'.",
-    "zippedApkFilterRegEx": "Filtrare gli APK all'interno dello ZIP"
+    "zippedApkFilterRegEx": "Filtrare gli APK all'interno dello ZIP",
+    "installMethodRoot": "Root",
+    "rootNotFound": "su non trovato in PATH - Concedi i permessi root all'app",
+    "rootFailed": "Esecuzione root fallita - controlla il tuo gestore root"
 }

@@ -456,5 +456,8 @@
     "yes": "Evet",
     "yesMarkUpdated": "Evet, güncel olarak işaretle",
     "youPickedTrackOnly": "'Sadece takip et' seçeneğini seçtiniz.",
-    "zippedApkFilterRegEx": "ZIP içindeki APK'ları filtrele"
+    "zippedApkFilterRegEx": "ZIP içindeki APK'ları filtrele",
+    "installMethodRoot": "Root",
+    "rootNotFound": "PATH'de su bulunamadı - Uygulamaya root izinleri verin",
+    "rootFailed": "Root yürütme başarısız - root yöneticinizi kontrol edin"
 }
