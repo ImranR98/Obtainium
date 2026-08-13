@@ -13,8 +13,21 @@ class Codeberg extends AppSource {
 
   @override
   List<List<GeneratedFormItem>>
-  get additionalSourceAppSpecificSettingFormItems =>
-      _gh.additionalSourceAppSpecificSettingFormItems;
+  get additionalSourceAppSpecificSettingFormItems => [
+    ..._gh.sourceConfigSettingFormItems.map((item) => [item]),
+    ..._gh.additionalSourceAppSpecificSettingFormItems,
+  ];
+
+  @override
+  Future<Map<String, String>?> getRequestHeaders(
+    Map<String, dynamic> additionalSettings,
+    String url, {
+    bool forAPKDownload = false,
+  }) => _gh.getRequestHeaders(
+    additionalSettings,
+    url,
+    forAPKDownload: forAPKDownload,
+  );
 
   @override
   List<GeneratedFormItem> get searchQuerySettingFormItems =>
