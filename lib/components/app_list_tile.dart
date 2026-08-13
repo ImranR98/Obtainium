@@ -911,14 +911,23 @@ class _VersionLabel extends StatelessWidget {
             constraints: BoxConstraints(maxWidth: maxWidth),
             child: DefaultTextStyle.merge(
               style: const TextStyle(fontSize: 14),
-              child: Text(
-                installedVersionText(app),
-                overflow: TextOverflow.ellipsis,
-                textAlign: TextAlign.end,
-                style: TextStyle(
-                  fontStyle:
-                      isVersionPseudo(app) ? FontStyle.italic : null,
-                  color: updateColor,
+              child: Directionality(
+                // The "old → new" version transition uses an LTR-only arrow
+                // glyph; under an RTL Directionality it gets bidi-mirrored
+                // and reordered, making it look like a downgrade. Force LTR
+                // so it always reads in the intended direction.
+                textDirection: isVersionUpdate(app)
+                    ? TextDirection.ltr
+                    : Directionality.of(context),
+                child: Text(
+                  installedVersionText(app),
+                  overflow: TextOverflow.ellipsis,
+                  textAlign: TextAlign.end,
+                  style: TextStyle(
+                    fontStyle:
+                        isVersionPseudo(app) ? FontStyle.italic : null,
+                    color: updateColor,
+                  ),
                 ),
               ),
             ),
@@ -960,10 +969,16 @@ class _VersionLabel extends StatelessWidget {
     );
   }
 
+  bool isVersionUpdate(App app) {
+    final installed = app.installedVersion;
+    final latest = app.latestVersion;
+    return installed != null && installed != latest;
+  }
+
   String installedVersionText(App app) {
     final installed = app.installedVersion;
     final latest = app.latestVersion;
-    if (installed != null && installed != latest) {
+    if (isVersionUpdate(app)) {
       return '$installed → $latest';
     }
     return installed ?? tr('notInstalled');
