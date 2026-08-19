@@ -510,7 +510,6 @@ Future<File> downloadFile(
     const downloadUIUpdateInterval = Duration(
       milliseconds: _progressUpdateIntervalMs,
     );
-    const downloadBufferSizeLocal = _downloadBufferSize;
 
     // Check status code BEFORE finishing the download stream so we can
     // abort early on errors and avoid wasting bandwidth reading a body
@@ -534,7 +533,6 @@ Future<File> downloadFile(
       )..url = url;
     }
 
-    final downloadBuffer = BytesBuilder();
     try {
       await response
           .map((chunk) {
@@ -553,22 +551,6 @@ Future<File> downloadFile(
             }
             return chunk;
           })
-          .transform(
-            StreamTransformer<List<int>, List<int>>.fromHandlers(
-              handleData: (List<int> data, EventSink<List<int>> s) {
-                downloadBuffer.add(data);
-                if (downloadBuffer.length >= downloadBufferSizeLocal) {
-                  s.add(downloadBuffer.takeBytes());
-                }
-              },
-              handleDone: (EventSink<List<int>> s) {
-                if (downloadBuffer.isNotEmpty) {
-                  s.add(downloadBuffer.takeBytes());
-                }
-                s.close();
-              },
-            ),
-          )
           .pipe(sink);
     } catch (e) {
       // Release the file handle, ignoring "file already closed" races that can
@@ -954,7 +936,7 @@ class AppsProvider with ChangeNotifier {
     final List<List<String>> errors = errorsMap.keys
         .map((e) => [e, errorsMap[e].toString()])
         .toList();
-    return errors;
+    return [pps.map((e) => [e.url]).toList(), errors];
   }
 }
 
