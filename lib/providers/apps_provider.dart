@@ -936,7 +936,7 @@ class AppsProvider with ChangeNotifier {
     final List<List<String>> errors = errorsMap.keys
         .map((e) => [e, errorsMap[e].toString()])
         .toList();
-    return [pps.map((e) => [e.url]).toList(), errors];
+    return errors;
   }
 }
 
