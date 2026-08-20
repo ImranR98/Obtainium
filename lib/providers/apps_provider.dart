@@ -534,25 +534,39 @@ Future<File> downloadFile(
     }
 
     try {
-      await response
-          .map((chunk) {
-            cancellationToken?.throwIfCancelled();
-            received += chunk.length;
-            final now = DateTime.now();
-            if (onProgress != null &&
-                (lastProgressUpdate == null ||
-                    now.difference(lastProgressUpdate!) >=
-                        downloadUIUpdateInterval)) {
-              progress = fullContentLength != null
-                  ? (received / fullContentLength * 100).clamp(0, 100)
-                  : _downloadProgressFallback.toDouble();
-              onProgress(progress, received, fullContentLength);
-              lastProgressUpdate = now;
-            }
-            return chunk;
-          })
-          .pipe(sink);
+      await sink.addStream(
+        response
+            .transform(
+              StreamTransformer<List<int>, List<int>>.fromHandlers(
+                handleData: (chunk, sink) {
+                  cancellationToken?.throwIfCancelled();
+                  received += chunk.length;
+                  final now = DateTime.now();
+                  if (onProgress != null &&
+                      (lastProgressUpdate == null ||
+                          now.difference(lastProgressUpdate!) >=
+                              downloadUIUpdateInterval)) {
+                    progress = fullContentLength != null
+                        ? (received / fullContentLength * 100).clamp(0, 100)
+                        : _downloadProgressFallback.toDouble();
+                    onProgress(progress, received, fullContentLength);
+                    lastProgressUpdate = now;
+                  }
+                  sink.add(chunk);
+                },
+              ),
+            )
+            .timeout(const Duration(seconds: 60)),
+      );
     } catch (e) {
+      if (e is TimeoutException) {
+        try {
+          await sink.close();
+        } catch (_) {
+          sink = null;
+        }
+        throw ObtainiumError(tr('downloadTimeoutError'))..url = url;
+      }
       // Release the file handle, ignoring "file already closed" races that can
       // happen when the stream is torn down mid-write. The .part file is kept so
       // the download can be resumed later.
