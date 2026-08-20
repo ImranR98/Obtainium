@@ -6,7 +6,6 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 import 'dart:math';
-import 'dart:typed_data';
 
 import 'package:android_package_manager/android_package_manager.dart';
 import 'package:battery_plus/battery_plus.dart';
@@ -14,6 +13,7 @@ import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:crypto/crypto.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:http/io_client.dart';
 import 'package:obtainium/custom_errors.dart';
 import 'package:obtainium/core/logging/app_logger.dart';
@@ -54,6 +54,76 @@ const int _bgClientExceptionRetryWaitSeconds = 15 * 60;
 
 final packageManager = AndroidPackageManager();
 final packageInfoFlags = PackageInfoFlags({PMFlag.getSigningCertificates});
+
+const MethodChannel _nativeDownloadChannel = MethodChannel(
+  'dev.imranr.obtainium/native_download',
+);
+final Map<String, void Function(double?, int?, int?)> _nativeDownloadProgress =
+    {};
+bool _nativeDownloadHandlerReady = false;
+
+void _ensureNativeDownloadHandler() {
+  if (_nativeDownloadHandlerReady) return;
+  _nativeDownloadHandlerReady = true;
+  _nativeDownloadChannel.setMethodCallHandler((call) async {
+    if (call.method != 'downloadProgress') return null;
+    final args = Map<Object?, Object?>.from(call.arguments as Map);
+    final callback = _nativeDownloadProgress[args['requestId']];
+    if (callback != null) {
+      final received = (args['received'] as num?)?.toInt();
+      final total = (args['total'] as num?)?.toInt();
+      callback(
+        total != null && total > 0
+            ? (received! / total * 100).clamp(0, 100).toDouble()
+            : _downloadProgressFallback.toDouble(),
+        received,
+        total,
+      );
+    }
+    return null;
+  });
+}
+
+Future<File> _downloadWithNativeTransport(
+  String url,
+  String outputPath,
+  Map<String, String>? headers,
+  int rangeStart,
+  int? totalLength,
+  Function? onProgress,
+  CancellationToken? cancellationToken,
+) async {
+  _ensureNativeDownloadHandler();
+  final requestId = '${DateTime.now().microsecondsSinceEpoch}-${url.hashCode}';
+  if (onProgress != null) {
+    _nativeDownloadProgress[requestId] = (progress, received, total) {
+      onProgress(progress, received, total);
+    };
+  }
+  void cancelNative() {
+    unawaited(
+      _nativeDownloadChannel.invokeMethod<void>('cancel', {
+        'requestId': requestId,
+      }),
+    );
+  }
+
+  cancellationToken?.addOnCancelCallback(cancelNative);
+  try {
+    await _nativeDownloadChannel.invokeMethod<String>('download', {
+      'requestId': requestId,
+      'url': url,
+      'outputPath': outputPath,
+      'headers': headers ?? const <String, String>{},
+      'rangeStart': rangeStart,
+      'totalLength': totalLength,
+    });
+    return File(outputPath);
+  } finally {
+    cancellationToken?.removeOnCancelCallback(cancelNative);
+    _nativeDownloadProgress.remove(requestId);
+  }
+}
 
 /// Live download state for an app: the progress percent (listenable, with -1
 /// meaning "installing" and null meaning "idle") plus the bytes downloaded and
@@ -469,6 +539,27 @@ Future<File> downloadFile(
     return null;
   }();
   int rangeStart = targetFileLength ?? 0;
+
+  if (Platform.isAndroid) {
+    final nativeFile = await _downloadWithNativeTransport(
+      url,
+      tempDownloadedFile.path,
+      reqHeaders,
+      rangeStart,
+      fullContentLength,
+      onProgress,
+      cancellationToken,
+    );
+    if (nativeFile.existsSync()) {
+      onProgress?.call(null, null, null);
+      if (downloadedFile.existsSync()) {
+        deleteFile(downloadedFile);
+      }
+      nativeFile.renameSync(downloadedFile.path);
+      return downloadedFile;
+    }
+  }
+
   IOSink? sink;
   bool sentRangeRequest = false;
   if (rangeFeatureEnabled && fullContentLength != null && rangeStart > 0) {
@@ -1278,9 +1369,29 @@ class CancellationException implements Exception {}
 
 class CancellationToken {
   bool _cancelled = false;
+  final List<void Function()> _onCancelCallbacks = [];
   bool get isCancelled => _cancelled;
 
-  void cancel() => _cancelled = true;
+  void addOnCancelCallback(void Function() callback) {
+    if (_cancelled) {
+      callback();
+    } else {
+      _onCancelCallbacks.add(callback);
+    }
+  }
+
+  void removeOnCancelCallback(void Function() callback) {
+    _onCancelCallbacks.remove(callback);
+  }
+
+  void cancel() {
+    if (_cancelled) return;
+    _cancelled = true;
+    for (final callback in List<void Function()>.from(_onCancelCallbacks)) {
+      callback();
+    }
+    _onCancelCallbacks.clear();
+  }
 
   void throwIfCancelled() {
     if (_cancelled) throw CancellationException();
