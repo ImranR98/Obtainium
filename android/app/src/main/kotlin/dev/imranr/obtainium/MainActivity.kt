@@ -3,6 +3,8 @@ package dev.imranr.obtainium
 import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
 import android.widget.Toast
 import androidx.core.content.FileProvider
 import io.flutter.embedding.android.FlutterActivity
@@ -34,6 +36,7 @@ class MainActivity : FlutterActivity() {
     private val downloadExecutor = Executors.newCachedThreadPool()
     private val cancelledDownloads = ConcurrentHashMap<String, AtomicBoolean>()
     private val activeDownloadConnections = ConcurrentHashMap<String, HttpURLConnection>()
+    private val mainHandler = Handler(Looper.getMainLooper())
 
     override fun onCreate(savedInstanceState: Bundle?) {
         intent?.let {
@@ -104,7 +107,9 @@ class MainActivity : FlutterActivity() {
         val url = arguments["url"] as? String
         val outputPath = arguments["outputPath"] as? String
         if (requestId.isNullOrEmpty() || url.isNullOrEmpty() || outputPath.isNullOrEmpty()) {
-            result.error("BAD_ARGS", "Missing native download arguments", null)
+            mainHandler.post {
+                result.error("BAD_ARGS", "Missing native download arguments", null)
+            }
             return
         }
         val cancelled = AtomicBoolean(false)
@@ -121,11 +126,13 @@ class MainActivity : FlutterActivity() {
                     requestId, url, outputPath, headers, rangeStart, totalLength,
                     cancelled, MethodChannel(engine.dartExecutor.binaryMessenger, DOWNLOAD_CHANNEL),
                 )
-                result.success(outputPath)
+                mainHandler.post { result.success(outputPath) }
             } catch (e: InterruptedException) {
-                result.error("CANCELLED", "Download cancelled", null)
+                mainHandler.post { result.error("CANCELLED", "Download cancelled", null) }
             } catch (e: Exception) {
-                result.error("DOWNLOAD_FAILED", e.message ?: e.javaClass.simpleName, null)
+                mainHandler.post {
+                    result.error("DOWNLOAD_FAILED", e.message ?: e.javaClass.simpleName, null)
+                }
             } finally {
                 cancelledDownloads.remove(requestId)
             }
@@ -176,11 +183,13 @@ class MainActivity : FlutterActivity() {
                         received += count
                         val now = System.currentTimeMillis()
                         if (now - lastProgress >= 500) {
-                            channel.invokeMethod("downloadProgress", mapOf(
-                                "requestId" to requestId,
-                                "received" to received,
-                                "total" to expected,
-                            ))
+                            mainHandler.post {
+                                channel.invokeMethod("downloadProgress", mapOf(
+                                    "requestId" to requestId,
+                                    "received" to received,
+                                    "total" to expected,
+                                ))
+                            }
                             lastProgress = now
                         }
                     }
