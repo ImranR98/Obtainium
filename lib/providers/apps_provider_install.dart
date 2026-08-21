@@ -818,7 +818,11 @@ extension AppsProviderInstall on AppsProvider {
         ].contains(getHost(appFileUrl.value)) &&
         context != null &&
         context.mounted) {
-      if (!(settingsProvider.hideAPKOriginWarning) &&
+      final trustedHosts = SourceProvider()
+          .getSource(app.url, overrideSource: app.overrideSource)
+          .trustedApkHosts;
+      if (!trustedHosts.contains(getHost(appFileUrl.value)) &&
+          !(settingsProvider.hideAPKOriginWarning) &&
           await showDialog(
                 context: context,
                 builder: (BuildContext ctx) {
@@ -914,14 +918,8 @@ extension AppsProviderInstall on AppsProvider {
       obtainiumId,
       strB: obtainiumTempId,
     );
-    appsToInstall = moveStrToEnd(
-      appsToInstall,
-      '$obtainiumId.fdroid',
-    );
-    appsToInstall = moveStrToEnd(
-      appsToInstall,
-      '$obtainiumId.debug',
-    );
+    appsToInstall = moveStrToEnd(appsToInstall, '$obtainiumId.fdroid');
+    appsToInstall = moveStrToEnd(appsToInstall, '$obtainiumId.debug');
 
     final List<_InstallResult> obtainiumResults = [];
     Future<void> installChain = Future.value();

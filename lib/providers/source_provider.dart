@@ -455,6 +455,7 @@ Future<http.Response> httpClientResponseStreamToFinalResponse(
 
 abstract class AppSource {
   List<String> hosts = [];
+  List<String> trustedApkHosts = [];
   bool hostChanged = false;
   bool hostIdenticalDespiteAnyChange = false;
   late String name;
@@ -1368,8 +1369,12 @@ class HttpService {
       request.cookies.addAll(cookies);
       request.followRedirects = false;
       if (postBody != null) {
-        request.headers.contentType = ContentType.json;
-        request.write(jsonEncode(postBody));
+        if (postBody is String) {
+          request.write(postBody);
+        } else {
+          request.headers.contentType = ContentType.json;
+          request.write(jsonEncode(postBody));
+        }
       }
       final response = await request.close();
 
