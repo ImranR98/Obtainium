@@ -1,6 +1,25 @@
 # Contributing to Obtanium!
 
-Basic procedures on how to contribute to Obtanium.
+Policies and procedures on contributing to Obtanium.
+
+## Style
+
+### Bracing
+
+Please use the "K&R" bracing style. 
+
+```Kotlin
+override fun onCreate(savedInstanceState: Bundle?) {
+    intent?.let {
+        setIntent(transformShareIntent(it))
+    }
+    super.onCreate(savedInstanceState)
+}
+```
+
+### Indentation
+
+Obtanium is a mixed spacing project; tabs are **not** used. Files will use either four or two spaces as indentation. Please follow the spacing in the current file. New files should use 4 spaces.
 
 ## Translations / i18n
 
