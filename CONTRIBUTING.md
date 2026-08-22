@@ -34,4 +34,4 @@ The main template file is [en.json](assets/translations/en.json). At a minimum p
 
 [standardize.mjs](assets/translations/standardize.mjs) and MTL may be used as a first pass to add translations for other languages, until more apt translations are proposed.
 
-Please also follow the [indentation style](#### Indentation).
+Please also follow the [indentation style](#indentation).
