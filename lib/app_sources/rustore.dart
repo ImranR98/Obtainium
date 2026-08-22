@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:math';
 import 'dart:typed_data';
@@ -7,6 +8,7 @@ import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter_charset_detector/flutter_charset_detector.dart';
 import 'package:http/http.dart';
 import 'package:obtainium/custom_errors.dart';
+import 'package:obtainium/providers/logs_provider.dart';
 import 'package:obtainium/providers/settings_provider.dart';
 import 'package:obtainium/providers/source_provider.dart';
 
@@ -194,6 +196,12 @@ class RuStore extends AppSource {
         ),
       );
       if (response.statusCode != 200) {
+        unawaited(
+          LogsProvider().add(
+            'RuStore: nonce request returned ${response.statusCode}',
+            level: LogLevel.warning,
+          ),
+        );
         return null;
       }
       final decoded = await decodeJsonBody(response.bodyBytes);
@@ -218,7 +226,13 @@ class RuStore extends AppSource {
       }
       final signature = signNonce(nonce);
       return _session = (deviceId: deviceId, signature: signature);
-    } catch (_) {
+    } catch (e) {
+      unawaited(
+        LogsProvider().add(
+          'RuStore: failed to generate secure session: $e',
+          level: LogLevel.warning,
+        ),
+      );
       return null;
     }
   }
