@@ -7,6 +7,7 @@ import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter_charset_detector/flutter_charset_detector.dart';
 import 'package:http/http.dart';
 import 'package:obtainium/custom_errors.dart';
+import 'package:obtainium/providers/settings_provider.dart';
 import 'package:obtainium/providers/source_provider.dart';
 
 typedef _SecureSession = ({String deviceId, String signature});
@@ -47,6 +48,16 @@ class RuStore extends AppSource {
       'arm64-v8a; $_deviceManufacturer $_deviceModelName; $_firmwareLang)';
 
   static _SecureSession? _session;
+  static String? _deviceType;
+
+  Future<String> _getDeviceType() async {
+    if (_deviceType == null) {
+      final settingsProvider = SettingsProvider();
+      await settingsProvider.initializeSettings();
+      _deviceType = settingsProvider.isTV ? 'TV' : 'mobile';
+    }
+    return _deviceType!;
+  }
 
   @override
   Future<Map<String, String>?> getRequestHeaders(
@@ -58,6 +69,7 @@ class RuStore extends AppSource {
         url.startsWith(_appInfoUrl) || url.startsWith(_downloadLinkUrl);
     final session = needsSignature ? await _getSecureSession() : _session;
     return _deviceHeaders(
+      deviceType: await _getDeviceType(),
       deviceId: session?.deviceId,
       signature: needsSignature ? session?.signature : null,
     );
@@ -151,7 +163,11 @@ class RuStore extends AppSource {
     }
   }
 
-  Map<String, String> _deviceHeaders({String? deviceId, String? signature}) => {
+  Map<String, String> _deviceHeaders({
+    required String deviceType,
+    String? deviceId,
+    String? signature,
+  }) => {
     'deviceId': ?deviceId,
     'firmwareVer': _firmwareVer,
     'androidSdkVer': _androidSdkVer,
@@ -160,7 +176,7 @@ class RuStore extends AppSource {
     'deviceModel': '$_deviceManufacturer $_deviceModelName',
     'firmwareLang': _firmwareLang,
     'ruStoreVerCode': _ruStoreVerCode,
-    'deviceType': 'mobile',
+    'deviceType': deviceType,
     'User-Agent': _userAgent,
     'X-Client-Signature': ?signature,
   };
@@ -172,7 +188,10 @@ class RuStore extends AppSource {
     Future<String?> fetchNonce(String deviceId) async {
       final response = await post(
         Uri.parse(_nonceUrl),
-        headers: _deviceHeaders(deviceId: deviceId),
+        headers: _deviceHeaders(
+          deviceType: await _getDeviceType(),
+          deviceId: deviceId,
+        ),
       );
       if (response.statusCode != 200) {
         return null;
