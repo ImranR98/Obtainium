@@ -2,9 +2,15 @@
 
 Policies and procedures on contributing to Obtanium.
 
-## Style
+## Bug Reports
 
-### Bracing
+Welcomed!
+
+## Development
+
+### Style
+
+#### Bracing
 
 Please use the "K&R" bracing style. 
 
@@ -17,7 +23,7 @@ override fun onCreate(savedInstanceState: Bundle?) {
 }
 ```
 
-### Indentation
+#### Indentation
 
 Obtanium is a mixed spacing project; tabs are **not** used. Files will use either four or two spaces as indentation. Please follow the spacing in the current file. New files should use 4 spaces.
 
@@ -27,3 +33,5 @@ User shown text strings are located in `*.json` files in [assets/translations](a
 The main template file is [en.json](assets/translations/en.json). At a minimum please add english translations for any new strings to this file.
 
 [standardize.mjs](assets/translations/standardize.mjs) and MTL may be used as a first pass to add translations for other languages, until more apt translations are proposed.
+
+Please also follow the [indentation style](#### Indentation).
