@@ -17,7 +17,7 @@ class HuaweiAppGallery extends AppSource {
     trustedApkHosts = ['dbankcloud.com', 'dbankcloud.ru'];
   }
 
-  static const String _sessionPrefsKey = 'huaweiAppGallery-session-creds';
+  static const String _sessionPrefsKey = 'huaweiAppGallery-session';
 
   static const String _apiPath = '/hwmarket/api/clientApi';
   static const String _userAgent = 'HiSpace##16.5.1.301##google##Pixel 8 Pro';
@@ -157,7 +157,7 @@ class HuaweiAppGallery extends AppSource {
     }
     final decoded = jsonDecode(utf8.decode(res.bodyBytes));
     if (decoded is! Map<String, dynamic>) {
-      throw ObtainiumError('Unexpected store API response', unexpected: true);
+      throw ObtainiumError(tr('unexpectedStoreApiResponse'), unexpected: true);
     }
     return decoded;
   }
@@ -230,7 +230,7 @@ class HuaweiAppGallery extends AppSource {
       ))['sign']?.toString();
     }
     if (sign == null || sign.isEmpty) {
-      throw ObtainiumError('front2 on $host returned no sign');
+      throw ObtainiumError(tr('storeHandshakeNoSign', args: [host]));
     }
     final session = _Session(host, sign, deviceId, DateTime.now());
     _session = session;
