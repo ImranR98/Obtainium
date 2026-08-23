@@ -27,6 +27,7 @@ import 'package:obtainium/app_sources/fdroidrepo.dart';
 import 'package:obtainium/app_sources/github.dart';
 import 'package:obtainium/app_sources/gitlab.dart';
 import 'package:obtainium/app_sources/huaweiappgallery.dart';
+import 'package:obtainium/app_sources/samsunggalaxystore.dart';
 import 'package:obtainium/app_sources/itchio.dart';
 import 'package:obtainium/app_sources/izzyondroid.dart';
 import 'package:obtainium/app_sources/html.dart';
@@ -994,6 +995,7 @@ class SourceProvider {
     Uptodown(),
     ItchIO(),
     HuaweiAppGallery(),
+    SamsungGalaxyStore(),
     Tencent(),
     VivoAppStore(),
     RuStore(),
@@ -1729,4 +1731,3 @@ class ApkFilterService {
     return apkUrls;
   }
 }
-
