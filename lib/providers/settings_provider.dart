@@ -639,18 +639,18 @@ class SettingsProvider with ChangeNotifier {
 
   Future<Uri?> getExportDir() async {
     final uriString = _getString('exportDir');
-    if (uriString != null) {
-      Uri? uri = Uri.parse(uriString);
-      if (!(await saf.canRead(uri) ?? false) ||
-          !(await saf.canWrite(uri) ?? false)) {
-        uri = null;
-        await prefs?.remove('exportDir');
-        notifyListeners();
-      }
-      return uri;
-    } else {
+    if (uriString == null) {
       return null;
     }
+    final uri = Uri.parse(uriString);
+    // The directory may be temporarily unreadable (e.g. a WebDAV mount not
+    // yet available right after a reboot). Keep the stored URI so it can be
+    // retried later, and only clear it via pickExportDir.
+    if (!(await saf.canRead(uri) ?? false) ||
+        !(await saf.canWrite(uri) ?? false)) {
+      return null;
+    }
+    return uri;
   }
 
   Future<void> pickExportDir({bool remove = false}) async {
