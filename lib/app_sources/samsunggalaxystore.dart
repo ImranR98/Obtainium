@@ -1,4 +1,5 @@
 import 'package:device_info_plus/device_info_plus.dart';
+import 'package:easy_localization/easy_localization.dart';
 import 'package:http/http.dart';
 import 'package:obtainium/custom_errors.dart';
 import 'package:obtainium/providers/source_provider.dart';
@@ -21,8 +22,9 @@ class SamsungGalaxyStore extends AppSource {
   }
 
   DateTime? _parseReleaseDateFromUrl(String apkUrl) {
-    final filename =
-        Uri.parse(apkUrl).pathSegments.where((s) => s.isNotEmpty).last;
+    final filename = Uri.parse(
+      apkUrl,
+    ).pathSegments.where((s) => s.isNotEmpty).last;
     final match = RegExp(r'(\d{14,17})').firstMatch(filename);
     if (match == null) return null;
     final ts = match.group(1)!;
@@ -47,10 +49,7 @@ class SamsungGalaxyStore extends AppSource {
   }
 
   @override
-  String sourceSpecificStandardizeURL(
-    String url, {
-    bool forSelection = false,
-  }) {
+  String sourceSpecificStandardizeURL(String url, {bool forSelection = false}) {
     final uri = Uri.parse(url);
     final host = uri.host;
     final validHosts = hosts + hosts.map((h) => 'www.$h').toList();
@@ -96,7 +95,7 @@ class SamsungGalaxyStore extends AppSource {
     [
       GeneratedFormTextField(
         'deviceId',
-        label: 'Device model',
+        label: tr('deviceModel'),
         required: false,
         hint: 'SM-S948B',
       ),
@@ -104,7 +103,7 @@ class SamsungGalaxyStore extends AppSource {
     [
       GeneratedFormTextField(
         'csc',
-        label: 'CSC code',
+        label: tr('cscCode'),
         required: false,
         hint: 'DBT',
       ),
@@ -125,30 +124,30 @@ class SamsungGalaxyStore extends AppSource {
     }
     final deviceId =
         additionalSettings['deviceId']?.toString().isNotEmpty == true
-            ? additionalSettings['deviceId'].toString()
-            : 'SM-S948B';
-    final csc =
-        additionalSettings['csc']?.toString().isNotEmpty == true
-            ? additionalSettings['csc'].toString()
-            : 'DBT';
+        ? additionalSettings['deviceId'].toString()
+        : 'SM-S948B';
+    final csc = additionalSettings['csc']?.toString().isNotEmpty == true
+        ? additionalSettings['csc'].toString()
+        : 'DBT';
 
     final sdkVer = await _getSdkVersion();
 
-    final String vasUrl = Uri.parse(
-      'https://vas.samsungapps.com/stub/stubDownload.as',
-    ).replace(
-      queryParameters: {
-        'appId': packageName,
-        'deviceId': deviceId,
-        'mcc': '425',
-        'mnc': '01',
-        'csc': csc,
-        'sdkVer': sdkVer,
-        'systemId': '1608665720954',
-        'abiType': '64',
-        'extuk': '0191d6627f38685f',
-      },
-    ).toString();
+    final String vasUrl =
+        Uri.parse('https://vas.samsungapps.com/stub/stubDownload.as')
+            .replace(
+              queryParameters: {
+                'appId': packageName,
+                'deviceId': deviceId,
+                'mcc': '425',
+                'mnc': '01',
+                'csc': csc,
+                'sdkVer': sdkVer,
+                'systemId': '1608665720954',
+                'abiType': '64',
+                'extuk': '0191d6627f38685f',
+              },
+            )
+            .toString();
 
     final Response response = await sourceRequest(vasUrl, additionalSettings);
     if (response.statusCode != 200) {
@@ -156,12 +155,14 @@ class SamsungGalaxyStore extends AppSource {
     }
     final String body = response.body;
 
-    final resultCode =
-        RegExp(r'<resultCode>(\d+)</resultCode>').firstMatch(body)?.group(1);
+    final resultCode = RegExp(
+      r'<resultCode>(\d+)</resultCode>',
+    ).firstMatch(body)?.group(1);
     if (resultCode != '1') {
-      final msg =
-          RegExp(r'<resultMsg>([^<]*)</resultMsg>').firstMatch(body)?.group(1);
-      throw ObtainiumError(msg ?? 'Samsung Galaxy Store API error');
+      final msg = RegExp(
+        r'<resultMsg>([^<]*)</resultMsg>',
+      ).firstMatch(body)?.group(1);
+      throw ObtainiumError(msg ?? tr('samsungGalaxyStoreApiError'));
     }
 
     final apkMatch = RegExp(
