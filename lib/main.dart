@@ -6,10 +6,11 @@ import 'package:flutter/services.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:obtainium/custom_errors.dart';
 import 'package:obtainium/providers/apps_provider.dart';
-import 'package:obtainium/providers/logs_provider.dart';
+import 'package:obtainium/core/logging/app_logger.dart';
 import 'package:obtainium/providers/notifications_provider.dart';
 import 'package:obtainium/providers/settings_provider.dart';
 import 'package:obtainium/providers/source_provider.dart';
+import 'package:obtainium/utils/native_features.dart';
 import 'package:obtainium/pages/home.dart';
 import 'package:obtainium/theme.dart';
 import 'package:provider/provider.dart';
@@ -51,8 +52,14 @@ List<MapEntry<Locale, String>> supportedLocales = const [
   MapEntry(Locale('gl'), 'Galego'),
 ];
 const fallbackLocale = Locale('en');
+final Set<Locale> supportedLocaleSet = supportedLocales
+    .map((e) => e.key)
+    .toSet();
 const localeDir = 'assets/translations';
 bool isFdroidBuild = false;
+
+const String _unexpectedErrorText = 'An unexpected error occurred.';
+const String _closeText = 'Close';
 
 /// Global navigator key, used to navigate from outside the widget tree
 /// (e.g. tapping a notification).
@@ -64,25 +71,19 @@ const _workManagerTaskName = 'obtainiumBgUpdateCheck';
 @pragma('vm:entry-point')
 void callbackDispatcher() {
   Workmanager().executeTask((taskName, inputData) async {
-    final logs = LogsProvider();
+    WidgetsFlutterBinding.ensureInitialized();
+    await AppLogger.init();
     try {
-      await logs.add(
-        'WorkManager callback invoked (task: $taskName)',
-        level: LogLevel.info,
-      );
+      AppLogger.info('WorkManager callback invoked (task: $taskName)');
       final taskId = 'wm_${DateTime.now().millisecondsSinceEpoch}';
       await bgUpdateCheck(taskId, inputData);
-      await logs.add(
-        'WorkManager callback completed successfully',
-        level: LogLevel.info,
-      );
+      AppLogger.info('WorkManager callback completed successfully');
       return true;
     } catch (e, stack) {
-      unawaited(
-        logs.add(
-          'WorkManager callback crashed: $e\n$stack',
-          level: LogLevel.error,
-        ),
+      AppLogger.error(
+        e,
+        stackTrace: stack,
+        message: 'WorkManager callback crashed',
       );
       return false;
     }
@@ -91,34 +92,43 @@ void callbackDispatcher() {
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  await AppLogger.init();
 
   PlatformDispatcher.instance.onError = (error, stack) {
-    unawaited(
-      LogsProvider().add(
-        'Uncaught platform error: $error\n$stack',
-        level: LogLevel.error,
-      ),
+    AppLogger.error(
+      error,
+      stackTrace: stack,
+      message: 'Uncaught platform error',
     );
     return true;
   };
 
+  final settingsProvider = SettingsProvider();
+  final sourceProvider = SourceProvider();
+  final appsProvider = AppsProvider(settingsProvider: settingsProvider);
+  final np = NotificationsProvider();
+  await np.initialize();
+
+  await initializeDateFormatting();
+  await EasyLocalization.ensureInitialized();
+
   ErrorWidget.builder = (details) {
-    return Directionality(
+    return const Directionality(
       textDirection: TextDirection.ltr,
       child: Scaffold(
         body: Center(
           child: Padding(
-            padding: const EdgeInsets.all(32),
+            padding: EdgeInsets.all(32),
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                const Icon(Icons.error_outline, size: 64),
-                const SizedBox(height: 16),
-                const Text('An unexpected error occurred.'),
-                const SizedBox(height: 16),
+                Icon(Icons.error_outline, size: 64),
+                SizedBox(height: 16),
+                Text(_unexpectedErrorText),
+                SizedBox(height: 16),
                 FilledButton(
-                  onPressed: () => SystemNavigator.pop(),
-                  child: const Text('Close'),
+                  onPressed: SystemNavigator.pop,
+                  child: Text(_closeText),
                 ),
               ],
             ),
@@ -128,19 +138,6 @@ void main() async {
     );
   };
 
-  final logs = LogsProvider();
-  final logger = AppLogger(logs: logs);
-  final settingsProvider = SettingsProvider();
-  final sourceProvider = SourceProvider();
-  final appsProvider = AppsProvider(
-    settingsProvider: settingsProvider,
-    logsProvider: logs,
-  );
-  final np = NotificationsProvider();
-  await np.initialize();
-
-  await initializeDateFormatting();
-  await EasyLocalization.ensureInitialized();
   if ((await DeviceInfoPlugin().androidInfo).version.sdkInt >= 29) {
     SystemChrome.setSystemUIOverlayStyle(
       const SystemUiOverlayStyle(
@@ -153,7 +150,7 @@ void main() async {
   }
 
   await Workmanager().initialize(callbackDispatcher);
-  await logs.add('WorkManager initialised', level: LogLevel.info);
+  AppLogger.info('WorkManager initialised');
 
   runApp(
     MultiProvider(
@@ -161,8 +158,6 @@ void main() async {
         ChangeNotifierProvider.value(value: appsProvider),
         ChangeNotifierProvider.value(value: settingsProvider),
         Provider.value(value: np),
-        Provider.value(value: logs),
-        Provider<Logger>.value(value: logger),
         Provider<SourceProvider>.value(value: sourceProvider),
       ],
       child: EasyLocalization(
@@ -187,7 +182,7 @@ class Obtainium extends StatefulWidget {
 class _ObtainiumState extends State<Obtainium> {
   var _firstRunHandled = false;
   var _launchByNotifChecked = false;
-  var _fontLoaded = false;
+  Locale? _lastLocale;
 
   Future<void> _scheduleWorkManager() async {
     await Workmanager().registerPeriodicTask(
@@ -207,18 +202,13 @@ class _ObtainiumState extends State<Obtainium> {
   void _handleFirstRun(
     SettingsProvider settings,
     AppsProvider apps,
-    Logger logger,
     BuildContext context,
   ) {
-    if (settings.prefs == null) {
-      settings.initializeSettings();
-      return;
-    }
     if (_firstRunHandled) return;
     _firstRunHandled = true;
     final isFirstRun = settings.checkAndFlipFirstRun();
     if (isFirstRun) {
-      logger.info('This is the first ever run of Obtainium.');
+      AppLogger.info('This is the first ever run of Obtainium.');
       if (!settings.isTV) {
         unawaited(Permission.notification.request());
       }
@@ -249,14 +239,18 @@ class _ObtainiumState extends State<Obtainium> {
                 );
               }
             })
-            .catchError((err) {
-              logger.error('Failed to add Obtainium on first run', err);
+            .catchError((err, stack) {
+              AppLogger.error(
+                err,
+                stackTrace: stack,
+                message: 'Failed to add Obtainium on first run',
+              );
             });
       }
     }
     final currentLang = context.locale.languageCode;
     final deviceLang = context.deviceLocale.languageCode;
-    if (!supportedLocales.map((e) => e.key).contains(context.locale) ||
+    if (!supportedLocaleSet.contains(context.locale) ||
         (settings.forcedLocale == null && deviceLang != currentLang)) {
       settings.resetLocaleSafe(context);
     } else if (settings.forcedLocale != null) {
@@ -267,37 +261,46 @@ class _ObtainiumState extends State<Obtainium> {
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
       final settingsProvider = context.read<SettingsProvider>();
+      await settingsProvider.initializeSettings();
+      if (!mounted) return;
       final appsProvider = context.read<AppsProvider>();
-      final logger = context.read<Logger>();
       final notifs = context.read<NotificationsProvider>();
 
       unawaited(_scheduleWorkManager());
-      _handleFirstRun(settingsProvider, appsProvider, logger, context);
+      _handleFirstRun(settingsProvider, appsProvider, context);
 
       if (!_launchByNotifChecked) {
         _launchByNotifChecked = true;
-        notifs.checkLaunchByNotif();
+        unawaited(notifs.checkLaunchByNotif());
       }
     });
   }
 
   @override
-  void dispose() {
-    LogsProvider.close();
-    super.dispose();
-  }
-
-  @override
   Widget build(BuildContext context) {
-    final SettingsProvider settingsProvider = context.watch<SettingsProvider>();
+    final themeColor = context.select<SettingsProvider, Color>(
+      (p) => p.themeColor,
+    );
+    final colourSchemeMode = context.select<SettingsProvider, ColourSchemeMode>(
+      (p) => p.colourSchemeMode,
+    );
+    final useBlackTheme = context.select<SettingsProvider, bool>(
+      (p) => p.useBlackTheme,
+    );
+    final themeSetting = context.select<SettingsProvider, ThemeSettings>(
+      (p) => p.theme,
+    );
+    final useSystemFont = context.select<SettingsProvider, bool>(
+      (p) => p.useSystemFont,
+    );
 
     return DynamicColorBuilder(
       builder: (ColorScheme? lightDynamic, ColorScheme? darkDynamic) {
         ColorScheme lightColorScheme;
         ColorScheme darkColorScheme;
-        final schemeMode = settingsProvider.colourSchemeMode;
+        final schemeMode = colourSchemeMode;
         if (lightDynamic != null &&
             darkDynamic != null &&
             schemeMode == ColourSchemeMode.materialYou) {
@@ -310,24 +313,23 @@ class _ObtainiumState extends State<Obtainium> {
             _ => DynamicSchemeVariant.tonalSpot,
           };
           lightColorScheme = ColorScheme.fromSeed(
-            seedColor: settingsProvider.themeColor,
+            seedColor: themeColor,
             dynamicSchemeVariant: variant,
           );
           darkColorScheme = ColorScheme.fromSeed(
-            seedColor: settingsProvider.themeColor,
+            seedColor: themeColor,
             brightness: Brightness.dark,
             dynamicSchemeVariant: variant,
           );
         }
 
-        if (settingsProvider.useBlackTheme) {
-          darkColorScheme = darkColorScheme
-              .copyWith(surface: Colors.black)
-              .harmonized();
+        if (useBlackTheme) {
+          darkColorScheme = darkColorScheme.harmonized().copyWith(
+            surface: Colors.black,
+          );
         }
 
-        if (settingsProvider.useSystemFont && !_fontLoaded) {
-          _fontLoaded = true;
+        if (useSystemFont) {
           unawaited(NativeFeatures.loadSystemFont());
         }
 
@@ -339,20 +341,23 @@ class _ObtainiumState extends State<Obtainium> {
           locale: context.locale,
           debugShowCheckedModeBanner: false,
           theme: buildObtainiumTheme(
-            settingsProvider.theme == ThemeSettings.dark
+            themeSetting == ThemeSettings.dark
                 ? darkColorScheme
                 : lightColorScheme,
-            settingsProvider.useSystemFont ? 'SystemFont' : 'Montserrat',
+            useSystemFont ? 'SystemFont' : 'Montserrat',
           ),
           darkTheme: buildObtainiumTheme(
-            settingsProvider.theme == ThemeSettings.light
+            themeSetting == ThemeSettings.light
                 ? lightColorScheme
                 : darkColorScheme,
-            settingsProvider.useSystemFont ? 'SystemFont' : 'Montserrat',
+            useSystemFont ? 'SystemFont' : 'Montserrat',
           ),
           home: const HomePage(),
           builder: (context, child) {
-            setAppLocale(context.locale);
+            if (context.locale != _lastLocale) {
+              _lastLocale = context.locale;
+              setAppLocale(context.locale);
+            }
             return Shortcuts(
               shortcuts: <LogicalKeySet, Intent>{
                 LogicalKeySet(LogicalKeyboardKey.select):

@@ -5,18 +5,20 @@ import 'dart:typed_data';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:obtainium/components/app_list_tile.dart';
+import 'package:obtainium/utils/string_utils.dart';
 import 'package:obtainium/components/category_editor.dart';
 import 'package:obtainium/components/generated_form_renderer.dart';
 import 'package:obtainium/components/ui_widgets.dart';
 import 'package:obtainium/theme.dart';
 import 'package:obtainium/custom_errors.dart';
+import 'package:obtainium/utils/locale_utils.dart';
 import 'package:obtainium/main.dart';
 import 'package:obtainium/pages/app.dart';
-import 'package:obtainium/pages/settings.dart';
 import 'package:obtainium/providers/apps_provider.dart';
 import 'package:obtainium/providers/notifications_provider.dart';
 import 'package:obtainium/providers/settings_provider.dart';
 import 'package:obtainium/providers/source_provider.dart';
+import 'package:obtainium/utils/nav_helper.dart';
 import 'package:provider/provider.dart';
 import 'package:share_plus/share_plus.dart';
 
@@ -51,11 +53,13 @@ class AppsPageState extends State<AppsPage> {
   late final AppsProvider appsProvider;
   late final SettingsProvider settingsProvider;
   bool _providersInitialized = false;
+  bool _autoRefreshTriggered = false;
 
   AppsFilter filter = AppsFilter();
   final AppsFilter neutralFilter = AppsFilter();
   Set<String> selectedAppIds = {};
   Set<String?> collapsedGroups = {};
+  bool _selectionPruneScheduled = false;
 
   final TextEditingController searchController = TextEditingController();
   final ScrollController scrollController = ScrollController();
@@ -71,6 +75,17 @@ class AppsPageState extends State<AppsPage> {
       appsProvider = context.read<AppsProvider>();
       settingsProvider = context.read<SettingsProvider>();
       _providersInitialized = true;
+    }
+    if (!_autoRefreshTriggered &&
+        !appsProvider.loadingApps &&
+        appsProvider.apps.isNotEmpty &&
+        settingsProvider.checkJustStarted() &&
+        settingsProvider.checkOnStart) {
+      _autoRefreshTriggered = true;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        refreshIndicatorKey.currentState?.show();
+      });
     }
   }
 
@@ -112,7 +127,7 @@ class AppsPageState extends State<AppsPage> {
     List<AppInMemory> listedApps,
     Set<String> existingUpdates,
   ) {
-    var result = AppListBuilder.filter(listedApps, filter);
+    var result = AppListBuilder.filter(listedApps, filter, settingsProvider);
     result = AppListBuilder.sort(
       result,
       settingsProvider.sortColumn,
@@ -125,6 +140,94 @@ class AppsPageState extends State<AppsPage> {
       existingUpdates,
     );
     return result;
+  }
+
+  (List<String>, List<String>, List<String>)
+      _computeUpdateIdSets(
+    AppsProvider appsProvider,
+    Set<String> existingUpdates,
+    Set<String> selectedAppIds,
+    Set<String> listedAppIdSet,
+  ) {
+    var existingUpdateIdsAllOrSelected = existingUpdates
+        .where(
+          (element) => selectedAppIds.isEmpty
+              ? listedAppIdSet.contains(element)
+              : selectedAppIds.contains(element),
+        )
+        .toList();
+    var newInstallIdsAllOrSelected = appsProvider
+        .findAppIdsWithPendingUpdates(nonInstalledOnly: true)
+        .where(
+          (element) => selectedAppIds.isEmpty
+              ? listedAppIdSet.contains(element)
+              : selectedAppIds.contains(element),
+        )
+        .toList();
+
+    final List<String> trackOnlyUpdateIdsAllOrSelected = [];
+    for (var id in existingUpdateIdsAllOrSelected) {
+      if (appsProvider.apps[id]!.app.settings.getBool('trackOnly')) {
+        trackOnlyUpdateIdsAllOrSelected.add(id);
+      }
+    }
+    for (var id in newInstallIdsAllOrSelected) {
+      if (appsProvider.apps[id]!.app.settings.getBool('trackOnly') &&
+          !trackOnlyUpdateIdsAllOrSelected.contains(id)) {
+        trackOnlyUpdateIdsAllOrSelected.add(id);
+      }
+    }
+    existingUpdateIdsAllOrSelected = existingUpdateIdsAllOrSelected
+        .where((id) => !trackOnlyUpdateIdsAllOrSelected.contains(id))
+        .toList();
+    newInstallIdsAllOrSelected = newInstallIdsAllOrSelected
+        .where((id) => !trackOnlyUpdateIdsAllOrSelected.contains(id))
+        .toList();
+
+    return (
+      existingUpdateIdsAllOrSelected,
+      newInstallIdsAllOrSelected,
+      trackOnlyUpdateIdsAllOrSelected,
+    );
+  }
+
+  (Map<String?, List<int>>, List<String?>) _buildGroups(
+    List<AppInMemory> listedApps,
+    String groupBy,
+    SourceProvider sourceProvider,
+  ) {
+    final grouped = <String?, List<int>>{};
+    if (groupBy == GroupByMode.category.name) {
+      for (var i = 0; i < listedApps.length; i++) {
+        final app = listedApps[i];
+        if (app.app.categories.isEmpty) {
+          grouped.putIfAbsent(null, () => []).add(i);
+        } else {
+          for (final cat in app.app.categories) {
+            grouped.putIfAbsent(cat, () => []).add(i);
+          }
+        }
+      }
+    } else if (groupBy == GroupByMode.source.name) {
+      final sourceNames = {
+        for (final s in sourceProvider.sources) s.sourceIdentifier: s.name,
+      };
+      for (var i = 0; i < listedApps.length; i++) {
+        final label =
+            sourceNames[listedApps[i].sourceType] ??
+            listedApps[i].sourceType ??
+            tr('noSource');
+        grouped.putIfAbsent(label, () => []).add(i);
+      }
+    }
+    final listedGroups = grouped.keys.toList();
+    listedGroups.sort((a, b) {
+      if (a == null && b == null) return 0;
+      if (a == null) return 1;
+      if (b == null) return -1;
+      return a.toLowerCase().compareTo(b.toLowerCase());
+    });
+    return (grouped, listedGroups);
   }
 
   Future<List<App>> refresh() {
@@ -140,7 +243,9 @@ class AppsPageState extends State<AppsPage> {
           return <App>[];
         })
         .whenComplete(() {
-          setState(() {});
+          if (mounted) {
+            setState(() {});
+          }
         });
   }
 
@@ -221,86 +326,114 @@ class AppsPageState extends State<AppsPage> {
 
   Future<void> showFilterDialog(BuildContext context) async {
     var pendingCategories = {...filter.categoryFilter};
-    final values = await showDialog<Map<String, dynamic>?>(
+    Map<String, dynamic> values = {};
+    final result = await showModalBottomSheet<bool>(
       context: context,
+      isScrollControlled: true,
+      showDragHandle: true,
       builder: (BuildContext ctx) {
         final vals = filter.toFormValuesMap();
-        return GeneratedFormModal(
-          tileMode: true,
-          initValid: true,
-          title: tr('filterApps'),
-          items: [
-            [
-              GeneratedFormTextField(
-                'appName',
-                label: tr('appName'),
-                required: false,
-                value: vals['appName'],
-              ),
-            ],
-            [
-              GeneratedFormTextField(
-                'author',
-                label: tr('author'),
-                required: false,
-                value: vals['author'],
-              ),
-            ],
-            [
-              GeneratedFormTextField(
-                'appId',
-                label: tr('appId'),
-                required: false,
-                value: vals['appId'],
-              ),
-            ],
-            [
-              GeneratedFormSwitch(
-                'upToDateApps',
-                label: tr('upToDateApps'),
-                value: vals['upToDateApps'],
-              ),
-            ],
-            [
-              GeneratedFormSwitch(
-                'nonInstalledApps',
-                label: tr('nonInstalledApps'),
-                value: vals['nonInstalledApps'],
-              ),
-            ],
-            [
-              GeneratedFormDropdown(
-                'sourceFilter',
-                label: tr('appSource'),
-                value: filter.sourceFilter,
-                [
-                  MapEntry('', tr('none')),
-                  ...ctx.read<SourceProvider>().sources.map(
-                    (e) => MapEntry(e.sourceIdentifier, e.name),
-                  ),
-                ],
-              ),
-            ],
-          ],
-          additionalWidgets: [
-            const SizedBox(height: 16),
-            ConnectedCard(
-              child: Padding(
-                padding: const EdgeInsets.all(16),
-                child: CategorySelector(
+        return SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Text(
+                  tr('filterApps'),
+                  style: Theme.of(ctx).textTheme.titleLarge,
+                ),
+                const SizedBox(height: 16),
+                GeneratedForm(
+                  tileMode: true,
+                  items: [
+                    [
+                      GeneratedFormTextField(
+                        'appName',
+                        label: tr('appName'),
+                        required: false,
+                        value: vals['appName'],
+                      ),
+                    ],
+                    [
+                      GeneratedFormTextField(
+                        'author',
+                        label: tr('author'),
+                        required: false,
+                        value: vals['author'],
+                      ),
+                    ],
+                    [
+                      GeneratedFormTextField(
+                        'appId',
+                        label: tr('appId'),
+                        required: false,
+                        value: vals['appId'],
+                      ),
+                    ],
+                    [
+                      GeneratedFormSwitch(
+                        'upToDateApps',
+                        label: tr('upToDateApps'),
+                        value: vals['upToDateApps'],
+                      ),
+                    ],
+                    [
+                      GeneratedFormSwitch(
+                        'nonInstalledApps',
+                        label: tr('nonInstalledApps'),
+                        value: vals['nonInstalledApps'],
+                      ),
+                    ],
+                    [
+                      GeneratedFormDropdown(
+                        'sourceFilter',
+                        label: tr('appSource'),
+                        value: filter.sourceFilter,
+                        [
+                          MapEntry('', tr('none')),
+                          ...ctx.read<SourceProvider>().sources.map(
+                            (e) => MapEntry(e.sourceIdentifier, e.name),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ],
+                  onValueChanges: (v, valid, isBuilding) {
+                    values = v;
+                  },
+                ),
+                const SizedBox(height: 16),
+                CategorySelector(
                   selected: filter.categoryFilter,
                   allowCreate: false,
                   onChanged: (categories) {
                     pendingCategories = categories;
                   },
                 ),
-              ),
+                const SizedBox(height: 24),
+                Row(
+                  children: [
+                    const Spacer(),
+                    TextButton(
+                      onPressed: () => Navigator.of(ctx).pop(false),
+                      child: Text(tr('cancel')),
+                    ),
+                    const SizedBox(width: 8),
+                    FilledButton(
+                      onPressed: () => Navigator.of(ctx).pop(true),
+                      child: Text(tr('continue')),
+                    ),
+                  ],
+                ),
+              ],
             ),
-          ],
+          ),
         );
       },
     );
-    if (values != null) {
+    if (result == true) {
       _searchDebounce?.cancel();
       filter.setFormValuesFromMap(values);
       filter.categoryFilter = pendingCategories;
@@ -349,19 +482,11 @@ class AppsPageState extends State<AppsPage> {
         }
         var cont = true;
         if (showPrompt) {
-          cont =
-              await showDialog<Map<String, dynamic>?>(
-                context: context,
-                builder: (BuildContext ctx) {
-                  return GeneratedFormModal(
-                    title: tr('categorize'),
-                    items: const [],
-                    initValid: true,
-                    message: tr('selectedCategorizeWarning'),
-                  );
-                },
-              ) !=
-              null;
+          cont = await showContinueCancelDialog(
+            context,
+            title: tr('categorize'),
+            message: tr('selectedCategorizeWarning'),
+          );
         }
         if (cont && context.mounted) {
           var pendingCategories = !showPrompt
@@ -464,8 +589,7 @@ class AppsPageState extends State<AppsPage> {
     final existingUpdateIds = selectedApps
         .where(
           (a) =>
-              a.installedVersion != null &&
-              a.installedVersion != a.latestVersion &&
+              isAppUpdateable(a, settingsProvider) &&
               a.settings.getBool('trackOnly') != true,
         )
         .map((a) => a.id)
@@ -481,8 +605,7 @@ class AppsPageState extends State<AppsPage> {
     final trackOnlyUpdateIds = selectedApps
         .where(
           (a) =>
-              a.installedVersion != null &&
-              a.installedVersion != a.latestVersion &&
+              isAppUpdateable(a, settingsProvider) &&
               a.settings.getBool('trackOnly') == true,
         )
         .map((a) => a.id)
@@ -534,7 +657,10 @@ class AppsPageState extends State<AppsPage> {
                 optionTile(
                   icon: isPinned ? Icons.push_pin : Icons.push_pin_outlined,
                   label: isPinned ? tr('unpinFromTop') : tr('pinToTop'),
-                  onTap: () => pinSelectedApps(selectedApps),
+                  onTap: () {
+                    settingsProvider.selectionClick();
+                    pinSelectedApps(selectedApps);
+                  },
                 ),
                 if (hasObtainActions && !appsProvider.areDownloadsRunning())
                   optionTile(
@@ -577,7 +703,7 @@ class AppsPageState extends State<AppsPage> {
                     appsProvider
                         .downloadAppAssets(
                           selectedApps.map((e) => e.id).toList(),
-                          context,
+                          context
                         )
                         .catchError((e) {
                           if (context.mounted) showError(e, context);
@@ -686,10 +812,7 @@ class AppsPageState extends State<AppsPage> {
         } else if (widget.onAppSelected != null) {
           widget.onAppSelected!(app.id);
         } else {
-          Navigator.push(
-            context,
-            MaterialPageRoute(builder: (context) => AppPage(appId: app.id)),
-          );
+          NavHelper.pushAppPage(context, app.id);
         }
       },
     );
@@ -868,7 +991,7 @@ class AppsPageState extends State<AppsPage> {
                 controller: searchController,
                 hintText: tr('search'),
                 padding: const WidgetStatePropertyAll(
-                  EdgeInsets.symmetric(horizontal: 16),
+                  AppPaddings.pageHorizontal,
                 ),
                 leading: const Icon(Icons.search_rounded),
                 trailing: trailing,
@@ -890,6 +1013,12 @@ class AppsPageState extends State<AppsPage> {
   ) {
     final mode = settingsProvider.actionBannerMode;
     if (mode == ActionBannerMode.none) {
+      return const SliverToBoxAdapter(child: SizedBox(width: double.infinity));
+    }
+    final pendingCount = existingUpdateIdsAllOrSelected.length +
+        newInstallIdsAllOrSelected.length +
+        trackOnlyUpdateIdsAllOrSelected.length;
+    if (pendingCount < 2) {
       return const SliverToBoxAdapter(child: SizedBox(width: double.infinity));
     }
     final onObtain =
@@ -915,7 +1044,7 @@ class AppsPageState extends State<AppsPage> {
                 child: ConnectedCard(
                   color: cs.primaryContainer,
                   child: Padding(
-                    padding: const EdgeInsets.all(16),
+                    padding: AppPaddings.cardInner,
                     child: Row(
                       children: [
                         Icon(
@@ -991,25 +1120,20 @@ class AppsPageState extends State<AppsPage> {
 
   @override
   Widget build(BuildContext context) {
+    // context.watch does NOT rebuild on per-app download progress ticks
+    // because DownloadState.progress is a ValueNotifier (no notifyListeners()).
     final appsProvider = context.watch<AppsProvider>();
     final settingsProvider = context.watch<SettingsProvider>();
     final sourceProvider = context.read<SourceProvider>();
 
-    if (!appsProvider.loadingApps &&
-        appsProvider.apps.isNotEmpty &&
-        settingsProvider.checkJustStarted() &&
-        settingsProvider.checkOnStart) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (!mounted) return;
-        refreshIndicatorKey.currentState?.show();
-      });
-    }
-
     final apps = appsProvider.getAppValues().toList();
     final allAppIds = apps.map((e) => e.app.id).toSet();
     final localSelected = selectedAppIds.where(allAppIds.contains).toSet();
-    if (localSelected.length != selectedAppIds.length) {
+    if (localSelected.length != selectedAppIds.length &&
+        !_selectionPruneScheduled) {
+      _selectionPruneScheduled = true;
       WidgetsBinding.instance.addPostFrameCallback((_) {
+        _selectionPruneScheduled = false;
         if (mounted) {
           final freshListedIds = appsProvider
               .getAppValues()
@@ -1033,75 +1157,21 @@ class AppsPageState extends State<AppsPage> {
       existingUpdates,
     );
 
-    final listedAppIdSet2 = listedApps.map((e) => e.app.id).toSet();
-
-    var existingUpdateIdsAllOrSelected = existingUpdates
-        .where(
-          (element) => selectedAppIds.isEmpty
-              ? listedAppIdSet2.contains(element)
-              : selectedAppIds.contains(element),
-        )
-        .toList();
-    var newInstallIdsAllOrSelected = appsProvider
-        .findAppIdsWithPendingUpdates(nonInstalledOnly: true)
-        .where(
-          (element) => selectedAppIds.isEmpty
-              ? listedAppIdSet2.contains(element)
-              : selectedAppIds.contains(element),
-        )
-        .toList();
-
-    final List<String> trackOnlyUpdateIdsAllOrSelected = [];
-    for (var id in existingUpdateIdsAllOrSelected) {
-      if (appsProvider.apps[id]!.app.settings.getBool('trackOnly')) {
-        trackOnlyUpdateIdsAllOrSelected.add(id);
-      }
-    }
-    for (var id in newInstallIdsAllOrSelected) {
-      if (appsProvider.apps[id]!.app.settings.getBool('trackOnly') &&
-          !trackOnlyUpdateIdsAllOrSelected.contains(id)) {
-        trackOnlyUpdateIdsAllOrSelected.add(id);
-      }
-    }
-    existingUpdateIdsAllOrSelected = existingUpdateIdsAllOrSelected
-        .where((id) => !trackOnlyUpdateIdsAllOrSelected.contains(id))
-        .toList();
-    newInstallIdsAllOrSelected = newInstallIdsAllOrSelected
-        .where((id) => !trackOnlyUpdateIdsAllOrSelected.contains(id))
-        .toList();
+    final listedAppIdSet = listedApps.map((e) => e.app.id).toSet();
+    final (existingUpdateIdsAllOrSelected, newInstallIdsAllOrSelected,
+        trackOnlyUpdateIdsAllOrSelected) = _computeUpdateIdSets(
+      appsProvider,
+      existingUpdates,
+      selectedAppIds,
+      listedAppIdSet,
+    );
 
     final groupBy = settingsProvider.groupBy;
-    final grouped = <String?, List<int>>{};
-    if (groupBy == GroupByMode.category.name) {
-      for (var i = 0; i < listedApps.length; i++) {
-        final app = listedApps[i];
-        if (app.app.categories.isEmpty) {
-          grouped.putIfAbsent(null, () => []).add(i);
-        } else {
-          for (final cat in app.app.categories) {
-            grouped.putIfAbsent(cat, () => []).add(i);
-          }
-        }
-      }
-    } else if (groupBy == GroupByMode.source.name) {
-      final sourceNames = {
-        for (final s in sourceProvider.sources) s.sourceIdentifier: s.name,
-      };
-      for (var i = 0; i < listedApps.length; i++) {
-        final label =
-            sourceNames[listedApps[i].sourceType] ??
-            listedApps[i].sourceType ??
-            tr('noSource');
-        grouped.putIfAbsent(label, () => []).add(i);
-      }
-    }
-    final listedGroups = grouped.keys.toList();
-    listedGroups.sort((a, b) {
-      if (a == null && b == null) return 0;
-      if (a == null) return 1;
-      if (b == null) return -1;
-      return a.toLowerCase().compareTo(b.toLowerCase());
-    });
+    final (grouped, listedGroups) = _buildGroups(
+      listedApps,
+      groupBy,
+      sourceProvider,
+    );
 
     return PopScope(
       canPop: selectedAppIds.isEmpty,
@@ -1130,11 +1200,7 @@ class AppsPageState extends State<AppsPage> {
                     actions: [
                       IconButton(
                         onPressed: () {
-                          Navigator.of(context).push(
-                            MaterialPageRoute(
-                              builder: (_) => const SettingsPage(),
-                            ),
-                          );
+                          NavHelper.pushSettingsPage(context);
                         },
                         icon: const Icon(Icons.settings_outlined),
                         tooltip: tr('settings'),
@@ -1168,6 +1234,24 @@ class AppsPageState extends State<AppsPage> {
                       height: MediaQuery.of(context).padding.bottom + 96,
                     ),
                   ),
+                  if (settingsProvider.isTV)
+                    SliverToBoxAdapter(
+                      child: Padding(
+                        padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+                        child: SizedBox(
+                          width: double.infinity,
+                          child: Focus(
+                            autofocus: true,
+                            child: FilledButton.tonalIcon(
+                              onPressed: () =>
+                                  NavHelper.pushAddAppPage(context),
+                              icon: const Icon(Icons.add),
+                              label: Text(tr('addApp')),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
                 ],
               ),
             ),
@@ -1187,12 +1271,7 @@ class AppsPageState extends State<AppsPage> {
     if (widget.onAppSelected != null) {
       widget.onAppSelected!(app.app.id);
     } else {
-      Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (BuildContext context) => AppPage(appId: app.app.id),
-        ),
-      );
+      NavHelper.pushAppPage(context, app.app.id);
     }
   }
 
@@ -1281,6 +1360,7 @@ class _BulkUpdateDialogState extends State<_BulkUpdateDialog> {
 
   Widget _sectionHeader(String label, List<String> ids, ColorScheme cs) {
     if (ids.isEmpty) return const SizedBox.shrink();
+    final tt = Theme.of(context).textTheme;
     return Padding(
       padding: const EdgeInsets.only(top: 12, bottom: 4),
       child: Row(
@@ -1288,15 +1368,14 @@ class _BulkUpdateDialogState extends State<_BulkUpdateDialog> {
           const SizedBox(width: 8),
           Text(
             label,
-            style: TextStyle(
-              fontSize: 12,
+            style: tt.bodySmall?.copyWith(
               fontWeight: FontWeight.bold,
               color: cs.primary,
             ),
           ),
           Text(
             ' (${ids.length})',
-            style: TextStyle(fontSize: 12, color: cs.onSurfaceVariant),
+            style: tt.bodySmall?.copyWith(color: cs.onSurfaceVariant),
           ),
         ],
       ),
@@ -1305,6 +1384,7 @@ class _BulkUpdateDialogState extends State<_BulkUpdateDialog> {
 
   Widget _appCheckRow(String id, ColorScheme cs) {
     final aim = widget.apps[id];
+    final tt = Theme.of(context).textTheme;
     if (aim == null) return const SizedBox.shrink();
     final isNewInstall = aim.app.installedVersion == null;
     final isUpdate =
@@ -1319,6 +1399,7 @@ class _BulkUpdateDialogState extends State<_BulkUpdateDialog> {
       visualDensity: VisualDensity.compact,
       value: selectedIds.contains(id),
       onChanged: (checked) {
+        context.read<SettingsProvider>().selectionClick();
         setState(() {
           if (checked == true) {
             selectedIds.add(id);
@@ -1348,14 +1429,22 @@ class _BulkUpdateDialogState extends State<_BulkUpdateDialog> {
               tr('byX', args: [aim.author]),
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
-              style: TextStyle(fontSize: 12, color: cs.onSurfaceVariant),
+              style: tt.bodySmall?.copyWith(color: cs.onSurfaceVariant),
             ),
           if (versionLabel.isNotEmpty)
-            Text(
-              versionLabel,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: TextStyle(fontSize: 12, color: cs.onSurfaceVariant),
+            Directionality(
+              // Force LTR for the "old → new" transition so the arrow isn't
+              // bidi-mirrored/reordered under RTL locales, which made it
+              // look like a downgrade instead of an update.
+              textDirection: isUpdate
+                  ? TextDirection.ltr
+                  : Directionality.of(context),
+              child: Text(
+                versionLabel,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: tt.bodySmall?.copyWith(color: cs.onSurfaceVariant),
+              ),
             ),
         ],
       ),
@@ -1474,7 +1563,7 @@ class _TVSearchBarState extends State<_TVSearchBar> {
             ),
           ),
         ),
-        const SizedBox(height: 8),
+        const SizedBox(height: AppSpacings.elementGap),
         Row(
           mainAxisAlignment: MainAxisAlignment.end,
           children: widget.trailing,

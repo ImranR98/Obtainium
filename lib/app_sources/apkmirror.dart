@@ -7,7 +7,7 @@ import 'package:http/http.dart';
 import 'package:obtainium/components/generated_form_model.dart';
 import 'package:obtainium/custom_errors.dart';
 import 'package:obtainium/providers/apps_provider.dart';
-import 'package:obtainium/providers/logs_provider.dart';
+import 'package:obtainium/core/logging/app_logger.dart';
 import 'package:obtainium/providers/settings_provider.dart';
 import 'package:obtainium/providers/source_provider.dart';
 
@@ -18,6 +18,8 @@ class APKMirror extends AppSource {
     enforceTrackOnly = true;
     showReleaseDateAsVersionToggle = true;
   }
+
+  static const String _fallbackVersion = '1.0.0';
 
   @override
   List<List<GeneratedFormItem>>
@@ -45,7 +47,7 @@ class APKMirror extends AppSource {
   }) async {
     return {
       'User-Agent':
-          "Obtainium/${(await getInstalledInfo(obtainiumId))?.versionName ?? '1.0.0'}",
+          'Obtainium/${(await getInstalledInfo(obtainiumId))?.versionName ?? _fallbackVersion}',
     };
   }
 
@@ -111,25 +113,17 @@ class APKMirror extends AppSource {
           try {
             releaseDate = HttpDate.parse('$dateString GMT');
           } catch (e) {
-            unawaited(
-              LogsProvider().add(
-                'Failed to parse APKMirror release date: ${e.toString()}',
-                level: LogLevel.warning,
-              ),
+            AppLogger.warn(
+              'Failed to parse APKMirror release date: ${e.toString()}',
             );
           }
         }
         String? version;
         if (titleString != null) {
-          final byMatches = RegExp(' by ').allMatches(titleString);
-          version = byMatches.isEmpty
-              ? titleString
-              : titleString
-                    .substring(
-                      RegExp('[0-9]').firstMatch(titleString)?.start ?? 0,
-                      byMatches.last.start,
-                    )
-                    .trim();
+          final match = RegExp(
+            r'\b(\d[\d.]*(?:[- ]?\d[\d.]*)*)\b',
+          ).firstMatch(titleString);
+          version = match?.group(1);
         }
         if (version == null || version.isEmpty) {
           version = titleString;

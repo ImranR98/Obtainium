@@ -206,17 +206,11 @@ class AddAppPageState extends State<AddAppPage> {
   ) async {
     if (additionalSettings['releaseDateAsVersion'] != true) return true;
     if (!context.mounted) return false;
-    return await showDialog(
-          context: context,
-          builder: (BuildContext ctx) {
-            return GeneratedFormModal(
-              title: tr('releaseDateAsVersion'),
-              items: const [],
-              message: tr('releaseDateAsVersionExplanation'),
-            );
-          },
-        ) !=
-        null;
+    return await showContinueCancelDialog(
+      context,
+      title: tr('releaseDateAsVersion'),
+      message: tr('releaseDateAsVersionExplanation'),
+    );
   }
 
   Future<void> addApp(BuildContext context) async {
@@ -280,7 +274,10 @@ class AddAppPageState extends State<AddAppPage> {
           app = app.copyWith(id: downloadedFile?.appId ?? downloadedDir!.appId);
         }
         if (appsProvider.apps.containsKey(app.id)) {
-          throw ObtainiumError(tr('appAlreadyAdded'));
+          final existing = appsProvider.apps[app.id];
+          throw ObtainiumError(
+            '${tr('appAlreadyAdded')}: ${existing?.app.name ?? app.id} (${app.id})',
+          );
         }
         if (app.settings.getBool('trackOnly') ||
             !app.settings.getBool('versionDetection')) {
@@ -304,6 +301,7 @@ class AddAppPageState extends State<AddAppPage> {
   }
 
   Future<void> runSearch(BuildContext context) async {
+    settingsProvider.lightImpact();
     searching = true;
     setState(() {});
     final sourceStrings = <String, List<String>>{};
@@ -511,7 +509,7 @@ class AddAppPageState extends State<AddAppPage> {
 
   Widget _buildSourceSpecificForm(SettingsProvider settingsProvider) {
     final s = pickedSource!;
-    final formItems = s.combinedAppSpecificSettingFormItems;
+    final formItems = cloneFormItems(s.combinedAppSpecificSettingFormItems);
     for (var row in formItems) {
       for (var item in row) {
         if (additionalSettings[item.key] != null) {
@@ -718,8 +716,7 @@ class AddAppPageState extends State<AddAppPage> {
                                 required: false,
                                 additionalValidators: [
                                   (value) {
-                                    if (value == null ||
-                                        value.trim().isEmpty) {
+                                    if (value == null || value.trim().isEmpty) {
                                       return null;
                                     }
                                     try {
@@ -760,7 +757,8 @@ class AddAppPageState extends State<AddAppPage> {
                                 width: 20,
                                 height: 20,
                                 child: CircularProgressIndicator(
-                                    strokeWidth: 2),
+                                  strokeWidth: 2,
+                                ),
                               ),
                             )
                           : IconButton(
@@ -769,18 +767,18 @@ class AddAppPageState extends State<AddAppPage> {
                               tooltip: tr('add'),
                               onPressed:
                                   doingSomething ||
-                                          pickedSource == null ||
-                                          !_urlValid ||
-                                          userInput.trim().isEmpty ||
-                                          (pickedSource!
-                                                      .combinedAppSpecificSettingFormItems
-                                                      .isNotEmpty &&
-                                                  !additionalSettingsValid)
-                                      ? null
-                                      : () {
-                                          settingsProvider.selectionClick();
-                                          addApp(context);
-                                        },
+                                      pickedSource == null ||
+                                      !_urlValid ||
+                                      userInput.trim().isEmpty ||
+                                      (pickedSource!
+                                              .combinedAppSpecificSettingFormItems
+                                              .isNotEmpty &&
+                                          !additionalSettingsValid)
+                                  ? null
+                                  : () {
+                                      settingsProvider.selectionClick();
+                                      addApp(context);
+                                    },
                             ),
                     ],
                   ),
@@ -837,12 +835,10 @@ class AddAppPageState extends State<AddAppPage> {
                               ],
                             ],
                             onValueChanges: (values, valid, isBuilding) {
-                              if (values.isNotEmpty &&
-                                  valid &&
-                                  !isBuilding) {
+                              if (values.isNotEmpty && valid && !isBuilding) {
                                 setState(() {
-                                  searchQuery =
-                                      values['searchSomeSources']!.trim();
+                                  searchQuery = values['searchSomeSources']!
+                                      .trim();
                                 });
                               }
                             },
@@ -856,14 +852,13 @@ class AddAppPageState extends State<AddAppPage> {
                                   width: 20,
                                   height: 20,
                                   child: CircularProgressIndicator(
-                                      strokeWidth: 2),
+                                    strokeWidth: 2,
+                                  ),
                                 ),
                               )
                             : IconButton(
-                                icon: const Icon(
-                                    Icons.search_rounded),
-                                visualDensity:
-                                    VisualDensity.compact,
+                                icon: const Icon(Icons.search_rounded),
+                                visualDensity: VisualDensity.compact,
                                 tooltip: tr('search'),
                                 onPressed: doingSomething
                                     ? null
@@ -871,10 +866,6 @@ class AddAppPageState extends State<AddAppPage> {
                               ),
                       ],
                     ),
-                  ],
-                  if (pickedSource == null && userInput.isEmpty) ...[
-                    if (shouldShowSearchBar) const SizedBox(height: 13),
-                    const ImportSection(),
                   ],
                   if (pickedSource != null)
                     FutureBuilder(

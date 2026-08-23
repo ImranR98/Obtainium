@@ -11,6 +11,8 @@ class APKCombo extends AppSource {
     inferAppIdFromUrlPath = true;
   }
 
+  static const String _userAgent = 'curl/8.0.1';
+
   @override
   String sourceSpecificStandardizeURL(
     String url, {
@@ -32,7 +34,7 @@ class APKCombo extends AppSource {
     // served by a Cloudflare R2 presigned URL on a different host, and sending
     // an apkcombo.com Host there makes R2 reject the signed request (403).
     return {
-      'User-Agent': 'curl/8.0.1',
+      'User-Agent': _userAgent,
       'Accept': '*/*',
       'Connection': 'keep-alive',
     };

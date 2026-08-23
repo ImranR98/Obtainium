@@ -1,10 +1,9 @@
-import 'dart:async';
 import 'dart:io' show SocketException;
 import 'dart:ui' show Locale;
 
 import 'package:easy_localization/easy_localization.dart';
 import 'package:android_package_installer/android_package_installer.dart';
-import 'package:obtainium/providers/logs_provider.dart';
+import 'package:obtainium/core/logging/app_logger.dart';
 import 'package:obtainium/providers/source_provider.dart';
 
 class ObtainiumError {
@@ -19,6 +18,11 @@ class ObtainiumError {
   /// even when the error itself was thrown deep inside a source with no app
   /// reference. Not part of the localized [message]; only surfaced via
   /// [toString].
+  ///
+  /// This field is intentionally mutable so that URL context can be attached
+  /// after construction via [withUrlContext] or the `..url =` cascade pattern
+  /// without requiring every error subclass to carry a `copyWithUrl` factory.
+  /// TODO: Make immutable with a proper copy-with-url pattern across all subclasses.
   String? url;
 
   ObtainiumError(
@@ -71,29 +75,19 @@ Never rethrowOrWrapError(
   if (error is ObtainiumError) {
     if (error.unexpected) {
       final resolvedStack = error.stack ?? StackTrace.current;
-      unawaited(
-        LogsProvider().add(
-          'Unexpected ObtainiumError: ${error.toString()}\n$resolvedStack',
-          level: LogLevel.error,
-        ),
+      AppLogger.error(
+        'Unexpected ObtainiumError: ${error.toString()}\n$resolvedStack',
+        message:
+            'Unexpected ObtainiumError: ${error.toString()}\n$resolvedStack',
       );
-      throw ObtainiumError(
-        error.message,
-        code: 'UNEXPECTED',
-        unexpected: true,
-        stack: resolvedStack,
-        data: error.data,
-        url: error.url,
-      );
+      throw error;
     }
     throw error;
   }
   final capturedStack = stack ?? StackTrace.current;
-  unawaited(
-    LogsProvider().add(
-      'Wrapping unexpected error: $error\n$capturedStack',
-      level: LogLevel.error,
-    ),
+  AppLogger.error(
+    'Wrapping unexpected error: $error\n$capturedStack',
+    message: 'Wrapping unexpected error: $error\n$capturedStack',
   );
   throw ObtainiumError(
     sourceName != null ? '$sourceName: $error' : error.toString(),
@@ -182,7 +176,10 @@ class CheckUpdatesException extends ObtainiumError {
   CheckUpdatesException(this.updates, this.errors)
     : super.withCode('CHECK_UPDATES_FAILED', unexpected: true);
   @override
-  String toString() => errors.toString();
+  String toString() {
+    final base = url != null && url!.isNotEmpty ? '$message ($url)' : message;
+    return '$base\n${errors.toString()}';
+  }
 }
 
 class NotImplementedError extends ObtainiumError {
@@ -203,6 +200,10 @@ class MultiAppMultiError extends ObtainiumError {
     }
     rawErrors[appId] = error;
     final string = error.toString();
+    for (final entry in idsByErrorString.entries) {
+      entry.value.remove(appId);
+    }
+    idsByErrorString.removeWhere((k, v) => v.isEmpty);
     var tempIds = idsByErrorString.remove(string);
     if (tempIds == null) {
       tempIds = [];
@@ -271,8 +272,6 @@ bool isEnglish() {
   if (_appCurrentLocale != null) return _appCurrentLocale!.languageCode == 'en';
   return false;
 }
-
-String lowerCaseIfEnglish(String str) => isEnglish() ? str.toLowerCase() : str;
 
 String list2FriendlyString(List<String> list) {
   final isUsingEnglish = isEnglish();

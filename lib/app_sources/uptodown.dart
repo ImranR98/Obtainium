@@ -3,29 +3,26 @@ import 'dart:async';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:html/parser.dart';
 import 'package:obtainium/custom_errors.dart';
-import 'package:obtainium/providers/logs_provider.dart';
+import 'package:obtainium/core/logging/app_logger.dart';
 import 'package:obtainium/providers/source_provider.dart';
 
-DateTime? parseUptodownDate(String? dateString) {
+DateTime? _parseUptodownDate(String? dateString) {
   if (dateString == null) return null;
   try {
     return DateFormat('MMM dd, yyyy').parse(dateString);
   } catch (_) {
-    unawaited(
-      LogsProvider().add(
-        'Failed to parse Uptodown release date (short format): $dateString',
-        level: LogLevel.error,
-      ),
+    AppLogger.error(
+      'Failed to parse Uptodown release date (short format): $dateString',
+      message:
+          'Failed to parse Uptodown release date (short format): $dateString',
     );
   }
   try {
     return DateFormat('MMMM dd, yyyy').parse(dateString);
   } catch (_) {
-    unawaited(
-      LogsProvider().add(
-        'Failed to parse Uptodown release date: $dateString',
-        level: LogLevel.error,
-      ),
+    AppLogger.error(
+      'Failed to parse Uptodown release date: $dateString',
+      message: 'Failed to parse Uptodown release date: $dateString',
     );
   }
   return null;
@@ -43,6 +40,10 @@ class Uptodown extends AppSource {
 
   @override
   String sourceSpecificStandardizeURL(String url, {bool forSelection = false}) {
+    url = url.replaceFirst(
+      RegExp(r'\.([a-z]{2,3})\.uptodown\.', caseSensitive: false),
+      '.en.uptodown.',
+    );
     return '${standardizeUrlWithRegex(url, subdomainPrefix: r'([^\\.]+\.)+', pathPattern: '')}/android/download';
   }
 
@@ -127,11 +128,16 @@ class Uptodown extends AppSource {
       final String? dateStr = appDetails['dateStr'];
       DateTime? relDate;
       if (dateStr != null) {
-        relDate = parseUptodownDate(dateStr);
+        relDate = _parseUptodownDate(dateStr);
       }
       return APKDetails(
         version,
-        [MapEntry('$appId.${extension ?? 'apk'}', apkUrl)],
+        [
+          MapEntry(
+            '$appId.${(extension != null && extension.isNotEmpty) ? extension : 'apk'}',
+            apkUrl,
+          ),
+        ],
         AppNames(author, appName),
         releaseDate: relDate,
       );

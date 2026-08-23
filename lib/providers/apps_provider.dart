@@ -8,17 +8,15 @@ import 'dart:io';
 import 'dart:math';
 import 'dart:typed_data';
 
-import 'package:android_system_font/android_system_font.dart';
 import 'package:android_package_manager/android_package_manager.dart';
 import 'package:battery_plus/battery_plus.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:crypto/crypto.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:http/io_client.dart';
 import 'package:obtainium/custom_errors.dart';
-import 'package:obtainium/providers/logs_provider.dart';
+import 'package:obtainium/core/logging/app_logger.dart';
 import 'package:obtainium/providers/notifications_provider.dart';
 import 'package:obtainium/providers/settings_provider.dart';
 import 'package:path_provider/path_provider.dart';
@@ -26,16 +24,13 @@ import 'package:flutter_fgbg/flutter_fgbg.dart';
 import 'package:obtainium/providers/source_provider.dart';
 import 'package:http/http.dart';
 import 'package:workmanager/workmanager.dart';
-import 'package:obtainium/main.dart';
-// ignore: implementation_imports
-import 'package:easy_localization/src/easy_localization_controller.dart';
-// ignore: implementation_imports
-import 'package:easy_localization/src/localization.dart';
 
 import 'package:obtainium/providers/apps_provider_import_export.dart';
 import 'package:obtainium/providers/apps_provider_install.dart';
 import 'package:obtainium/providers/apps_provider_lifecycle.dart';
 import 'package:obtainium/providers/apps_provider_updates.dart';
+
+import 'package:obtainium/utils/translation_loader.dart';
 
 export 'apps_provider_import_export.dart';
 export 'apps_provider_install.dart';
@@ -190,37 +185,26 @@ List<T> _moveToEnd<T extends Object>(List<T> arr, bool Function(T) match) {
 List<String> moveStrToEnd(List<String> arr, String str, {String? strB}) =>
     _moveToEnd(arr, (e) => e == str || e == strB);
 
-/// See [_moveToEnd] for semantic details.
-List<MapEntry<String, int>> moveStrToEndMapEntryWithCount(
-  List<MapEntry<String, int>> arr,
-  MapEntry<String, int> str, {
-  MapEntry<String, int>? strB,
-}) => _moveToEnd(arr, (e) => e.key == str.key || e.key == strB?.key);
-
 Future<File> downloadFileWithRetry(
-  String url,
   String fileName,
   bool fileNameHasExt,
   Function? onProgress,
-  String destDir, {
+  String destDir,
+  Map<String, dynamic> additionalSettings, {
   bool useExisting = true,
   Map<String, String>? headers,
   int retries = _defaultRetries,
-  bool allowInsecure = false,
-  LogsProvider? logs,
   CancellationToken? cancellationToken,
 }) async {
   try {
     return await downloadFile(
-      url,
       fileName,
       fileNameHasExt,
       onProgress,
       destDir,
+      additionalSettings,
       useExisting: useExisting,
       headers: headers,
-      allowInsecure: allowInsecure,
-      logs: logs,
       cancellationToken: cancellationToken,
     );
   } catch (e) {
@@ -232,16 +216,14 @@ Future<File> downloadFileWithRetry(
             e is TimeoutException)) {
       await Future.delayed(const Duration(seconds: _retryDelaySeconds));
       return await downloadFileWithRetry(
-        url,
         fileName,
         fileNameHasExt,
         onProgress,
         destDir,
+        additionalSettings,
         useExisting: useExisting,
         headers: headers,
         retries: (retries - 1),
-        allowInsecure: allowInsecure,
-        logs: logs,
         cancellationToken: cancellationToken,
       );
     } else {
@@ -256,11 +238,10 @@ String hashListOfLists(List<List<int>> data) {
 }
 
 Future<String> checkPartialDownloadHashDynamic(
-  String url, {
+  Map<String, dynamic> additionalSettings, {
   int startingSize = _partialHashCheckStartingSize,
   int lowerLimit = _partialHashCheckLowerLimit,
   Map<String, String>? headers,
-  bool allowInsecure = false,
 }) async {
   for (int i = startingSize; i >= lowerLimit; i -= _partialHashCheckDecrement) {
     // Both requests fetch the same byte range to confirm the hash is
@@ -268,16 +249,14 @@ Future<String> checkPartialDownloadHashDynamic(
     // requests agree, the hash is considered valid.
     final List<String> ab = await Future.wait([
       checkPartialDownloadHash(
-        url,
+        additionalSettings,
         i,
         headers: headers,
-        allowInsecure: allowInsecure,
       ),
       checkPartialDownloadHash(
-        url,
+        additionalSettings,
         i,
         headers: headers,
-        allowInsecure: allowInsecure,
       ),
     ]);
     if (ab[0] == ab[1]) {
@@ -288,17 +267,17 @@ Future<String> checkPartialDownloadHashDynamic(
 }
 
 Future<String> checkPartialDownloadHash(
-  String url,
+  Map<String, dynamic> additionalSettings,
   int bytesToGrab, {
   Map<String, String>? headers,
-  bool allowInsecure = false,
 }) async {
+  final url = additionalSettings['url'] as String;
   final req = Request('GET', Uri.parse(url));
   if (headers != null) {
     req.headers.addAll(headers);
   }
   req.headers[HttpHeaders.rangeHeader] = 'bytes=0-$bytesToGrab';
-  final client = IOClient(createHttpClient(allowInsecure));
+  final client = IOClient(await createHttpClient(additionalSettings));
   try {
     final response = await client.send(req);
     if (response.statusCode < 200 || response.statusCode > 299) {
@@ -315,14 +294,14 @@ Future<String> checkPartialDownloadHash(
 }
 
 Future<String?> checkETagHeader(
-  String url, {
+  Map<String, dynamic> additionalSettings, {
   Map<String, String>? headers,
-  bool allowInsecure = false,
 }) async {
+  final url = additionalSettings['url'] as String;
   final reqHeaders = headers ?? {};
   final req = Request('GET', Uri.parse(url));
   req.headers.addAll(reqHeaders);
-  final client = IOClient(createHttpClient(allowInsecure));
+  final client = IOClient(await createHttpClient(additionalSettings));
   try {
     final StreamedResponse response = await client.send(req);
     if (response.statusCode < 200 || response.statusCode >= 300) {
@@ -352,12 +331,9 @@ void deleteFile(File file) {
 Future<File?> _waitForConcurrentDownload(
   File tempDownloadedFile,
   File downloadedFile,
-  LogsProvider? logs,
 ) async {
-  unawaited(
-    logs?.add(
-      'Partial download exists - will wait: ${tempDownloadedFile.uri.pathSegments.last}',
-    ),
+  AppLogger.info(
+    'Partial download exists - will wait: ${tempDownloadedFile.uri.pathSegments.last}',
   );
   int currentTempFileSize = await tempDownloadedFile.length();
   int pollCount = 0;
@@ -373,16 +349,12 @@ Future<File?> _waitForConcurrentDownload(
       }
       if (newTempFileSize > currentTempFileSize) {
         currentTempFileSize = newTempFileSize;
-        unawaited(
-          logs?.add(
-            'Existing partial download still in progress: ${tempDownloadedFile.uri.pathSegments.last}',
-          ),
+        AppLogger.info(
+          'Existing partial download still in progress: ${tempDownloadedFile.uri.pathSegments.last}',
         );
       } else {
-        unawaited(
-          logs?.add(
-            'Ignoring existing partial download: ${tempDownloadedFile.uri.pathSegments.last}',
-          ),
+        AppLogger.info(
+          'Ignoring existing partial download: ${tempDownloadedFile.uri.pathSegments.last}',
         );
         break;
       }
@@ -391,37 +363,31 @@ Future<File?> _waitForConcurrentDownload(
     }
   }
   if (downloadedFile.existsSync()) {
-    unawaited(
-      logs?.add(
-        'Existing partial download completed - not repeating: ${tempDownloadedFile.uri.pathSegments.last}',
-      ),
+    AppLogger.info(
+      'Existing partial download completed - not repeating: ${tempDownloadedFile.uri.pathSegments.last}',
     );
     return downloadedFile;
   }
-  unawaited(
-    logs?.add(
-      'Existing partial download not in progress: ${tempDownloadedFile.uri.pathSegments.last}',
-    ),
+  AppLogger.info(
+    'Existing partial download not in progress: ${tempDownloadedFile.uri.pathSegments.last}',
   );
   return null;
 }
 
 /// Downloads a file to [destDir] with progress reporting, resuming partial downloads when supported.
 Future<File> downloadFile(
-  String url,
   String fileName,
   bool fileNameHasExt,
   Function? onProgress,
-  String destDir, {
+  String destDir,
+  Map<String, dynamic> additionalSettings, {
   bool useExisting = true,
   Map<String, String>? headers,
-  bool allowInsecure = false,
-  LogsProvider? logs,
   CancellationToken? cancellationToken,
 }) async {
   final reqHeaders = headers ?? {};
-  final headersClient = IOClient(createHttpClient(allowInsecure));
-
+  final headersClient = IOClient(await createHttpClient(additionalSettings));
+  final url = additionalSettings['url'] as String;
   final getReq = Request('GET', Uri.parse(url));
   getReq.headers.addAll(reqHeaders);
   final headersResponse = await headersClient.send(getReq);
@@ -444,9 +410,12 @@ Future<File> downloadFile(
   } else if (ext == 'attachment') {
     ext = 'apk';
   }
-  fileName = fileNameHasExt
-      ? fileName
-      : fileName.split('/').last; // Ensure the fileName is a file name
+  // Never trust a source-provided fileName: always reduce it to a plain
+  // basename so it cannot escape destDir, whatever the caller passed.
+  fileName = fileName.replaceAll('\\', '/').split('/').last;
+  if (fileName.isEmpty || fileName == '.' || fileName == '..') {
+    throw ObtainiumError(tr('unexpectedError'));
+  }
   File downloadedFile = File('$destDir/$fileName.$ext');
   if (fileNameHasExt) {
     // If the user says the filename already has an ext, ignore whatever you inferred from above
@@ -485,7 +454,6 @@ Future<File> downloadFile(
     final result = await _waitForConcurrentDownload(
       tempDownloadedFile,
       downloadedFile,
-      logs,
     );
     if (result != null) return result;
   }
@@ -516,9 +484,8 @@ Future<File> downloadFile(
   }
   final responseWithClient = await sourceRequestStreamResponse(
     'GET',
-    url,
     reqHeaders,
-    {'allowInsecure': allowInsecure},
+    additionalSettings
   );
   final HttpClient responseClient = responseWithClient.value.key;
   final HttpClientResponse response = responseWithClient.value.value;
@@ -556,9 +523,7 @@ Future<File> downloadFile(
       await sink.close();
       sink = null;
       await response.drain<void>().catchError((_) {
-        unawaited(
-          logs?.add('Failed to drain response body', level: LogLevel.warning),
-        );
+        AppLogger.warn('Failed to drain response body');
       });
       if (tempDownloadedFile.existsSync()) {
         deleteFile(tempDownloadedFile);
@@ -642,11 +607,8 @@ Future<File> downloadFile(
               downloadedFile.deleteSync();
               tempDownloadedFile.renameSync(downloadedFile.path);
             } catch (secondErr) {
-              unawaited(
-                logs?.add(
-                  'Rename of temp download failed: $firstErr / $secondErr. Temp file left at ${tempDownloadedFile.path}',
-                  level: LogLevel.warning,
-                ),
+              AppLogger.warn(
+                'Rename of temp download failed: $firstErr / $secondErr. Temp file left at ${tempDownloadedFile.path}',
               );
             }
           }
@@ -667,9 +629,9 @@ Future<File> downloadFile(
   } finally {
     responseClient.close();
     unawaited(
-      sink?.close().catchError((_) {
-        logs?.add('Failed to close download sink', level: LogLevel.warning);
-      }),
+      sink?.close().catchError(
+        (_) => AppLogger.warn('Failed to close download sink'),
+      ),
     );
   }
 }
@@ -681,9 +643,15 @@ Future<int?> getDownloadSize(
   String url, {
   Map<String, String>? headers,
   bool allowInsecure = false,
+  bool enableCertificatePinning = false,
 }) async {
   final reqHeaders = headers ?? {};
-  final client = IOClient(createHttpClient(allowInsecure));
+  final Map<String, dynamic> additionalSettings = {
+    'allowInsecure': allowInsecure,
+    'url': url,
+    'enableCertificatePinning': enableCertificatePinning
+  };
+  final client = IOClient(await createHttpClient(additionalSettings));
   try {
     final getReq = Request('GET', Uri.parse(url));
     getReq.headers.addAll(reqHeaders);
@@ -702,41 +670,11 @@ Future<int?> getDownloadSize(
   } on HandshakeException {
     return null;
   } catch (e) {
-    unawaited(
-      LogsProvider().add(
-        'Unexpected error in getDownloadSize: $e',
-        level: LogLevel.error,
-      ),
-    );
+    AppLogger.error(e, message: 'Unexpected error in getDownloadSize');
     return null;
   } finally {
     client.close();
   }
-}
-
-/// Formats a byte count as a short human-readable string (e.g. "5.0 MB").
-String formatBytes(int bytes) {
-  if (bytes <= 0) return '0 B';
-  const units = ['B', 'KB', 'MB', 'GB', 'TB'];
-  var size = bytes.toDouble();
-  var unit = 0;
-  while (size >= 1024 && unit < units.length - 1) {
-    size /= 1024;
-    unit++;
-  }
-  final value = unit == 0 ? size.toStringAsFixed(0) : size.toStringAsFixed(1);
-  return '$value ${units[unit]}';
-}
-
-/// Formats download progress as "received / total" (e.g. "5.0 MB / 20.0 MB"),
-/// or just the received amount when the total is unknown. Returns null when no
-/// bytes have been received yet.
-String? formatDownloadSize(int? receivedBytes, int? totalBytes) {
-  if (receivedBytes == null) return null;
-  if (totalBytes != null && totalBytes > 0) {
-    return '${formatBytes(receivedBytes)} / ${formatBytes(totalBytes)}';
-  }
-  return formatBytes(receivedBytes);
 }
 
 Future<List<PackageInfo>> getAllInstalledInfo() async {
@@ -754,47 +692,6 @@ Future<PackageInfo?> getInstalledInfo(String? packageName) async {
     } catch (_) {}
   }
   return null;
-}
-
-/// Snapshot of a package's install state, taken before an install so that
-/// [waitForPackageInstall] can later tell whether the install landed.
-class InstallBaseline {
-  final bool wasInstalled;
-  final int? updateTime;
-  const InstallBaseline(this.wasInstalled, this.updateTime);
-}
-
-/// Captures the current install state of [appId] to compare against later.
-Future<InstallBaseline> captureInstallBaseline(String appId) async {
-  final info = await getInstalledInfo(appId);
-  return InstallBaseline(info != null, info?.lastUpdateTime);
-}
-
-/// Polls for an install that can't report completion synchronously (a silent
-/// background install, or a hand-off to an external installer). Returns true as
-/// soon as the package appears (when it wasn't installed before) or its update
-/// timestamp changes relative to [baseline] — a version-agnostic signal that
-/// also works with pseudo-versions — or false if neither happens within
-/// [attempts] × [interval].
-Future<bool> waitForPackageInstall(
-  String appId,
-  InstallBaseline baseline, {
-  required int attempts,
-  Duration interval = const Duration(milliseconds: 500),
-}) async {
-  for (var attempt = 0; attempt < attempts; attempt++) {
-    final info = await getInstalledInfo(appId);
-    if (info != null) {
-      if (!baseline.wasInstalled) return true;
-      final updateTimeAfter = info.lastUpdateTime;
-      if (baseline.updateTime == null ||
-          (updateTimeAfter != null && updateTimeAfter != baseline.updateTime)) {
-        return true;
-      }
-    }
-    await Future.delayed(interval);
-  }
-  return false;
 }
 
 Future<Directory> getAppStorageDir() async {
@@ -839,8 +736,6 @@ class AppsProvider with ChangeNotifier {
   /// WITHOUT triggering a full [notify] (which would rerun the expensive app
   /// list pipeline on every listener each tick and stutter the UI).
   final ValueNotifier<double?> refreshProgress = ValueNotifier<double?>(null);
-  LogsProvider logs = LogsProvider();
-
   // Serializes concurrent loadApps() calls without busy-waiting.
   Completer<void>? appsLoadingCompleter;
 
@@ -849,6 +744,8 @@ class AppsProvider with ChangeNotifier {
 
   // Set in dispose() to guard against deferred callbacks running post-disposal.
   bool _disposed = false;
+
+  final Completer<void> _readyCompleter = Completer<void>();
 
   // Tracks whether a background save occurred since the last load.
   bool _needsBgReload = false;
@@ -886,6 +783,8 @@ class AppsProvider with ChangeNotifier {
     return _iconsCacheDir!;
   }
 
+  Future<void> get ready => _readyCompleter.future;
+
   Iterable<AppInMemory> getAppValues() {
     _reloadIfBgSaved();
     return apps.values;
@@ -895,12 +794,7 @@ class AppsProvider with ChangeNotifier {
     if (!_needsBgReload) return;
     _needsBgReload = false;
     loadApps().catchError((e) {
-      unawaited(
-        logs.add(
-          'Reload after background save failed: $e',
-          level: LogLevel.error,
-        ),
-      );
+      AppLogger.error(e, message: 'Reload after background save failed');
     });
   }
 
@@ -922,6 +816,7 @@ class AppsProvider with ChangeNotifier {
 
   /// Requests cancellation of an ongoing download for [appId], if any.
   void cancelDownload(String appId) {
+    if (_disposed) return;
     _downloadCancellations[appId]?.cancel();
     final entry = apps[appId];
     if (entry != null && entry.downloadProgress != null) {
@@ -948,23 +843,16 @@ class AppsProvider with ChangeNotifier {
     _autoExportDebounce = Timer(const Duration(seconds: 2), () {
       if (!_disposed) {
         export(isAuto: true).catchError((e) {
-          unawaited(
-            logs.add('Auto-export failed: $e', level: LogLevel.warning),
-          );
+          AppLogger.warn('Auto-export failed: $e');
           return null;
         });
       }
     });
   }
 
-  AppsProvider({
-    bool isBg = false,
-    SettingsProvider? settingsProvider,
-    LogsProvider? logsProvider,
-  }) {
+  AppsProvider({bool isBg = false, SettingsProvider? settingsProvider}) {
     _isBg = isBg;
     this.settingsProvider = settingsProvider ?? SettingsProvider();
-    logs = logsProvider ?? LogsProvider();
     // Subscribe to changes in the app foreground status
     foregroundStream = FGBGEvents.instance.stream.asBroadcastStream();
     foregroundSubscription = foregroundStream?.listen((event) async {
@@ -1020,17 +908,24 @@ class AppsProvider with ChangeNotifier {
             }
           }
         }
+        _readyCompleter.complete();
       }
     }().catchError((e) {
+      if (!_readyCompleter.isCompleted) _readyCompleter.completeError(e);
       initError = e.toString();
-      unawaited(
-        logs.add('AppsProvider async init error: $e', level: LogLevel.error),
-      );
+      AppLogger.error(e, message: 'AppsProvider async init error');
     });
   }
 
   @override
   void dispose() {
+    if (NotificationsProvider.onDownloadCancelRequested == cancelDownload) {
+      NotificationsProvider.onDownloadCancelRequested = null;
+    }
+    for (final token in _downloadCancellations.values) {
+      token.cancel();
+    }
+    _downloadCancellations.clear();
     _disposed = true;
     foregroundSubscription?.cancel();
     _autoExportDebounce?.cancel();
@@ -1052,7 +947,10 @@ class AppsProvider with ChangeNotifier {
     final Map<String, dynamic> errorsMap = results[1];
     for (var app in pps) {
       if (apps.containsKey(app.id)) {
-        errorsMap.addAll({app.id: tr('appAlreadyAdded')});
+        errorsMap.addAll({
+          app.id:
+              '${tr('appAlreadyAdded')}: ${apps[app.id]?.app.name ?? app.id}',
+        });
       } else {
         await saveApps([app], onlyIfExists: false);
       }
@@ -1068,16 +966,13 @@ Future<void> _runBGInstallMode(
   List<String> appIds,
   AppsProvider appsProvider,
   NotificationsProvider notificationsProvider,
-  LogsProvider logs,
 ) async {
-  unawaited(logs.add('BG install task: Started.'));
+  AppLogger.info('BG install task: Started.');
   if (appIds.isEmpty) {
-    unawaited(logs.add('BG install task: No pending installs.'));
+    AppLogger.info('BG install task: No pending installs.');
     return;
   }
-  unawaited(
-    logs.add('BG install task: Installing ${appIds.length} apps silently.'),
-  );
+  AppLogger.info('BG install task: Installing ${appIds.length} apps silently.');
   try {
     await appsProvider.downloadAndInstallLatestApps(
       appIds,
@@ -1095,11 +990,11 @@ Future<void> _runBGInstallMode(
         );
       });
     } else {
-      unawaited(logs.add('Fatal error in BG install task: ${e.toString()}'));
+      AppLogger.error(e, message: 'Fatal error in BG install task');
       rethrow;
     }
   }
-  unawaited(logs.add('BG install task: Done installing updates.'));
+  AppLogger.info('BG install task: Done installing updates.');
 }
 
 /// Background update check and installation orchestrator.
@@ -1112,24 +1007,22 @@ Future<void> _runBGInstallMode(
 Future<void> bgUpdateCheck(
   String taskId,
   Map<String, dynamic>? params, {
-  LogsProvider? logs,
   NotificationsProvider? notifs,
   SettingsProvider? settings,
   bool forceAll = false,
 }) async {
-  final bgLogs = logs ?? LogsProvider();
   WidgetsFlutterBinding.ensureInitialized();
+  await AppLogger.init();
   await EasyLocalization.ensureInitialized();
   await TranslationLoader.load();
   params ??= {};
-  unawaited(bgLogs.add('BG task started $taskId: $params'));
+  AppLogger.info('BG task started $taskId: $params');
 
   final NotificationsProvider notificationsProvider =
       notifs ?? NotificationsProvider();
   final AppsProvider appsProvider = AppsProvider(
     isBg: true,
     settingsProvider: settings,
-    logsProvider: bgLogs,
   );
   await appsProvider.loadApps();
   await appsProvider.settingsProvider.initializeSettings();
@@ -1138,25 +1031,20 @@ Future<void> bgUpdateCheck(
   if (netResult.contains(ConnectivityResult.none) ||
       netResult.isEmpty ||
       (netResult.contains(ConnectivityResult.vpn) && netResult.length == 1)) {
-    unawaited(bgLogs.add('BG update task: No network.'));
+    AppLogger.info('BG update task: No network.');
     return;
   }
 
-  if (!appsProvider.settingsProvider.enableBackgroundUpdates ||
-      appsProvider.settingsProvider.updateInterval == 0) {
+  if (appsProvider.settingsProvider.updateInterval == 0) {
     if (!forceAll) {
-      unawaited(
-        bgLogs.add(
-          'BG update task: Skipped (enabled=${appsProvider.settingsProvider.enableBackgroundUpdates}, '
-          'interval=${appsProvider.settingsProvider.updateInterval})',
-        ),
+      AppLogger.info(
+        'BG update task: Skipped (enabled=${appsProvider.settingsProvider.enableBackgroundUpdates}, '
+        'interval=${appsProvider.settingsProvider.updateInterval})',
       );
       return;
     }
-    unawaited(
-      bgLogs.add(
-        'BG update task: Running manual check despite disabled settings',
-      ),
+    AppLogger.info(
+      'BG update task: Running manual check despite disabled settings',
     );
   }
 
@@ -1189,11 +1077,11 @@ Future<void> bgUpdateCheck(
       (await Battery().batteryState) != BatteryState.charging;
 
   if (networkRestricted) {
-    unawaited(bgLogs.add('BG update task: Network restriction in effect.'));
+    AppLogger.info('BG update task: Network restriction in effect.');
   }
 
   if (chargingRestricted) {
-    unawaited(bgLogs.add('BG update task: Charging restriction in effect.'));
+    AppLogger.info('BG update task: Charging restriction in effect.');
   }
 
   final canInstall = !networkRestricted && !chargingRestricted;
@@ -1205,7 +1093,6 @@ Future<void> bgUpdateCheck(
       toCheck,
       appsProvider,
       notificationsProvider,
-      bgLogs,
     );
 
     final List<App> trackOnlyToNotify = [];
@@ -1215,10 +1102,8 @@ Future<void> bgUpdateCheck(
           .canInstallSilentlyInBackground(result.updates[i]);
       if (!canInstall || !willInstallInBackground) {
         if (!result.updates[i].settings.getBool('skipUpdateNotifications')) {
-          unawaited(
-            bgLogs.add(
-              'BG update task notifying for ${result.updates[i].id} (canInstall $canInstall, canInstallSilentlyInBackground $willInstallInBackground).',
-            ),
+          AppLogger.info(
+            'BG update task notifying for ${result.updates[i].id} (canInstall $canInstall, canInstallSilentlyInBackground $willInstallInBackground).',
           );
           if (result.updates[i].settings.getBool('trackOnly')) {
             trackOnlyToNotify.add(result.updates[i]);
@@ -1242,12 +1127,10 @@ Future<void> bgUpdateCheck(
       );
     }
 
-    unawaited(
-      bgLogs.add(
-        'BG update task: Notified ${toNotify.length} updates, '
-        '${trackOnlyToNotify.length} track-only, '
-        '${result.toThrow.rawErrors.length} errors',
-      ),
+    AppLogger.info(
+      'BG update task: Notified ${toNotify.length} updates, '
+      '${trackOnlyToNotify.length} track-only, '
+      '${result.toThrow.rawErrors.length} errors',
     );
 
     if (result.toThrow.rawErrors.isNotEmpty && result.errors != null) {
@@ -1259,16 +1142,18 @@ Future<void> bgUpdateCheck(
               id:
                   errorCheckingUpdatesNotificationId +
                   100 +
-                  Random().nextInt(9900),
+                  element.key.hashCode.abs(),
             ),
           ),
         );
       }
     }
   } else {
-    unawaited(bgLogs.add('BG update task: No apps due for checking.'));
+    AppLogger.info('BG update task: No apps due for checking.');
   }
-  if (canInstall && params['toCheck'] == null) {
+  if (canInstall &&
+      appsProvider.settingsProvider.enableBackgroundUpdates &&
+      params['toCheck'] == null) {
     final discovered = appsProvider.findAppIdsWithPendingUpdates(
       installedOnly: true,
     );
@@ -1281,10 +1166,8 @@ Future<void> bgUpdateCheck(
         silentlyInstallable.add(id);
       }
     }
-    unawaited(
-      bgLogs.add(
-        'BG install task: Found ${silentlyInstallable.length} apps to install (${existing.length} from checks, ${silentlyInstallable.length - existing.length} pre-existing).',
-      ),
+    AppLogger.info(
+      'BG install task: Found ${silentlyInstallable.length} apps to install (${existing.length} from checks, ${silentlyInstallable.length - existing.length} pre-existing).',
     );
   }
   if (params['toCheck'] == null) {
@@ -1292,10 +1175,9 @@ Future<void> bgUpdateCheck(
       silentlyInstallable,
       appsProvider,
       notificationsProvider,
-      bgLogs,
     );
   }
-  unawaited(bgLogs.add('BG task completed $taskId.'));
+  AppLogger.info('BG task completed $taskId.');
   AppsProvider._eventsController.add(null);
 }
 
@@ -1307,9 +1189,8 @@ _bgRunUpdateCheck(
   List<MapEntry<String, int>> toCheck,
   AppsProvider appsProvider,
   NotificationsProvider notificationsProvider,
-  LogsProvider logs,
 ) async {
-  unawaited(logs.add('BG update task: Started (${toCheck.length}).'));
+  AppLogger.info('BG update task: Started (${toCheck.length}).');
 
   List<App> updates = [];
   final List<MapEntry<String, int>> toRetry = [];
@@ -1331,10 +1212,8 @@ _bgRunUpdateCheck(
       updates = e.updates;
       errors = e.errors;
       errors.rawErrors.forEach((key, err) {
-        unawaited(
-          logs.add(
-            'BG update task: Got error on checking for $key \'${err.toString()}\'.',
-          ),
+        AppLogger.info(
+          'BG update task: Got error on checking for $key \'${err.toString()}\'.',
         );
 
         final toCheckApp = toCheck.firstWhere(
@@ -1348,7 +1227,8 @@ _bgRunUpdateCheck(
               : err is ClientException
               ? (_bgClientExceptionRetryWaitSeconds)
               : (toCheckApp.value + 1);
-          if (minRetryIntervalForThisApp > _bgUpdateMaxRetryWaitSeconds) {
+          if (minRetryIntervalForThisApp > _bgUpdateMaxRetryWaitSeconds &&
+              err is! RateLimitError) {
             minRetryIntervalForThisApp = _bgUpdateMaxRetryWaitSeconds;
           }
           if (minRetryIntervalForThisApp > retryAfterXSeconds) {
@@ -1361,20 +1241,18 @@ _bgRunUpdateCheck(
         }
       });
     } else {
-      unawaited(logs.add('Fatal error in BG update task: ${e.toString()}'));
+      AppLogger.error(e, message: 'Fatal error in BG update task');
       rethrow;
     }
   } finally {
     unawaited(notificationsProvider.cancel(notif.id));
   }
 
-  unawaited(logs.add('BG update task: Done checking for updates.'));
+  AppLogger.info('BG update task: Done checking for updates.');
   if (toRetry.isNotEmpty) {
-    unawaited(
-      logs.add(
-        'BG update task $taskId: Scheduling retry in ${retryAfterXSeconds}s '
-        '(${toRetry.length} to retry).',
-      ),
+    AppLogger.info(
+      'BG update task $taskId: Scheduling retry in ${retryAfterXSeconds}s '
+      '(${toRetry.length} to retry).',
     );
     final retryName = 'retry_${taskId}_${Random().nextInt(10000)}';
     await Workmanager().registerOneOffTask(
@@ -1398,7 +1276,7 @@ _bgRunUpdateCheck(
       },
     );
   } else {
-    unawaited(logs.add('BG update task: No retries needed.'));
+    AppLogger.info('BG update task: No retries needed.');
   }
 
   return (updates: updates, errors: errors, toThrow: toThrow);
@@ -1414,56 +1292,5 @@ class CancellationToken {
 
   void throwIfCancelled() {
     if (_cancelled) throw CancellationException();
-  }
-}
-
-/// Isolates the implementation-level `easy_localization/src/` imports to a
-/// single file so the rest of the codebase only depends on the public API.
-class TranslationLoader {
-  static Future<void> load() async {
-    await EasyLocalizationController.initEasyLocation();
-    final s = SettingsProvider();
-    await s.initializeSettings();
-    final forceLocale = s.forcedLocale;
-    final controller = EasyLocalizationController(
-      saveLocale: true,
-      forceLocale: forceLocale,
-      fallbackLocale: fallbackLocale,
-      supportedLocales: supportedLocales.map((e) => e.key).toList(),
-      assetLoader: const RootBundleAssetLoader(),
-      useOnlyLangCode: false,
-      useFallbackTranslations: true,
-      path: localeDir,
-      onLoadError: (FlutterError e) {
-        throw e;
-      },
-    );
-    await controller.loadTranslations();
-    Localization.load(
-      controller.locale,
-      translations: controller.translations,
-      fallbackTranslations: controller.fallbackTranslations,
-    );
-  }
-}
-// Platform channel helpers for native OS features (e.g. system font loading).
-
-class NativeFeatures {
-  static bool _systemFontLoaded = false;
-
-  static Future<ByteData> _readFileBytes(String path) async {
-    final file = File(path);
-    final bytes = await file.readAsBytes();
-    return ByteData.sublistView(bytes);
-  }
-
-  static Future<void> loadSystemFont() async {
-    if (_systemFontLoaded) return;
-    final fontLoader = FontLoader('SystemFont');
-    final fontFilePath = await AndroidSystemFont().getFilePath();
-    if (fontFilePath == null) return;
-    fontLoader.addFont(_readFileBytes(fontFilePath));
-    await fontLoader.load();
-    _systemFontLoaded = true;
   }
 }

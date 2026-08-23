@@ -11,7 +11,7 @@ import 'package:obtainium/custom_errors.dart';
 import 'package:obtainium/main.dart';
 
 import 'package:obtainium/providers/apps_provider.dart';
-import 'package:obtainium/providers/logs_provider.dart';
+import 'package:obtainium/core/logging/app_logger.dart';
 import 'package:obtainium/providers/source_provider.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:device_info_plus/device_info_plus.dart';
@@ -23,8 +23,6 @@ const String obtainiumId = 'dev.imranr.obtainium';
 const String obtainiumUrl = 'https://github.com/ImranR98/Obtainium';
 const Color obtainiumThemeColor = Color(0xFF6438B5);
 
-String lowerCaseUnlessLang(String str, String lang) =>
-    currentLanguageCode == lang ? str : str.toLowerCase();
 
 Locale? tryParseLocale(String? localeString) {
   if (localeString == null) return null;
@@ -64,6 +62,7 @@ class SettingsProvider with ChangeNotifier {
   String? defaultAppDir;
   bool justStarted = true;
   bool isTV = false;
+  bool _silent = false;
 
   T? _get<T>(String key) {
     final value = prefs?.get(key);
@@ -438,12 +437,7 @@ class SettingsProvider with ChangeNotifier {
       try {
         _categoriesCache = Map<String, int>.from(jsonDecode(raw));
       } catch (e) {
-        unawaited(
-          LogsProvider().add(
-            'Corrupted categories data, resetting: $e',
-            level: LogLevel.error,
-          ),
-        );
+        AppLogger.error(e, message: 'Corrupted categories data, resetting');
         _categoriesCache = <String, int>{};
       }
     }
@@ -469,11 +463,9 @@ class SettingsProvider with ChangeNotifier {
           .toList();
       if (changedApps.isNotEmpty) {
         appsProvider.saveApps(changedApps).catchError((e) {
-          unawaited(
-            LogsProvider().add(
-              'Failed to save apps during category update: $e',
-              level: LogLevel.error,
-            ),
+          AppLogger.error(
+            e,
+            message: 'Failed to save apps during category update',
           );
         });
       }
@@ -522,6 +514,15 @@ class SettingsProvider with ChangeNotifier {
 
   set showAppDowngradeError(bool show) {
     prefs?.setBool('showAppDowngradeError', show);
+    notifyListeners();
+  }
+
+  bool get hideDowngrades {
+    return _getBool('hideDowngrades') ?? true;
+  }
+
+  set hideDowngrades(bool hide) {
+    prefs?.setBool('hideDowngrades', hide);
     notifyListeners();
   }
 
@@ -579,6 +580,15 @@ class SettingsProvider with ChangeNotifier {
 
   set enableBackgroundUpdates(bool val) {
     prefs?.setBool('enableBackgroundUpdates', val);
+    notifyListeners();
+  }
+
+  bool get enableCertificatePinning {
+    return _getBool('enableCertificatePinning') ?? false;
+  }
+
+  set enableCertificatePinning(bool enableCertificatePinning) {
+    prefs?.setBool('enableCertificatePinning', enableCertificatePinning);
     notifyListeners();
   }
 
@@ -651,12 +661,7 @@ class SettingsProvider with ChangeNotifier {
       try {
         newOneWayDataSyncDir = (await saf.openDocumentTree());
       } catch (e) {
-        unawaited(
-          LogsProvider().add(
-            'Failed to open document tree: $e',
-            level: LogLevel.error,
-          ),
-        );
+        AppLogger.error(e, message: 'Failed to open document tree');
         throw ObtainiumError(tr('noFilePickerAvailable'));
       }
     }
@@ -716,8 +721,17 @@ class SettingsProvider with ChangeNotifier {
     notifyListeners();
   }
 
+  bool get exportInstalledOnly {
+    return _getBool('exportInstalledOnly') ?? false;
+  }
+
+  set exportInstalledOnly(bool val) {
+    prefs?.setBool('exportInstalledOnly', val);
+    notifyListeners();
+  }
+
   bool get parallelDownloads {
-    return _getBool('parallelDownloads') ?? false;
+    return _getBool('parallelDownloads') ?? true;
   }
 
   set parallelDownloads(bool val) {
@@ -743,9 +757,7 @@ class SettingsProvider with ChangeNotifier {
     }
     final legacyBool = _getBool('showActionBannerForUpdateOnly');
     if (legacyBool != null) {
-      return legacyBool
-          ? ActionBannerMode.updatesOnly
-          : ActionBannerMode.all;
+      return legacyBool ? ActionBannerMode.updatesOnly : ActionBannerMode.all;
     }
     return ActionBannerMode.updatesOnly;
   }
@@ -771,5 +783,27 @@ class SettingsProvider with ChangeNotifier {
   set shizukuPretendToBeGooglePlay(bool val) {
     prefs?.setBool('shizukuPretendToBeGooglePlay', val);
     notifyListeners();
+  }
+
+  /// Runs [updates] with listener notifications suppressed, then calls
+  /// [notifyListeners] once at the end. Use this when multiple settings
+  /// are being changed together to avoid unnecessary rebuilds.
+  /// TODO: modify individual setter methods to skip their own
+  /// notifyListeners() calls when batched.
+  void batchUpdate(void Function() updates) {
+    _silent = true;
+    try {
+      updates();
+    } finally {
+      _silent = false;
+      notifyListeners();
+    }
+  }
+
+  @override
+  void notifyListeners() {
+    if (!_silent) {
+      super.notifyListeners();
+    }
   }
 }

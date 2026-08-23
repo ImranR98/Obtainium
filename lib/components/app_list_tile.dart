@@ -8,13 +8,14 @@ import 'package:flutter_markdown_plus/flutter_markdown_plus.dart';
 import 'package:markdown/markdown.dart' as md;
 import 'package:obtainium/components/generated_form_renderer.dart';
 import 'package:obtainium/main.dart';
-import 'package:obtainium/pages/app.dart';
 import 'package:obtainium/theme.dart';
 import 'package:obtainium/components/ui_widgets.dart';
 import 'package:obtainium/providers/apps_provider.dart';
+import 'package:obtainium/utils/format_utils.dart';
 import 'package:obtainium/providers/notifications_provider.dart';
 import 'package:obtainium/providers/settings_provider.dart';
 import 'package:obtainium/providers/source_provider.dart';
+import 'package:obtainium/utils/nav_helper.dart';
 // AppsFilter and AppListBuilder are defined below in this file.
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher_string.dart';
@@ -131,20 +132,19 @@ class AppIconWidget extends StatefulWidget {
 
 class _AppIconWidgetState extends State<AppIconWidget> {
   late Future<void> _iconFuture;
-  String? _lastAppId;
 
   @override
   void initState() {
     super.initState();
-    _lastAppId = widget.appId;
     _iconFuture = widget.appsProvider.updateAppIcon(widget.appId);
   }
 
   @override
   void didUpdateWidget(AppIconWidget oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (widget.appId != _lastAppId) {
-      _lastAppId = widget.appId;
+    if (widget.appId != oldWidget.appId ||
+        widget.appsProvider.apps[widget.appId]?.icon !=
+            widget.appsProvider.apps[oldWidget.appId]?.icon) {
       _iconFuture = widget.appsProvider.updateAppIcon(widget.appId);
     }
   }
@@ -159,12 +159,10 @@ class _AppIconWidgetState extends State<AppIconWidget> {
           ? () => packageManager.openApp(widget.appId)
           : null,
       onLongPress: () {
-        Navigator.push(
+        NavHelper.pushAppPage(
           context,
-          MaterialPageRoute(
-            builder: (context) =>
-                AppPage(appId: widget.appId, showOppositeOfPreferredView: true),
-          ),
+          widget.appId,
+          showOppositeOfPreferredView: true,
         );
       },
       child: InkWell(
@@ -182,14 +180,10 @@ class _AppIconWidgetState extends State<AppIconWidget> {
           }
         },
         onLongPress: () {
-          Navigator.push(
+          NavHelper.pushAppPage(
             context,
-            MaterialPageRoute(
-              builder: (context) => AppPage(
-                appId: widget.appId,
-                showOppositeOfPreferredView: true,
-              ),
-            ),
+            widget.appId,
+            showOppositeOfPreferredView: true,
           );
         },
       ),
@@ -314,9 +308,7 @@ class AppListTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final showChangesFn = getChangeLogFn(context, _app);
-    final hasUpdate =
-        _app.installedVersion != null &&
-        _app.installedVersion != _app.latestVersion;
+    final hasUpdate = isAppUpdateable(_app, settingsProvider);
     final Widget trailingRow = LayoutBuilder(
       builder: (context, constraints) => Row(
         mainAxisSize: MainAxisSize.min,
@@ -344,10 +336,9 @@ class AppListTile extends StatelessWidget {
     ];
     final appId = _app.id;
     final installed = _app.installedVersion;
-    final latest = _app.latestVersion;
     final trackOnly = _app.settings.getBool('trackOnly');
     final canInstall = installed == null && !trackOnly;
-    final canUpdate = installed != null && installed != latest && !trackOnly;
+    final canUpdate = hasUpdate && !trackOnly;
     final cs = Theme.of(context).colorScheme;
 
     final swipeBackground = canInstall
@@ -389,6 +380,9 @@ class AppListTile extends StatelessWidget {
           )
         : null;
 
+    // TODO: Consider using the `child` parameter of ValueListenableBuilder
+    // to cache the built widget tree and avoid rebuilds when only the
+    // downloadProgress changes.
     return ValueListenableBuilder<double?>(
       valueListenable: appInMemory.downloadProgressNotifier,
       builder: (context, downloadProgress, child) {
@@ -433,14 +427,11 @@ class AppListTile extends StatelessWidget {
                     ? RoundedSuperellipseBorder(borderRadius: borderRadius!)
                     : null,
                 tileColor: _app.pinned
-                    ? Theme.of(context)
-                        .colorScheme
-                        .onSurface
-                        .withValues(alpha: 0.06)
+                    ? Theme.of(
+                        context,
+                      ).colorScheme.onSurface.withValues(alpha: 0.10)
                     : Colors.transparent,
-                selectedTileColor: Theme.of(context)
-                    .colorScheme
-                    .primary
+                selectedTileColor: Theme.of(context).colorScheme.primary
                     .withValues(alpha: _app.pinned ? 0.2 : 0.1),
                 selected: multiSelected || detailSelected,
                 leading: settingsProvider.isTV
@@ -450,7 +441,10 @@ class AppListTile extends StatelessWidget {
                         installed: appInMemory.installedInfo != null,
                         appsProvider: appsProvider,
                       ),
-                onLongPress: onToggleSelected,
+                onLongPress: () {
+                  settingsProvider.selectionClick();
+                  onToggleSelected();
+                },
                 title: Text(
                   maxLines: 1,
                   appInMemory.name,
@@ -465,10 +459,7 @@ class AppListTile extends StatelessWidget {
                     ? Column(
                         mainAxisSize: MainAxisSize.min,
                         crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          _authorText(),
-                          _repoMovedRow(context),
-                        ],
+                        children: [_authorText(), _repoMovedRow(context)],
                       )
                     : _authorText(),
                 trailing: downloadProgress != null
@@ -486,6 +477,7 @@ class AppListTile extends StatelessWidget {
                     Checkbox(
                       value: multiSelected,
                       onChanged: (_) {
+                        settingsProvider.selectionClick();
                         onToggleSelected();
                       },
                     ),
@@ -508,8 +500,7 @@ class AppListTile extends StatelessWidget {
                   color: cs.errorContainer,
                   alignment: Alignment.centerRight,
                   padding: const EdgeInsets.only(right: 24),
-                  child: Icon(Icons.delete_outline,
-                      color: cs.onErrorContainer),
+                  child: Icon(Icons.delete_outline, color: cs.onErrorContainer),
                 ),
                 confirmDismiss: (direction) async {
                   if (direction == DismissDirection.startToEnd) {
@@ -533,7 +524,6 @@ class AppListTile extends StatelessWidget {
                     return appsProvider.removeAppsWithModal(context, [_app]);
                   }
                 },
-                onDismissed: (direction) {},
                 child: tileChild,
               );
       },
@@ -607,9 +597,6 @@ class DownloadProgressTrailing extends StatelessWidget {
     );
   }
 }
-
-String capitalizeFirst(String s) =>
-    s.isEmpty ? s : s[0].toUpperCase() + s.substring(1);
 
 /// A collapsible section header + its app tiles, used when the list is grouped
 /// (by category or source). [title] is the already-resolved display label.
@@ -740,7 +727,11 @@ class AppsFilter {
 }
 
 class AppListBuilder {
-  static List<AppInMemory> filter(List<AppInMemory> apps, AppsFilter filter) {
+  static List<AppInMemory> filter(
+    List<AppInMemory> apps,
+    AppsFilter filter,
+    SettingsProvider settingsProvider,
+  ) {
     final nameTokens = filter.nameFilter.isNotEmpty
         ? filter.nameFilter
               .split(' ')
@@ -756,6 +747,12 @@ class AppListBuilder {
 
     return apps.where((app) {
       if (app.app.installedVersion == app.app.latestVersion &&
+          !(filter.includeUptodate)) {
+        return false;
+      }
+      if (app.app.installedVersion != null &&
+          app.app.installedVersion != app.app.latestVersion &&
+          !isAppUpdateable(app.app, settingsProvider) &&
           !(filter.includeUptodate)) {
         return false;
       }
@@ -881,6 +878,7 @@ class AppListBuilder {
 }
 
 class _VersionLabel extends StatelessWidget {
+  static final DateFormat _dateFmt = DateFormat('yyyy-MM-dd');
   final AppInMemory appInMemory;
   final SettingsProvider settingsProvider;
   final double maxWidth;
@@ -896,9 +894,7 @@ class _VersionLabel extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final app = appInMemory.app;
-    final hasUpdate =
-        app.installedVersion != null &&
-        app.installedVersion != app.latestVersion;
+    final hasUpdate = isAppUpdateable(app, settingsProvider);
     final updateColor = hasUpdate
         ? Theme.of(context).colorScheme.primary
         : Theme.of(context).colorScheme.onSurfaceVariant;
@@ -914,14 +910,23 @@ class _VersionLabel extends StatelessWidget {
             constraints: BoxConstraints(maxWidth: maxWidth),
             child: DefaultTextStyle.merge(
               style: const TextStyle(fontSize: 14),
-              child: Text(
-                installedVersionText(app),
-                overflow: TextOverflow.ellipsis,
-                textAlign: TextAlign.end,
-                style: TextStyle(
-                  fontStyle:
-                      isVersionPseudo(app) ? FontStyle.italic : null,
-                  color: updateColor,
+              child: Directionality(
+                // The "old → new" version transition uses an LTR-only arrow
+                // glyph; under an RTL Directionality it gets bidi-mirrored
+                // and reordered, making it look like a downgrade. Force LTR
+                // so it always reads in the intended direction.
+                textDirection: isVersionUpdate(app)
+                    ? TextDirection.ltr
+                    : Directionality.of(context),
+                child: Text(
+                  installedVersionText(app),
+                  overflow: TextOverflow.ellipsis,
+                  textAlign: TextAlign.end,
+                  style: TextStyle(
+                    fontStyle:
+                        isVersionPseudo(app) ? FontStyle.italic : null,
+                    color: updateColor,
+                  ),
                 ),
               ),
             ),
@@ -963,10 +968,16 @@ class _VersionLabel extends StatelessWidget {
     );
   }
 
+  bool isVersionUpdate(App app) {
+    final installed = app.installedVersion;
+    final latest = app.latestVersion;
+    return installed != null && installed != latest;
+  }
+
   String installedVersionText(App app) {
     final installed = app.installedVersion;
     final latest = app.latestVersion;
-    if (installed != null && installed != latest) {
+    if (isVersionUpdate(app)) {
       return '$installed → $latest';
     }
     return installed ?? tr('notInstalled');
@@ -975,8 +986,8 @@ class _VersionLabel extends StatelessWidget {
   String changesLabel(App app, bool hasChangeLogFn) {
     return app.releaseDate == null
         ? hasChangeLogFn
-            ? tr('changes')
-            : ''
-        : DateFormat('yyyy-MM-dd').format(app.releaseDate!.toLocal());
+              ? tr('changes')
+              : ''
+        : _dateFmt.format(app.releaseDate!.toLocal());
   }
 }

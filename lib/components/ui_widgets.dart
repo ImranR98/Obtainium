@@ -4,8 +4,9 @@ import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:obtainium/theme.dart';
+import 'package:obtainium/components/generated_form_renderer.dart';
 import 'package:obtainium/custom_errors.dart';
-import 'package:obtainium/providers/logs_provider.dart';
+import 'package:obtainium/core/logging/app_logger.dart';
 import 'package:obtainium/providers/settings_provider.dart';
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher_string.dart';
@@ -48,11 +49,32 @@ Future<bool> showConfirmDialog(
   return confirmed ?? false;
 }
 
-void showMessage(dynamic e, BuildContext context, {bool isError = false}) {
-  context.read<LogsProvider>().add(
-    e.toString(),
-    level: isError ? LogLevel.error : LogLevel.info,
+Future<bool> showContinueCancelDialog(
+  BuildContext context, {
+  required String title,
+  String? message,
+  String? continueText,
+}) async {
+  final result = await showDialog<Map<String, dynamic>?>(
+    context: context,
+    builder: (ctx) => GeneratedFormModal(
+      title: title,
+      items: const [],
+      initValid: true,
+      message: message ?? '',
+      singleNullReturnButton: continueText ?? tr('continue'),
+    ),
   );
+  return result != null;
+}
+
+void showMessage(dynamic e, BuildContext context, {bool isError = false}) {
+  if (isError) context.read<SettingsProvider>().heavyImpact();
+  if (isError) {
+    AppLogger.error(e, message: e.toString());
+  } else {
+    AppLogger.info(e.toString());
+  }
   if (e is String || (e is ObtainiumError && !e.unexpected)) {
     ScaffoldMessenger.of(
       context,
@@ -151,55 +173,6 @@ class AppIcon extends StatelessWidget {
                 ),
               ),
       ),
-    );
-  }
-}
-
-class HighlightableButton extends StatelessWidget {
-  final bool highlight;
-  final VoidCallback? onPressed;
-  final VoidCallback? onLongPress;
-  final Widget? icon;
-  final Widget label;
-
-  const HighlightableButton({
-    super.key,
-    required this.highlight,
-    required this.onPressed,
-    this.onLongPress,
-    this.icon,
-    required this.label,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    if (highlight) {
-      if (icon != null) {
-        return FilledButton.icon(
-          onPressed: onPressed,
-          onLongPress: onLongPress,
-          icon: icon!,
-          label: label,
-        );
-      }
-      return FilledButton(
-        onPressed: onPressed,
-        onLongPress: onLongPress,
-        child: label,
-      );
-    }
-    if (icon != null) {
-      return TextButton.icon(
-        onPressed: onPressed,
-        onLongPress: onLongPress,
-        icon: icon!,
-        label: label,
-      );
-    }
-    return TextButton(
-      onPressed: onPressed,
-      onLongPress: onLongPress,
-      child: label,
     );
   }
 }
@@ -438,11 +411,7 @@ Widget _wrapChildWithRadius(Widget w, BorderRadius radius) {
     final r = radius;
     final isFirst = r.topLeft.x == connectedTileBigRadius;
     final isLast = r.bottomLeft.x == connectedTileBigRadius;
-    return ConnectedCard(
-      isFirst: isFirst,
-      isLast: isLast,
-      child: w,
-    );
+    return ConnectedCard(isFirst: isFirst, isLast: isLast, child: w);
   }
   if (w is ConnectedCard) {
     final r = radius;
@@ -468,8 +437,7 @@ List<Widget> shapeCardTiles(List<Widget> children) {
       continue;
     }
     final prevIsTile = i > 0 && _isTile(children[i - 1]);
-    final nextIsTile =
-        i < children.length - 1 && _isTile(children[i + 1]);
+    final nextIsTile = i < children.length - 1 && _isTile(children[i + 1]);
     result.add(
       _wrapChildWithRadius(
         w,

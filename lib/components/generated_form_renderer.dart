@@ -1,7 +1,5 @@
 import 'dart:async';
-import 'dart:math';
 
-import 'package:hsluv/hsluv.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -14,17 +12,6 @@ import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher_string.dart';
 
 export 'generated_form_model.dart';
-
-Color generateRandomLightColor() {
-  final randomSeed = Random().nextInt(120);
-  final goldenAngle = 180 * (3 - sqrt(5));
-  final double hue = randomSeed * goldenAngle;
-  final List<double> rgbValuesDbl = Hsluv.hpluvToRgb([hue, 100, 70]);
-  final List<int> rgbValues = rgbValuesDbl
-      .map((rgb) => (rgb * 255).toInt())
-      .toList();
-  return Color.fromARGB(255, rgbValues[0], rgbValues[1], rgbValues[2]);
-}
 
 typedef OnValueChanges =
     void Function(Map<String, dynamic> values, bool valid, bool isBuilding);
@@ -197,11 +184,13 @@ class _GeneratedFormState extends State<GeneratedForm> {
   void notifyFormChange({bool forceInvalid = false, bool isBuilding = false}) {
     final Map<String, dynamic> returnValues = values;
     var valid = true;
-    for (final key in _fieldKeys) {
-      valid = valid && key.currentState?.isValid == true;
-    }
-    if (forceInvalid) {
-      valid = false;
+    if (!isBuilding) {
+      for (final key in _fieldKeys) {
+        valid = valid && key.currentState?.isValid == true;
+      }
+      if (forceInvalid) {
+        valid = false;
+      }
     }
     widget.onValueChanges(returnValues, valid, isBuilding);
     setState(() {});
@@ -326,10 +315,15 @@ class _GeneratedFormState extends State<GeneratedForm> {
 
   int _computeItemsHash(List<List<GeneratedFormItem>> items) {
     return Object.hashAll(
-      items.expand((row) => row.map((e) {
-        return Object.hash(e.key, e.runtimeType,
-            e is GeneratedFormTextField ? e.trailingKey : null);
-      })),
+      items.expand(
+        (row) => row.map((e) {
+          return Object.hash(
+            e.key,
+            e.runtimeType,
+            e is GeneratedFormTextField ? e.trailingKey : null,
+          );
+        }),
+      ),
     );
   }
 
@@ -375,6 +369,7 @@ class _GeneratedFormState extends State<GeneratedForm> {
     super.initState();
     _initFormData();
     WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
       notifyFormChange(isBuilding: true);
     });
   }
@@ -386,6 +381,7 @@ class _GeneratedFormState extends State<GeneratedForm> {
         _computeItemsHash(widget.items) != _itemsHash) {
       _initFormData();
       WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
         notifyFormChange(isBuilding: true);
       });
     }
@@ -400,18 +396,18 @@ class _GeneratedFormState extends State<GeneratedForm> {
     super.dispose();
   }
 
-  Widget _buildSubForm(GeneratedFormSubForm item, String fieldKey,
-      {bool isFirst = true, bool isLast = true}) {
+  Widget _buildSubForm(
+    GeneratedFormSubForm item,
+    String fieldKey, {
+    bool isFirst = true,
+    bool isLast = true,
+  }) {
     final compact = item.items.length == 1 && item.items[0].length == 1;
     final n = values[fieldKey].length;
     final List<Widget> cards = [];
     for (int i = 0; i < n; i++) {
       final internalFormKey = ValueKey(
-        generateDeterministicId(
-          n,
-          seed2: i,
-          seed3: _subFormGenerationCount,
-        ),
+        generateDeterministicId(n, seed2: i, seed3: _subFormGenerationCount),
       );
       final isLastEntry = i == n - 1;
       cards.add(
@@ -427,10 +423,9 @@ class _GeneratedFormState extends State<GeneratedForm> {
                   padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
                   child: Text(
                     '${tr(item.label)} (${i + 1})',
-                    style: Theme.of(context)
-                        .textTheme
-                        .bodyLarge
-                        ?.copyWith(fontWeight: FontWeight.bold),
+                    style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                 ),
                 const SizedBox(height: 8),
@@ -466,16 +461,14 @@ class _GeneratedFormState extends State<GeneratedForm> {
                   children: [
                     IconButton(
                       style: IconButton.styleFrom(
-                        foregroundColor:
-                            Theme.of(context).colorScheme.error,
+                        foregroundColor: Theme.of(context).colorScheme.error,
                       ),
                       visualDensity: VisualDensity.compact,
                       tooltip: tr('remove'),
                       icon: const Icon(Icons.delete_outline_rounded),
                       onPressed: n > 0
                           ? () {
-                              final temp =
-                                  List.from(values[fieldKey]);
+                              final temp = List.from(values[fieldKey]);
                               temp.removeAt(i);
                               values[fieldKey] = List.from(temp);
                               _subFormGenerationCount++;
@@ -487,13 +480,13 @@ class _GeneratedFormState extends State<GeneratedForm> {
                     if (isLastEntry)
                       TextButton.icon(
                         style: TextButton.styleFrom(
-                          foregroundColor:
-                              Theme.of(context).colorScheme.primary,
+                          foregroundColor: Theme.of(
+                            context,
+                          ).colorScheme.primary,
                         ),
                         onPressed: () {
                           values[fieldKey].add(
-                            getDefaultValuesFromFormItems(
-                                item.items),
+                            getDefaultValuesFromFormItems(item.items),
                           );
                           _subFormGenerationCount++;
                           notifyFormChange();
@@ -522,8 +515,7 @@ class _GeneratedFormState extends State<GeneratedForm> {
                 const Spacer(),
                 TextButton.icon(
                   style: TextButton.styleFrom(
-                    foregroundColor:
-                        Theme.of(context).colorScheme.primary,
+                    foregroundColor: Theme.of(context).colorScheme.primary,
                   ),
                   onPressed: () {
                     values[fieldKey].add(
@@ -564,12 +556,12 @@ class _GeneratedFormState extends State<GeneratedForm> {
             noPadding: widget.noTilePadding,
             onChanged: item.disabled
                 ? null
-                : (value) {
+                : hapticSwitchOnChanged(context, (value) {
                     setState(() {
                       values[fieldKey] = value;
                       notifyFormChange();
                     });
-                  },
+                  }),
           );
         } else if (item is GeneratedFormSubForm) {
           renderedInputs[r][e] = _buildSubForm(
