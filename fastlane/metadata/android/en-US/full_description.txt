@@ -22,18 +22,20 @@
 			<li>APKPure</li>
 			<li>Aptoide</li>
 			<li>Uptodown</li>
-			<li>APKCombo</li>
 			<li>itch.io</li>
 			<li>Huawei AppGallery</li>
 			<li>Tencent App Store</li>
 			<li>vivo App Store (CN)</li>
 			<li>RuStore</li>
-			<li>APK4Free</li>
 			<li>Farsroid</li>
-			<li>CoolApk</li>
+			<li>Samsung Galaxy Store</li>
 			<li>LiteAPKs</li>
+			<li>APK4Free</li>
+			<li>CoolApk</li>
+			<li>SourceForge</li>
 			<li>Jenkins Jobs</li>
 			<li>APKMirror (Track-Only)</li>
+			<li>APKCombo</li>
 			<li>RockMods (Track-Only)</li>
 		</ul>
 	</li>
