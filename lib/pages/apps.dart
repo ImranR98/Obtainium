@@ -2,7 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:typed_data';
 
-import 'package:easy_localization/easy_localization.dart';
+import 'package:easy_localization/easy_localization.dart' hide TextDirection;
 import 'package:flutter/material.dart';
 import 'package:obtainium/components/app_list_tile.dart';
 import 'package:obtainium/utils/string_utils.dart';
@@ -142,8 +142,7 @@ class AppsPageState extends State<AppsPage> {
     return result;
   }
 
-  (List<String>, List<String>, List<String>)
-      _computeUpdateIdSets(
+  (List<String>, List<String>, List<String>) _computeUpdateIdSets(
     AppsProvider appsProvider,
     Set<String> existingUpdates,
     Set<String> selectedAppIds,
@@ -336,98 +335,100 @@ class AppsPageState extends State<AppsPage> {
         return SafeArea(
           child: Padding(
             padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                Text(
-                  tr('filterApps'),
-                  style: Theme.of(ctx).textTheme.titleLarge,
-                ),
-                const SizedBox(height: 16),
-                GeneratedForm(
-                  tileMode: true,
-                  items: [
-                    [
-                      GeneratedFormTextField(
-                        'appName',
-                        label: tr('appName'),
-                        required: false,
-                        value: vals['appName'],
+            child: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Text(
+                    tr('filterApps'),
+                    style: Theme.of(ctx).textTheme.titleLarge,
+                  ),
+                  const SizedBox(height: 16),
+                  GeneratedForm(
+                    tileMode: true,
+                    items: [
+                      [
+                        GeneratedFormTextField(
+                          'appName',
+                          label: tr('appName'),
+                          required: false,
+                          value: vals['appName'],
+                        ),
+                      ],
+                      [
+                        GeneratedFormTextField(
+                          'author',
+                          label: tr('author'),
+                          required: false,
+                          value: vals['author'],
+                        ),
+                      ],
+                      [
+                        GeneratedFormTextField(
+                          'appId',
+                          label: tr('appId'),
+                          required: false,
+                          value: vals['appId'],
+                        ),
+                      ],
+                      [
+                        GeneratedFormSwitch(
+                          'upToDateApps',
+                          label: tr('upToDateApps'),
+                          value: vals['upToDateApps'],
+                        ),
+                      ],
+                      [
+                        GeneratedFormSwitch(
+                          'nonInstalledApps',
+                          label: tr('nonInstalledApps'),
+                          value: vals['nonInstalledApps'],
+                        ),
+                      ],
+                      [
+                        GeneratedFormDropdown(
+                          'sourceFilter',
+                          label: tr('appSource'),
+                          value: filter.sourceFilter,
+                          [
+                            MapEntry('', tr('none')),
+                            ...ctx.read<SourceProvider>().sources.map(
+                              (e) => MapEntry(e.sourceIdentifier, e.name),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ],
+                    onValueChanges: (v, valid, isBuilding) {
+                      values = v;
+                    },
+                  ),
+                  const SizedBox(height: 16),
+                  CategorySelector(
+                    selected: filter.categoryFilter,
+                    allowCreate: false,
+                    onChanged: (categories) {
+                      pendingCategories = categories;
+                    },
+                  ),
+                  const SizedBox(height: 24),
+                  Row(
+                    children: [
+                      const Spacer(),
+                      TextButton(
+                        onPressed: () => Navigator.of(ctx).pop(false),
+                        child: Text(tr('cancel')),
+                      ),
+                      const SizedBox(width: 8),
+                      FilledButton(
+                        onPressed: () => Navigator.of(ctx).pop(true),
+                        child: Text(tr('continue')),
                       ),
                     ],
-                    [
-                      GeneratedFormTextField(
-                        'author',
-                        label: tr('author'),
-                        required: false,
-                        value: vals['author'],
-                      ),
-                    ],
-                    [
-                      GeneratedFormTextField(
-                        'appId',
-                        label: tr('appId'),
-                        required: false,
-                        value: vals['appId'],
-                      ),
-                    ],
-                    [
-                      GeneratedFormSwitch(
-                        'upToDateApps',
-                        label: tr('upToDateApps'),
-                        value: vals['upToDateApps'],
-                      ),
-                    ],
-                    [
-                      GeneratedFormSwitch(
-                        'nonInstalledApps',
-                        label: tr('nonInstalledApps'),
-                        value: vals['nonInstalledApps'],
-                      ),
-                    ],
-                    [
-                      GeneratedFormDropdown(
-                        'sourceFilter',
-                        label: tr('appSource'),
-                        value: filter.sourceFilter,
-                        [
-                          MapEntry('', tr('none')),
-                          ...ctx.read<SourceProvider>().sources.map(
-                            (e) => MapEntry(e.sourceIdentifier, e.name),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ],
-                  onValueChanges: (v, valid, isBuilding) {
-                    values = v;
-                  },
-                ),
-                const SizedBox(height: 16),
-                CategorySelector(
-                  selected: filter.categoryFilter,
-                  allowCreate: false,
-                  onChanged: (categories) {
-                    pendingCategories = categories;
-                  },
-                ),
-                const SizedBox(height: 24),
-                Row(
-                  children: [
-                    const Spacer(),
-                    TextButton(
-                      onPressed: () => Navigator.of(ctx).pop(false),
-                      child: Text(tr('cancel')),
-                    ),
-                    const SizedBox(width: 8),
-                    FilledButton(
-                      onPressed: () => Navigator.of(ctx).pop(true),
-                      child: Text(tr('continue')),
-                    ),
-                  ],
-                ),
-              ],
+                  ),
+                ],
+              ),
             ),
           ),
         );
@@ -703,7 +704,7 @@ class AppsPageState extends State<AppsPage> {
                     appsProvider
                         .downloadAppAssets(
                           selectedApps.map((e) => e.id).toList(),
-                          context
+                          context,
                         )
                         .catchError((e) {
                           if (context.mounted) showError(e, context);
@@ -1015,7 +1016,8 @@ class AppsPageState extends State<AppsPage> {
     if (mode == ActionBannerMode.none) {
       return const SliverToBoxAdapter(child: SizedBox(width: double.infinity));
     }
-    final pendingCount = existingUpdateIdsAllOrSelected.length +
+    final pendingCount =
+        existingUpdateIdsAllOrSelected.length +
         newInstallIdsAllOrSelected.length +
         trackOnlyUpdateIdsAllOrSelected.length;
     if (pendingCount < 2) {
@@ -1158,8 +1160,11 @@ class AppsPageState extends State<AppsPage> {
     );
 
     final listedAppIdSet = listedApps.map((e) => e.app.id).toSet();
-    final (existingUpdateIdsAllOrSelected, newInstallIdsAllOrSelected,
-        trackOnlyUpdateIdsAllOrSelected) = _computeUpdateIdSets(
+    final (
+      existingUpdateIdsAllOrSelected,
+      newInstallIdsAllOrSelected,
+      trackOnlyUpdateIdsAllOrSelected,
+    ) = _computeUpdateIdSets(
       appsProvider,
       existingUpdates,
       selectedAppIds,
