@@ -2,8 +2,7 @@ import 'package:easy_localization/easy_localization.dart';
 import 'package:flex_color_picker/flex_color_picker.dart';
 import 'package:flutter/foundation.dart' show setEquals;
 import 'package:flutter/material.dart';
-import 'package:obtainium/utils/color_utils.dart'
-    show generateRandomLightColor;
+import 'package:obtainium/utils/color_utils.dart' show generateRandomLightColor;
 import 'package:obtainium/components/ui_widgets.dart';
 import 'package:obtainium/providers/apps_provider.dart';
 import 'package:obtainium/providers/settings_provider.dart';
@@ -467,8 +466,9 @@ class _CategorySelectorState extends State<CategorySelector> {
                       onLongPress: () => _edit(name),
                       child: FilterChip(
                         avatar: CircleAvatar(
-                          backgroundColor:
-                              Color(categories[name] ?? 0xFFCCCCCC),
+                          backgroundColor: Color(
+                            categories[name] ?? 0xFFCCCCCC,
+                          ),
                           radius: 7,
                         ),
                         label: Text(name),
@@ -505,7 +505,9 @@ class CategoryManager extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
-    final categories = context.select<SettingsProvider, Map<String, int>>((p) => p.categories);
+    final categories = context.select<SettingsProvider, Map<String, int>>(
+      (p) => p.categories,
+    );
     final names = categories.keys.toList()
       ..sort((a, b) => a.toLowerCase().compareTo(b.toLowerCase()));
     if (names.isEmpty) {
@@ -514,10 +516,9 @@ class CategoryManager extends StatelessWidget {
         children: [
           Text(
             tr('noCategories'),
-            style: Theme.of(context)
-                .textTheme
-                .bodyMedium
-                ?.copyWith(color: cs.onSurfaceVariant),
+            style: Theme.of(
+              context,
+            ).textTheme.bodyMedium?.copyWith(color: cs.onSurfaceVariant),
           ),
           const Spacer(),
           ActionChip(

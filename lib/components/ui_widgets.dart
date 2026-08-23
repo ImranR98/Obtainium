@@ -6,7 +6,7 @@ import 'package:flutter/services.dart';
 import 'package:obtainium/theme.dart';
 import 'package:obtainium/components/generated_form_renderer.dart';
 import 'package:obtainium/custom_errors.dart';
-import 'package:obtainium/providers/logs_provider.dart';
+import 'package:obtainium/core/logging/app_logger.dart';
 import 'package:obtainium/providers/settings_provider.dart';
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher_string.dart';
@@ -70,10 +70,11 @@ Future<bool> showContinueCancelDialog(
 
 void showMessage(dynamic e, BuildContext context, {bool isError = false}) {
   if (isError) context.read<SettingsProvider>().heavyImpact();
-  context.read<LogsProvider>().add(
-    e.toString(),
-    level: isError ? LogLevel.error : LogLevel.info,
-  );
+  if (isError) {
+    AppLogger.error(e, message: e.toString());
+  } else {
+    AppLogger.info(e.toString());
+  }
   if (e is String || (e is ObtainiumError && !e.unexpected)) {
     ScaffoldMessenger.of(
       context,
@@ -410,11 +411,7 @@ Widget _wrapChildWithRadius(Widget w, BorderRadius radius) {
     final r = radius;
     final isFirst = r.topLeft.x == connectedTileBigRadius;
     final isLast = r.bottomLeft.x == connectedTileBigRadius;
-    return ConnectedCard(
-      isFirst: isFirst,
-      isLast: isLast,
-      child: w,
-    );
+    return ConnectedCard(isFirst: isFirst, isLast: isLast, child: w);
   }
   if (w is ConnectedCard) {
     final r = radius;
@@ -440,8 +437,7 @@ List<Widget> shapeCardTiles(List<Widget> children) {
       continue;
     }
     final prevIsTile = i > 0 && _isTile(children[i - 1]);
-    final nextIsTile =
-        i < children.length - 1 && _isTile(children[i + 1]);
+    final nextIsTile = i < children.length - 1 && _isTile(children[i + 1]);
     result.add(
       _wrapChildWithRadius(
         w,
