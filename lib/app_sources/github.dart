@@ -7,7 +7,7 @@ import 'package:obtainium/utils/string_compare.dart';
 import 'package:obtainium/components/generated_form_model.dart';
 import 'package:obtainium/custom_errors.dart';
 import 'package:obtainium/providers/apps_provider.dart';
-import 'package:obtainium/providers/logs_provider.dart';
+import 'package:obtainium/core/logging/app_logger.dart';
 import 'package:obtainium/providers/settings_provider.dart';
 import 'package:obtainium/providers/source_provider.dart';
 
@@ -213,18 +213,14 @@ class GitHub extends AppSource {
               return appIds.first;
             }
           } catch (err) {
-            unawaited(
-              LogsProvider().add(
-                'Error parsing build.gradle from ${res.request?.url.toString() ?? standardUrl}: ${err.toString()}',
-              ),
+            AppLogger.info(
+              'Error parsing build.gradle from ${res.request?.url.toString() ?? standardUrl}: ${err.toString()}',
             );
           }
         }
       } catch (err) {
-        unawaited(
-          LogsProvider().add(
-            'Failed to extract ID from build.gradle or APK: ${err.toString()}',
-          ),
+        AppLogger.info(
+          'Failed to extract ID from build.gradle or APK: ${err.toString()}',
         );
       }
     }
@@ -359,10 +355,8 @@ class GitHub extends AppSource {
         try {
           newUrl = jsonDecode(res2.body)['html_url'];
         } catch (e) {
-          unawaited(
-            LogsProvider().add(
-              'Failed to parse redirect response for repo rename: ${e.toString()}',
-            ),
+          AppLogger.info(
+            'Failed to parse redirect response for repo rename: ${e.toString()}',
           );
         }
         if (newUrl != null) {
@@ -457,8 +451,14 @@ class GitHub extends AppSource {
       if (b == null) return 1;
 
       if (isDateOnly) {
-        final dateA = dates.putIfAbsent(a, () => _getReleaseDateFromRelease(a, useLatestAssetDateAsReleaseDate));
-        final dateB = dates.putIfAbsent(b, () => _getReleaseDateFromRelease(b, useLatestAssetDateAsReleaseDate));
+        final dateA = dates.putIfAbsent(
+          a,
+          () => _getReleaseDateFromRelease(a, useLatestAssetDateAsReleaseDate),
+        );
+        final dateB = dates.putIfAbsent(
+          b,
+          () => _getReleaseDateFromRelease(b, useLatestAssetDateAsReleaseDate),
+        );
         return (dateA ?? DateTime(0)).compareTo(dateB ?? DateTime(0));
       }
 
@@ -467,8 +467,14 @@ class GitHub extends AppSource {
       final stdFormats = formats[a]!.intersection(formats[b]!);
 
       if (sortMethod == 'smartname-datefallback' && stdFormats.isEmpty) {
-        final dateA = _getReleaseDateFromRelease(a, useLatestAssetDateAsReleaseDate);
-        final dateB = _getReleaseDateFromRelease(b, useLatestAssetDateAsReleaseDate);
+        final dateA = _getReleaseDateFromRelease(
+          a,
+          useLatestAssetDateAsReleaseDate,
+        );
+        final dateB = _getReleaseDateFromRelease(
+          b,
+          useLatestAssetDateAsReleaseDate,
+        );
         return (dateA ?? DateTime(0)).compareTo(dateB ?? DateTime(0));
       }
 
@@ -526,10 +532,10 @@ class GitHub extends AppSource {
     required Map<String, String> sourceConfigSettingValues,
   }) {
     var releaseSkipped = 0;
-    final titleRegex =
-        regexFilter != null ? RegExp(regexFilter) : null;
-    final notesRegex =
-        regexNotesFilter != null ? RegExp(regexNotesFilter) : null;
+    final titleRegex = regexFilter != null ? RegExp(regexFilter) : null;
+    final notesRegex = regexNotesFilter != null
+        ? RegExp(regexNotesFilter)
+        : null;
     for (int i = 0; i < releases.length; i++) {
       if (!fallbackToOlderReleases && i > releaseSkipped) break;
       if (!includePrereleases && releases[i]['prerelease'] == true) {
@@ -544,13 +550,13 @@ class GitHub extends AppSource {
       if (nameToFilter == null || nameToFilter.trim().isEmpty) {
         nameToFilter = releases[i]['tag_name']?.toString() ?? '';
       }
-      if (titleRegex != null &&
-          !titleRegex.hasMatch(nameToFilter.trim())) {
+      if (titleRegex != null && !titleRegex.hasMatch(nameToFilter.trim())) {
         continue;
       }
       if (notesRegex != null &&
           !notesRegex.hasMatch(
-              ((releases[i]['body'] as String?) ?? '').trim())) {
+            ((releases[i]['body'] as String?) ?? '').trim(),
+          )) {
         continue;
       }
       final allAssetsWithUrls = _findReleaseAssetUrls(

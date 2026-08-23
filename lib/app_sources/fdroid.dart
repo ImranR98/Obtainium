@@ -7,8 +7,8 @@ import 'package:http/http.dart';
 import 'package:obtainium/app_sources/github.dart';
 import 'package:obtainium/app_sources/gitlab.dart';
 import 'package:obtainium/components/generated_form_model.dart';
+import 'package:obtainium/core/logging/app_logger.dart';
 import 'package:obtainium/custom_errors.dart';
-import 'package:obtainium/providers/logs_provider.dart';
 import 'package:obtainium/providers/source_provider.dart';
 
 class FDroid extends AppSource {
@@ -109,10 +109,7 @@ class FDroid extends AppSource {
           if (authorLines.isNotEmpty) {
             details = details.copyWith(
               names: details.names.copyWith(
-                author: authorLines.first
-                    .split(': ')
-                    .sublist(1)
-                    .join(': '),
+                author: authorLines.first.split(': ').sublist(1).join(': '),
               ),
             );
           }
@@ -150,10 +147,8 @@ class FDroid extends AppSource {
             }
           }
         } catch (e) {
-          unawaited(
-            LogsProvider().add(
-              'Failed to process changelog for F-Droid app: ${e.toString()}',
-            ),
+          AppLogger.info(
+            'Failed to process changelog for F-Droid app: ${e.toString()}',
           );
         }
         if ((details.changeLog?.length ?? 0) > _maxChangeLogCodeUnits) {
@@ -164,9 +159,7 @@ class FDroid extends AppSource {
               cl.codeUnitAt(end - 1) <= 0xDBFF) {
             end--;
           }
-          details = details.copyWith(
-            changeLog: '${cl.substring(0, end)}...',
-          );
+          details = details.copyWith(changeLog: '${cl.substring(0, end)}...');
         }
       }
       return details;
@@ -231,8 +224,9 @@ class FDroid extends AppSource {
         : null;
     if (res.statusCode == 200) {
       final response = jsonDecode(res.body);
-      List<dynamic> releases =
-          response is Map ? (response['packages'] ?? []) : [];
+      List<dynamic> releases = response is Map
+          ? (response['packages'] ?? [])
+          : [];
       if (apkFilterRegEx != null) {
         releases = releases.where((rel) {
           final String apk = '${apkUrlPrefix}_${rel['versionCode']}.apk';

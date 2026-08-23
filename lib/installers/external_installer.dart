@@ -8,7 +8,7 @@ import 'package:obtainium/custom_errors.dart';
 import 'package:obtainium/installers/installer.dart';
 import 'package:obtainium/installers/install_utils.dart';
 import 'package:obtainium/providers/external_install_bridge.dart';
-import 'package:obtainium/providers/logs_provider.dart';
+import 'package:obtainium/core/logging/app_logger.dart';
 import 'package:obtainium/providers/source_provider.dart';
 
 const String _apkMime = 'application/vnd.android.package-archive';
@@ -44,10 +44,8 @@ class ExternalInstaller extends Installer {
 
   @override
   Future<bool> canInstallSilently(App app) async {
-    unawaited(
-      LogsProvider().add(
-        'App will not be installed silently: the external installer always requires user interaction: ${app.id}',
-      ),
+    AppLogger.info(
+      'App will not be installed silently: the external installer always requires user interaction: ${app.id}',
     );
     return false;
   }
@@ -97,7 +95,9 @@ class ExternalInstaller extends Installer {
 
       // Set up foreground return listener BEFORE launching intent.
       final fgCompleter = Completer<FGBGType>();
-      final fgSub = FGBGEvents.instance.stream.asBroadcastStream().listen((event) {
+      final fgSub = FGBGEvents.instance.stream.asBroadcastStream().listen((
+        event,
+      ) {
         if (event == FGBGType.foreground && !fgCompleter.isCompleted) {
           fgCompleter.complete(event);
         }
@@ -108,7 +108,9 @@ class ExternalInstaller extends Installer {
 
       // Set up background detection.
       final bgCompleter = Completer<FGBGType>();
-      final bgSub = FGBGEvents.instance.stream.asBroadcastStream().listen((event) {
+      final bgSub = FGBGEvents.instance.stream.asBroadcastStream().listen((
+        event,
+      ) {
         if (event == FGBGType.background && !bgCompleter.isCompleted) {
           bgCompleter.complete(event);
         }
@@ -139,20 +141,16 @@ class ExternalInstaller extends Installer {
     // The external installer app never reports a status code back to us, so
     // install completion can only be detected by polling the package state
     // rather than reading a return code from the installer.
-    unawaited(
-      LogsProvider().add(
-        'Detecting install completion for $appId via fallback polling (external installer returns no status code).',
-      ),
+    AppLogger.info(
+      'Detecting install completion for $appId via fallback polling (external installer returns no status code).',
     );
     final installed = await waitForPackageInstall(
       appId,
       baseline,
       attempts: _confirmAttempts,
     );
-    unawaited(
-      LogsProvider().add(
-        'Fallback polling ${installed ? 'confirmed' : 'could not confirm'} install completion for $appId.',
-      ),
+    AppLogger.info(
+      'Fallback polling ${installed ? 'confirmed' : 'could not confirm'} install completion for $appId.',
     );
     return installed ? InstallResult.success() : InstallResult.cancelled();
   }

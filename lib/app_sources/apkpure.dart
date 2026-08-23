@@ -5,7 +5,7 @@ import 'package:device_info_plus/device_info_plus.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:obtainium/components/generated_form_model.dart';
 import 'package:obtainium/custom_errors.dart';
-import 'package:obtainium/providers/logs_provider.dart';
+import 'package:obtainium/core/logging/app_logger.dart';
 import 'package:obtainium/providers/source_provider.dart';
 
 extension Unique<E, Id> on List<E> {
@@ -27,7 +27,8 @@ class APKPure extends AppSource {
     inferAppIdFromUrlPath = true;
   }
 
-  static const String _apiBaseUrl = 'https://tapi.pureapk.com/v3/get_app_his_version?package_name';
+  static const String _apiBaseUrl =
+      'https://tapi.pureapk.com/v3/get_app_his_version?package_name';
 
   @override
   List<List<GeneratedFormItem>>
@@ -169,12 +170,7 @@ class APKPure extends AppSource {
               '{"device_info":{"os_ver":"${androidInfo.version.sdkInt}"}}',
         };
       } catch (e) {
-        unawaited(
-          LogsProvider().add(
-            'Failed to get device info headers: $e',
-            level: LogLevel.error,
-          ),
-        );
+        AppLogger.error(e, message: 'Failed to get device info headers');
         return null;
       }
     }
@@ -195,12 +191,7 @@ class APKPure extends AppSource {
       try {
         supportedArchs = (await DeviceInfoPlugin().androidInfo).supportedAbis;
       } catch (e) {
-        unawaited(
-          LogsProvider().add(
-            'Failed to get supported ABIs: $e',
-            level: LogLevel.error,
-          ),
-        );
+        AppLogger.error(e, message: 'Failed to get supported ABIs');
         supportedArchs = [];
       }
 
@@ -216,12 +207,7 @@ class APKPure extends AppSource {
         apks = (jsonDecode(res.body)['version_list'] as List<dynamic>)
             .cast<Map<String, dynamic>>();
       } catch (e) {
-        unawaited(
-          LogsProvider().add(
-            'Failed to parse version list: $e',
-            level: LogLevel.error,
-          ),
-        );
+        AppLogger.error(e, message: 'Failed to parse version list');
         throw NoReleasesError();
       }
 

@@ -7,7 +7,7 @@ import 'package:http/http.dart';
 import 'package:obtainium/components/generated_form_model.dart';
 import 'package:obtainium/custom_errors.dart';
 import 'package:obtainium/providers/apps_provider.dart';
-import 'package:obtainium/providers/logs_provider.dart';
+import 'package:obtainium/core/logging/app_logger.dart';
 import 'package:obtainium/providers/settings_provider.dart';
 import 'package:obtainium/providers/source_provider.dart';
 
@@ -113,18 +113,16 @@ class APKMirror extends AppSource {
           try {
             releaseDate = HttpDate.parse('$dateString GMT');
           } catch (e) {
-            unawaited(
-              LogsProvider().add(
-                'Failed to parse APKMirror release date: ${e.toString()}',
-                level: LogLevel.warning,
-              ),
+            AppLogger.warn(
+              'Failed to parse APKMirror release date: ${e.toString()}',
             );
           }
         }
         String? version;
         if (titleString != null) {
-          final match =
-              RegExp(r'\b(\d[\d.]*(?:[- ]?\d[\d.]*)*)\b').firstMatch(titleString);
+          final match = RegExp(
+            r'\b(\d[\d.]*(?:[- ]?\d[\d.]*)*)\b',
+          ).firstMatch(titleString);
           version = match?.group(1);
         }
         if (version == null || version.isEmpty) {
