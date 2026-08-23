@@ -439,10 +439,9 @@ class _CategorySelectorState extends State<CategorySelector> {
         spacing: 8,
         runSpacing: 8,
         children: [
-          ActionChip(
-            avatar: const Icon(Icons.add, size: 18),
-            label: Text(tr('newCategory')),
-            onPressed: _create,
+          Tooltip(
+            message: tr('newCategory'),
+            child: ActionChip(label: const Text('+'), onPressed: _create),
           ),
         ],
       );
@@ -471,7 +470,12 @@ class _CategorySelectorState extends State<CategorySelector> {
                           ),
                           radius: 7,
                         ),
-                        label: Text(name),
+                        label: Text(
+                          name,
+                          softWrap: true,
+                          maxLines: 3,
+                          overflow: TextOverflow.ellipsis,
+                        ),
                         selected: _selected.contains(name),
                         onSelected: (v) => _toggle(name, v),
                         selectedColor: Color(
@@ -487,10 +491,9 @@ class _CategorySelectorState extends State<CategorySelector> {
         ),
         if (widget.allowCreate) const SizedBox(width: 8),
         if (widget.allowCreate)
-          ActionChip(
-            avatar: const Icon(Icons.add, size: 18),
-            label: Text(tr('newCategory')),
-            onPressed: _create,
+          Tooltip(
+            message: tr('newCategory'),
+            child: ActionChip(label: const Text('+'), onPressed: _create),
           ),
       ],
     );
@@ -521,10 +524,12 @@ class CategoryManager extends StatelessWidget {
             ).textTheme.bodyMedium?.copyWith(color: cs.onSurfaceVariant),
           ),
           const Spacer(),
-          ActionChip(
-            avatar: const Icon(Icons.add, size: 18),
-            label: Text(tr('newCategory')),
-            onPressed: () => showCategoryEditor(context),
+          Tooltip(
+            message: tr('newCategory'),
+            child: ActionChip(
+              label: const Text('+'),
+              onPressed: () => showCategoryEditor(context),
+            ),
           ),
         ],
       );
@@ -544,7 +549,12 @@ class CategoryManager extends StatelessWidget {
                     backgroundColor: Color(categories[name]!),
                     radius: 7,
                   ),
-                  label: Text(name),
+                  label: Text(
+                    name,
+                    softWrap: true,
+                    maxLines: 3,
+                    overflow: TextOverflow.ellipsis,
+                  ),
                   onPressed: () =>
                       showCategoryEditor(context, existingName: name),
                 ),
@@ -552,10 +562,12 @@ class CategoryManager extends StatelessWidget {
           ),
         ),
         const SizedBox(width: 8),
-        ActionChip(
-          avatar: const Icon(Icons.add, size: 18),
-          label: Text(tr('newCategory')),
-          onPressed: () => showCategoryEditor(context),
+        Tooltip(
+          message: tr('newCategory'),
+          child: ActionChip(
+            label: const Text('+'),
+            onPressed: () => showCategoryEditor(context),
+          ),
         ),
       ],
     );
