@@ -35,6 +35,7 @@ class _SettingsPageState extends State<SettingsPage> {
   int? androidSdkInt;
   int _installerCheckSeq = 0;
   bool _isRunningBgCheck = false;
+  Map<String, String?> _credentials = {};
 
   @override
   void initState() {
@@ -44,7 +45,26 @@ class _SettingsPageState extends State<SettingsPage> {
       final sp = context.read<SettingsProvider>();
       if (sp.prefs == null) sp.initializeSettings();
       initAndroidSdk();
+      _loadCredentials();
     });
+  }
+
+  /// Loads source credentials from secure storage for display in the form.
+  Future<void> _loadCredentials() async {
+    final sp = context.read<SettingsProvider>();
+    final keys = context
+        .read<SourceProvider>()
+        .sources
+        .expand((e) => e.sourceConfigSettingFormItems)
+        .map((e) => e.key)
+        .where(SettingsProvider.isCredentialKey);
+    final map = <String, String?>{};
+    for (final key in keys) {
+      map[key] = await sp.getCredential(key);
+    }
+    if (mounted) {
+      setState(() => _credentials = map);
+    }
   }
 
   Future<void> _triggerManualBgCheck() async {
@@ -297,7 +317,9 @@ class _SettingsPageState extends State<SettingsPage> {
       if (item is GeneratedFormSwitch) {
         item.value = settingsProvider.getSettingBool(item.key);
       } else {
-        item.value = settingsProvider.getSettingString(item.key);
+        item.value = SettingsProvider.isCredentialKey(item.key)
+            ? _credentials[item.key]
+            : settingsProvider.getSettingString(item.key);
       }
     }
     final Widget? sourceSpecificForm = allSourceConfigItems.isEmpty
@@ -314,7 +336,12 @@ class _SettingsPageState extends State<SettingsPage> {
                   if (formItem is GeneratedFormSwitch) {
                     settingsProvider.setSettingBool(key, value == true);
                   } else {
-                    settingsProvider.setSettingString(key, value ?? '');
+                    unawaited(
+                      settingsProvider.setSettingStringOrCredential(
+                        key,
+                        value ?? '',
+                      ),
+                    );
                   }
                 });
               }

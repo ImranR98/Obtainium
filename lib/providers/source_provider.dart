@@ -838,7 +838,9 @@ abstract class AppSource {
               ? additionalSettings[e.key]
               : (e is GeneratedFormSwitch
                   ? settingsProvider.getSettingBool(e.key).toString()
-                  : settingsProvider.getSettingString(e.key));
+                  : await settingsProvider.getSettingStringOrCredential(
+                      e.key,
+                    ));
       if (val != null) {
         if (e is GeneratedFormSwitch) {
           val = val.toString();
