@@ -57,6 +57,7 @@
     "author": "Author",
     "authorName": "Author/name",
     "autoApkFilterByArch": "Attempt to filter APKs by CPU architecture if possible",
+    "autoExportFileName": "Auto-export file name (leave blank for a timestamped name)",
     "autoExportOnChanges": "Automatically export on changes",
     "exportIncludesSecretsWarning": "The exported file will contain all settings in cleartext, which may include sensitive values such as tokens. Anyone with the file can read them.",
     "exportInstalledOnly": "Export installed apps only",

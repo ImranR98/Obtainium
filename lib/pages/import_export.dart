@@ -489,6 +489,21 @@ class _ExportSectionState extends State<ExportSection> {
             ConnectedCard(
               isFirst: false,
               isLast: false,
+              padding: const EdgeInsets.fromLTRB(16, 4, 16, 4),
+              child: TextFormField(
+                initialValue: settingsProvider.autoExportFileName ?? '',
+                decoration: InputDecoration(
+                  labelText: tr('autoExportFileName'),
+                  hintText: tr('obtainiumExportHyphenatedLowercase'),
+                  border: InputBorder.none,
+                ),
+                onChanged: (value) =>
+                    settingsProvider.autoExportFileName = value,
+              ),
+            ),
+            ConnectedCard(
+              isFirst: false,
+              isLast: false,
               child: ToggleTile(
                 label: tr('exportInstalledOnly'),
                 value: settingsProvider.exportInstalledOnly,
