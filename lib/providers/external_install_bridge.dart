@@ -3,7 +3,7 @@ import 'dart:io';
 
 import 'package:flutter/services.dart';
 import 'package:obtainium/providers/apps_provider.dart' show packageManager;
-import 'package:obtainium/providers/logs_provider.dart';
+import 'package:obtainium/core/logging/app_logger.dart';
 
 /// A device app that can receive an APK install handoff.
 class InstallerTarget {
@@ -40,12 +40,7 @@ class ExternalInstallerBridge {
     try {
       raw = await _channel.invokeMethod<List<dynamic>>('listInstallTargets');
     } catch (e) {
-      unawaited(
-        LogsProvider().add(
-          'Failed to list external installer targets: $e',
-          level: LogLevel.error,
-        ),
-      );
+      AppLogger.error(e, message: 'Failed to list external installer targets');
       return const [];
     }
     if (raw == null) return const [];
@@ -77,12 +72,7 @@ class ExternalInstallerBridge {
     try {
       return await packageManager.getApplicationLabel(packageName: package);
     } catch (e) {
-      unawaited(
-        LogsProvider().add(
-          'Failed to get label for $package: $e',
-          level: LogLevel.warning,
-        ),
-      );
+      AppLogger.warn('Failed to get label for $package: $e');
       return null;
     }
   }
@@ -91,12 +81,7 @@ class ExternalInstallerBridge {
     try {
       return await packageManager.getApplicationIcon(packageName: package);
     } catch (e) {
-      unawaited(
-        LogsProvider().add(
-          'Failed to get icon for $package: $e',
-          level: LogLevel.warning,
-        ),
-      );
+      AppLogger.warn('Failed to get icon for $package: $e');
       return null;
     }
   }

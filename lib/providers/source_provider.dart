@@ -45,7 +45,7 @@ import 'package:obtainium/app_sources/vivoappstore.dart';
 import 'package:obtainium/components/generated_form_model.dart';
 import 'package:obtainium/custom_errors.dart';
 import 'package:obtainium/app_sources/githubstars.dart';
-import 'package:obtainium/providers/logs_provider.dart';
+import 'package:obtainium/core/logging/app_logger.dart';
 import 'package:obtainium/providers/settings_provider.dart';
 
 part 'app_json_migration.dart';
@@ -63,10 +63,7 @@ class AppNames {
   const AppNames(this.author, this.name);
 
   AppNames copyWith({String? author, String? name}) {
-    return AppNames(
-      author ?? this.author,
-      name ?? this.name,
-    );
+    return AppNames(author ?? this.author, name ?? this.name);
   }
 }
 
@@ -103,8 +100,9 @@ class APKDetails {
       version ?? this.version,
       apkUrls ?? this.apkUrls,
       names ?? this.names,
-      releaseDate:
-          releaseDate == _sentinel ? this.releaseDate : releaseDate as DateTime?,
+      releaseDate: releaseDate == _sentinel
+          ? this.releaseDate
+          : releaseDate as DateTime?,
       changeLog: changeLog == _sentinel ? this.changeLog : changeLog as String?,
       allAssetUrls: allAssetUrls ?? this.allAssetUrls,
     );
@@ -268,11 +266,8 @@ class App {
       // Fall back to the unmigrated JSON so the app still loads rather than
       // being lost (e.g. when its saved URL no longer matches any source).
       json = originalJson;
-      unawaited(
-        LogsProvider().add(
-          'Error running JSON compat modifiers (using original JSON): ${e.toString()}',
-          level: LogLevel.warning,
-        ),
+      AppLogger.warn(
+        'Error running JSON compat modifiers (using original JSON): ${e.toString()}',
       );
     }
     try {
@@ -316,11 +311,10 @@ class App {
         pendingRepoRenameUrl: json['pendingRepoRenameUrl'] as String?,
       );
     } on TypeError catch (e) {
-      unawaited(
-        LogsProvider().add(
-          'Type mismatch in App.fromJson: ${e.toString()}',
-          level: LogLevel.error,
-        ),
+      AppLogger.error(
+        e,
+        stackTrace: e.stackTrace,
+        message: 'Type mismatch in App.fromJson',
       );
       rethrow;
     }
@@ -834,11 +828,11 @@ abstract class AppSource {
       var val = hostChanged && !hostIdenticalDespiteAnyChange
           ? additionalSettings[e.key]
           : (additionalSettings[e.key] is String &&
-                  (additionalSettings[e.key] as String).isNotEmpty)
-              ? additionalSettings[e.key]
-              : (e is GeneratedFormSwitch
-                  ? settingsProvider.getSettingBool(e.key).toString()
-                  : settingsProvider.getSettingString(e.key));
+                (additionalSettings[e.key] as String).isNotEmpty)
+          ? additionalSettings[e.key]
+          : (e is GeneratedFormSwitch
+                ? settingsProvider.getSettingBool(e.key).toString()
+                : settingsProvider.getSettingString(e.key));
       if (val != null) {
         if (e is GeneratedFormSwitch) {
           val = val.toString();
@@ -1176,9 +1170,7 @@ class SourceProvider {
       throw NoAPKError()..url = standardUrl;
     }
     if (additionalSettings['autoApkFilterByArch'] == true) {
-      apk = apk.copyWith(
-        apkUrls: await filterApksByArch(apk.apkUrls),
-      );
+      apk = apk.copyWith(apkUrls: await filterApksByArch(apk.apkUrls));
       if (apk.apkUrls.isEmpty && !trackOnly) {
         throw NoAPKError()..url = standardUrl;
       }
@@ -1817,4 +1809,3 @@ class ApkFilterService {
     return apkUrls;
   }
 }
-

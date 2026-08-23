@@ -4,7 +4,7 @@ import 'package:http/http.dart';
 import 'package:intl/intl.dart';
 import 'package:obtainium/custom_errors.dart';
 import 'package:obtainium/components/generated_form_model.dart';
-import 'package:obtainium/providers/logs_provider.dart';
+import 'package:obtainium/core/logging/app_logger.dart';
 import 'package:obtainium/providers/source_provider.dart';
 
 class SourceHut extends AppSource {
@@ -84,11 +84,8 @@ class SourceHut extends AppSource {
                   ).parse(releaseDateString)
                 : null;
           } catch (e) {
-            unawaited(
-              LogsProvider().add(
-                'Failed to parse SourceHut release date: ${e.toString()}',
-                level: LogLevel.warning,
-              ),
+            AppLogger.warn(
+              'Failed to parse SourceHut release date: ${e.toString()}',
             );
           }
           final res2 = await sourceRequest(releasePage, additionalSettings);

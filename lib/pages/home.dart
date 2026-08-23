@@ -10,7 +10,7 @@ import 'package:obtainium/custom_errors.dart';
 import 'package:obtainium/pages/app.dart';
 import 'package:obtainium/pages/apps.dart';
 import 'package:obtainium/providers/apps_provider.dart';
-import 'package:obtainium/providers/logs_provider.dart';
+import 'package:obtainium/core/logging/app_logger.dart';
 import 'package:obtainium/providers/settings_provider.dart';
 import 'package:obtainium/providers/source_provider.dart';
 import 'package:obtainium/utils/nav_helper.dart';
@@ -202,7 +202,9 @@ class _HomePageState extends State<HomePage> {
 
           String? standardizedUrl;
           try {
-            standardizedUrl = sourceProvider.getSource(data).standardizeUrl(data);
+            standardizedUrl = sourceProvider
+                .getSource(data)
+                .standardizeUrl(data);
           } catch (_) {
             standardizedUrl = null;
           }
@@ -254,12 +256,7 @@ class _HomePageState extends State<HomePage> {
             try {
               parsedData = jsonDecode(data);
             } catch (e) {
-              unawaited(
-                LogsProvider().add(
-                  'Failed to decode deep-link JSON: $e',
-                  level: LogLevel.error,
-                ),
-              );
+              AppLogger.error(e, message: 'Failed to decode deep-link JSON');
               throw ObtainiumError(tr('invalidInput'));
             }
             final importPayload = jsonEncode(<String, dynamic>{
@@ -323,8 +320,7 @@ class _HomePageState extends State<HomePage> {
 
     final layoutWidth = MediaQuery.sizeOf(context).width;
     final useLargeScreen = isTV || layoutWidth >= 840;
-    final useTwoPane =
-        useLargeScreen && !settingsProvider.alwaysUsePhoneLayout;
+    final useTwoPane = useLargeScreen && !settingsProvider.alwaysUsePhoneLayout;
 
     final detailPane =
         selectedAppId != null &&
@@ -373,13 +369,15 @@ class _HomePageState extends State<HomePage> {
       label: Text(tr('add')),
     );
 
-    final loadingApps = context.select<AppsProvider, bool>((p) => p.loadingApps);
+    final loadingApps = context.select<AppsProvider, bool>(
+      (p) => p.loadingApps,
+    );
 
     final Widget? fab = isTV
         ? null
         : appsSelecting
-            ? actionsFab
-            : (loadingApps ? null : createFabExtended);
+        ? actionsFab
+        : (loadingApps ? null : createFabExtended);
 
     final Widget content;
     if (useTwoPane) {
