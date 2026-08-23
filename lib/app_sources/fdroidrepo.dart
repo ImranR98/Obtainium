@@ -5,7 +5,7 @@ import 'package:html/parser.dart';
 import 'package:http/http.dart';
 import 'package:obtainium/components/generated_form_model.dart';
 import 'package:obtainium/custom_errors.dart';
-import 'package:obtainium/providers/logs_provider.dart';
+import 'package:obtainium/core/logging/app_logger.dart';
 import 'package:obtainium/providers/source_provider.dart';
 
 class FDroidRepo extends AppSource {
@@ -110,7 +110,7 @@ class FDroidRepo extends AppSource {
     try {
       Uri.parse(inputUrl).queryParameters['appId'];
     } catch (e) {
-      unawaited(LogsProvider().add('Failed to parse appId from URL: $e'));
+      AppLogger.info('Failed to parse appId from URL: $e');
     }
   }
 

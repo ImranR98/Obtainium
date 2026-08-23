@@ -19,7 +19,7 @@ import 'package:obtainium/installers/shizuku_installer.dart';
 import 'package:obtainium/installers/stock_installer.dart';
 import 'package:obtainium/installers/install_utils.dart';
 import 'package:obtainium/providers/apps_provider.dart';
-import 'package:obtainium/providers/logs_provider.dart';
+import 'package:obtainium/core/logging/app_logger.dart';
 import 'package:obtainium/providers/notifications_provider.dart';
 import 'package:obtainium/providers/settings_provider.dart';
 import 'package:obtainium/providers/source_provider.dart';
@@ -188,8 +188,10 @@ extension AppsProviderInstall on AppsProvider {
         downloadUrl,
         forAPKDownload: true,
       );
+      additionalSettingsPlusSourceConfig['url'] = downloadUrl;
+      additionalSettingsPlusSourceConfig['allowInsecure'] = app.settings.getBool('allowInsecure');
+      additionalSettingsPlusSourceConfig['enableCertificatePinning'] = settingsProvider.enableCertificatePinning;
       var downloadedFile = await downloadFileWithRetry(
-        downloadUrl,
         fileNameNoExt,
         source.urlsAlwaysHaveExtension,
         headers: headers,
@@ -222,9 +224,8 @@ extension AppsProviderInstall on AppsProvider {
           prevProg = prog;
         },
         this.apkDir.path,
+        additionalSettingsPlusSourceConfig,
         useExisting: useExisting,
-        allowInsecure: app.settings.getBool('allowInsecure'),
-        logs: logs,
         cancellationToken: cancellationToken,
       );
       if (apps[app.id] != null) {
@@ -365,10 +366,8 @@ extension AppsProviderInstall on AppsProvider {
   /// Independent of the background-update setting.
   Future<bool> canInstallSilently(App app) async {
     if (app.apkUrls.length > 1) {
-      unawaited(
-        logs.add(
-          'App will not be installed silently: multiple APK URLs require manual selection: ${app.id}',
-        ),
+      AppLogger.info(
+        'App will not be installed silently: multiple APK URLs require manual selection: ${app.id}',
       );
       return false; // Manual API selection means silent install is not possible
     }
@@ -382,18 +381,14 @@ extension AppsProviderInstall on AppsProvider {
   /// [canInstallSilently]. Foreground installs must not use this.
   Future<bool> canInstallSilentlyInBackground(App app) async {
     if (!settingsProvider.enableBackgroundUpdates) {
-      unawaited(
-        logs.add(
-          'App will not be installed in the background: background updates are disabled: ${app.id}',
-        ),
+      AppLogger.info(
+        'App will not be installed in the background: background updates are disabled: ${app.id}',
       );
       return false;
     }
     if (app.settings.getBool('exemptFromBackgroundUpdates')) {
-      unawaited(
-        logs.add(
-          'App will not be installed in the background: exempted from background updates: ${app.id}',
-        ),
+      AppLogger.info(
+        'App will not be installed in the background: exempted from background updates: ${app.id}',
       );
       return false;
     }
@@ -460,14 +455,21 @@ extension AppsProviderInstall on AppsProvider {
     if (!destDir.existsSync()) {
       destDir.createSync(recursive: true);
     }
+    final destRoot = Uri.file(
+      destDir.absolute.path,
+    ).normalizePath().toFilePath();
     for (final file in tarArchive.files) {
-      if (file.isFile) {
-        final content = file.content;
-        final outPath = '${destDir.path}/${file.name}';
-        final outFile = File(outPath);
-        outFile.createSync(recursive: true);
-        outFile.writeAsBytesSync(content);
+      if (!file.isFile) continue;
+      // Reject entries whose path would escape the destination directory.
+      final outPath = Uri.file(
+        '$destRoot/${file.name}',
+      ).normalizePath().toFilePath();
+      if (outPath != destRoot && !outPath.startsWith('$destRoot/')) {
+        throw ObtainiumError(tr('invalidArchive'));
       }
+      final outFile = File(outPath);
+      outFile.createSync(recursive: true);
+      outFile.writeAsBytesSync(file.content);
     }
   }
 
@@ -515,10 +517,8 @@ extension AppsProviderInstall on AppsProvider {
           }
           unawaited(dir.file.delete());
         } catch (e) {
-          unawaited(
-            logs.add(
-              'Could not install container from ${dir.type}: ${e.toString()}',
-            ),
+          AppLogger.info(
+            'Could not install container from ${dir.type}: ${e.toString()}',
           );
           errors.add(dir.appId, e, appName: apps[dir.appId]?.name);
         }
@@ -549,10 +549,8 @@ extension AppsProviderInstall on AppsProvider {
         somethingInstalled = somethingInstalled || wasInstalled;
         unawaited(dir.file.delete());
       } catch (e) {
-        unawaited(
-          logs.add(
-            'Could not install APKs for ${dir.appId} from ${dir.type}: ${e.toString()}',
-          ),
+        AppLogger.info(
+          'Could not install APKs for ${dir.appId} from ${dir.type}: ${e.toString()}',
         );
         errors.add(dir.appId, e, appName: apps[dir.appId]?.name);
       }
@@ -586,10 +584,8 @@ extension AppsProviderInstall on AppsProvider {
           deleteFile(a.file);
         }
       } catch (e) {
-        unawaited(
-          logs.add(
-            'Failed to delete bad download files for ${file.appId}: ${e.toString()}',
-          ),
+        AppLogger.info(
+          'Failed to delete bad download files for ${file.appId}: ${e.toString()}',
         );
       }
       throw ObtainiumError(tr('badDownload'))..url = apps[file.appId]?.app.url;
@@ -597,10 +593,8 @@ extension AppsProviderInstall on AppsProvider {
     final PackageInfo? appInfo = await getInstalledInfo(
       apps[file.appId]!.app.id,
     );
-    unawaited(
-      logs.add(
-        'Installing "${newInfo.packageName}" version "${newInfo.versionName}" versionCode "${newInfo.versionCode}"${appInfo != null ? ' (from existing version "${appInfo.versionName}" versionCode "${appInfo.versionCode}")' : ''}',
-      ),
+    AppLogger.info(
+      'Installing "${newInfo.packageName}" version "${newInfo.versionName}" versionCode "${newInfo.versionCode}"${appInfo != null ? ' (from existing version "${appInfo.versionName}" versionCode "${appInfo.versionCode}")' : ''}',
     );
     final newVersionCode = newInfo.versionCode;
     final oldVersionCode = appInfo?.versionCode;
@@ -613,12 +607,7 @@ extension AppsProviderInstall on AppsProvider {
         try {
           file.file.deleteSync();
         } catch (e) {
-          unawaited(
-            logs.add(
-              'Failed to delete downgraded APK file: $e',
-              level: LogLevel.error,
-            ),
-          );
+          AppLogger.error(e, message: 'Failed to delete downgraded APK file');
         }
         throw DowngradeError(oldVersionCode, newVersionCode);
       }
@@ -646,10 +635,8 @@ extension AppsProviderInstall on AppsProvider {
       try {
         deleteFile(file.file);
       } catch (e) {
-        unawaited(
-          logs.add(
-            'Failed to delete APK after failed install: ${e.toString()}',
-          ),
+        AppLogger.info(
+          'Failed to delete APK after failed install: ${e.toString()}',
         );
       }
       throw InstallError(result.errorCode!);
@@ -720,15 +707,11 @@ extension AppsProviderInstall on AppsProvider {
           '${await getStorageRootPath()}/Android/obb/$appId',
         ).create(recursive: true);
         await file.copy(obbDestPath);
-        unawaited(
-          logs.add(
-            'Copied OBB file $obbFileName for $appId via direct file access',
-          ),
+        AppLogger.info(
+          'Copied OBB file $obbFileName for $appId via direct file access',
         );
       } catch (e) {
-        unawaited(
-          logs.add('Failed to place OBB file for $appId: ${e.toString()}'),
-        );
+        AppLogger.info('Failed to place OBB file for $appId: ${e.toString()}');
       }
     } else {
       await Permission.storage.request();
@@ -737,10 +720,8 @@ extension AppsProviderInstall on AppsProvider {
       Directory(obbDirPath).createSync(recursive: true);
       final String obbFileName = file.path.split('/').last;
       await file.copy('$obbDirPath/$obbFileName');
-      unawaited(
-        logs.add(
-          'Copied OBB file $obbFileName for $appId via direct file access',
-        ),
+      AppLogger.info(
+        'Copied OBB file $obbFileName for $appId via direct file access',
       );
     }
   }
@@ -914,14 +895,8 @@ extension AppsProviderInstall on AppsProvider {
       obtainiumId,
       strB: obtainiumTempId,
     );
-    appsToInstall = moveStrToEnd(
-      appsToInstall,
-      '$obtainiumId.fdroid',
-    );
-    appsToInstall = moveStrToEnd(
-      appsToInstall,
-      '$obtainiumId.debug',
-    );
+    appsToInstall = moveStrToEnd(appsToInstall, '$obtainiumId.fdroid');
+    appsToInstall = moveStrToEnd(appsToInstall, '$obtainiumId.debug');
 
     final List<_InstallResult> obtainiumResults = [];
     Future<void> installChain = Future.value();
@@ -1082,6 +1057,7 @@ extension AppsProviderInstall on AppsProvider {
           errors,
           downloadedIds,
           notificationsProvider,
+          settingsProvider.enableCertificatePinning
         );
       }
     } else {
@@ -1093,6 +1069,7 @@ extension AppsProviderInstall on AppsProvider {
             errors,
             downloadedIds,
             notificationsProvider,
+            settingsProvider.enableCertificatePinning
           ),
         ),
       );
@@ -1170,24 +1147,20 @@ extension AppsProviderInstall on AppsProvider {
             baseline,
             attempts: _bgInstallConfirmAttempts,
           );
-          unawaited(
-            logs.add(
-              sayInstalled
-                  ? 'BG install confirmed for $id via polling'
-                  : 'BG install poll timed out for $id after $_bgInstallConfirmAttempts attempts',
-              level: sayInstalled ? LogLevel.info : LogLevel.warning,
-            ),
-          );
+          if (sayInstalled) {
+            AppLogger.info('BG install confirmed for $id via polling');
+          } else {
+            AppLogger.warn(
+              'BG install poll timed out for $id after $_bgInstallConfirmAttempts attempts',
+            );
+          }
           if (!sayInstalled) {
             final latestInfo = await getInstalledInfo(id);
-            unawaited(
-              logs.add(
-                'BG install final state for $id: wasInstalled=${baseline.wasInstalled}, '
-                'baselineUpdateTime=${baseline.updateTime}, '
-                'currentUpdateTime=${latestInfo?.lastUpdateTime}, '
-                'latestVersion=${appEntry.app.latestVersion}',
-                level: LogLevel.warning,
-              ),
+            AppLogger.warn(
+              'BG install final state for $id: wasInstalled=${baseline.wasInstalled}, '
+              'baselineUpdateTime=${baseline.updateTime}, '
+              'currentUpdateTime=${latestInfo?.lastUpdateTime}, '
+              'latestVersion=${appEntry.app.latestVersion}',
             );
           }
         } else {
@@ -1210,24 +1183,20 @@ extension AppsProviderInstall on AppsProvider {
             baseline,
             attempts: _bgInstallConfirmAttempts,
           );
-          unawaited(
-            logs.add(
-              sayInstalled
-                  ? 'BG install confirmed for $id via polling'
-                  : 'BG install poll timed out for $id after $_bgInstallConfirmAttempts attempts',
-              level: sayInstalled ? LogLevel.info : LogLevel.warning,
-            ),
-          );
+          if (sayInstalled) {
+            AppLogger.info('BG install confirmed for $id via polling');
+          } else {
+            AppLogger.warn(
+              'BG install poll timed out for $id after $_bgInstallConfirmAttempts attempts',
+            );
+          }
           if (!sayInstalled) {
             final latestInfo = await getInstalledInfo(id);
-            unawaited(
-              logs.add(
-                'BG install final state for $id: wasInstalled=${baseline.wasInstalled}, '
-                'baselineUpdateTime=${baseline.updateTime}, '
-                'currentUpdateTime=${latestInfo?.lastUpdateTime}, '
-                'latestVersion=${appEntry.app.latestVersion}',
-                level: LogLevel.warning,
-              ),
+            AppLogger.warn(
+              'BG install final state for $id: wasInstalled=${baseline.wasInstalled}, '
+              'baselineUpdateTime=${baseline.updateTime}, '
+              'currentUpdateTime=${latestInfo?.lastUpdateTime}, '
+              'latestVersion=${appEntry.app.latestVersion}',
             );
           }
         } else {
@@ -1340,11 +1309,13 @@ extension AppsProviderInstall on AppsProvider {
     MultiAppMultiError errors,
     List<String> downloadedIds,
     NotificationsProvider notificationsProvider,
+    bool enableCertificatePinning,
   ) async {
+    app.additionalSettings['url'] = fileUrl.value;
+    app.additionalSettings['enableCertificatePinning'] = enableCertificatePinning;
     try {
       final String downloadPath = '${await getStorageRootPath()}/Download';
       await downloadFile(
-        fileUrl.value,
         fileUrl.key,
         true,
         (double? progress, [int? received, int? total]) {
@@ -1360,6 +1331,7 @@ extension AppsProviderInstall on AppsProvider {
           );
         },
         downloadPath,
+        app.additionalSettings,
         headers: await SourceProvider()
             .getSource(app.url, overrideSource: app.overrideSource)
             .getRequestHeaders(
@@ -1368,8 +1340,6 @@ extension AppsProviderInstall on AppsProvider {
               forAPKDownload: AppSource.isApkOrContainerFile(fileUrl.key),
             ),
         useExisting: false,
-        allowInsecure: app.settings.getBool('allowInsecure'),
-        logs: logs,
       );
       unawaited(
         notificationsProvider.notify(

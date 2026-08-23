@@ -8,7 +8,7 @@ import 'package:android_package_manager/android_package_manager.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:obtainium/custom_errors.dart';
-import 'package:obtainium/providers/logs_provider.dart';
+import 'package:obtainium/core/logging/app_logger.dart';
 import 'package:obtainium/app_sources/html.dart';
 import 'package:obtainium/components/generated_form_renderer.dart';
 import 'package:obtainium/utils/color_utils.dart';
@@ -172,7 +172,7 @@ extension AppsProviderLifecycle on AppsProvider {
         additionalSettings: Map<String, dynamic>.from(app.additionalSettings)
           ..['versionDetection'] = false,
       );
-      unawaited(logs.add('Could not reconcile version formats for: ${app.id}'));
+      AppLogger.info('Could not reconcile version formats for: ${app.id}');
       modded = true;
     }
 
@@ -247,21 +247,16 @@ extension AppsProviderLifecycle on AppsProvider {
                 } catch (err) {
                   if (err is FormatException) {
                     // Genuinely corrupt JSON: set it aside so it stops failing.
-                    unawaited(
-                      logs.add(
-                        'Corrupt JSON, renaming ${item.path}: $err',
-                        level: LogLevel.error,
-                      ),
+                    AppLogger.error(
+                      err,
+                      message: 'Corrupt JSON, renaming ${item.path}',
                     );
                     unawaited(item.rename('${item.path}$_corruptFileSuffix'));
                   } else {
                     // Other errors (e.g. a temporarily unresolvable source):
                     // skip but keep the file so it can load once resolved.
-                    unawaited(
-                      logs.add(
-                        'Error loading app ${item.path} (skipped, file kept): $err',
-                        level: LogLevel.warning,
-                      ),
+                    AppLogger.warn(
+                      'Error loading app ${item.path} (skipped, file kept): $err',
                     );
                   }
                 }
@@ -312,10 +307,8 @@ extension AppsProviderLifecycle on AppsProvider {
                   );
                 } catch (e) {
                   if (e is RateLimitError || e is SocketException) {
-                    unawaited(
-                      logs.add(
-                        'Transient error loading app ${app!.id}, will retry: $e',
-                      ),
+                    AppLogger.info(
+                      'Transient error loading app ${app!.id}, will retry: $e',
                     );
                   } else {
                     errors.add([app!.id, app.finalName, e.toString()]);
@@ -326,11 +319,9 @@ extension AppsProviderLifecycle on AppsProvider {
       );
       if (errors.isNotEmpty) {
         for (var error in errors) {
-          unawaited(
-            logs.add(
-              'Removing app ${error[0]} (${error[1]}) due to load error: ${error[2]}',
-              level: LogLevel.error,
-            ),
+          AppLogger.error(
+            error[2],
+            message: 'Removing app ${error[0]} (${error[1]}) due to load error',
           );
         }
         unawaited(removeApps(errors.map((e) => e[0]).toList()));

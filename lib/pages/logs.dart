@@ -3,7 +3,8 @@ import 'dart:async';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:obtainium/components/ui_widgets.dart';
-import 'package:obtainium/providers/logs_provider.dart';
+import 'package:obtainium/core/logging/app_log_db.dart';
+import 'package:obtainium/core/logging/app_logger.dart';
 import 'package:obtainium/providers/settings_provider.dart';
 import 'package:obtainium/theme.dart';
 import 'package:provider/provider.dart';
@@ -20,7 +21,7 @@ class _LogsPageState extends State<LogsPage> {
   static const List<int> _dayOptions = [7, 5, 4, 3, 2, 1];
 
   final ScrollController _scrollController = ScrollController();
-  List<Log> _logs = [];
+  List<LogEntry> _logs = [];
   int _days = _dayOptions.first;
   bool _loading = true;
 
@@ -38,7 +39,7 @@ class _LogsPageState extends State<LogsPage> {
 
   Future<void> _loadLogs(int days) async {
     setState(() => _loading = true);
-    final value = await context.read<LogsProvider>().get(
+    final value = await AppLogger.getLogs(
       after: DateTime.now().subtract(Duration(days: days)),
     );
     if (!mounted) return;
@@ -68,14 +69,13 @@ class _LogsPageState extends State<LogsPage> {
   }
 
   Future<void> _clearLogs() async {
-    final logsProvider = context.read<LogsProvider>();
     final cont = await showContinueCancelDialog(
       context,
       title: tr('appLogs'),
       message: tr('removeFromObtainium'),
     );
     if (!cont) return;
-    await logsProvider.clear();
+    await AppLogger.clearLogs();
     if (!mounted) return;
     await _loadLogs(_days);
   }
@@ -88,17 +88,17 @@ class _LogsPageState extends State<LogsPage> {
     );
   }
 
-  Color _levelColor(BuildContext context, LogLevel level) {
+  Color _levelColor(BuildContext context, AppLogLevel level) {
     final cs = Theme.of(context).colorScheme;
     return switch (level) {
-      LogLevel.error => cs.error,
-      LogLevel.warning => cs.tertiary,
-      LogLevel.debug => cs.onSurfaceVariant,
-      LogLevel.info => cs.onSurface,
+      AppLogLevel.error => cs.error,
+      AppLogLevel.warning => cs.tertiary,
+      AppLogLevel.debug => cs.onSurfaceVariant,
+      AppLogLevel.info => cs.onSurface,
     };
   }
 
-  Widget _logTile(Log log) {
+  Widget _logTile(LogEntry log) {
     final color = _levelColor(context, log.level);
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),

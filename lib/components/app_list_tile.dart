@@ -129,6 +129,7 @@ class AppIconWidget extends StatefulWidget {
   @override
   State<AppIconWidget> createState() => _AppIconWidgetState();
 }
+
 class _AppIconWidgetState extends State<AppIconWidget> {
   late Future<void> _iconFuture;
 
@@ -158,8 +159,11 @@ class _AppIconWidgetState extends State<AppIconWidget> {
           ? () => packageManager.openApp(widget.appId)
           : null,
       onLongPress: () {
-        NavHelper.pushAppPage(context, widget.appId,
-            showOppositeOfPreferredView: true);
+        NavHelper.pushAppPage(
+          context,
+          widget.appId,
+          showOppositeOfPreferredView: true,
+        );
       },
       child: InkWell(
         child: FutureBuilder(
@@ -176,8 +180,11 @@ class _AppIconWidgetState extends State<AppIconWidget> {
           }
         },
         onLongPress: () {
-          NavHelper.pushAppPage(context, widget.appId,
-              showOppositeOfPreferredView: true);
+          NavHelper.pushAppPage(
+            context,
+            widget.appId,
+            showOppositeOfPreferredView: true,
+          );
         },
       ),
     );
@@ -420,14 +427,11 @@ class AppListTile extends StatelessWidget {
                     ? RoundedSuperellipseBorder(borderRadius: borderRadius!)
                     : null,
                 tileColor: _app.pinned
-                    ? Theme.of(context)
-                        .colorScheme
-                        .onSurface
-                        .withValues(alpha: 0.10)
+                    ? Theme.of(
+                        context,
+                      ).colorScheme.onSurface.withValues(alpha: 0.10)
                     : Colors.transparent,
-                selectedTileColor: Theme.of(context)
-                    .colorScheme
-                    .primary
+                selectedTileColor: Theme.of(context).colorScheme.primary
                     .withValues(alpha: _app.pinned ? 0.2 : 0.1),
                 selected: multiSelected || detailSelected,
                 leading: settingsProvider.isTV
@@ -455,10 +459,7 @@ class AppListTile extends StatelessWidget {
                     ? Column(
                         mainAxisSize: MainAxisSize.min,
                         crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          _authorText(),
-                          _repoMovedRow(context),
-                        ],
+                        children: [_authorText(), _repoMovedRow(context)],
                       )
                     : _authorText(),
                 trailing: downloadProgress != null
@@ -499,8 +500,7 @@ class AppListTile extends StatelessWidget {
                   color: cs.errorContainer,
                   alignment: Alignment.centerRight,
                   padding: const EdgeInsets.only(right: 24),
-                  child: Icon(Icons.delete_outline,
-                      color: cs.onErrorContainer),
+                  child: Icon(Icons.delete_outline, color: cs.onErrorContainer),
                 ),
                 confirmDismiss: (direction) async {
                   if (direction == DismissDirection.startToEnd) {
@@ -597,7 +597,6 @@ class DownloadProgressTrailing extends StatelessWidget {
     );
   }
 }
-
 
 /// A collapsible section header + its app tiles, used when the list is grouped
 /// (by category or source). [title] is the already-resolved display label.
@@ -987,8 +986,8 @@ class _VersionLabel extends StatelessWidget {
   String changesLabel(App app, bool hasChangeLogFn) {
     return app.releaseDate == null
         ? hasChangeLogFn
-            ? tr('changes')
-            : ''
+              ? tr('changes')
+              : ''
         : _dateFmt.format(app.releaseDate!.toLocal());
   }
 }

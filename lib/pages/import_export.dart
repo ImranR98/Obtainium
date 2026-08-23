@@ -9,11 +9,38 @@ import 'package:obtainium/components/generated_form_renderer.dart';
 import 'package:obtainium/components/ui_widgets.dart';
 import 'package:obtainium/custom_errors.dart';
 import 'package:obtainium/providers/apps_provider.dart';
-import 'package:obtainium/providers/logs_provider.dart';
+import 'package:obtainium/core/logging/app_logger.dart';
 import 'package:obtainium/providers/settings_provider.dart';
 import 'package:obtainium/providers/source_provider.dart';
 import 'package:provider/provider.dart';
 import 'package:file_picker/file_picker.dart';
+
+/// Shows a blocking dialog warning that an "include all settings" export
+/// embeds potentially sensitive values in cleartext.
+/// Returns true if the user chooses to export anyway.
+Future<bool> confirmExportIncludesSecrets(BuildContext context) async {
+  final proceed = await showDialog<bool>(
+    context: context,
+    builder: (BuildContext ctx) {
+      return AlertDialog(
+        title: Text(tr('warning')),
+        content: Text(tr('exportIncludesSecretsWarning')),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(false),
+            child: Text(tr('cancel')),
+          ),
+          FilledButton.tonal(
+            autofocus: true,
+            onPressed: () => Navigator.of(ctx).pop(true),
+            child: Text(tr('continue')),
+          ),
+        ],
+      );
+    },
+  );
+  return proceed == true;
+}
 
 class ImportFromURLListPage extends StatefulWidget {
   const ImportFromURLListPage({super.key});
@@ -106,15 +133,16 @@ class _ImportFromURLListPageState extends State<ImportFromURLListPage> {
                       spacing: 16,
                       children: [
                         ConnectedCard(
-                          color: Theme.of(context)
-                              .colorScheme
-                              .surfaceContainerHighest,
+                          color: Theme.of(
+                            context,
+                          ).colorScheme.surfaceContainerHighest,
                           child: TextFormField(
                             controller: controller.urlController,
                             maxLines: null,
                             minLines: 8,
                             decoration: InputDecoration(
-                                labelText: tr('appURLList')),
+                              labelText: tr('appURLList'),
+                            ),
                             validator: controller.validate,
                             autovalidateMode:
                                 AutovalidateMode.onUserInteraction,
@@ -156,9 +184,7 @@ class _ImportFromURLListPageState extends State<ImportFromURLListPage> {
                           child: Text(
                             tr('importedAppsIdDisclaimer'),
                             textAlign: TextAlign.center,
-                            style: Theme.of(context)
-                                .textTheme
-                                .bodySmall
+                            style: Theme.of(context).textTheme.bodySmall
                                 ?.copyWith(fontStyle: FontStyle.italic),
                           ),
                         ),
@@ -395,6 +421,10 @@ class _ExportSectionState extends State<ExportSection> {
 
     Future<void> runObtainiumExport({bool pickOnly = false}) async {
       settingsProvider.selectionClick();
+      if (!pickOnly && settingsProvider.exportSettings >= 2) {
+        final proceed = await confirmExportIncludesSecrets(context);
+        if (!proceed) return;
+      }
       unawaited(
         appsProvider
             .export(
@@ -459,6 +489,21 @@ class _ExportSectionState extends State<ExportSection> {
             ConnectedCard(
               isFirst: false,
               isLast: false,
+              padding: const EdgeInsets.fromLTRB(16, 4, 16, 4),
+              child: TextFormField(
+                initialValue: settingsProvider.autoExportFileName ?? '',
+                decoration: InputDecoration(
+                  labelText: tr('autoExportFileName'),
+                  hintText: tr('obtainiumExportHyphenatedLowercase'),
+                  border: InputBorder.none,
+                ),
+                onChanged: (value) =>
+                    settingsProvider.autoExportFileName = value,
+              ),
+            ),
+            ConnectedCard(
+              isFirst: false,
+              isLast: false,
               child: ToggleTile(
                 label: tr('exportInstalledOnly'),
                 value: settingsProvider.exportInstalledOnly,
@@ -472,20 +517,15 @@ class _ExportSectionState extends State<ExportSection> {
               child: DropdownMenu<String>(
                 expandedInsets: EdgeInsets.zero,
                 label: Text(tr('includeSettings')),
-                initialSelection:
-                    settingsProvider.exportSettings.toString(),
+                initialSelection: settingsProvider.exportSettings.toString(),
                 dropdownMenuEntries: [
-                  DropdownMenuEntry(
-                      value: '0', label: tr('none')),
-                  DropdownMenuEntry(
-                      value: '1', label: tr('excludeSecrets')),
-                  DropdownMenuEntry(
-                      value: '2', label: tr('all')),
+                  DropdownMenuEntry(value: '0', label: tr('none')),
+                  DropdownMenuEntry(value: '1', label: tr('excludeSecrets')),
+                  DropdownMenuEntry(value: '2', label: tr('all')),
                 ],
                 onSelected: (value) {
                   if (value != null) {
-                    settingsProvider.exportSettings =
-                        int.tryParse(value) ?? 1;
+                    settingsProvider.exportSettings = int.tryParse(value) ?? 1;
                   }
                 },
               ),
@@ -691,10 +731,9 @@ class _SelectionModalState extends State<SelectionModal> {
         if (widget.titlesAreLinks)
           Text(
             Uri.parse(entry.key).host,
-            style: Theme.of(context)
-                .textTheme
-                .bodySmall
-                ?.copyWith(decoration: TextDecoration.underline),
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+              decoration: TextDecoration.underline,
+            ),
           ),
       ],
     );
@@ -707,10 +746,9 @@ class _SelectionModalState extends State<SelectionModal> {
             entry.value[1].length > 128
                 ? '${entry.value[1].substring(0, 128)}...'
                 : entry.value[1],
-            style: Theme.of(context)
-                .textTheme
-                .bodySmall
-                ?.copyWith(fontStyle: FontStyle.italic),
+            style: Theme.of(
+              context,
+            ).textTheme.bodySmall?.copyWith(fontStyle: FontStyle.italic),
           );
   }
 
@@ -820,8 +858,9 @@ class _SelectionModalState extends State<SelectionModal> {
     final isTV = context.read<SettingsProvider>().isTV;
     final Map<MapEntry<String, List<String>>, bool> filteredEntrySelections =
         {};
-    final filterRegexCompiled =
-        filterRegex.isEmpty ? null : RegExp(filterRegex);
+    final filterRegexCompiled = filterRegex.isEmpty
+        ? null
+        : RegExp(filterRegex);
     final filterRegexCompiledCI = filterRegex.isEmpty
         ? null
         : RegExp(filterRegex, caseSensitive: false);
@@ -973,12 +1012,7 @@ class ImportFromURLListController extends ChangeNotifier {
                 sourceProvider.getSource(url);
                 return true;
               } catch (e) {
-                unawaited(
-                  LogsProvider().add(
-                    'URL parse error in filter: $e',
-                    level: LogLevel.error,
-                  ),
-                );
+                AppLogger.error(e, message: 'URL parse error in filter');
                 return false;
               }
             })

@@ -7,10 +7,9 @@ import 'package:http/http.dart';
 import 'package:obtainium/components/generated_form_model.dart';
 import 'package:obtainium/custom_errors.dart';
 import 'package:obtainium/providers/apps_provider.dart';
-import 'package:obtainium/providers/logs_provider.dart';
+import 'package:obtainium/core/logging/app_logger.dart';
 import 'package:obtainium/providers/source_provider.dart';
 import 'package:obtainium/utils/string_compare.dart';
-
 
 List<String> collectAllStringsFromJSONObject(dynamic obj) {
   List<String> extractor(dynamic obj) {
@@ -32,7 +31,6 @@ List<String> collectAllStringsFromJSONObject(dynamic obj) {
 
   return extractor(obj);
 }
-
 
 List<MapEntry<String, String>> getLinksInLines(String lines) =>
     RegExp(r'(?:(?:http|https|ftp)://)\S+')
@@ -83,7 +81,9 @@ Future<List<MapEntry<String, String>>> grabLinksCommon(
       allLinks = getLinksInLines(rawBody);
     } else {
       try {
-        final jsonStrings = collectAllStringsFromJSONObject(jsonDecode(rawBody));
+        final jsonStrings = collectAllStringsFromJSONObject(
+          jsonDecode(rawBody),
+        );
         allLinks = getLinksInLines(jsonStrings.join('\n'));
         if (allLinks.isEmpty) {
           allLinks = getLinksInLines(
@@ -95,12 +95,7 @@ Future<List<MapEntry<String, String>>> grabLinksCommon(
           );
         }
       } catch (e) {
-        unawaited(
-          LogsProvider().add(
-            'Failed to parse HTML links: ${e.toString()}',
-            level: LogLevel.warning,
-          ),
-        );
+        AppLogger.warn('Failed to parse HTML links: ${e.toString()}');
         allLinks = getLinksInLines(rawBody);
       }
     }
@@ -116,12 +111,7 @@ Future<List<MapEntry<String, String>>> grabLinksCommon(
       try {
         link = Uri.decodeFull(element.key);
       } catch (e) {
-        unawaited(
-          LogsProvider().add(
-            'Failed to decode URI in HTML filter: ${e.toString()}',
-            level: LogLevel.debug,
-          ),
-        );
+        AppLogger.debug('Failed to decode URI in HTML filter: ${e.toString()}');
       }
       return reg.hasMatch(filterLinkByText ? element.value : link);
     }).toList();
@@ -131,11 +121,8 @@ Future<List<MapEntry<String, String>>> grabLinksCommon(
       try {
         link = Uri.decodeFull(element.key);
       } catch (e) {
-        unawaited(
-          LogsProvider().add(
-            'Failed to decode URI in HTML APK filter: ${e.toString()}',
-            level: LogLevel.debug,
-          ),
+        AppLogger.debug(
+          'Failed to decode URI in HTML APK filter: ${e.toString()}',
         );
       }
       return AppSource.isApkOrContainerFile(
@@ -392,11 +379,8 @@ class HTML extends AppSource {
       try {
         relDecoded = Uri.decodeFull(rel);
       } catch (e) {
-        unawaited(
-          LogsProvider().add(
-            'Failed to decode URI for version extraction: ${e.toString()}',
-            level: LogLevel.debug,
-          ),
+        AppLogger.debug(
+          'Failed to decode URI for version extraction: ${e.toString()}',
         );
       }
       String? version;
@@ -407,6 +391,7 @@ class HTML extends AppSource {
             ? versionExtractionWholePageString
             : relDecoded,
       );
+      additionalSettings['url'] = rel;
       final apkReqHeaders = await getRequestHeaders(
         additionalSettings,
         rel,
@@ -415,9 +400,8 @@ class HTML extends AppSource {
       if (version == null &&
           additionalSettings['defaultPseudoVersioningMethod'] == 'ETag') {
         version = await checkETagHeader(
-          rel,
+          additionalSettings,
           headers: apkReqHeaders,
-          allowInsecure: additionalSettings['allowInsecure'] == true,
         );
         if (version == null || version.isEmpty) {
           throw NoVersionError();
@@ -427,9 +411,8 @@ class HTML extends AppSource {
           additionalSettings['defaultPseudoVersioningMethod'] == 'APKLinkHash'
           ? rel.hashCode.toString()
           : (await checkPartialDownloadHashDynamic(
-              rel,
+              additionalSettings,
               headers: apkReqHeaders,
-              allowInsecure: additionalSettings['allowInsecure'] == true,
             )).toString();
       return APKDetails(
         version,

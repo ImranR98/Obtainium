@@ -716,8 +716,7 @@ class AddAppPageState extends State<AddAppPage> {
                                 required: false,
                                 additionalValidators: [
                                   (value) {
-                                    if (value == null ||
-                                        value.trim().isEmpty) {
+                                    if (value == null || value.trim().isEmpty) {
                                       return null;
                                     }
                                     try {
@@ -758,7 +757,8 @@ class AddAppPageState extends State<AddAppPage> {
                                 width: 20,
                                 height: 20,
                                 child: CircularProgressIndicator(
-                                    strokeWidth: 2),
+                                  strokeWidth: 2,
+                                ),
                               ),
                             )
                           : IconButton(
@@ -767,18 +767,18 @@ class AddAppPageState extends State<AddAppPage> {
                               tooltip: tr('add'),
                               onPressed:
                                   doingSomething ||
-                                          pickedSource == null ||
-                                          !_urlValid ||
-                                          userInput.trim().isEmpty ||
-                                          (pickedSource!
-                                                      .combinedAppSpecificSettingFormItems
-                                                      .isNotEmpty &&
-                                                  !additionalSettingsValid)
-                                      ? null
-                                      : () {
-                                          settingsProvider.selectionClick();
-                                          addApp(context);
-                                        },
+                                      pickedSource == null ||
+                                      !_urlValid ||
+                                      userInput.trim().isEmpty ||
+                                      (pickedSource!
+                                              .combinedAppSpecificSettingFormItems
+                                              .isNotEmpty &&
+                                          !additionalSettingsValid)
+                                  ? null
+                                  : () {
+                                      settingsProvider.selectionClick();
+                                      addApp(context);
+                                    },
                             ),
                     ],
                   ),
@@ -835,12 +835,10 @@ class AddAppPageState extends State<AddAppPage> {
                               ],
                             ],
                             onValueChanges: (values, valid, isBuilding) {
-                              if (values.isNotEmpty &&
-                                  valid &&
-                                  !isBuilding) {
+                              if (values.isNotEmpty && valid && !isBuilding) {
                                 setState(() {
-                                  searchQuery =
-                                      values['searchSomeSources']!.trim();
+                                  searchQuery = values['searchSomeSources']!
+                                      .trim();
                                 });
                               }
                             },
@@ -854,14 +852,13 @@ class AddAppPageState extends State<AddAppPage> {
                                   width: 20,
                                   height: 20,
                                   child: CircularProgressIndicator(
-                                      strokeWidth: 2),
+                                    strokeWidth: 2,
+                                  ),
                                 ),
                               )
                             : IconButton(
-                                icon: const Icon(
-                                    Icons.search_rounded),
-                                visualDensity:
-                                    VisualDensity.compact,
+                                icon: const Icon(Icons.search_rounded),
+                                visualDensity: VisualDensity.compact,
                                 tooltip: tr('search'),
                                 onPressed: doingSomething
                                     ? null
