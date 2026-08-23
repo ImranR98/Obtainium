@@ -223,6 +223,26 @@ Map<String, dynamic> _migrateHtmlSpecificMigrations(
   return additionalSettings;
 }
 
+/// One-time migration for Huawei AppGallery apps saved while the source
+/// forced pseudo-versioning.
+void _migrateHuaweiAppGallery(
+  Map<String, dynamic> json,
+  Map<String, dynamic> additionalSettings,
+) {
+  bool isPseudoVersion(dynamic v) =>
+      v is String && RegExp(r'^\d{10,}$').hasMatch(v);
+  final hasLegacyState =
+      additionalSettings['releaseDateAsVersion'] == true ||
+      isPseudoVersion(json['installedVersion']) ||
+      isPseudoVersion(json['latestVersion']);
+  if (!hasLegacyState) return;
+  additionalSettings['versionDetection'] = true;
+  additionalSettings.remove('releaseDateAsVersion');
+  if (isPseudoVersion(json['installedVersion'])) {
+    json['installedVersion'] = null;
+  }
+}
+
 /// Migrates F-Droid cloudflare URLs to override-source and auto-detects
 /// third-party F-Droid repo URLs.
 void _migrateFdroidOverrides(Map<String, dynamic> json) {
@@ -289,6 +309,10 @@ Map<String, dynamic> appJSONCompatibilityModifiers(Map<String, dynamic> json) {
       originalAdditionalSettings,
       additionalSettings,
     );
+  }
+
+  if (source is HuaweiAppGallery) {
+    _migrateHuaweiAppGallery(json, additionalSettings);
   }
 
   json['additionalSettings'] = jsonEncode(additionalSettings);

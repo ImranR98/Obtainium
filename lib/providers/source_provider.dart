@@ -406,8 +406,9 @@ String getSourceRegex(List<String> hosts) {
 }
 
 /// Delegates to [HttpService.createHttpClient].
-Future<HttpClient> createHttpClient(Map<String, dynamic> additionalSettings) async =>
-    await HttpService().createHttpClient(additionalSettings);
+Future<HttpClient> createHttpClient(
+  Map<String, dynamic> additionalSettings,
+) async => await HttpService().createHttpClient(additionalSettings);
 
 // ------------------------------------------------------------------------
 // More top-level delegation helpers (continued)
@@ -448,6 +449,7 @@ Future<http.Response> httpClientResponseStreamToFinalResponse(
 
 abstract class AppSource {
   List<String> hosts = [];
+  List<String> trustedApkHosts = [];
   bool hostChanged = false;
   bool hostIdenticalDespiteAnyChange = false;
   late String name;
@@ -520,7 +522,8 @@ abstract class AppSource {
       additionalSettingsPlusSourceConfig,
     );
     additionalSettingsPlusSourceConfig['url'] = url;
-    additionalSettingsPlusSourceConfig['enableCertificatePinning'] = sp.enableCertificatePinning;
+    additionalSettingsPlusSourceConfig['enableCertificatePinning'] =
+        sp.enableCertificatePinning;
     final method = postBody == null ? 'GET' : 'POST';
     final requestHeaders = await getRequestHeaders(
       additionalSettingsPlusSourceConfig,
@@ -1336,9 +1339,11 @@ class HttpService {
     ]),
   };
 
-  static Future<List<Uint8List>> _loadCertificateFromAsset(List<String> assetsPath) async {
+  static Future<List<Uint8List>> _loadCertificateFromAsset(
+    List<String> assetsPath,
+  ) async {
     final List<Uint8List> certsBytes = [];
-    for(final certPath in assetsPath) {
+    for (final certPath in assetsPath) {
       final cert = await rootBundle.load(certPath);
       certsBytes.add(cert.buffer.asUint8List());
     }
@@ -1348,32 +1353,35 @@ class HttpService {
   Future<SecurityContext?> _createCertPinning(String url) async {
     final uri = Uri.parse(url);
     final host = uri.host;
-    if(_certificatePins.containsKey(host)){
+    if (_certificatePins.containsKey(host)) {
       final certsBytes = await _certificatePins[host]!;
       final securityContext = SecurityContext();
-      for(final certBytes in certsBytes) {
+      for (final certBytes in certsBytes) {
         securityContext.setTrustedCertificatesBytes(certBytes);
       }
       return securityContext;
-    }
-    else {
+    } else {
       return null;
     }
   }
 
-  Future<HttpClient> createHttpClient(Map<String, dynamic> additionalSettings) async {
+  Future<HttpClient> createHttpClient(
+    Map<String, dynamic> additionalSettings,
+  ) async {
     final insecure = additionalSettings['allowInsecure'] == true;
     final url = additionalSettings['url'] as String;
     final pinning = additionalSettings['enableCertificatePinning'] == true;
     SecurityContext? securityContext;
-    if(pinning) {
+    if (pinning) {
       securityContext = await _createCertPinning(url);
     }
-    final client = securityContext != null ? HttpClient(context: securityContext) : HttpClient();
+    final client = securityContext != null
+        ? HttpClient(context: securityContext)
+        : HttpClient();
     if (insecure) {
       client.badCertificateCallback =
           (X509Certificate cert, String host, int port) {
-            if(_certificatePins.containsKey(host) && pinning) {
+            if (_certificatePins.containsKey(host) && pinning) {
               return false;
             }
             return true;
@@ -1417,9 +1425,7 @@ class HttpService {
     List<Cookie> cookies = [];
     HttpClient? httpClient;
     while (redirectCount < maxRedirects) {
-      httpClient = await createHttpClient(
-        additionalSettings,
-      );
+      httpClient = await createHttpClient(additionalSettings);
       final request = await httpClient.openUrl(method, currentUrl);
       if (requestHeaders != null) {
         requestHeaders.forEach((key, value) {
@@ -1429,8 +1435,12 @@ class HttpService {
       request.cookies.addAll(cookies);
       request.followRedirects = false;
       if (postBody != null) {
-        request.headers.contentType = ContentType.json;
-        request.write(jsonEncode(postBody));
+        if (postBody is String) {
+          request.write(postBody);
+        } else {
+          request.headers.contentType = ContentType.json;
+          request.write(jsonEncode(postBody));
+        }
       }
       final response = await request.close();
 
@@ -1449,8 +1459,7 @@ class HttpService {
             // different origin.
             requestHeaders = requestHeaders == null
                 ? null
-                : (Map<String, String>.from(requestHeaders)
-                  ..removeWhere(
+                : (Map<String, String>.from(requestHeaders)..removeWhere(
                     (key, _) =>
                         sensitiveRedirectHeaders.contains(key.toLowerCase()),
                   ));

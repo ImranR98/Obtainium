@@ -189,8 +189,10 @@ extension AppsProviderInstall on AppsProvider {
         forAPKDownload: true,
       );
       additionalSettingsPlusSourceConfig['url'] = downloadUrl;
-      additionalSettingsPlusSourceConfig['allowInsecure'] = app.settings.getBool('allowInsecure');
-      additionalSettingsPlusSourceConfig['enableCertificatePinning'] = settingsProvider.enableCertificatePinning;
+      additionalSettingsPlusSourceConfig['allowInsecure'] = app.settings
+          .getBool('allowInsecure');
+      additionalSettingsPlusSourceConfig['enableCertificatePinning'] =
+          settingsProvider.enableCertificatePinning;
       var downloadedFile = await downloadFileWithRetry(
         fileNameNoExt,
         source.urlsAlwaysHaveExtension,
@@ -799,7 +801,11 @@ extension AppsProviderInstall on AppsProvider {
         ].contains(getHost(appFileUrl.value)) &&
         context != null &&
         context.mounted) {
-      if (!(settingsProvider.hideAPKOriginWarning) &&
+      final trustedHosts = SourceProvider()
+          .getSource(app.url, overrideSource: app.overrideSource)
+          .trustedApkHosts;
+      if (!trustedHosts.contains(getHost(appFileUrl.value)) &&
+          !(settingsProvider.hideAPKOriginWarning) &&
           await showDialog(
                 context: context,
                 builder: (BuildContext ctx) {
@@ -1057,7 +1063,7 @@ extension AppsProviderInstall on AppsProvider {
           errors,
           downloadedIds,
           notificationsProvider,
-          settingsProvider.enableCertificatePinning
+          settingsProvider.enableCertificatePinning,
         );
       }
     } else {
@@ -1069,7 +1075,7 @@ extension AppsProviderInstall on AppsProvider {
             errors,
             downloadedIds,
             notificationsProvider,
-            settingsProvider.enableCertificatePinning
+            settingsProvider.enableCertificatePinning,
           ),
         ),
       );
@@ -1312,7 +1318,8 @@ extension AppsProviderInstall on AppsProvider {
     bool enableCertificatePinning,
   ) async {
     app.additionalSettings['url'] = fileUrl.value;
-    app.additionalSettings['enableCertificatePinning'] = enableCertificatePinning;
+    app.additionalSettings['enableCertificatePinning'] =
+        enableCertificatePinning;
     try {
       final String downloadPath = '${await getStorageRootPath()}/Download';
       await downloadFile(
