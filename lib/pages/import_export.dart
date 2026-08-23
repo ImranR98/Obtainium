@@ -220,14 +220,11 @@ class _ImportSectionState extends State<ImportSection> {
 
     void runObtainiumImport() {
       settingsProvider.selectionClick();
-      FilePicker.pickFiles()
-          .then((result) async {
-            if (result == null) {
+      FilePicker.pickFile()
+          .then((file) async {
+            if (file == null) {
               if (!context.mounted) return;
               showMessage(tr('cancelled'), context);
-              return;
-            }
-            if (result.files.isEmpty) {
               return;
             }
             if (mounted) {
@@ -235,7 +232,6 @@ class _ImportSectionState extends State<ImportSection> {
                 importInProgress = true;
               });
             }
-            final file = result.files.single;
             final String data;
             if (file.path != null) {
               data = await File(file.path!).readAsString();
@@ -998,9 +994,9 @@ class ImportFromURLListController extends ChangeNotifier {
 
   Future<void> importFromFile(BuildContext context) async {
     try {
-      final result = await FilePicker.pickFiles();
-      if (result != null && result.files.isNotEmpty) {
-        final path = result.files.single.path;
+      final file = await FilePicker.pickFile();
+      if (file != null && file.path != null) {
+        final path = file.path;
         if (path == null) return;
         final urls = RegExp(r'https?://[^\s"]+')
             .allMatches(await File(path).readAsString())
