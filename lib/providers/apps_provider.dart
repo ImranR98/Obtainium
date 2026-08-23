@@ -186,27 +186,25 @@ List<String> moveStrToEnd(List<String> arr, String str, {String? strB}) =>
     _moveToEnd(arr, (e) => e == str || e == strB);
 
 Future<File> downloadFileWithRetry(
-  String url,
   String fileName,
   bool fileNameHasExt,
   Function? onProgress,
-  String destDir, {
+  String destDir,
+  Map<String, dynamic> additionalSettings, {
   bool useExisting = true,
   Map<String, String>? headers,
   int retries = _defaultRetries,
-  bool allowInsecure = false,
   CancellationToken? cancellationToken,
 }) async {
   try {
     return await downloadFile(
-      url,
       fileName,
       fileNameHasExt,
       onProgress,
       destDir,
+      additionalSettings,
       useExisting: useExisting,
       headers: headers,
-      allowInsecure: allowInsecure,
       cancellationToken: cancellationToken,
     );
   } catch (e) {
@@ -218,15 +216,14 @@ Future<File> downloadFileWithRetry(
             e is TimeoutException)) {
       await Future.delayed(const Duration(seconds: _retryDelaySeconds));
       return await downloadFileWithRetry(
-        url,
         fileName,
         fileNameHasExt,
         onProgress,
         destDir,
+        additionalSettings,
         useExisting: useExisting,
         headers: headers,
         retries: (retries - 1),
-        allowInsecure: allowInsecure,
         cancellationToken: cancellationToken,
       );
     } else {
@@ -241,11 +238,10 @@ String hashListOfLists(List<List<int>> data) {
 }
 
 Future<String> checkPartialDownloadHashDynamic(
-  String url, {
+  Map<String, dynamic> additionalSettings, {
   int startingSize = _partialHashCheckStartingSize,
   int lowerLimit = _partialHashCheckLowerLimit,
   Map<String, String>? headers,
-  bool allowInsecure = false,
 }) async {
   for (int i = startingSize; i >= lowerLimit; i -= _partialHashCheckDecrement) {
     // Both requests fetch the same byte range to confirm the hash is
@@ -253,16 +249,14 @@ Future<String> checkPartialDownloadHashDynamic(
     // requests agree, the hash is considered valid.
     final List<String> ab = await Future.wait([
       checkPartialDownloadHash(
-        url,
+        additionalSettings,
         i,
         headers: headers,
-        allowInsecure: allowInsecure,
       ),
       checkPartialDownloadHash(
-        url,
+        additionalSettings,
         i,
         headers: headers,
-        allowInsecure: allowInsecure,
       ),
     ]);
     if (ab[0] == ab[1]) {
@@ -273,17 +267,17 @@ Future<String> checkPartialDownloadHashDynamic(
 }
 
 Future<String> checkPartialDownloadHash(
-  String url,
+  Map<String, dynamic> additionalSettings,
   int bytesToGrab, {
   Map<String, String>? headers,
-  bool allowInsecure = false,
 }) async {
+  final url = additionalSettings['url'] as String;
   final req = Request('GET', Uri.parse(url));
   if (headers != null) {
     req.headers.addAll(headers);
   }
   req.headers[HttpHeaders.rangeHeader] = 'bytes=0-$bytesToGrab';
-  final client = IOClient(createHttpClient(allowInsecure));
+  final client = IOClient(await createHttpClient(additionalSettings));
   try {
     final response = await client.send(req);
     if (response.statusCode < 200 || response.statusCode > 299) {
@@ -300,14 +294,14 @@ Future<String> checkPartialDownloadHash(
 }
 
 Future<String?> checkETagHeader(
-  String url, {
+  Map<String, dynamic> additionalSettings, {
   Map<String, String>? headers,
-  bool allowInsecure = false,
 }) async {
+  final url = additionalSettings['url'] as String;
   final reqHeaders = headers ?? {};
   final req = Request('GET', Uri.parse(url));
   req.headers.addAll(reqHeaders);
-  final client = IOClient(createHttpClient(allowInsecure));
+  final client = IOClient(await createHttpClient(additionalSettings));
   try {
     final StreamedResponse response = await client.send(req);
     if (response.statusCode < 200 || response.statusCode >= 300) {
@@ -382,19 +376,18 @@ Future<File?> _waitForConcurrentDownload(
 
 /// Downloads a file to [destDir] with progress reporting, resuming partial downloads when supported.
 Future<File> downloadFile(
-  String url,
   String fileName,
   bool fileNameHasExt,
   Function? onProgress,
-  String destDir, {
+  String destDir,
+  Map<String, dynamic> additionalSettings, {
   bool useExisting = true,
   Map<String, String>? headers,
-  bool allowInsecure = false,
   CancellationToken? cancellationToken,
 }) async {
   final reqHeaders = headers ?? {};
-  final headersClient = IOClient(createHttpClient(allowInsecure));
-
+  final headersClient = IOClient(await createHttpClient(additionalSettings));
+  final url = additionalSettings['url'] as String;
   final getReq = Request('GET', Uri.parse(url));
   getReq.headers.addAll(reqHeaders);
   final headersResponse = await headersClient.send(getReq);
@@ -417,9 +410,12 @@ Future<File> downloadFile(
   } else if (ext == 'attachment') {
     ext = 'apk';
   }
-  fileName = fileNameHasExt
-      ? fileName
-      : fileName.split('/').last; // Ensure the fileName is a file name
+  // Never trust a source-provided fileName: always reduce it to a plain
+  // basename so it cannot escape destDir, whatever the caller passed.
+  fileName = fileName.replaceAll('\\', '/').split('/').last;
+  if (fileName.isEmpty || fileName == '.' || fileName == '..') {
+    throw ObtainiumError(tr('unexpectedError'));
+  }
   File downloadedFile = File('$destDir/$fileName.$ext');
   if (fileNameHasExt) {
     // If the user says the filename already has an ext, ignore whatever you inferred from above
@@ -488,9 +484,8 @@ Future<File> downloadFile(
   }
   final responseWithClient = await sourceRequestStreamResponse(
     'GET',
-    url,
     reqHeaders,
-    {'allowInsecure': allowInsecure},
+    additionalSettings
   );
   final HttpClient responseClient = responseWithClient.value.key;
   final HttpClientResponse response = responseWithClient.value.value;
@@ -648,9 +643,15 @@ Future<int?> getDownloadSize(
   String url, {
   Map<String, String>? headers,
   bool allowInsecure = false,
+  bool enableCertificatePinning = false,
 }) async {
   final reqHeaders = headers ?? {};
-  final client = IOClient(createHttpClient(allowInsecure));
+  final Map<String, dynamic> additionalSettings = {
+    'allowInsecure': allowInsecure,
+    'url': url,
+    'enableCertificatePinning': enableCertificatePinning
+  };
+  final client = IOClient(await createHttpClient(additionalSettings));
   try {
     final getReq = Request('GET', Uri.parse(url));
     getReq.headers.addAll(reqHeaders);

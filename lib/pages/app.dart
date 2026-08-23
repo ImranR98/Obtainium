@@ -99,6 +99,7 @@ class _AppPageState extends State<AppPage> {
           resolvedUrl,
           headers: headers,
           allowInsecure: app.app.settings.getBool('allowInsecure'),
+          enableCertificatePinning: settingsProvider.enableCertificatePinning
         );
         if (mounted && _sizeProbeKey == key && size != null) {
           setState(() => _probedDownloadSize = size);

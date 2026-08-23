@@ -583,6 +583,15 @@ class SettingsProvider with ChangeNotifier {
     notifyListeners();
   }
 
+  bool get enableCertificatePinning {
+    return _getBool('enableCertificatePinning') ?? false;
+  }
+
+  set enableCertificatePinning(bool enableCertificatePinning) {
+    prefs?.setBool('enableCertificatePinning', enableCertificatePinning);
+    notifyListeners();
+  }
+
   bool get bgUpdatesOnWiFiOnly {
     return _getBool('bgUpdatesOnWiFiOnly') ?? false;
   }

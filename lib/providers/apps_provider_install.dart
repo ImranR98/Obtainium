@@ -188,8 +188,10 @@ extension AppsProviderInstall on AppsProvider {
         downloadUrl,
         forAPKDownload: true,
       );
+      additionalSettingsPlusSourceConfig['url'] = downloadUrl;
+      additionalSettingsPlusSourceConfig['allowInsecure'] = app.settings.getBool('allowInsecure');
+      additionalSettingsPlusSourceConfig['enableCertificatePinning'] = settingsProvider.enableCertificatePinning;
       var downloadedFile = await downloadFileWithRetry(
-        downloadUrl,
         fileNameNoExt,
         source.urlsAlwaysHaveExtension,
         headers: headers,
@@ -222,8 +224,8 @@ extension AppsProviderInstall on AppsProvider {
           prevProg = prog;
         },
         this.apkDir.path,
+        additionalSettingsPlusSourceConfig,
         useExisting: useExisting,
-        allowInsecure: app.settings.getBool('allowInsecure'),
         cancellationToken: cancellationToken,
       );
       if (apps[app.id] != null) {
@@ -453,14 +455,21 @@ extension AppsProviderInstall on AppsProvider {
     if (!destDir.existsSync()) {
       destDir.createSync(recursive: true);
     }
+    final destRoot = Uri.file(
+      destDir.absolute.path,
+    ).normalizePath().toFilePath();
     for (final file in tarArchive.files) {
-      if (file.isFile) {
-        final content = file.content;
-        final outPath = '${destDir.path}/${file.name}';
-        final outFile = File(outPath);
-        outFile.createSync(recursive: true);
-        outFile.writeAsBytesSync(content);
+      if (!file.isFile) continue;
+      // Reject entries whose path would escape the destination directory.
+      final outPath = Uri.file(
+        '$destRoot/${file.name}',
+      ).normalizePath().toFilePath();
+      if (outPath != destRoot && !outPath.startsWith('$destRoot/')) {
+        throw ObtainiumError(tr('invalidArchive'));
       }
+      final outFile = File(outPath);
+      outFile.createSync(recursive: true);
+      outFile.writeAsBytesSync(file.content);
     }
   }
 
@@ -1048,6 +1057,7 @@ extension AppsProviderInstall on AppsProvider {
           errors,
           downloadedIds,
           notificationsProvider,
+          settingsProvider.enableCertificatePinning
         );
       }
     } else {
@@ -1059,6 +1069,7 @@ extension AppsProviderInstall on AppsProvider {
             errors,
             downloadedIds,
             notificationsProvider,
+            settingsProvider.enableCertificatePinning
           ),
         ),
       );
@@ -1298,11 +1309,13 @@ extension AppsProviderInstall on AppsProvider {
     MultiAppMultiError errors,
     List<String> downloadedIds,
     NotificationsProvider notificationsProvider,
+    bool enableCertificatePinning,
   ) async {
+    app.additionalSettings['url'] = fileUrl.value;
+    app.additionalSettings['enableCertificatePinning'] = enableCertificatePinning;
     try {
       final String downloadPath = '${await getStorageRootPath()}/Download';
       await downloadFile(
-        fileUrl.value,
         fileUrl.key,
         true,
         (double? progress, [int? received, int? total]) {
@@ -1318,6 +1331,7 @@ extension AppsProviderInstall on AppsProvider {
           );
         },
         downloadPath,
+        app.additionalSettings,
         headers: await SourceProvider()
             .getSource(app.url, overrideSource: app.overrideSource)
             .getRequestHeaders(
@@ -1326,7 +1340,6 @@ extension AppsProviderInstall on AppsProvider {
               forAPKDownload: AppSource.isApkOrContainerFile(fileUrl.key),
             ),
         useExisting: false,
-        allowInsecure: app.settings.getBool('allowInsecure'),
       );
       unawaited(
         notificationsProvider.notify(

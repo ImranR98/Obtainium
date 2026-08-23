@@ -12,6 +12,7 @@ import 'dart:typed_data';
 import 'package:crypto/crypto.dart';
 import 'package:device_info_plus/device_info_plus.dart';
 import 'package:easy_localization/easy_localization.dart';
+import 'package:flutter/services.dart';
 import 'package:http/http.dart' as http;
 import 'package:obtainium/app_sources/apkcombo.dart';
 import 'package:obtainium/app_sources/apkmirror.dart';
@@ -405,8 +406,8 @@ String getSourceRegex(List<String> hosts) {
 }
 
 /// Delegates to [HttpService.createHttpClient].
-HttpClient createHttpClient(bool insecure) =>
-    HttpService().createHttpClient(insecure);
+Future<HttpClient> createHttpClient(Map<String, dynamic> additionalSettings) async =>
+    await HttpService().createHttpClient(additionalSettings);
 
 // ------------------------------------------------------------------------
 // More top-level delegation helpers (continued)
@@ -416,14 +417,12 @@ HttpClient createHttpClient(bool insecure) =>
 Future<MapEntry<Uri, MapEntry<HttpClient, HttpClientResponse>>>
 sourceRequestStreamResponse(
   String method,
-  String url,
   Map<String, String>? requestHeaders,
   Map<String, dynamic> additionalSettings, {
   bool followRedirects = true,
   Object? postBody,
 }) => HttpService().sourceRequestStreamResponse(
   method,
-  url,
   requestHeaders,
   additionalSettings,
   followRedirects: followRedirects,
@@ -520,6 +519,8 @@ abstract class AppSource {
       url,
       additionalSettingsPlusSourceConfig,
     );
+    additionalSettingsPlusSourceConfig['url'] = url;
+    additionalSettingsPlusSourceConfig['enableCertificatePinning'] = sp.enableCertificatePinning;
     final method = postBody == null ? 'GET' : 'POST';
     final requestHeaders = await getRequestHeaders(
       additionalSettingsPlusSourceConfig,
@@ -528,7 +529,6 @@ abstract class AppSource {
     final streamedResponseUrlWithResponseAndClient =
         await sourceRequestStreamResponse(
           method,
-          url,
           requestHeaders,
           additionalSettingsPlusSourceConfig,
           followRedirects: followRedirects,
@@ -1312,14 +1312,83 @@ class TypedSettings {
 class HttpService {
   static const int maxRedirects = 10;
 
-  HttpClient createHttpClient(bool insecure) {
-    final client = HttpClient();
+  /// Headers that must never be forwarded to a different origin on redirect.
+  static const Set<String> sensitiveRedirectHeaders = {
+    'authorization',
+    'proxy-authorization',
+    'cookie',
+  };
+
+  static final Map<String, Future<List<Uint8List>>> _certificatePins = {
+    'github.com': _loadCertificateFromAsset([
+      'assets/ca-certs/sectigo-pub-serv-auth-r46.crt',
+      'assets/ca-certs/sectigo-pub-serv-auth-e46.crt',
+    ]),
+    'codeberg.org': _loadCertificateFromAsset([
+      'assets/ca-certs/isrg-root-x1.crt',
+      'assets/ca-certs/isrg-root-x2.crt',
+      'assets/ca-certs/isrg-root-ye.crt',
+      'assets/ca-certs/isrg-root-yr.crt',
+    ]),
+    'gitlab.com': _loadCertificateFromAsset([
+      'assets/ca-certs/sectigo-pub-serv-auth-r46.crt',
+      'assets/ca-certs/sectigo-pub-serv-auth-e46.crt',
+    ]),
+  };
+
+  static Future<List<Uint8List>> _loadCertificateFromAsset(List<String> assetsPath) async {
+    final List<Uint8List> certsBytes = [];
+    for(final certPath in assetsPath) {
+      final cert = await rootBundle.load(certPath);
+      certsBytes.add(cert.buffer.asUint8List());
+    }
+    return certsBytes;
+  }
+
+  Future<SecurityContext?> _createCertPinning(String url) async {
+    final uri = Uri.parse(url);
+    final host = uri.host;
+    if(_certificatePins.containsKey(host)){
+      final certsBytes = await _certificatePins[host]!;
+      final securityContext = SecurityContext();
+      for(final certBytes in certsBytes) {
+        securityContext.setTrustedCertificatesBytes(certBytes);
+      }
+      return securityContext;
+    }
+    else {
+      return null;
+    }
+  }
+
+  Future<HttpClient> createHttpClient(Map<String, dynamic> additionalSettings) async {
+    final insecure = additionalSettings['allowInsecure'] == true;
+    final url = additionalSettings['url'] as String;
+    final pinning = additionalSettings['enableCertificatePinning'] == true;
+    SecurityContext? securityContext;
+    if(pinning) {
+      securityContext = await _createCertPinning(url);
+    }
+    final client = securityContext != null ? HttpClient(context: securityContext) : HttpClient();
     if (insecure) {
       client.badCertificateCallback =
-          (X509Certificate cert, String host, int port) => true;
+          (X509Certificate cert, String host, int port) {
+            if(_certificatePins.containsKey(host) && pinning) {
+              return false;
+            }
+            return true;
+          };
     }
     return client;
   }
+
+  /// Whether two URIs share the same origin (scheme, host, and port — Dart
+  /// normalizes default ports for http/https, so explicit and implicit
+  /// default ports compare equal).
+  static bool isSameOrigin(Uri a, Uri b) =>
+      a.scheme.toLowerCase() == b.scheme.toLowerCase() &&
+      a.host.toLowerCase() == b.host.toLowerCase() &&
+      a.port == b.port;
 
   String ensureAbsoluteUrl(String ambiguousUrl, Uri referenceAbsoluteUrl) {
     try {
@@ -1337,19 +1406,19 @@ class HttpService {
   Future<MapEntry<Uri, MapEntry<HttpClient, HttpClientResponse>>>
   sourceRequestStreamResponse(
     String method,
-    String url,
     Map<String, String>? requestHeaders,
     Map<String, dynamic> additionalSettings, {
     bool followRedirects = true,
     Object? postBody,
   }) async {
+    final url = additionalSettings['url'] as String;
     var currentUrl = Uri.parse(url);
     var redirectCount = 0;
     List<Cookie> cookies = [];
     HttpClient? httpClient;
     while (redirectCount < maxRedirects) {
-      httpClient = createHttpClient(
-        additionalSettings['allowInsecure'] == true,
+      httpClient = await createHttpClient(
+        additionalSettings,
       );
       final request = await httpClient.openUrl(method, currentUrl);
       if (requestHeaders != null) {
@@ -1369,9 +1438,28 @@ class HttpService {
           (response.statusCode >= 300 && response.statusCode <= 399)) {
         final location = response.headers.value(HttpHeaders.locationHeader);
         if (location != null) {
-          currentUrl = Uri.parse(ensureAbsoluteUrl(location, currentUrl));
+          final nextUrl = Uri.parse(ensureAbsoluteUrl(location, currentUrl));
+          if (currentUrl.scheme == 'https' && nextUrl.scheme == 'http') {
+            // Never follow a redirect that downgrades to cleartext HTTP.
+            httpClient.close();
+            throw ObtainiumError(tr('insecureRedirect'));
+          }
+          if (!isSameOrigin(currentUrl, nextUrl)) {
+            // Do not forward credentials or session cookies to a
+            // different origin.
+            requestHeaders = requestHeaders == null
+                ? null
+                : (Map<String, String>.from(requestHeaders)
+                  ..removeWhere(
+                    (key, _) =>
+                        sensitiveRedirectHeaders.contains(key.toLowerCase()),
+                  ));
+            cookies = [];
+          } else {
+            cookies = response.cookies;
+          }
+          currentUrl = nextUrl;
           redirectCount++;
-          cookies = response.cookies;
           httpClient.close();
           httpClient = null;
           continue;
