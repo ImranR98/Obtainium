@@ -1432,11 +1432,19 @@ class _BulkUpdateDialogState extends State<_BulkUpdateDialog> {
               style: tt.bodySmall?.copyWith(color: cs.onSurfaceVariant),
             ),
           if (versionLabel.isNotEmpty)
-            Text(
-              versionLabel,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: tt.bodySmall?.copyWith(color: cs.onSurfaceVariant),
+            Directionality(
+              // Force LTR for the "old → new" transition so the arrow isn't
+              // bidi-mirrored/reordered under RTL locales, which made it
+              // look like a downgrade instead of an update.
+              textDirection: isUpdate
+                  ? TextDirection.ltr
+                  : Directionality.of(context),
+              child: Text(
+                versionLabel,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: tt.bodySmall?.copyWith(color: cs.onSurfaceVariant),
+              ),
             ),
         ],
       ),
