@@ -189,8 +189,10 @@ extension AppsProviderInstall on AppsProvider {
         forAPKDownload: true,
       );
       additionalSettingsPlusSourceConfig['url'] = downloadUrl;
-      additionalSettingsPlusSourceConfig['allowInsecure'] = app.settings.getBool('allowInsecure');
-      additionalSettingsPlusSourceConfig['enableCertificatePinning'] = settingsProvider.enableCertificatePinning;
+      additionalSettingsPlusSourceConfig['allowInsecure'] = app.settings
+          .getBool('allowInsecure');
+      additionalSettingsPlusSourceConfig['enableCertificatePinning'] =
+          settingsProvider.enableCertificatePinning;
       var downloadedFile = await downloadFileWithRetry(
         fileNameNoExt,
         source.urlsAlwaysHaveExtension,
@@ -367,7 +369,7 @@ extension AppsProviderInstall on AppsProvider {
   Future<bool> canInstallSilently(App app) async {
     if (app.apkUrls.length > 1) {
       AppLogger.info(
-          'App will not be installed silently: multiple APK URLs require manual selection: ${app.id}',
+        'App will not be installed silently: multiple APK URLs require manual selection: ${app.id}',
       );
       return false; // Manual API selection means silent install is not possible
     }
@@ -382,13 +384,13 @@ extension AppsProviderInstall on AppsProvider {
   Future<bool> canInstallSilentlyInBackground(App app) async {
     if (!settingsProvider.enableBackgroundUpdates) {
       AppLogger.info(
-          'App will not be installed in the background: background updates are disabled: ${app.id}',
+        'App will not be installed in the background: background updates are disabled: ${app.id}',
       );
       return false;
     }
     if (app.settings.getBool('exemptFromBackgroundUpdates')) {
       AppLogger.info(
-          'App will not be installed in the background: exempted from background updates: ${app.id}',
+        'App will not be installed in the background: exempted from background updates: ${app.id}',
       );
       return false;
     }
@@ -467,8 +469,8 @@ extension AppsProviderInstall on AppsProvider {
       if (outPath != destRoot && !outPath.startsWith('$destRoot/')) {
         throw ObtainiumError(tr('invalidArchive'));
       }
-        final outFile = File(outPath);
-        outFile.createSync(recursive: true);
+      final outFile = File(outPath);
+      outFile.createSync(recursive: true);
       outFile.writeAsBytesSync(file.content);
     }
   }
@@ -518,7 +520,7 @@ extension AppsProviderInstall on AppsProvider {
           unawaited(dir.file.delete());
         } catch (e) {
           AppLogger.info(
-              'Could not install container from ${dir.type}: ${e.toString()}',
+            'Could not install container from ${dir.type}: ${e.toString()}',
           );
           errors.add(dir.appId, e, appName: apps[dir.appId]?.name);
         }
@@ -550,7 +552,7 @@ extension AppsProviderInstall on AppsProvider {
         unawaited(dir.file.delete());
       } catch (e) {
         AppLogger.info(
-            'Could not install APKs for ${dir.appId} from ${dir.type}: ${e.toString()}',
+          'Could not install APKs for ${dir.appId} from ${dir.type}: ${e.toString()}',
         );
         errors.add(dir.appId, e, appName: apps[dir.appId]?.name);
       }
@@ -585,7 +587,7 @@ extension AppsProviderInstall on AppsProvider {
         }
       } catch (e) {
         AppLogger.info(
-            'Failed to delete bad download files for ${file.appId}: ${e.toString()}',
+          'Failed to delete bad download files for ${file.appId}: ${e.toString()}',
         );
       }
       throw ObtainiumError(tr('badDownload'))..url = apps[file.appId]?.app.url;
@@ -594,7 +596,7 @@ extension AppsProviderInstall on AppsProvider {
       apps[file.appId]!.app.id,
     );
     AppLogger.info(
-        'Installing "${newInfo.packageName}" version "${newInfo.versionName}" versionCode "${newInfo.versionCode}"${appInfo != null ? ' (from existing version "${appInfo.versionName}" versionCode "${appInfo.versionCode}")' : ''}',
+      'Installing "${newInfo.packageName}" version "${newInfo.versionName}" versionCode "${newInfo.versionCode}"${appInfo != null ? ' (from existing version "${appInfo.versionName}" versionCode "${appInfo.versionCode}")' : ''}',
     );
     final newVersionCode = newInfo.versionCode;
     final oldVersionCode = appInfo?.versionCode;
@@ -636,7 +638,7 @@ extension AppsProviderInstall on AppsProvider {
         deleteFile(file.file);
       } catch (e) {
         AppLogger.info(
-            'Failed to delete APK after failed install: ${e.toString()}',
+          'Failed to delete APK after failed install: ${e.toString()}',
         );
       }
       throw InstallError(result.errorCode!);
@@ -708,7 +710,7 @@ extension AppsProviderInstall on AppsProvider {
         ).create(recursive: true);
         await file.copy(obbDestPath);
         AppLogger.info(
-            'Copied OBB file $obbFileName for $appId via direct file access',
+          'Copied OBB file $obbFileName for $appId via direct file access',
         );
       } catch (e) {
         AppLogger.info('Failed to place OBB file for $appId: ${e.toString()}');
@@ -721,7 +723,7 @@ extension AppsProviderInstall on AppsProvider {
       final String obbFileName = file.path.split('/').last;
       await file.copy('$obbDirPath/$obbFileName');
       AppLogger.info(
-          'Copied OBB file $obbFileName for $appId via direct file access',
+        'Copied OBB file $obbFileName for $appId via direct file access',
       );
     }
   }
@@ -1061,7 +1063,7 @@ extension AppsProviderInstall on AppsProvider {
           errors,
           downloadedIds,
           notificationsProvider,
-          settingsProvider.enableCertificatePinning
+          settingsProvider.enableCertificatePinning,
         );
       }
     } else {
@@ -1073,7 +1075,7 @@ extension AppsProviderInstall on AppsProvider {
             errors,
             downloadedIds,
             notificationsProvider,
-            settingsProvider.enableCertificatePinning
+            settingsProvider.enableCertificatePinning,
           ),
         ),
       );
@@ -1156,15 +1158,15 @@ extension AppsProviderInstall on AppsProvider {
           } else {
             AppLogger.warn(
               'BG install poll timed out for $id after $_bgInstallConfirmAttempts attempts',
-          );
+            );
           }
           if (!sayInstalled) {
             final latestInfo = await getInstalledInfo(id);
             AppLogger.warn(
-                'BG install final state for $id: wasInstalled=${baseline.wasInstalled}, '
-                'baselineUpdateTime=${baseline.updateTime}, '
-                'currentUpdateTime=${latestInfo?.lastUpdateTime}, '
-                'latestVersion=${appEntry.app.latestVersion}',
+              'BG install final state for $id: wasInstalled=${baseline.wasInstalled}, '
+              'baselineUpdateTime=${baseline.updateTime}, '
+              'currentUpdateTime=${latestInfo?.lastUpdateTime}, '
+              'latestVersion=${appEntry.app.latestVersion}',
             );
           }
         } else {
@@ -1192,15 +1194,15 @@ extension AppsProviderInstall on AppsProvider {
           } else {
             AppLogger.warn(
               'BG install poll timed out for $id after $_bgInstallConfirmAttempts attempts',
-          );
+            );
           }
           if (!sayInstalled) {
             final latestInfo = await getInstalledInfo(id);
             AppLogger.warn(
-                'BG install final state for $id: wasInstalled=${baseline.wasInstalled}, '
-                'baselineUpdateTime=${baseline.updateTime}, '
-                'currentUpdateTime=${latestInfo?.lastUpdateTime}, '
-                'latestVersion=${appEntry.app.latestVersion}',
+              'BG install final state for $id: wasInstalled=${baseline.wasInstalled}, '
+              'baselineUpdateTime=${baseline.updateTime}, '
+              'currentUpdateTime=${latestInfo?.lastUpdateTime}, '
+              'latestVersion=${appEntry.app.latestVersion}',
             );
           }
         } else {
@@ -1316,7 +1318,8 @@ extension AppsProviderInstall on AppsProvider {
     bool enableCertificatePinning,
   ) async {
     app.additionalSettings['url'] = fileUrl.value;
-    app.additionalSettings['enableCertificatePinning'] = enableCertificatePinning;
+    app.additionalSettings['enableCertificatePinning'] =
+        enableCertificatePinning;
     try {
       final String downloadPath = '${await getStorageRootPath()}/Download';
       await downloadFile(

@@ -1,10 +1,9 @@
-import 'dart:async';
 import 'dart:convert';
 import 'dart:math';
 
 import 'package:easy_localization/easy_localization.dart';
+import 'package:obtainium/core/logging/app_logger.dart';
 import 'package:obtainium/custom_errors.dart';
-import 'package:obtainium/providers/logs_provider.dart';
 import 'package:obtainium/providers/settings_provider.dart';
 import 'package:obtainium/providers/source_provider.dart';
 
@@ -275,20 +274,12 @@ class HuaweiAppGallery extends AppSource {
         // Non-zero rtnCode - possibly an expired sign. Refresh once and retry.
         lastError = 'rtnCode=$rtnCode rtnDesc=${resp['rtnDesc']}';
       }
-      unawaited(
-        LogsProvider().add(
-          '$name: appDetailById failed ($lastError), using appdl fallback',
-          level: LogLevel.warning,
-        ),
+      AppLogger.warn(
+        '$name: appDetailById failed ($lastError), using appdl fallback',
       );
       return null;
     } catch (e) {
-      unawaited(
-        LogsProvider().add(
-          '$name: store API failed ($e), using appdl fallback',
-          level: LogLevel.warning,
-        ),
-      );
+      AppLogger.warn('$name: store API failed ($e), using appdl fallback');
       return null;
     }
   }

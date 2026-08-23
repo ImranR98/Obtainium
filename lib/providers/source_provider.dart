@@ -267,7 +267,7 @@ class App {
       // being lost (e.g. when its saved URL no longer matches any source).
       json = originalJson;
       AppLogger.warn(
-          'Error running JSON compat modifiers (using original JSON): ${e.toString()}',
+        'Error running JSON compat modifiers (using original JSON): ${e.toString()}',
       );
     }
     try {
@@ -406,8 +406,9 @@ String getSourceRegex(List<String> hosts) {
 }
 
 /// Delegates to [HttpService.createHttpClient].
-Future<HttpClient> createHttpClient(Map<String, dynamic> additionalSettings) async =>
-    await HttpService().createHttpClient(additionalSettings);
+Future<HttpClient> createHttpClient(
+  Map<String, dynamic> additionalSettings,
+) async => await HttpService().createHttpClient(additionalSettings);
 
 // ------------------------------------------------------------------------
 // More top-level delegation helpers (continued)
@@ -521,7 +522,8 @@ abstract class AppSource {
       additionalSettingsPlusSourceConfig,
     );
     additionalSettingsPlusSourceConfig['url'] = url;
-    additionalSettingsPlusSourceConfig['enableCertificatePinning'] = sp.enableCertificatePinning;
+    additionalSettingsPlusSourceConfig['enableCertificatePinning'] =
+        sp.enableCertificatePinning;
     final method = postBody == null ? 'GET' : 'POST';
     final requestHeaders = await getRequestHeaders(
       additionalSettingsPlusSourceConfig,
@@ -829,11 +831,11 @@ abstract class AppSource {
       var val = hostChanged && !hostIdenticalDespiteAnyChange
           ? additionalSettings[e.key]
           : (additionalSettings[e.key] is String &&
-                  (additionalSettings[e.key] as String).isNotEmpty)
-              ? additionalSettings[e.key]
-              : (e is GeneratedFormSwitch
-                  ? settingsProvider.getSettingBool(e.key).toString()
-                  : settingsProvider.getSettingString(e.key));
+                (additionalSettings[e.key] as String).isNotEmpty)
+          ? additionalSettings[e.key]
+          : (e is GeneratedFormSwitch
+                ? settingsProvider.getSettingBool(e.key).toString()
+                : settingsProvider.getSettingString(e.key));
       if (val != null) {
         if (e is GeneratedFormSwitch) {
           val = val.toString();
@@ -1337,9 +1339,11 @@ class HttpService {
     ]),
   };
 
-  static Future<List<Uint8List>> _loadCertificateFromAsset(List<String> assetsPath) async {
+  static Future<List<Uint8List>> _loadCertificateFromAsset(
+    List<String> assetsPath,
+  ) async {
     final List<Uint8List> certsBytes = [];
-    for(final certPath in assetsPath) {
+    for (final certPath in assetsPath) {
       final cert = await rootBundle.load(certPath);
       certsBytes.add(cert.buffer.asUint8List());
     }
@@ -1349,32 +1353,35 @@ class HttpService {
   Future<SecurityContext?> _createCertPinning(String url) async {
     final uri = Uri.parse(url);
     final host = uri.host;
-    if(_certificatePins.containsKey(host)){
+    if (_certificatePins.containsKey(host)) {
       final certsBytes = await _certificatePins[host]!;
       final securityContext = SecurityContext();
-      for(final certBytes in certsBytes) {
+      for (final certBytes in certsBytes) {
         securityContext.setTrustedCertificatesBytes(certBytes);
       }
       return securityContext;
-    }
-    else {
+    } else {
       return null;
     }
   }
 
-  Future<HttpClient> createHttpClient(Map<String, dynamic> additionalSettings) async {
+  Future<HttpClient> createHttpClient(
+    Map<String, dynamic> additionalSettings,
+  ) async {
     final insecure = additionalSettings['allowInsecure'] == true;
     final url = additionalSettings['url'] as String;
     final pinning = additionalSettings['enableCertificatePinning'] == true;
     SecurityContext? securityContext;
-    if(pinning) {
+    if (pinning) {
       securityContext = await _createCertPinning(url);
     }
-    final client = securityContext != null ? HttpClient(context: securityContext) : HttpClient();
+    final client = securityContext != null
+        ? HttpClient(context: securityContext)
+        : HttpClient();
     if (insecure) {
       client.badCertificateCallback =
           (X509Certificate cert, String host, int port) {
-            if(_certificatePins.containsKey(host) && pinning) {
+            if (_certificatePins.containsKey(host) && pinning) {
               return false;
             }
             return true;
@@ -1418,9 +1425,7 @@ class HttpService {
     List<Cookie> cookies = [];
     HttpClient? httpClient;
     while (redirectCount < maxRedirects) {
-      httpClient = await createHttpClient(
-        additionalSettings,
-      );
+      httpClient = await createHttpClient(additionalSettings);
       final request = await httpClient.openUrl(method, currentUrl);
       if (requestHeaders != null) {
         requestHeaders.forEach((key, value) {
@@ -1454,14 +1459,13 @@ class HttpService {
             // different origin.
             requestHeaders = requestHeaders == null
                 ? null
-                : (Map<String, String>.from(requestHeaders)
-                  ..removeWhere(
+                : (Map<String, String>.from(requestHeaders)..removeWhere(
                     (key, _) =>
                         sensitiveRedirectHeaders.contains(key.toLowerCase()),
                   ));
             cookies = [];
           } else {
-          cookies = response.cookies;
+            cookies = response.cookies;
           }
           currentUrl = nextUrl;
           redirectCount++;
