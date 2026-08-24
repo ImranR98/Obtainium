@@ -52,7 +52,8 @@ extension AppsProviderUpdates on AppsProvider {
   /// minimum update age and should therefore be suppressed.
   bool _isReleaseYoungerThanMinAge(App currentApp, App newApp) {
     final releaseDate = newApp.releaseDate;
-    if (releaseDate == null || newApp.latestVersion == currentApp.latestVersion) {
+    if (releaseDate == null ||
+        newApp.latestVersion == currentApp.latestVersion) {
       return false;
     }
     final raw = currentApp.additionalSettings['minimumUpdateAgeDays'];

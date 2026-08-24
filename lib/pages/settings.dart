@@ -599,9 +599,9 @@ class _SettingsPageState extends State<SettingsPage> {
         ],
       ],
       ToggleTile(
-          label: tr('enableCertificatePinning'),
-          value: settingsProvider.enableCertificatePinning,
-          onChanged: (value) => settingsProvider.enableCertificatePinning = value,
+        label: tr('enableCertificatePinning'),
+        value: settingsProvider.enableCertificatePinning,
+        onChanged: (value) => settingsProvider.enableCertificatePinning = value,
       ),
       ToggleTile(
         label: tr('checkOnStart'),
@@ -648,7 +648,8 @@ class _SettingsPageState extends State<SettingsPage> {
       ToggleTile(
         label: tr('skipBulkUpdateConfirmation'),
         value: settingsProvider.skipBulkUpdateConfirmation,
-        onChanged: (value) => settingsProvider.skipBulkUpdateConfirmation = value,
+        onChanged: (value) =>
+            settingsProvider.skipBulkUpdateConfirmation = value,
       ),
       _fieldTile(
         context,
@@ -665,8 +666,7 @@ class _SettingsPageState extends State<SettingsPage> {
           ],
           onSelected: (value) {
             if (value != null) {
-              settingsProvider.minimumUpdateAgeDays =
-                  int.tryParse(value) ?? 0;
+              settingsProvider.minimumUpdateAgeDays = int.tryParse(value) ?? 0;
             }
           },
         ),

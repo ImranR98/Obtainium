@@ -297,10 +297,7 @@ class AppsPageState extends State<AppsPage> {
                 final np = context.read<NotificationsProvider>();
                 np.cancel(updateNotificationId);
                 np.cancel(
-                  SilentUpdateAttemptNotification(
-                    [],
-                    id: value[0].hashCode,
-                  ).id,
+                  SilentUpdateAttemptNotification([], id: value[0].hashCode).id,
                 );
               }
             }

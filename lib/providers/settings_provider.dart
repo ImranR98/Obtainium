@@ -23,7 +23,6 @@ const String obtainiumId = 'dev.imranr.obtainium';
 const String obtainiumUrl = 'https://github.com/ImranR98/Obtainium';
 const Color obtainiumThemeColor = Color(0xFF6438B5);
 
-
 Locale? tryParseLocale(String? localeString) {
   if (localeString == null) return null;
   final split = localeString.split('-');
@@ -703,8 +702,7 @@ class SettingsProvider with ChangeNotifier {
     notifyListeners();
   }
 
-  String? get globalApkFilterRegEx =>
-      getSettingString('globalApkFilterRegEx');
+  String? get globalApkFilterRegEx => getSettingString('globalApkFilterRegEx');
 
   set globalApkFilterRegEx(String? val) {
     final cleaned = val?.trim();
