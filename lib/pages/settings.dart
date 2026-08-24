@@ -1340,9 +1340,9 @@ class _ExternalInstallerTileState extends State<_ExternalInstallerTile> {
       future: _targetsFuture,
       builder: (context, snapshot) {
         if (snapshot.connectionState != ConnectionState.done) {
-          return ListTile(
-            contentPadding: const EdgeInsets.symmetric(horizontal: 8),
-            leading: const SizedBox(
+          return const ListTile(
+            contentPadding: EdgeInsets.symmetric(horizontal: 8),
+            leading: SizedBox(
               width: 24,
               height: 24,
               child: CircularProgressIndicator(),

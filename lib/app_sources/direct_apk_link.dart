@@ -91,7 +91,7 @@ class DirectAPKLink extends AppSource {
       }
       additionalSettingsNew['directAPKLink'] = true;
       additionalSettingsNew['versionDetection'] = false;
-      return html.getLatestAPKDetails(standardUrl, additionalSettingsNew);
+      return await html.getLatestAPKDetails(standardUrl, additionalSettingsNew);
     } catch (e) {
       rethrowOrWrapError(e);
     }
