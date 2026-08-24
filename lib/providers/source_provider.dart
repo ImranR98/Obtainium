@@ -687,7 +687,7 @@ abstract class AppSource {
           for (final days in minimumUpdateAgeOptions)
             MapEntry(
               days == 0 ? '' : days.toString(),
-              days == 0 ? tr('useGlobalDefault') : tr('day', args: [days]),
+              days == 0 ? tr('useGlobalDefault') : plural('day', days),
             ),
         ],
         label: tr('minimumUpdateAgeDays'),

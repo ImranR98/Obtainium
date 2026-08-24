@@ -661,7 +661,7 @@ class _SettingsPageState extends State<SettingsPage> {
             for (final days in minimumUpdateAgeOptions)
               DropdownMenuEntry(
                 value: days.toString(),
-                label: days == 0 ? tr('none') : tr('day', args: [days]),
+                label: days == 0 ? tr('none') : plural('day', days),
               ),
           ],
           onSelected: (value) {
