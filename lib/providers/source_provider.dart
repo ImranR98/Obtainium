@@ -473,6 +473,7 @@ abstract class AppSource {
   bool suppressStandardVersionExtraction = false;
   List<String> excludeCommonSettingKeys = [];
   bool urlsAlwaysHaveExtension = false;
+  bool allowInsecureRedirects = false;
   bool allowIncludeZips = false;
   bool allowIncludeTarballs = false;
   String get sourceIdentifier => runtimeType.toString();
@@ -530,6 +531,8 @@ abstract class AppSource {
     additionalSettingsPlusSourceConfig['url'] = url;
     additionalSettingsPlusSourceConfig['enableCertificatePinning'] =
         sp.enableCertificatePinning;
+    additionalSettingsPlusSourceConfig['allowInsecureRedirects'] =
+        allowInsecureRedirects;
     final method = postBody == null ? 'GET' : 'POST';
     final requestHeaders = await getRequestHeaders(
       additionalSettingsPlusSourceConfig,
@@ -1474,7 +1477,10 @@ class HttpService {
         final location = response.headers.value(HttpHeaders.locationHeader);
         if (location != null) {
           final nextUrl = Uri.parse(ensureAbsoluteUrl(location, currentUrl));
-          if (currentUrl.scheme == 'https' && nextUrl.scheme == 'http') {
+          if (currentUrl.scheme == 'https' &&
+              nextUrl.scheme == 'http' &&
+              additionalSettings['allowInsecure'] != true &&
+              additionalSettings['allowInsecureRedirects'] != true) {
             // Never follow a redirect that downgrades to cleartext HTTP.
             httpClient.close();
             throw ObtainiumError(tr('insecureRedirect'));

@@ -220,7 +220,7 @@
     "installX": "Install {}",
     "installed": "Installed",
     "installedVersionX": "Installed: {}",
-    "insecureRedirect": "Refused to follow a redirect from HTTPS to insecure HTTP",
+    "insecureRedirect": "Refused to follow a redirect from HTTPS to insecure HTTP. This can be allowed with the per-app 'Allow insecure connections' setting.",
     "installing": "Installing",
     "intermediateLink": "Intermediate link",
     "intermediateLinkNotFound": "Intermediate link not found",
