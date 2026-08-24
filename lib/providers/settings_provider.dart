@@ -734,6 +734,15 @@ class SettingsProvider with ChangeNotifier {
     notifyListeners();
   }
 
+  bool get skipBulkUpdateConfirmation {
+    return _getBool('skipBulkUpdateConfirmation') ?? false;
+  }
+
+  set skipBulkUpdateConfirmation(bool val) {
+    prefs?.setBool('skipBulkUpdateConfirmation', val);
+    notifyListeners();
+  }
+
   int get exportSettings {
     return _getInt('exportSettings') ?? 1;
   }

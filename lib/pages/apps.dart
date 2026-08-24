@@ -262,13 +262,53 @@ class AppsPageState extends State<AppsPage> {
         ? null
         : () {
             settingsProvider.heavyImpact();
-            _showObtainDialog(
-              context,
-              existingUpdateIdsAllOrSelected,
-              newInstallIdsAllOrSelected,
-              trackOnlyUpdateIdsAllOrSelected,
-            );
+            if (settingsProvider.skipBulkUpdateConfirmation) {
+              final ids = <String>{
+                ...existingUpdateIdsAllOrSelected,
+                ...trackOnlyUpdateIdsAllOrSelected,
+              };
+              if (existingUpdateIdsAllOrSelected.isEmpty) {
+                ids.addAll(newInstallIdsAllOrSelected);
+              }
+              _obtainApps(ids.toList(), context);
+            } else {
+              _showObtainDialog(
+                context,
+                existingUpdateIdsAllOrSelected,
+                newInstallIdsAllOrSelected,
+                trackOnlyUpdateIdsAllOrSelected,
+              );
+            }
           };
+  }
+
+  void _obtainApps(List<String> selectedIds, BuildContext context) {
+    if (selectedIds.isEmpty) return;
+    unawaited(
+      appsProvider
+          .downloadAndInstallLatestApps(
+            selectedIds,
+            appNavigatorKey.currentContext,
+          )
+          .then((value) {
+            if (value.isNotEmpty) {
+              if (context.mounted) {
+                showMessage(tr('appsUpdated'), context);
+                final np = context.read<NotificationsProvider>();
+                np.cancel(updateNotificationId);
+                np.cancel(
+                  SilentUpdateAttemptNotification(
+                    [],
+                    id: value[0].hashCode,
+                  ).id,
+                );
+              }
+            }
+          })
+          .catchError((e) {
+            if (context.mounted) showError(e, context);
+          }),
+    );
   }
 
   void _showObtainDialog(
@@ -292,34 +332,10 @@ class AppsPageState extends State<AppsPage> {
           apps: appsProvider.apps,
         );
       },
-    ).then((selectedIds) async {
-      if (selectedIds != null && selectedIds.isNotEmpty) {
+    ).then((selectedIds) {
+      if (selectedIds != null) {
         if (!context.mounted) return;
-        unawaited(
-          appsProvider
-              .downloadAndInstallLatestApps(
-                selectedIds.toList(),
-                appNavigatorKey.currentContext,
-              )
-              .then((value) {
-                if (value.isNotEmpty) {
-                  if (context.mounted) {
-                    showMessage(tr('appsUpdated'), context);
-                    final np = context.read<NotificationsProvider>();
-                    np.cancel(updateNotificationId);
-                    np.cancel(
-                      SilentUpdateAttemptNotification(
-                        [],
-                        id: value[0].hashCode,
-                      ).id,
-                    );
-                  }
-                }
-              })
-              .catchError((e) {
-                if (context.mounted) showError(e, context);
-              }),
-        );
+        _obtainApps(selectedIds.toList(), context);
       }
     });
   }

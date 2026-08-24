@@ -646,6 +646,11 @@ class _SettingsPageState extends State<SettingsPage> {
         onChanged: (value) => settingsProvider.hideDowngrades = value,
       ),
       ToggleTile(
+        label: tr('skipBulkUpdateConfirmation'),
+        value: settingsProvider.skipBulkUpdateConfirmation,
+        onChanged: (value) => settingsProvider.skipBulkUpdateConfirmation = value,
+      ),
+      ToggleTile(
         label: tr('parallelDownloads'),
         value: settingsProvider.parallelDownloads,
         onChanged: (value) => settingsProvider.parallelDownloads = value,
