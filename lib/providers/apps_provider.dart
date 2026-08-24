@@ -46,7 +46,6 @@ const int _partialHashCheckDecrement = 256;
 const int _maxDownloadPolls = 43;
 const int _downloadPollIntervalSeconds = 7;
 const int _progressUpdateIntervalMs = 500;
-const int _downloadBufferSize = 32 * 1024;
 const int _downloadProgressFallback = 30;
 const int _bgUpdateMaxAttempts = 4;
 const int _bgUpdateMaxRetryWaitSeconds = 30;
@@ -90,6 +89,7 @@ Future<File> _downloadWithNativeTransport(
   Map<String, String>? headers,
   int rangeStart,
   int? totalLength,
+  bool rangeSupported,
   Function? onProgress,
   CancellationToken? cancellationToken,
 ) async {
@@ -117,6 +117,7 @@ Future<File> _downloadWithNativeTransport(
       'headers': headers ?? const <String, String>{},
       'rangeStart': rangeStart,
       'totalLength': totalLength,
+      'rangeSupported': rangeSupported,
     });
     return File(outputPath);
   } finally {
@@ -547,6 +548,7 @@ Future<File> downloadFile(
       reqHeaders,
       rangeStart,
       fullContentLength,
+      rangeFeatureEnabled,
       onProgress,
       cancellationToken,
     );
