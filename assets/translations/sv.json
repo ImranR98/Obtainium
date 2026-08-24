@@ -90,6 +90,7 @@
     "categoryAlreadyExists": "A category with this name already exists",
     "categoryDeleteWarning": "Alla Appar i de borttagna kategorierna kommer att märkas som okategoriserade.",
     "categoryName": "Category name",
+    "collapseGroupsOnStartup": "Collapse all groups upon startup",
     "certificateHash": {
         "one": "Certificate Hash",
         "other": "Certificate Hashes"
@@ -184,12 +185,14 @@
     "githubPATLabel": "GitHub Personal Access Token (ökar hastighetsgräns)",
     "githubSourceNote": "GitHub-hastighetsbegränsning kan undvikas med en API-nyckel.",
     "githubStarredRepos": "GitHub Stjärnmärkta Förråd",
+    "globalApkFilterRegEx": "Global APK filter regex",
     "gitlabPATLabel": "Personligt åtkomsttoken för GitLab",
     "googleVerificationWarningP1": "Google har meddelat att alla appar på \"certifierade\" Android-enheter kommer att kräva att utvecklaren skickar personuppgifter direkt till Google.\n\nEftersom utvecklarna av denna app inte samtycker till detta krav kommer Obtainium inte längre att arbeta med certifierade Android-enheter efter den tiden.",
     "googleVerificationWarningP2": "Gå till https://keepandroidopen.org/ för mer information.",
     "googleVerificationWarningP3": "Observera att på kort sikt kan det fortsätta att vara möjligt att installera \"overifierade\" (icke-kompatibla) appar genom en \"avancerad flöde\" -process som Google har lovat att genomföra efter bred backlash till deras tillkännagivande, men de har inte detaljerat hur detta skulle fungera så det är oklart om det verkligen kommer att bevara användarfrihet på något praktiskt sätt.\n\nGoogles flytt är ett viktigt steg mot slutet av gratis, allmänt ändamål datorer för individer.\n\nIcke-certifierade operativsystem, som GrapheneOS, bör inte påverkas av detta så länge de får fortsätta att existera.",
     "groupBy": "Group by",
     "hideDowngrades": "Hide downgrades as updates",
+    "skipBulkUpdateConfirmation": "Skip update/install confirmation dialog",
     "highlightTouchTargets": "Markera mindre uppenbara beröringsobjekt",
     "huaweiAppGallery": "Huawei AppGallery",
     "import": "Import",
@@ -241,6 +244,7 @@
     "markXTrackOnlyAsUpdated": "Märk {}\n(Följ-Endast)\nsom Uppdaterad",
     "matchGroupToUse": "Match Group to Use",
     "matchGroupToUseForX": "Matchningsgrupp att använda för \"{}\"",
+    "minimumUpdateAgeDays": "Minimum age for updates",
     "matchLinksOutsideATags": "Matcha länkar utanför <a>-taggar",
     "minStarCount": "Minsta antal stjärnmarkeringar",
     "minute": {
@@ -398,6 +402,7 @@
     "trySelectingSuggestedVersionCode": "Försök att välja föreslagen versionCode APK",
     "uname": "Användarnamn",
     "unexpectedError": "Oväntat fel",
+    "useGlobalDefault": "Use global default",
     "unexpectedStoreApiResponse": "Unexpected store API response",
     "uninstallFromDevice": "Avinstallera från Enheten",
     "unknown": "Okänd",

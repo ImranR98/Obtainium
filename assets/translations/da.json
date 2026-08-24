@@ -90,6 +90,7 @@
     "categoryAlreadyExists": "A category with this name already exists",
     "categoryDeleteWarning": "Alle apps i slettede kategorier indstilles til ukategoriseret.",
     "categoryName": "Category name",
+    "collapseGroupsOnStartup": "Collapse all groups upon startup",
     "certificateHash": {
         "one": "Certifikathash",
         "other": "Certifikathash"
@@ -184,12 +185,14 @@
     "githubPATLabel": "GitHub Personlig Adgangstoken (øger hastighedsgrænse)",
     "githubSourceNote": "GitHub's hastighedsbegrænsning kan undgås med en API-nøgle.",
     "githubStarredRepos": "Stjernemarkeret GitHub-repos",
+    "globalApkFilterRegEx": "Global APK filter regex",
     "gitlabPATLabel": "GitLab Personlig Adgangstoken",
     "googleVerificationWarningP1": "Google har annonceret, at fra 2026 / 2027, alle apps på \"certificeret\" Android-enheder vil kræve, at udvikleren til at indsende personlige identitetsoplysninger direkte til Google.\n\nDa udviklerne af denne app ikke accepterer dette krav, Obtainium vil ikke længere arbejde på certificerede Android-enheder efter dette tidspunkt.",
     "googleVerificationWarningP2": "Gå til https: / / keepandroidopen.org / for mere information.",
     "googleVerificationWarningP3": "Bemærk, at på kort sigt, kan det fortsætte med at være muligt at installere \"uverificerbare\" (ikke-overensstemmende) apps gennem en \"avanceret flow\" proces, som Google har lovet at gennemføre efter bred backlash til deres meddelelse, men de har ikke detaljeret, hvordan dette ville arbejde, så det er uklart, om det virkelig vil bevare brugernes friheder i praksis.\n\nUnder alle omstændigheder er Googles bevægelse et væsentligt skridt i retning af afslutningen af fri, generel-formål computing for enkeltpersoner.\n\nIkke-certificerede OS, som GrapheneOS, bør være upåvirket af dette, så længe de har lov til at fortsætte med at eksistere.",
     "groupBy": "Group by",
     "hideDowngrades": "Hide downgrades as updates",
+    "skipBulkUpdateConfirmation": "Skip update/install confirmation dialog",
     "highlightTouchTargets": "Fremhæv mindre åbenlyse berøringsmål",
     "huaweiAppGallery": "Huawei AppGallery",
     "import": "Import",
@@ -241,6 +244,7 @@
     "markXTrackOnlyAsUpdated": "Markér {}\n(Følg Kun)\nsom opdateret",
     "matchGroupToUse": "RegEx-matchgruppe til brug for versionsstrengsudtrækning",
     "matchGroupToUseForX": "Match-gruppe til brug for \"{}\"",
+    "minimumUpdateAgeDays": "Minimum age for updates",
     "matchLinksOutsideATags": "Match links uden for <a>-tags",
     "minStarCount": "Minimum antal stjerner",
     "minute": {
@@ -398,6 +402,7 @@
     "trySelectingSuggestedVersionCode": "Forsøg at vælge den foreslåede versionKode af APK",
     "uname": "Brugernavn",
     "unexpectedError": "Uventet fejl",
+    "useGlobalDefault": "Use global default",
     "unexpectedStoreApiResponse": "Unexpected store API response",
     "uninstallFromDevice": "Afinstaller fra enhed",
     "unknown": "Ukendt",

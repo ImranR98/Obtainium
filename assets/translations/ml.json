@@ -90,6 +90,7 @@
     "categoryAlreadyExists": "A category with this name already exists",
     "categoryDeleteWarning": "ഇല്ലാതാക്കിയ വിഭാഗങ്ങളിലെ എല്ലാ ആപ്പുകളും വിഭാഗരഹിതമായി ക്രമീകരിക്കും.",
     "categoryName": "Category name",
+    "collapseGroupsOnStartup": "Collapse all groups upon startup",
     "certificateHash": {
         "one": "Certificate Hash",
         "other": "Certificate Hashes"
@@ -184,12 +185,14 @@
     "githubPATLabel": "GitHub പേഴ്സണൽ ആക്സസ് ടോക്കൺ (നിരക്ക് പരിധി വർദ്ധിപ്പിക്കുന്നു)",
     "githubSourceNote": "API കീ ഉപയോഗിച്ച് GitHub നിരക്ക് പരിധി ഒഴിവാക്കാം.",
     "githubStarredRepos": "GitHub സ്റ്റാർ ചെയ്ത റെപ്പോസിറ്ററികൾ",
+    "globalApkFilterRegEx": "Global APK filter regex",
     "gitlabPATLabel": "GitLab പേഴ്സണൽ ആക്സസ് ടോക്കൺ",
     "googleVerificationWarningP1": "Google has announced that, starting in 2026/2027, all apps on \"certified\" Android devices will require the developer to submit personal identity details directly to Google.\n\nSince the developers of this app do not agree to this requirement, Obtainium will no longer work on certified Android devices after that time.",
     "googleVerificationWarningP2": "Go to https://keepandroidopen.org/ for more information.",
     "googleVerificationWarningP3": "Note that in the short term, it may continue to be possible to install \"unverified\" (non-compliant) apps through an \"advanced flow\" process that Google has promised to implement after broad backlash to their announcement, but they have not detailed how this would work so it is unclear whether it will truly preserve user freedoms in any practical way.\n\nIn any case, Google's move is a significant step towards the end of free, general-purpose computing for individuals.\n\nNon-certified OSes, like GrapheneOS, should be unaffected by this for as long as they are allowed to continue to exist.",
     "groupBy": "Group by",
     "hideDowngrades": "Hide downgrades as updates",
+    "skipBulkUpdateConfirmation": "Skip update/install confirmation dialog",
     "highlightTouchTargets": "കുറഞ്ഞ വ്യക്തതയുള്ള ടച്ച് ടാർഗെറ്റുകൾ ഹൈലൈറ്റ് ചെയ്യുക",
     "huaweiAppGallery": "Huawei AppGallery",
     "import": "Import",
@@ -241,6 +244,7 @@
     "markXTrackOnlyAsUpdated": "{}\n(ട്രാക്ക്-മാത്രം)\nഅപ്‌ഡേറ്റ് ചെയ്തതായി അടയാളപ്പെടുത്തുക",
     "matchGroupToUse": "പതിപ്പ് സ്ട്രിംഗ് വേർതിരിച്ചെടുക്കുന്നതിനുള്ള റെഗുലർ എക്സ്പ്രഷനായി ഉപയോഗിക്കേണ്ട ഗ്രൂപ്പ് മാച്ച് ചെയ്യുക",
     "matchGroupToUseForX": "\"{}\" നായി ഉപയോഗിക്കേണ്ട ഗ്രൂപ്പ് മാച്ച് ചെയ്യുക",
+    "minimumUpdateAgeDays": "Minimum age for updates",
     "matchLinksOutsideATags": "Match links outside <a> tags",
     "minStarCount": "കുറഞ്ഞ നക്ഷത്രങ്ങളുടെ എണ്ണം",
     "minute": {
@@ -398,6 +402,7 @@
     "trySelectingSuggestedVersionCode": "നിർദ്ദേശിച്ച versionCode APK തിരഞ്ഞെടുക്കാൻ ശ്രമിക്കുക",
     "uname": "ഉപയോക്തൃനാമം",
     "unexpectedError": "പ്രതീക്ഷിക്കാത്ത പിശക്",
+    "useGlobalDefault": "Use global default",
     "unexpectedStoreApiResponse": "Unexpected store API response",
     "uninstallFromDevice": "ഉപകരണത്തിൽ നിന്ന് അൺഇൻസ്റ്റാൾ ചെയ്യുക",
     "unknown": "അജ്ഞാതം",

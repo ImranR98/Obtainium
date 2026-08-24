@@ -90,6 +90,7 @@
     "categoryAlreadyExists": "この名前のカテゴリはすでに存在します",
     "categoryDeleteWarning": "削除されたカテゴリ内のアプリは未分類に設定されます。",
     "categoryName": "カテゴリ名",
+    "collapseGroupsOnStartup": "Collapse all groups upon startup",
     "certificateHash": {
         "one": "証明書ハッシュ",
         "other": "証明書ハッシュ"
@@ -184,12 +185,14 @@
     "githubPATLabel": "GitHub パーソナルアクセストークン (レート制限の引き上げ)",
     "githubSourceNote": "GitHubのレート制限はAPIキーを使うことで回避できます。",
     "githubStarredRepos": "GitHubでスターしたリポジトリ",
+    "globalApkFilterRegEx": "Global APK filter regex",
     "gitlabPATLabel": "GitLab パーソナルアクセストークン",
     "googleVerificationWarningP1": "Googleは、2026年から2027年以降、「認定」Androidデバイス上のすべてのアプリにおいて、開発者が個人情報をGoogleに直接提出することを義務付けると発表しました。\n\nこのアプリの開発者はこの要件に同意しないため、それ以降Obtainiumは認定Androidデバイスでは動作しなくなります。",
     "googleVerificationWarningP2": "詳細については、https://keepandroidopen.org/ をご覧ください。",
     "googleVerificationWarningP3": "なお、短期的には、Googleが発表後に広範な反発を受けて実装を約束した「高度なフロー」プロセスを通じて、「未検証」（非準拠）のアプリをインストールし続けることが可能になるかもしれません。しかし、その具体的な仕組みは明らかにされておらず、ユーザーの自由が実質的に保たれるかどうかは不明です。\n\nいずれにせよ、Googleのこの動きは、個人向けの自由な汎用コンピューティングの終焉に向けた大きな一歩です。\n\nGrapheneOSのような非認定OSは、その存在が許される限り、この影響を受けないはずです。",
     "groupBy": "グループ化",
     "hideDowngrades": "インストール済みより古いバージョンをアップデートとして表示しない",
+    "skipBulkUpdateConfirmation": "Skip update/install confirmation dialog",
     "highlightTouchTargets": "目立たないタップ可能な対象をハイライトする",
     "huaweiAppGallery": "Huawei AppGallery",
     "import": "インポート",
@@ -241,6 +244,7 @@
     "markXTrackOnlyAsUpdated": "{}\n(追跡のみ)\nをアップデート済みとしてマークする",
     "matchGroupToUse": "バージョン抽出に使用するマッチしたグループ",
     "matchGroupToUseForX": "\"{}\"に使用するマッチしたグループ",
+    "minimumUpdateAgeDays": "Minimum age for updates",
     "matchLinksOutsideATags": "<a>タグの外にあるリンクに一致させる",
     "minStarCount": "最小スター数",
     "minute": {
@@ -398,6 +402,7 @@
     "trySelectingSuggestedVersionCode": "提案されたバージョンコードのAPKを選択する",
     "uname": "ユーザー名",
     "unexpectedError": "予期せぬエラーが発生しました",
+    "useGlobalDefault": "Use global default",
     "unexpectedStoreApiResponse": "Unexpected store API response",
     "uninstallFromDevice": "デバイスからアンインストールする",
     "unknown": "不明",
