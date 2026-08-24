@@ -402,7 +402,11 @@ Future<File> downloadFile(
     ext = ext.substring(0, ext.length - 1);
   }
   final urlPath = Uri.tryParse(url)?.path ?? url;
-  if (AppSource.isApkOrContainerFile(urlPath)) {
+  if (AppSource.isApkOrContainerFile(
+    urlPath,
+    includeArchives: true,
+    includeTarballs: true,
+  )) {
     // Preserve the real extension (.apk/.xapk/.apkm/.apks) so XAPK/APKS
     // bundles are still detected and extracted downstream rather than forced
     // to .apk and handed to the APK parser.
