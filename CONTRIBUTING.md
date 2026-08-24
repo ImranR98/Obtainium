@@ -8,6 +8,12 @@ Welcomed!
 
 ## Development
 
+### Logging
+
+Please use our [AppLogger](lib/core/logging/app_logger.dart) for any internal logging.
+
+There are plenty of examples of it's use in [main.dart](lib/main.dart).
+
 ### Style
 
 #### Bracing
