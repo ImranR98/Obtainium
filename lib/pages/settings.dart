@@ -650,6 +650,27 @@ class _SettingsPageState extends State<SettingsPage> {
         value: settingsProvider.skipBulkUpdateConfirmation,
         onChanged: (value) => settingsProvider.skipBulkUpdateConfirmation = value,
       ),
+      _fieldTile(
+        context,
+        DropdownMenu<String>(
+          expandedInsets: EdgeInsets.zero,
+          label: Text(tr('minimumUpdateAgeDays')),
+          initialSelection: settingsProvider.minimumUpdateAgeDays.toString(),
+          dropdownMenuEntries: [
+            for (final days in minimumUpdateAgeOptions)
+              DropdownMenuEntry(
+                value: days.toString(),
+                label: days == 0 ? tr('none') : tr('day', args: [days]),
+              ),
+          ],
+          onSelected: (value) {
+            if (value != null) {
+              settingsProvider.minimumUpdateAgeDays =
+                  int.tryParse(value) ?? 0;
+            }
+          },
+        ),
+      ),
       ToggleTile(
         label: tr('parallelDownloads'),
         value: settingsProvider.parallelDownloads,

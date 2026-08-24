@@ -31,12 +31,36 @@ extension AppsProviderUpdates on AppsProvider {
       currentApp.additionalSettings,
       currentApp: currentApp,
     );
+    if (_isReleaseYoungerThanMinAge(currentApp, newApp)) {
+      // Suppress the update until the release has reached the configured
+      // minimum age (supply-chain delay).
+      newApp = newApp.copyWith(
+        latestVersion: currentApp.latestVersion,
+        releaseDate: currentApp.releaseDate,
+        changeLog: currentApp.changeLog,
+      );
+    }
     if (currentApp.preferredApkIndex < newApp.apkUrls.length) {
       newApp = newApp.copyWith(preferredApkIndex: currentApp.preferredApkIndex);
     } else if (newApp.apkUrls.isNotEmpty) {
       newApp = newApp.copyWith(preferredApkIndex: 0);
     }
     return newApp;
+  }
+
+  /// Returns true when [newApp]'s release is newer than the configured
+  /// minimum update age and should therefore be suppressed.
+  bool _isReleaseYoungerThanMinAge(App currentApp, App newApp) {
+    final releaseDate = newApp.releaseDate;
+    if (releaseDate == null || newApp.latestVersion == currentApp.latestVersion) {
+      return false;
+    }
+    final raw = currentApp.additionalSettings['minimumUpdateAgeDays'];
+    final minAgeDays = raw is String && raw.isNotEmpty
+        ? int.tryParse(raw) ?? settingsProvider.minimumUpdateAgeDays
+        : settingsProvider.minimumUpdateAgeDays;
+    if (minAgeDays <= 0) return false;
+    return DateTime.now().difference(releaseDate) < Duration(days: minAgeDays);
   }
 
   Future<App?> checkUpdate(String appId) async {

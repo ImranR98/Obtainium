@@ -244,6 +244,7 @@
     "markXTrackOnlyAsUpdated": "Mark {}\n(track-only)\nas updated",
     "matchGroupToUse": "Match group to use for version string extraction RegEx",
     "matchGroupToUseForX": "Match group to use for \"{}\"",
+    "minimumUpdateAgeDays": "Minimum age for updates",
     "matchLinksOutsideATags": "Match links outside <a> tags",
     "minStarCount": "Minimum star count",
     "minute": {
@@ -401,6 +402,7 @@
     "trySelectingSuggestedVersionCode": "Try selecting suggested versionCode APK",
     "uname": "Username",
     "unexpectedError": "Unexpected error",
+    "useGlobalDefault": "Use global default",
     "unexpectedStoreApiResponse": "Unexpected store API response",
     "uninstallFromDevice": "Uninstall from device",
     "unknown": "Unknown",

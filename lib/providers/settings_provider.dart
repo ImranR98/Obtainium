@@ -743,6 +743,15 @@ class SettingsProvider with ChangeNotifier {
     notifyListeners();
   }
 
+  int get minimumUpdateAgeDays {
+    return _getInt('minimumUpdateAgeDays') ?? 0;
+  }
+
+  set minimumUpdateAgeDays(int val) {
+    prefs?.setInt('minimumUpdateAgeDays', val < 0 ? 0 : val);
+    notifyListeners();
+  }
+
   int get exportSettings {
     return _getInt('exportSettings') ?? 1;
   }
