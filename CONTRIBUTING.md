@@ -6,6 +6,8 @@ Policies and procedures on contributing to Obtanium.
 
 Welcomed!
 
+If you want to be excellent, please consider implementing this guide, [The Art Of The Bug Report](https://www.ministryoftesting.com/insights/11b82aee).
+
 ## Development
 
 ### Logging
