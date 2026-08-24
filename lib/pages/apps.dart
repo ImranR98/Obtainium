@@ -59,6 +59,7 @@ class AppsPageState extends State<AppsPage> {
   final AppsFilter neutralFilter = AppsFilter();
   Set<String> selectedAppIds = {};
   Set<String?> collapsedGroups = {};
+  bool _collapseStateInitDone = false;
   bool _selectionPruneScheduled = false;
 
   final TextEditingController searchController = TextEditingController();
@@ -1177,6 +1178,12 @@ class AppsPageState extends State<AppsPage> {
       groupBy,
       sourceProvider,
     );
+    if (!_collapseStateInitDone) {
+      _collapseStateInitDone = true;
+      if (settingsProvider.collapseGroupsOnStartup) {
+        collapsedGroups = Set<String?>.from(listedGroups);
+      }
+    }
 
     return PopScope(
       canPop: selectedAppIds.isEmpty,

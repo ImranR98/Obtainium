@@ -863,6 +863,11 @@ class _SettingsPageState extends State<SettingsPage> {
         onChanged: (value) => settingsProvider.hideTrackOnlyWarning = value,
       ),
       ToggleTile(
+        label: tr('collapseGroupsOnStartup'),
+        value: settingsProvider.collapseGroupsOnStartup,
+        onChanged: (value) => settingsProvider.collapseGroupsOnStartup = value,
+      ),
+      ToggleTile(
         label: tr('dontShowAPKOriginWarnings'),
         value: settingsProvider.hideAPKOriginWarning,
         onChanged: (value) => settingsProvider.hideAPKOriginWarning = value,

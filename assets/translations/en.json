@@ -90,6 +90,7 @@
     "categoryAlreadyExists": "A category with this name already exists",
     "categoryDeleteWarning": "All apps in deleted categories will be set to uncategorized.",
     "categoryName": "Category name",
+    "collapseGroupsOnStartup": "Collapse all groups upon startup",
     "certificateHash": {
         "one": "Certificate Hash",
         "other": "Certificate Hashes"

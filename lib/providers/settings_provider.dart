@@ -712,6 +712,15 @@ class SettingsProvider with ChangeNotifier {
     notifyListeners();
   }
 
+  bool get collapseGroupsOnStartup {
+    return _getBool('collapseGroupsOnStartup') ?? false;
+  }
+
+  set collapseGroupsOnStartup(bool val) {
+    prefs?.setBool('collapseGroupsOnStartup', val);
+    notifyListeners();
+  }
+
   int get exportSettings {
     return _getInt('exportSettings') ?? 1;
   }
