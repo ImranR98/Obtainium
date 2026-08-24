@@ -619,9 +619,24 @@ class _SettingsPageState extends State<SettingsPage> {
         onChanged: (value) =>
             settingsProvider.onlyCheckInstalledOrTrackOnlyApps = value,
       ),
-      const CardTile(
-        padding: EdgeInsets.fromLTRB(16, 8, 16, 8),
-        child: _GlobalApkFilterTile(),
+      GeneratedForm(
+        tileMode: true,
+        items: [
+          [
+            GeneratedFormTextField(
+              'globalApkFilterRegEx',
+              label: tr('globalApkFilterRegEx'),
+              required: false,
+              additionalValidators: [regExValidator],
+            )..value = settingsProvider.globalApkFilterRegEx,
+          ],
+        ],
+        onValueChanges: (values, valid, isBuilding) {
+          if (valid && !isBuilding) {
+            settingsProvider.globalApkFilterRegEx =
+                values['globalApkFilterRegEx'];
+          }
+        },
       ),
       ToggleTile(
         label: tr('removeOnExternalUninstall'),
@@ -651,25 +666,9 @@ class _SettingsPageState extends State<SettingsPage> {
         onChanged: (value) =>
             settingsProvider.skipBulkUpdateConfirmation = value,
       ),
-      _fieldTile(
-        context,
-        DropdownMenu<String>(
-          expandedInsets: EdgeInsets.zero,
-          label: Text(tr('minimumUpdateAgeDays')),
-          initialSelection: settingsProvider.minimumUpdateAgeDays.toString(),
-          dropdownMenuEntries: [
-            for (final days in minimumUpdateAgeOptions)
-              DropdownMenuEntry(
-                value: days.toString(),
-                label: days == 0 ? tr('none') : plural('day', days),
-              ),
-          ],
-          onSelected: (value) {
-            if (value != null) {
-              settingsProvider.minimumUpdateAgeDays = int.tryParse(value) ?? 0;
-            }
-          },
-        ),
+      const CardTile(
+        padding: EdgeInsets.fromLTRB(16, 8, 16, 8),
+        child: _MinimumUpdateAgeSliderTile(),
       ),
       ToggleTile(
         label: tr('parallelDownloads'),
@@ -957,42 +956,126 @@ extension on Color {
   ColorSwatch<Object> toSwatch() => ColorTools.createPrimarySwatch(this);
 }
 
-/// Text input for the global APK filter regex, applied to apps that do not
-/// define their own per-app APK filter.
-class _GlobalApkFilterTile extends StatefulWidget {
-  const _GlobalApkFilterTile();
+/// Slider tile for the minimum-age-for-updates setting. Kept as its own
+/// [StatefulWidget] so that dragging the slider only rebuilds this tile
+/// rather than the entire settings page; the chosen value is only committed
+/// to the [SettingsProvider] when the drag ends.
+class _MinimumUpdateAgeSliderTile extends StatefulWidget {
+  const _MinimumUpdateAgeSliderTile();
 
   @override
-  State<_GlobalApkFilterTile> createState() => _GlobalApkFilterTileState();
+  State<_MinimumUpdateAgeSliderTile> createState() =>
+      _MinimumUpdateAgeSliderTileState();
 }
 
-class _GlobalApkFilterTileState extends State<_GlobalApkFilterTile> {
-  late final TextEditingController _controller;
+class _MinimumUpdateAgeSliderTileState
+    extends State<_MinimumUpdateAgeSliderTile> {
+  double sliderVal = 0;
+  bool showLabel = true;
+
+  int get _days =>
+      minimumUpdateAgeOptions[sliderVal.round().clamp(
+        0,
+        minimumUpdateAgeOptions.length - 1,
+      )];
+
+  String get _label => _days == 0 ? tr('none') : plural('day', _days);
 
   @override
   void initState() {
     super.initState();
-    _controller = TextEditingController(
-      text: context.read<SettingsProvider>().globalApkFilterRegEx ?? '',
-    );
+    _syncFromSettings();
   }
 
   @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _syncFromSettings();
+  }
+
+  void _syncFromSettings() {
+    final days = context.read<SettingsProvider>().minimumUpdateAgeDays;
+    final index = minimumUpdateAgeOptions.indexOf(days);
+    sliderVal = (index >= 0 ? index : 0).toDouble();
+  }
+
+  void _commit() {
+    context.read<SettingsProvider>().minimumUpdateAgeDays = _days;
   }
 
   @override
   Widget build(BuildContext context) {
-    final settingsProvider = context.watch<SettingsProvider>();
-    return TextField(
-      controller: _controller,
-      onChanged: (value) => settingsProvider.globalApkFilterRegEx = value,
-      decoration: InputDecoration(
-        labelText: tr('globalApkFilterRegEx'),
-        border: const OutlineInputBorder(),
-      ),
+    final settingsProvider = context.read<SettingsProvider>();
+    final rawSlider = Slider(
+      value: sliderVal,
+      max: (minimumUpdateAgeOptions.length - 1).toDouble(),
+      divisions: minimumUpdateAgeOptions.length - 1,
+      label: _label,
+      onChanged: (double value) {
+        setState(() {
+          sliderVal = value;
+        });
+      },
+      onChangeStart: (double value) {
+        setState(() {
+          showLabel = false;
+        });
+      },
+      onChangeEnd: (double value) {
+        setState(() {
+          showLabel = true;
+        });
+        _commit();
+      },
+    );
+
+    final Widget ageSlider = settingsProvider.isTV
+        ? Row(
+            children: [
+              IconButton(
+                icon: const Icon(Icons.remove),
+                onPressed: sliderVal <= 0
+                    ? null
+                    : () {
+                        final newVal = (sliderVal - 1).clamp(
+                          0.0,
+                          (minimumUpdateAgeOptions.length - 1).toDouble(),
+                        );
+                        setState(() {
+                          sliderVal = newVal;
+                        });
+                        _commit();
+                      },
+              ),
+              Expanded(child: Text(_label, textAlign: TextAlign.center)),
+              IconButton(
+                icon: const Icon(Icons.add),
+                onPressed:
+                    sliderVal >= (minimumUpdateAgeOptions.length - 1).toDouble()
+                    ? null
+                    : () {
+                        final newVal = (sliderVal + 1).clamp(
+                          0.0,
+                          (minimumUpdateAgeOptions.length - 1).toDouble(),
+                        );
+                        setState(() {
+                          sliderVal = newVal;
+                        });
+                        _commit();
+                      },
+              ),
+            ],
+          )
+        : rawSlider;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        showLabel
+            ? Text("${tr('minimumUpdateAgeDays')}: $_label")
+            : const SizedBox(height: 20),
+        ageSlider,
+      ],
     );
   }
 }
