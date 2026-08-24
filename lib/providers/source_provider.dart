@@ -448,6 +448,11 @@ Future<http.Response> httpClientResponseStreamToFinalResponse(
 // AppSource — abstract base class for all app sources.
 // ========================================================================
 
+/// Options (in days) for the minimum-age-for-updates setting. Zero disables
+/// the delay; the empty string means "use the global default" for per-app
+/// overrides.
+const List<int> minimumUpdateAgeOptions = [0, 1, 2, 3, 5, 7, 14, 30];
+
 abstract class AppSource {
   List<String> hosts = [];
   List<String> trustedApkHosts = [];
@@ -468,6 +473,7 @@ abstract class AppSource {
   bool suppressStandardVersionExtraction = false;
   List<String> excludeCommonSettingKeys = [];
   bool urlsAlwaysHaveExtension = false;
+  bool allowInsecureRedirects = false;
   bool allowIncludeZips = false;
   bool allowIncludeTarballs = false;
   String get sourceIdentifier => runtimeType.toString();
@@ -525,6 +531,8 @@ abstract class AppSource {
     additionalSettingsPlusSourceConfig['url'] = url;
     additionalSettingsPlusSourceConfig['enableCertificatePinning'] =
         sp.enableCertificatePinning;
+    additionalSettingsPlusSourceConfig['allowInsecureRedirects'] =
+        allowInsecureRedirects;
     final method = postBody == null ? 'GET' : 'POST';
     final requestHeaders = await getRequestHeaders(
       additionalSettingsPlusSourceConfig,
@@ -670,6 +678,21 @@ abstract class AppSource {
         'autoApkFilterByArch',
         label: tr('autoApkFilterByArch'),
         value: true,
+      ),
+    ],
+    [
+      GeneratedFormDropdown(
+        'minimumUpdateAgeDays',
+        [
+          for (final days in minimumUpdateAgeOptions)
+            MapEntry(
+              days == 0 ? '' : days.toString(),
+              days == 0 ? tr('useGlobalDefault') : plural('day', days),
+            ),
+        ],
+        label: tr('minimumUpdateAgeDays'),
+        value: '',
+        required: false,
       ),
     ],
     [GeneratedFormTextField('appName', label: tr('appName'), required: false)],
@@ -1164,10 +1187,13 @@ class SourceProvider {
         version: apk.releaseDate!.microsecondsSinceEpoch.toString(),
       );
     }
+    final settingsProvider = SettingsProvider();
+    await settingsProvider.initializeSettings();
     apk = apk.copyWith(
       apkUrls: filterApks(
         apk.apkUrls,
-        additionalSettings['apkFilterRegEx'],
+        additionalSettings['apkFilterRegEx'] ??
+            settingsProvider.globalApkFilterRegEx,
         additionalSettings['invertAPKFilter'],
       ),
     );
@@ -1451,7 +1477,10 @@ class HttpService {
         final location = response.headers.value(HttpHeaders.locationHeader);
         if (location != null) {
           final nextUrl = Uri.parse(ensureAbsoluteUrl(location, currentUrl));
-          if (currentUrl.scheme == 'https' && nextUrl.scheme == 'http') {
+          if (currentUrl.scheme == 'https' &&
+              nextUrl.scheme == 'http' &&
+              additionalSettings['allowInsecure'] != true &&
+              additionalSettings['allowInsecureRedirects'] != true) {
             // Never follow a redirect that downgrades to cleartext HTTP.
             httpClient.close();
             throw ObtainiumError(tr('insecureRedirect'));

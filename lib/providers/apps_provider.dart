@@ -248,16 +248,8 @@ Future<String> checkPartialDownloadHashDynamic(
     // stable. The loop decrements on mismatch; when two consecutive
     // requests agree, the hash is considered valid.
     final List<String> ab = await Future.wait([
-      checkPartialDownloadHash(
-        additionalSettings,
-        i,
-        headers: headers,
-      ),
-      checkPartialDownloadHash(
-        additionalSettings,
-        i,
-        headers: headers,
-      ),
+      checkPartialDownloadHash(additionalSettings, i, headers: headers),
+      checkPartialDownloadHash(additionalSettings, i, headers: headers),
     ]);
     if (ab[0] == ab[1]) {
       return ab[0];
@@ -402,7 +394,11 @@ Future<File> downloadFile(
     ext = ext.substring(0, ext.length - 1);
   }
   final urlPath = Uri.tryParse(url)?.path ?? url;
-  if (AppSource.isApkOrContainerFile(urlPath)) {
+  if (AppSource.isApkOrContainerFile(
+    urlPath,
+    includeArchives: true,
+    includeTarballs: true,
+  )) {
     // Preserve the real extension (.apk/.xapk/.apkm/.apks) so XAPK/APKS
     // bundles are still detected and extracted downstream rather than forced
     // to .apk and handed to the APK parser.
@@ -485,7 +481,7 @@ Future<File> downloadFile(
   final responseWithClient = await sourceRequestStreamResponse(
     'GET',
     reqHeaders,
-    additionalSettings
+    additionalSettings,
   );
   final HttpClient responseClient = responseWithClient.value.key;
   final HttpClientResponse response = responseWithClient.value.value;
@@ -649,7 +645,7 @@ Future<int?> getDownloadSize(
   final Map<String, dynamic> additionalSettings = {
     'allowInsecure': allowInsecure,
     'url': url,
-    'enableCertificatePinning': enableCertificatePinning
+    'enableCertificatePinning': enableCertificatePinning,
   };
   final client = IOClient(await createHttpClient(additionalSettings));
   try {

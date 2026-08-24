@@ -191,6 +191,8 @@ extension AppsProviderInstall on AppsProvider {
       additionalSettingsPlusSourceConfig['url'] = downloadUrl;
       additionalSettingsPlusSourceConfig['allowInsecure'] = app.settings
           .getBool('allowInsecure');
+      additionalSettingsPlusSourceConfig['allowInsecureRedirects'] =
+          source.allowInsecureRedirects;
       additionalSettingsPlusSourceConfig['enableCertificatePinning'] =
           settingsProvider.enableCertificatePinning;
       var downloadedFile = await downloadFileWithRetry(

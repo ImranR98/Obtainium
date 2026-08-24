@@ -26,6 +26,8 @@ class VivoAppStore extends AppSource {
     naiveStandardVersionDetection = true;
     canSearch = true;
     allowOverride = false;
+    // Vivo's download/detail endpoints redirect to plain-HTTP CDN URLs.
+    allowInsecureRedirects = true;
   }
 
   @override

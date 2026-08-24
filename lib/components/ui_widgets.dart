@@ -53,7 +53,6 @@ Future<bool> showContinueCancelDialog(
   BuildContext context, {
   required String title,
   String? message,
-  String? continueText,
 }) async {
   final result = await showDialog<Map<String, dynamic>?>(
     context: context,
@@ -62,7 +61,6 @@ Future<bool> showContinueCancelDialog(
       items: const [],
       initValid: true,
       message: message ?? '',
-      singleNullReturnButton: continueText ?? tr('continue'),
     ),
   );
   return result != null;

@@ -23,7 +23,6 @@ const String obtainiumId = 'dev.imranr.obtainium';
 const String obtainiumUrl = 'https://github.com/ImranR98/Obtainium';
 const Color obtainiumThemeColor = Color(0xFF6438B5);
 
-
 Locale? tryParseLocale(String? localeString) {
   if (localeString == null) return null;
   final split = localeString.split('-');
@@ -703,12 +702,51 @@ class SettingsProvider with ChangeNotifier {
     notifyListeners();
   }
 
+  String? get globalApkFilterRegEx => getSettingString('globalApkFilterRegEx');
+
+  set globalApkFilterRegEx(String? val) {
+    final cleaned = val?.trim();
+    if (cleaned == null || cleaned.isEmpty) {
+      prefs?.remove('globalApkFilterRegEx');
+    } else {
+      prefs?.setString('globalApkFilterRegEx', cleaned);
+    }
+    notifyListeners();
+  }
+
   bool get onlyCheckInstalledOrTrackOnlyApps {
     return _getBool('onlyCheckInstalledOrTrackOnlyApps') ?? false;
   }
 
   set onlyCheckInstalledOrTrackOnlyApps(bool val) {
     prefs?.setBool('onlyCheckInstalledOrTrackOnlyApps', val);
+    notifyListeners();
+  }
+
+  bool get collapseGroupsOnStartup {
+    return _getBool('collapseGroupsOnStartup') ?? false;
+  }
+
+  set collapseGroupsOnStartup(bool val) {
+    prefs?.setBool('collapseGroupsOnStartup', val);
+    notifyListeners();
+  }
+
+  bool get skipBulkUpdateConfirmation {
+    return _getBool('skipBulkUpdateConfirmation') ?? false;
+  }
+
+  set skipBulkUpdateConfirmation(bool val) {
+    prefs?.setBool('skipBulkUpdateConfirmation', val);
+    notifyListeners();
+  }
+
+  int get minimumUpdateAgeDays {
+    return _getInt('minimumUpdateAgeDays') ?? 0;
+  }
+
+  set minimumUpdateAgeDays(int val) {
+    prefs?.setInt('minimumUpdateAgeDays', val < 0 ? 0 : val);
     notifyListeners();
   }
 
