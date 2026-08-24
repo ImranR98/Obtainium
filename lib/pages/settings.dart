@@ -619,24 +619,27 @@ class _SettingsPageState extends State<SettingsPage> {
         onChanged: (value) =>
             settingsProvider.onlyCheckInstalledOrTrackOnlyApps = value,
       ),
-      GeneratedForm(
-        tileMode: true,
-        items: [
-          [
-            GeneratedFormTextField(
-              'globalApkFilterRegEx',
-              label: tr('globalApkFilterRegEx'),
-              required: false,
-              additionalValidators: [regExValidator],
-            )..value = settingsProvider.globalApkFilterRegEx,
+      ConnectedCard(
+        color: Theme.of(context).colorScheme.surfaceContainerHighest,
+        child: GeneratedForm(
+          tileMode: true,
+          items: [
+            [
+              GeneratedFormTextField(
+                'globalApkFilterRegEx',
+                label: tr('globalApkFilterRegEx'),
+                required: false,
+                additionalValidators: [regExValidator],
+              )..value = settingsProvider.globalApkFilterRegEx,
+            ],
           ],
-        ],
-        onValueChanges: (values, valid, isBuilding) {
-          if (valid && !isBuilding) {
-            settingsProvider.globalApkFilterRegEx =
-                values['globalApkFilterRegEx'];
-          }
-        },
+          onValueChanges: (values, valid, isBuilding) {
+            if (valid && !isBuilding) {
+              settingsProvider.globalApkFilterRegEx =
+                  values['globalApkFilterRegEx'];
+            }
+          },
+        ),
       ),
       ToggleTile(
         label: tr('removeOnExternalUninstall'),
