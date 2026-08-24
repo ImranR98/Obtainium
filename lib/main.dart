@@ -103,6 +103,18 @@ void main() async {
     return true;
   };
 
+  // Exceptions thrown in UI handlers are reported to FlutterError.onError
+  // rather than PlatformDispatcher.onError, so hook both into the log store.
+  final prevFlutterErrorHandler = FlutterError.onError;
+  FlutterError.onError = (details) {
+    prevFlutterErrorHandler?.call(details);
+    AppLogger.error(
+      details.exception,
+      stackTrace: details.stack,
+      message: 'Uncaught framework error',
+    );
+  };
+
   final settingsProvider = SettingsProvider();
   final sourceProvider = SourceProvider();
   final appsProvider = AppsProvider(settingsProvider: settingsProvider);
