@@ -619,6 +619,10 @@ class _SettingsPageState extends State<SettingsPage> {
         onChanged: (value) =>
             settingsProvider.onlyCheckInstalledOrTrackOnlyApps = value,
       ),
+      const CardTile(
+        padding: EdgeInsets.fromLTRB(16, 8, 16, 8),
+        child: _GlobalApkFilterTile(),
+      ),
       ToggleTile(
         label: tr('removeOnExternalUninstall'),
         value: settingsProvider.removeOnExternalUninstall,
@@ -925,6 +929,46 @@ class _SettingsPageState extends State<SettingsPage> {
 
 extension on Color {
   ColorSwatch<Object> toSwatch() => ColorTools.createPrimarySwatch(this);
+}
+
+/// Text input for the global APK filter regex, applied to apps that do not
+/// define their own per-app APK filter.
+class _GlobalApkFilterTile extends StatefulWidget {
+  const _GlobalApkFilterTile();
+
+  @override
+  State<_GlobalApkFilterTile> createState() => _GlobalApkFilterTileState();
+}
+
+class _GlobalApkFilterTileState extends State<_GlobalApkFilterTile> {
+  late final TextEditingController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = TextEditingController(
+      text: context.read<SettingsProvider>().globalApkFilterRegEx ?? '',
+    );
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final settingsProvider = context.watch<SettingsProvider>();
+    return TextField(
+      controller: _controller,
+      onChanged: (value) => settingsProvider.globalApkFilterRegEx = value,
+      decoration: InputDecoration(
+        labelText: tr('globalApkFilterRegEx'),
+        border: const OutlineInputBorder(),
+      ),
+    );
+  }
 }
 
 /// The background-update-interval slider tile. Kept as its own [StatefulWidget]

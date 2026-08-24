@@ -1164,10 +1164,13 @@ class SourceProvider {
         version: apk.releaseDate!.microsecondsSinceEpoch.toString(),
       );
     }
+    final settingsProvider = SettingsProvider();
+    await settingsProvider.initializeSettings();
     apk = apk.copyWith(
       apkUrls: filterApks(
         apk.apkUrls,
-        additionalSettings['apkFilterRegEx'],
+        additionalSettings['apkFilterRegEx'] ??
+            settingsProvider.globalApkFilterRegEx,
         additionalSettings['invertAPKFilter'],
       ),
     );

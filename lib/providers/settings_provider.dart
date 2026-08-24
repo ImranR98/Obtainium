@@ -703,6 +703,19 @@ class SettingsProvider with ChangeNotifier {
     notifyListeners();
   }
 
+  String? get globalApkFilterRegEx =>
+      getSettingString('globalApkFilterRegEx');
+
+  set globalApkFilterRegEx(String? val) {
+    final cleaned = val?.trim();
+    if (cleaned == null || cleaned.isEmpty) {
+      prefs?.remove('globalApkFilterRegEx');
+    } else {
+      prefs?.setString('globalApkFilterRegEx', cleaned);
+    }
+    notifyListeners();
+  }
+
   bool get onlyCheckInstalledOrTrackOnlyApps {
     return _getBool('onlyCheckInstalledOrTrackOnlyApps') ?? false;
   }
