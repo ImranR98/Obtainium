@@ -90,6 +90,7 @@
     "categoryAlreadyExists": "Er bestaat al een categorie met deze naam",
     "categoryDeleteWarning": "Alle apps in verwijderde categorieën worden teruggezet naar 'ongecategoriseerd'.",
     "categoryName": "Naam categorie",
+    "collapseGroupsOnStartup": "Collapse all groups upon startup",
     "certificateHash": {
         "one": "Certificaat Hash",
         "other": "Certificaat Hashes"
@@ -184,12 +185,14 @@
     "githubPATLabel": "GitHub persoonlijk toegangskenmerk\n(Verhoogt limiet aantal verzoeken)",
     "githubSourceNote": "Beperkingen van GitHub kunnen worden vermeden door het gebruik van een API-sleutel.",
     "githubStarredRepos": "GitHub-repo's met ster",
+    "globalApkFilterRegEx": "Global APK filter regex",
     "gitlabPATLabel": "GitLab persoonlijk toegangskenmerk",
     "googleVerificationWarningP1": "Google heeft aangekondigd dat vanaf 2026/2027 alle apps op \"gecertificeerde\" Android-apparaten de ontwikkelaar nodig hebben om persoonlijke identiteitsgegevens rechtstreeks aan Google te verzenden.\n\nAangezien de ontwikkelaars van deze app niet akkoord gaan met deze eis, zal Progressionium niet meer werken op gecertificeerde Android-apparaten na die tijd.",
     "googleVerificationWarningP2": "Ga naar https://keepandroidopen.org/ voor meer informatie.",
     "googleVerificationWarningP3": "Merk op dat het op korte termijn mogelijk kan blijven om \"niet-geverifieerde\" (niet-conforme) apps te installeren via een \"geavanceerde flow\" proces dat Google heeft beloofd te implementeren na brede backlash naar hun aankondiging, maar ze hebben niet gedetailleerd hoe dit zou werken, dus het is onduidelijk of het echt zal behouden gebruikersvrijheden op enige praktische manier.\n\nIn ieder geval, Google's zet is een belangrijke stap naar het einde van vrije, algemene computer voor individuen.\n\nNiet-gecertificeerde besturingssystemen, zoals GrapheneOS, mogen hierdoor niet worden beïnvloed zolang ze mogen blijven bestaan.",
     "groupBy": "Groeperen op",
     "hideDowngrades": "Afwaarderingen verbergen als updates",
+    "skipBulkUpdateConfirmation": "Skip update/install confirmation dialog",
     "highlightTouchTargets": "Minder voor de hand liggende aanraakdoelen markeren",
     "huaweiAppGallery": "Huawei AppGallery",
     "import": "Importeren",
@@ -241,6 +244,7 @@
     "markXTrackOnlyAsUpdated": "{}\n(Alleen volgen)\nals bijgewerkt markeren",
     "matchGroupToUse": "Overeenkomende groep om te gebruiken voor de reguliere expressie voor versie-extractie",
     "matchGroupToUseForX": "Overeenkomende groep te gebruiken voor \"{}\"",
+    "minimumUpdateAgeDays": "Minimum age for updates",
     "matchLinksOutsideATags": "Koppelingen buiten <a>-tags overeenstemmen",
     "minStarCount": "Minimum aantal sterren",
     "minute": {
@@ -398,6 +402,7 @@
     "trySelectingSuggestedVersionCode": "Probeer de voorgestelde versiecode APK te selecteren",
     "uname": "Gebruikersnaam",
     "unexpectedError": "Onverwachte fout",
+    "useGlobalDefault": "Use global default",
     "unexpectedStoreApiResponse": "Unexpected store API response",
     "uninstallFromDevice": "Van apparaat verwijderen",
     "unknown": "Onbekend",

@@ -90,6 +90,7 @@
     "categoryAlreadyExists": "A category with this name already exists",
     "categoryDeleteWarning": "Tutte le app nelle categorie eliminate saranno impostate come non categorizzate.",
     "categoryName": "Category name",
+    "collapseGroupsOnStartup": "Collapse all groups upon startup",
     "certificateHash": {
         "one": "Certificato Hash",
         "other": "Certificato Hashes"
@@ -184,12 +185,14 @@
     "githubPATLabel": "GitHub Personal Access Token (aumenta limite di traffico)",
     "githubSourceNote": "Il limite di ricerca GitHub può essere evitato usando una chiave API.",
     "githubStarredRepos": "repository stellati da GitHub",
+    "globalApkFilterRegEx": "Global APK filter regex",
     "gitlabPATLabel": "GitLab Token di accesso personale",
     "googleVerificationWarningP1": "Google ha annunciato che, a partire dal 2026/2027, tutte le applicazioni su dispositivi Android \"certificati\" richiederanno allo sviluppatore di inviare dati di identità personali direttamente a Google.\n\nPoiché gli sviluppatori di questa applicazione non sono d'accordo con questo requisito, Obtainium non lavorerà più su dispositivi Android certificati dopo quel tempo.",
     "googleVerificationWarningP2": "Vai a https://keepandroidopen.org/ per ulteriori informazioni.",
     "googleVerificationWarningP3": "Si noti che a breve termine, può continuare ad essere possibile installare applicazioni \"non verificate\" (non conformi) attraverso un processo di \"flusso avanzato\" che Google ha promesso di implementare dopo ampio backlash al loro annuncio, ma non hanno dettagliato come questo funzionerebbe in modo da non essere chiaro se veramente preservare le libertà degli utenti in qualsiasi modo pratico.\n\nIn ogni caso, la mossa di Google è un passo significativo verso la fine del free, general-purpose computing per gli individui.\n\nOS non certificati, come GrapheneOS, non dovrebbero essere influenzati da questo per tutto il tempo in cui sono autorizzati a continuare ad esistere.",
     "groupBy": "Group by",
     "hideDowngrades": "Hide downgrades as updates",
+    "skipBulkUpdateConfirmation": "Skip update/install confirmation dialog",
     "highlightTouchTargets": "Evidenzia elementi toccabili meno ovvi",
     "huaweiAppGallery": "Huawei AppGallery",
     "import": "Import",
@@ -241,6 +244,7 @@
     "markXTrackOnlyAsUpdated": "Contrassegna {}\n(Solo-Monitoraggio)\ncome aggiornata",
     "matchGroupToUse": "Gruppo da usare",
     "matchGroupToUseForX": "Gruppo di corrispondenza da utilizzare per \"{}\"",
+    "minimumUpdateAgeDays": "Minimum age for updates",
     "matchLinksOutsideATags": "Corrispondenza dei collegamenti al di fuori dei tag <a>",
     "minStarCount": "Numero minimo di stelle",
     "minute": {
@@ -398,6 +402,7 @@
     "trySelectingSuggestedVersionCode": "Prova a selezionare APK con versionCode suggerito",
     "uname": "Nome utente",
     "unexpectedError": "Errore imprevisto",
+    "useGlobalDefault": "Use global default",
     "unexpectedStoreApiResponse": "Unexpected store API response",
     "uninstallFromDevice": "Disinstalla dal dispositivo",
     "unknown": "Sconosciuto",

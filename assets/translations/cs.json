@@ -93,6 +93,7 @@
     "categoryAlreadyExists": "A category with this name already exists",
     "categoryDeleteWarning": "Všechny aplikace v odstraněných kategoriích budou nastaveny na nekategorizované.",
     "categoryName": "Category name",
+    "collapseGroupsOnStartup": "Collapse all groups upon startup",
     "certificateHash": {
         "one": "Haš osvědčení",
         "other": "Uzávěry certifikátů"
@@ -189,12 +190,14 @@
     "githubPATLabel": "Osobní přístupový token GitHub (zvyšuje limit požadavků)",
     "githubSourceNote": "Limit požadavků služby GitHub lze obejít pomocí klíče API.",
     "githubStarredRepos": "Repozitáře na GitHubu označené hvězdičkou",
+    "globalApkFilterRegEx": "Global APK filter regex",
     "gitlabPATLabel": "Osobní přístupový token GitLab",
     "googleVerificationWarningP1": "Společnost Google oznámila, že počínaje rokem 2026 / 2027 budou všechny aplikace na \"certifikovaných\" zařízeních pro Android vyžadovat, aby vývojář předložil osobní údaje o identitě přímo společnosti Google.\n\nVzhledem k tomu, vývojáři této aplikace nesouhlasí s tímto požadavkem, Obstainium již nebude pracovat na certifikovaných Android zařízení po této době.",
     "googleVerificationWarningP2": "Další informace získáte na adrese https: / / keepandroidopen.org.",
     "googleVerificationWarningP3": "Všimněte si, že v krátkodobém horizontu může být i nadále možné instalovat \"neověřené\" (nevyhovující) aplikace prostřednictvím procesu \"pokročilého toku\", který Google slíbil implementovat po širokém odporu k jejich oznámení, ale neupřesnili, jak by to mělo fungovat, takže není jasné, zda bude skutečně zachovávat uživatelskou svobodu jakýmkoli praktickým způsobem.\n\nV každém případě je krok společnosti Google významným krokem ke konci volného, všeobecného výpočetní techniky pro jednotlivce.\n\nNecertifikované Osy, jako je GrapheneOS, by tím neměly být ovlivněny, pokud budou nadále existovat.",
     "groupBy": "Group by",
     "hideDowngrades": "Hide downgrades as updates",
+    "skipBulkUpdateConfirmation": "Skip update/install confirmation dialog",
     "highlightTouchTargets": "Zvýraznit méně zjevné cíle dotyku",
     "huaweiAppGallery": "Huawei AppGallery",
     "import": "Import",
@@ -247,6 +250,7 @@
     "markXTrackOnlyAsUpdated": "Označit aplikaci {}\n(pouze sledování)\njako aktualizovanou",
     "matchGroupToUse": "Odpovídá použité skupině",
     "matchGroupToUseForX": "Shoda se skupinou k použití pro „{}“",
+    "minimumUpdateAgeDays": "Minimum age for updates",
     "matchLinksOutsideATags": "Shoda odkazů mimo značky <a>",
     "minStarCount": "Minimální počet hvězdiček",
     "minute": {
@@ -406,6 +410,7 @@
     "trySelectingSuggestedVersionCode": "Zkusit vybrat navrhovanou verzi APK",
     "uname": "Uživatelské jméno",
     "unexpectedError": "Neočekávaná chyba",
+    "useGlobalDefault": "Use global default",
     "unexpectedStoreApiResponse": "Unexpected store API response",
     "uninstallFromDevice": "Odinstalovat ze zařízení",
     "unknown": "Neznám",

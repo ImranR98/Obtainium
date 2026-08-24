@@ -90,6 +90,7 @@
     "categoryAlreadyExists": "A category with this name already exists",
     "categoryDeleteWarning": "Semua aplikasi dalam kategori yang dihapus akan diatur sebagai tidak terkategori.",
     "categoryName": "Category name",
+    "collapseGroupsOnStartup": "Collapse all groups upon startup",
     "certificateHash": {
         "one": "Hash Sertifikat",
         "other": "Hashes Sertifikat"
@@ -184,12 +185,14 @@
     "githubPATLabel": "Token Akses Pribadi GitHub (tingkatkan batasan tarif)",
     "githubSourceNote": "Pembatasan tarif pada GitHub dapat dihindari dengan menggunakan kunci API.",
     "githubStarredRepos": "Repositori berbintang GitHub",
+    "globalApkFilterRegEx": "Global APK filter regex",
     "gitlabPATLabel": "Token Akses Pribadi GitLab",
     "googleVerificationWarningP1": "Google has announced that, starting in 2026 / 2027, all apps on \"certified\" Android devices will needs the developer to submit personal identity details directly to Google.\n\nKarena pengembang aplikasi ini tidak setuju dengan persyaratan ini, Obtainium tidak akan lagi bekerja pada perangkat Android bersertifikat setelah waktu itu.",
     "googleVerificationWarningP2": "Pergi ke https: / / keep androidpen.org / untuk informasi lebih lanjut.",
     "googleVerificationWarningP3": "Perlu dicatat bahwa dalam jangka pendek, mungkin terus mungkin untuk memasang aplikasi \"belum diverifikasi\" (bukan -compliant) melalui proses \"arus maju\" yang Google janjikan untuk mengimplementasikan setelah reaksi luas terhadap pengumuman mereka, tetapi mereka tidak rinci bagaimana hal ini akan bekerja sehingga tidak jelas apakah itu benar-benar akan menjaga kebebasan pengguna dengan cara praktis.\n\nDalam hal apapun, Google bergerak adalah langkah yang signifikan menuju akhir bebas, tujuan umum komputasi untuk individu.\n\nOS tidak bersertifikat, seperti GrapheneOS, seharusnya tidak terpengaruh oleh hal ini selama mereka diizinkan untuk terus ada.",
     "groupBy": "Group by",
     "hideDowngrades": "Hide downgrades as updates",
+    "skipBulkUpdateConfirmation": "Skip update/install confirmation dialog",
     "highlightTouchTargets": "Sorot target sentuh yang kurang jelas",
     "huaweiAppGallery": "Huawei AppGallery",
     "import": "Import",
@@ -241,6 +244,7 @@
     "markXTrackOnlyAsUpdated": "Tandai {}\n(Pelacakan Saja)\nsudah diperbarui",
     "matchGroupToUse": "Cocokkan grup yang akan digunakan untuk reguler ekspresi terkait ekstraksi versi string",
     "matchGroupToUseForX": "Cocokkan grup yang akan digunakan untuk \"{}\"",
+    "minimumUpdateAgeDays": "Minimum age for updates",
     "matchLinksOutsideATags": "Mencocokkan tautan di luar tag <a>",
     "minStarCount": "Jumlah bintang minimum",
     "minute": {
@@ -398,6 +402,7 @@
     "trySelectingSuggestedVersionCode": "Coba pilih APK dengan version kode yang disarankan",
     "uname": "Nama pengguna",
     "unexpectedError": "Kesalahan tidak terduga",
+    "useGlobalDefault": "Use global default",
     "unexpectedStoreApiResponse": "Unexpected store API response",
     "uninstallFromDevice": "Copot pemasangan dari perangkat",
     "unknown": "Tidak diketahui",

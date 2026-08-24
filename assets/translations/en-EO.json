@@ -90,6 +90,7 @@
     "categoryAlreadyExists": "A category with this name already exists",
     "categoryDeleteWarning": "Ĉiuj apoj el forigitaj kategorioj iĝos nekategoriitaj.",
     "categoryName": "Category name",
+    "collapseGroupsOnStartup": "Collapse all groups upon startup",
     "certificateHash": {
         "one": "Certificate Hash",
         "other": "Certificate Hashes"
@@ -184,12 +185,14 @@
     "githubPATLabel": "Github persona atingoĵetono (pliigas la kvantolimon)",
     "githubSourceNote": "La kvantolimo de GitHub povas esti evitata danke al API-ŝlosilo.",
     "githubStarredRepos": "Stelaj GitHub-deponejoj",
+    "globalApkFilterRegEx": "Global APK filter regex",
     "gitlabPATLabel": "GitLab persona atingoĵetono",
     "googleVerificationWarningP1": "Google has announced that, starting in 2026/2027, all apps on \"certified\" Android devices will require the developer to submit personal identity details directly to Google.\n\nSince the developers of this app do not agree to this requirement, Obtainium will no longer work on certified Android devices after that time.",
     "googleVerificationWarningP2": "Go to https://keepandroidopen.org/ for more information.",
     "googleVerificationWarningP3": "Note that in the short term, it may continue to be possible to install \"unverified\" (non-compliant) apps through an \"advanced flow\" process that Google has promised to implement after broad backlash to their announcement, but they have not detailed how this would work so it is unclear whether it will truly preserve user freedoms in any practical way.\n\nIn any case, Google's move is a significant step towards the end of free, general-purpose computing for individuals.\n\nNon-certified OSes, like GrapheneOS, should be unaffected by this for as long as they are allowed to continue to exist.",
     "groupBy": "Group by",
     "hideDowngrades": "Hide downgrades as updates",
+    "skipBulkUpdateConfirmation": "Skip update/install confirmation dialog",
     "highlightTouchTargets": "Emfazi malpi evidentajn klavojn",
     "huaweiAppGallery": "Huawei AppGallery",
     "import": "Import",
@@ -241,6 +244,7 @@
     "markXTrackOnlyAsUpdated": "Marki {}\n(Nur sekvita)\nkiel ĝisdata",
     "matchGroupToUse": "Grupo de konformeco uzota por la eltiraĵo de la versio per regula esprimo",
     "matchGroupToUseForX": "Konformecogrupo uzota por \"{}\"",
+    "minimumUpdateAgeDays": "Minimum age for updates",
     "matchLinksOutsideATags": "Match links outside <a> tags",
     "minStarCount": "Minimuma nombro da steloj",
     "minute": {
@@ -398,6 +402,7 @@
     "trySelectingSuggestedVersionCode": "Provi selekti la sugestitan version fare de la APK-kodo",
     "uname": "Uzantnomo",
     "unexpectedError": "Neatendita eraro",
+    "useGlobalDefault": "Use global default",
     "unexpectedStoreApiResponse": "Unexpected store API response",
     "uninstallFromDevice": "Malinstali el la disponaĵo",
     "unknown": "Nekonata",

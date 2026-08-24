@@ -90,6 +90,7 @@
     "categoryAlreadyExists": "A category with this name already exists",
     "categoryDeleteWarning": "已刪除類別中的所有應用程式將被設定為未分類。",
     "categoryName": "Category name",
+    "collapseGroupsOnStartup": "Collapse all groups upon startup",
     "certificateHash": {
         "one": "憑證雜湊",
         "other": "憑證雜湊"
@@ -184,12 +185,14 @@
     "githubPATLabel": "GitHub 個人存取權杖（可提高速率限制）",
     "githubSourceNote": "使用 API 金鑰可避免 GitHub 速率限制。",
     "githubStarredRepos": "GitHub 已加星號的儲存庫",
+    "globalApkFilterRegEx": "Global APK filter regex",
     "gitlabPATLabel": "GitLab 個人存取權杖",
     "googleVerificationWarningP1": "Google 宣布，自 2026/2027 年起，所有在「認證」Android 裝置上的應用程式，都必須要求開發者將個人身分資料直接提交給 Google。\n\n由於此應用程式的開發者不同意這項要求，屆時 Obtainium 將不再於認證的 Android 裝置上運作。",
     "googleVerificationWarningP2": "請前往 https://keepandroidopen.org/ 取得更多資訊。",
     "googleVerificationWarningP3": "請注意，在短期內，可能仍可透過 Google 承諾在其公告遭到廣泛強烈反對後實作的「進階流程」程序，安裝「未經驗證」（不合規）的應用程式，但他們尚未詳細說明此流程將如何運作，因此尚不清楚它是否能以任何實際方式真正保護使用者的自由。\n\n無論如何，Google 的舉動是終結個人自由、通用運算的重要一步。\n\n未經認證的作業系統（例如 GrapheneOS）只要獲准繼續存在，就不應受到影響。",
     "groupBy": "Group by",
     "hideDowngrades": "Hide downgrades as updates",
+    "skipBulkUpdateConfirmation": "Skip update/install confirmation dialog",
     "highlightTouchTargets": "突顯較不明顯的觸控目標",
     "huaweiAppGallery": "Huawei AppGallery",
     "import": "Import",
@@ -241,6 +244,7 @@
     "markXTrackOnlyAsUpdated": "將 {}\n（僅追蹤）\n標記為已更新",
     "matchGroupToUse": "要用於版本字串擷取正規表示式的符合群組",
     "matchGroupToUseForX": "要用於「{}」的符合群組",
+    "minimumUpdateAgeDays": "Minimum age for updates",
     "matchLinksOutsideATags": "符合 <a> 標籤外的連結",
     "minStarCount": "星號數量下限",
     "minute": {
@@ -398,6 +402,7 @@
     "trySelectingSuggestedVersionCode": "嘗試選取建議的版本號碼 APK",
     "uname": "使用者名稱",
     "unexpectedError": "未預期的錯誤",
+    "useGlobalDefault": "Use global default",
     "unexpectedStoreApiResponse": "Unexpected store API response",
     "uninstallFromDevice": "從裝置上解除安裝",
     "unknown": "未知",
