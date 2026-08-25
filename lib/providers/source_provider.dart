@@ -1343,6 +1343,12 @@ class TypedSettings {
 class HttpService {
   static const int maxRedirects = 10;
 
+  static final Future<List<Uint8List>> _ruStoreCertificatePins =
+      _loadCertificateFromAsset([
+        'assets/ca-certs/harica-tls-rsa-root-ca-2021.crt',
+        'assets/ca-certs/russian-trusted-root-ca.crt',
+      ]);
+
   /// Headers that must never be forwarded to a different origin on redirect.
   static const Set<String> sensitiveRedirectHeaders = {
     'authorization',
@@ -1365,6 +1371,10 @@ class HttpService {
       'assets/ca-certs/sectigo-pub-serv-auth-r46.crt',
       'assets/ca-certs/sectigo-pub-serv-auth-e46.crt',
     ]),
+    'rustore.ru': _ruStoreCertificatePins,
+    'backapi.rustore.ru': _ruStoreCertificatePins,
+    'api.rustore.ru': _ruStoreCertificatePins,
+    'static-m.rustore.ru': _ruStoreCertificatePins,
   };
 
   static Future<List<Uint8List>> _loadCertificateFromAsset(

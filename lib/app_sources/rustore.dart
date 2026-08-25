@@ -6,6 +6,7 @@ import 'package:crypto/crypto.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter_charset_detector/flutter_charset_detector.dart';
 import 'package:http/http.dart';
+import 'package:http/io_client.dart';
 import 'package:obtainium/core/logging/app_logger.dart';
 import 'package:obtainium/custom_errors.dart';
 import 'package:obtainium/providers/settings_provider.dart';
@@ -68,7 +69,9 @@ class RuStore extends AppSource {
   }) async {
     final needsSignature =
         url.startsWith(_appInfoUrl) || url.startsWith(_downloadLinkUrl);
-    final session = needsSignature ? await _getSecureSession() : _session;
+    final session = needsSignature
+        ? await _getSecureSession(additionalSettings)
+        : _session;
     return _deviceHeaders(
       deviceType: await _getDeviceType(),
       deviceId: session?.deviceId,
@@ -182,26 +185,36 @@ class RuStore extends AppSource {
     'X-Client-Signature': ?signature,
   };
 
-  Future<_SecureSession?> _getSecureSession() async =>
-      _session ??= await _generateSecureSession();
+  Future<_SecureSession?> _getSecureSession(
+    Map<String, dynamic> additionalSettings,
+  ) async => _session ??= await _generateSecureSession(additionalSettings);
 
-  Future<_SecureSession?> _generateSecureSession() async {
+  Future<_SecureSession?> _generateSecureSession(
+    Map<String, dynamic> additionalSettings,
+  ) async {
     Future<String?> fetchNonce(String deviceId) async {
-      final response = await post(
-        Uri.parse(_nonceUrl),
-        headers: _deviceHeaders(
-          deviceType: await _getDeviceType(),
-          deviceId: deviceId,
-        ),
+      final client = IOClient(
+        await createHttpClient({...additionalSettings, 'url': _nonceUrl}),
       );
-      if (response.statusCode != 200) {
-        AppLogger.warn(
-          'RuStore: nonce request returned ${response.statusCode}',
+      try {
+        final response = await client.post(
+          Uri.parse(_nonceUrl),
+          headers: _deviceHeaders(
+            deviceType: await _getDeviceType(),
+            deviceId: deviceId,
+          ),
         );
-        return null;
+        if (response.statusCode != 200) {
+          AppLogger.warn(
+            'RuStore: nonce request returned ${response.statusCode}',
+          );
+          return null;
+        }
+        final decoded = await decodeJsonBody(response.bodyBytes);
+        return decoded is Map ? decoded['nonce'] as String? : null;
+      } finally {
+        client.close();
       }
-      final decoded = await decodeJsonBody(response.bodyBytes);
-      return decoded is Map ? decoded['nonce'] as String? : null;
     }
 
     // signature = base64(HMAC-SHA256(KEY, base64decode(nonce) || certSha256))
@@ -270,7 +283,8 @@ class RuStore extends AppSource {
       followRedirects: followRedirects,
       postBody: postBody,
     );
-    if (response.statusCode == 419 && await _generateSecureSession() != null) {
+    if (response.statusCode == 419 &&
+        await _generateSecureSession(additionalSettings) != null) {
       response = await sourceRequest(
         url,
         additionalSettings,
