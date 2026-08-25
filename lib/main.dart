@@ -6,7 +6,7 @@ import 'package:flutter/services.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:obtainium/custom_errors.dart';
 import 'package:obtainium/providers/apps_provider.dart';
-import 'package:obtainium/providers/logs_provider.dart';
+import 'package:obtainium/core/logging/app_logger.dart';
 import 'package:obtainium/providers/notifications_provider.dart';
 import 'package:obtainium/providers/settings_provider.dart';
 import 'package:obtainium/providers/source_provider.dart';
@@ -52,7 +52,9 @@ List<MapEntry<Locale, String>> supportedLocales = const [
   MapEntry(Locale('gl'), 'Galego'),
 ];
 const fallbackLocale = Locale('en');
-final Set<Locale> supportedLocaleSet = supportedLocales.map((e) => e.key).toSet();
+final Set<Locale> supportedLocaleSet = supportedLocales
+    .map((e) => e.key)
+    .toSet();
 const localeDir = 'assets/translations';
 bool isFdroidBuild = false;
 
@@ -70,25 +72,18 @@ const _workManagerTaskName = 'obtainiumBgUpdateCheck';
 void callbackDispatcher() {
   Workmanager().executeTask((taskName, inputData) async {
     WidgetsFlutterBinding.ensureInitialized();
-    final logs = LogsProvider();
+    await AppLogger.init();
     try {
-      await logs.add(
-        'WorkManager callback invoked (task: $taskName)',
-        level: LogLevel.info,
-      );
+      AppLogger.info('WorkManager callback invoked (task: $taskName)');
       final taskId = 'wm_${DateTime.now().millisecondsSinceEpoch}';
       await bgUpdateCheck(taskId, inputData);
-      await logs.add(
-        'WorkManager callback completed successfully',
-        level: LogLevel.info,
-      );
+      AppLogger.info('WorkManager callback completed successfully');
       return true;
     } catch (e, stack) {
-      unawaited(
-        logs.add(
-          'WorkManager callback crashed: $e\n$stack',
-          level: LogLevel.error,
-        ),
+      AppLogger.error(
+        e,
+        stackTrace: stack,
+        message: 'WorkManager callback crashed',
       );
       return false;
     }
@@ -97,25 +92,32 @@ void callbackDispatcher() {
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  await AppLogger.init();
 
   PlatformDispatcher.instance.onError = (error, stack) {
-    unawaited(
-      LogsProvider().add(
-        'Uncaught platform error: $error\n$stack',
-        level: LogLevel.error,
-      ),
+    AppLogger.error(
+      error,
+      stackTrace: stack,
+      message: 'Uncaught platform error',
     );
     return true;
   };
 
-  final logs = LogsProvider();
-  final logger = AppLogger(logs: logs);
+  // Exceptions thrown in UI handlers are reported to FlutterError.onError
+  // rather than PlatformDispatcher.onError, so hook both into the log store.
+  final prevFlutterErrorHandler = FlutterError.onError;
+  FlutterError.onError = (details) {
+    prevFlutterErrorHandler?.call(details);
+    AppLogger.error(
+      details.exception,
+      stackTrace: details.stack,
+      message: 'Uncaught framework error',
+    );
+  };
+
   final settingsProvider = SettingsProvider();
   final sourceProvider = SourceProvider();
-  final appsProvider = AppsProvider(
-    settingsProvider: settingsProvider,
-    logsProvider: logs,
-  );
+  final appsProvider = AppsProvider(settingsProvider: settingsProvider);
   final np = NotificationsProvider();
   await np.initialize();
 
@@ -160,7 +162,7 @@ void main() async {
   }
 
   await Workmanager().initialize(callbackDispatcher);
-  await logs.add('WorkManager initialised', level: LogLevel.info);
+  AppLogger.info('WorkManager initialised');
 
   runApp(
     MultiProvider(
@@ -168,8 +170,6 @@ void main() async {
         ChangeNotifierProvider.value(value: appsProvider),
         ChangeNotifierProvider.value(value: settingsProvider),
         Provider.value(value: np),
-        Provider.value(value: logs),
-        Provider<Logger>.value(value: logger),
         Provider<SourceProvider>.value(value: sourceProvider),
       ],
       child: EasyLocalization(
@@ -214,14 +214,13 @@ class _ObtainiumState extends State<Obtainium> {
   void _handleFirstRun(
     SettingsProvider settings,
     AppsProvider apps,
-    Logger logger,
     BuildContext context,
   ) {
     if (_firstRunHandled) return;
     _firstRunHandled = true;
     final isFirstRun = settings.checkAndFlipFirstRun();
     if (isFirstRun) {
-      logger.info('This is the first ever run of Obtainium.');
+      AppLogger.info('This is the first ever run of Obtainium.');
       if (!settings.isTV) {
         unawaited(Permission.notification.request());
       }
@@ -252,8 +251,12 @@ class _ObtainiumState extends State<Obtainium> {
                 );
               }
             })
-            .catchError((err) {
-              logger.error('Failed to add Obtainium on first run', err);
+            .catchError((err, stack) {
+              AppLogger.error(
+                err,
+                stackTrace: stack,
+                message: 'Failed to add Obtainium on first run',
+              );
             });
       }
     }
@@ -275,12 +278,10 @@ class _ObtainiumState extends State<Obtainium> {
       await settingsProvider.initializeSettings();
       if (!mounted) return;
       final appsProvider = context.read<AppsProvider>();
-      final logger = context.read<Logger>();
       final notifs = context.read<NotificationsProvider>();
 
       unawaited(_scheduleWorkManager());
-      unawaited(LogsProvider.runStartupCleanup());
-      _handleFirstRun(settingsProvider, appsProvider, logger, context);
+      _handleFirstRun(settingsProvider, appsProvider, context);
 
       if (!_launchByNotifChecked) {
         _launchByNotifChecked = true;
@@ -290,24 +291,22 @@ class _ObtainiumState extends State<Obtainium> {
   }
 
   @override
-  void dispose() {
-    LogsProvider.close();
-    super.dispose();
-  }
-
-  @override
   Widget build(BuildContext context) {
-    final themeColor =
-        context.select<SettingsProvider, Color>((p) => p.themeColor);
-    final colourSchemeMode =
-        context.select<SettingsProvider, ColourSchemeMode>(
-            (p) => p.colourSchemeMode);
-    final useBlackTheme =
-        context.select<SettingsProvider, bool>((p) => p.useBlackTheme);
-    final themeSetting =
-        context.select<SettingsProvider, ThemeSettings>((p) => p.theme);
-    final useSystemFont =
-        context.select<SettingsProvider, bool>((p) => p.useSystemFont);
+    final themeColor = context.select<SettingsProvider, Color>(
+      (p) => p.themeColor,
+    );
+    final colourSchemeMode = context.select<SettingsProvider, ColourSchemeMode>(
+      (p) => p.colourSchemeMode,
+    );
+    final useBlackTheme = context.select<SettingsProvider, bool>(
+      (p) => p.useBlackTheme,
+    );
+    final themeSetting = context.select<SettingsProvider, ThemeSettings>(
+      (p) => p.theme,
+    );
+    final useSystemFont = context.select<SettingsProvider, bool>(
+      (p) => p.useSystemFont,
+    );
 
     return DynamicColorBuilder(
       builder: (ColorScheme? lightDynamic, ColorScheme? darkDynamic) {
@@ -337,9 +336,9 @@ class _ObtainiumState extends State<Obtainium> {
         }
 
         if (useBlackTheme) {
-          darkColorScheme = darkColorScheme
-              .harmonized()
-              .copyWith(surface: Colors.black);
+          darkColorScheme = darkColorScheme.harmonized().copyWith(
+            surface: Colors.black,
+          );
         }
 
         if (useSystemFont) {

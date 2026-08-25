@@ -86,7 +86,7 @@ lib/
 │  ├─ stock_installer.dart        AndroidPackageInstaller
 │  ├─ shizuku_installer.dart      Shizuku/Dhizuku/Sui
 │  └─ external_installer.dart     Third-party installer hand-off
-└─ app_sources/                  One file per supported source (28 sources + githubstars)
+└─ app_sources/                  One file per supported source (29 sources + githubstars)
 ```
 
 ---

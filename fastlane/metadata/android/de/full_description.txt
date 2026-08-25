@@ -19,15 +19,16 @@
 		<ul>
 			<li>alternative Stores
 				<ul>
-				<li>CoolApk</li>
 				<li>Tencent App Store</li>
 				<li>RuStore</li>
+				<li>CoolApk</li>
 				</ul>
 			</li>
 			<li>OEM-Stores
 				<ul>
 				<li>Huawei AppGallery</li>
 				<li>vivo App Store (China)</li>
+				<li>Samsung Galaxy Store</li>
 				</ul>
 			</li>
 			<li>Indie
@@ -43,15 +44,16 @@
 			</li>
 			<li>Reupload-Stores
 				<ul>
-				<li>APKMirror (nur Updatebenachrichtigungen; kein APK-Download möglich)</li>
 				<li>APKPure</li>
 				<li>Aptoide</li>
+				<li>Uptodown</li>
 				<li>LiteAPKs</li>
 				<li>APK4Free</li>
-				<li>Uptodown</li>
+				<li>APKMirror (nur Updatebenachrichtigungen; kein APK-Download möglich)</li>
 				<li>APKCombo</li>
 				</ul>
 			</li>
+			<li>SourceForge</li>
 			<li>Jenkins Jobs</li>
 		</ul>
 	</li>

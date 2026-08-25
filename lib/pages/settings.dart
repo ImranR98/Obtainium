@@ -11,10 +11,10 @@ import 'package:flutter/material.dart';
 import 'package:obtainium/components/ui_widgets.dart';
 import 'package:obtainium/components/generated_form_renderer.dart';
 import 'package:obtainium/custom_errors.dart';
+import 'package:obtainium/core/logging/app_logger.dart';
 import 'package:obtainium/main.dart';
 import 'package:obtainium/pages/import_export.dart';
 import 'package:obtainium/pages/logs.dart';
-import 'package:obtainium/providers/logs_provider.dart';
 import 'package:obtainium/providers/apps_provider.dart';
 import 'package:obtainium/providers/external_install_bridge.dart';
 import 'package:obtainium/providers/settings_provider.dart';
@@ -51,24 +51,16 @@ class _SettingsPageState extends State<SettingsPage> {
   Future<void> _triggerManualBgCheck() async {
     if (_isRunningBgCheck) return;
     setState(() => _isRunningBgCheck = true);
-    final logs = context.read<LogsProvider>();
-    await logs.add(
-      'Manual BG update check triggered from settings',
-      level: LogLevel.info,
-    );
+    AppLogger.info('Manual BG update check triggered from settings');
     try {
       final taskId = 'manual_${DateTime.now().millisecondsSinceEpoch}';
       await bgUpdateCheck(taskId, null, forceAll: true);
-      await logs.add(
-        'Manual BG update check completed successfully',
-        level: LogLevel.info,
-      );
+      AppLogger.info('Manual BG update check completed successfully');
     } catch (e, stack) {
-      unawaited(
-        logs.add(
-          'Manual BG update check crashed: $e\n$stack',
-          level: LogLevel.error,
-        ),
+      AppLogger.error(
+        e,
+        stackTrace: stack,
+        message: 'Manual BG update check crashed',
       );
     }
     if (!mounted) return;
@@ -82,12 +74,7 @@ class _SettingsPageState extends State<SettingsPage> {
       if (mounted) setState(() {});
     } catch (e) {
       if (!mounted) return;
-      unawaited(
-        context.read<LogsProvider>().add(
-          'Failed to get Android SDK info: $e',
-          level: LogLevel.error,
-        ),
-      );
+      AppLogger.error(e, message: 'Failed to get Android SDK info');
     }
   }
 
@@ -399,41 +386,43 @@ class _SettingsPageState extends State<SettingsPage> {
                               ),
                             ),
                           ),
-            _settingsRow(
-              context,
-              icon: Icons.update_outlined,
-              title: tr('updates'),
-              onTap: () => _pushPage(
-                context,
-                title: tr('updates'),
-                childBuilder: (ctx) => _buildUpdatesSection(
-                  ctx, showBgSection, sdk,
-                ),
-              ),
-            ),
-            if (sourceSpecificForm != null)
-              _settingsRow(
-                context,
-                icon: Icons.tune_outlined,
-                title: tr('sourceSpecific'),
-                onTap: () => _pushPage(
-                  context,
-                  title: tr('sourceSpecific'),
-                  childBuilder: (_) => sourceSpecificForm,
-                ),
-              ),
-            _settingsRow(
-              context,
-              icon: Icons.palette_outlined,
-              title: tr('appearance'),
-              onTap: () => _pushPage(
-                context,
-                title: tr('appearance'),
-                childBuilder: (ctx) => _buildAppearanceSection(
-                  ctx, colorPicker, sortDropdown, orderControl,
-                ),
-              ),
-            ),
+                          _settingsRow(
+                            context,
+                            icon: Icons.update_outlined,
+                            title: tr('updates'),
+                            onTap: () => _pushPage(
+                              context,
+                              title: tr('updates'),
+                              childBuilder: (ctx) =>
+                                  _buildUpdatesSection(ctx, showBgSection, sdk),
+                            ),
+                          ),
+                          if (sourceSpecificForm != null)
+                            _settingsRow(
+                              context,
+                              icon: Icons.tune_outlined,
+                              title: tr('sourceSpecific'),
+                              onTap: () => _pushPage(
+                                context,
+                                title: tr('sourceSpecific'),
+                                childBuilder: (_) => sourceSpecificForm,
+                              ),
+                            ),
+                          _settingsRow(
+                            context,
+                            icon: Icons.palette_outlined,
+                            title: tr('appearance'),
+                            onTap: () => _pushPage(
+                              context,
+                              title: tr('appearance'),
+                              childBuilder: (ctx) => _buildAppearanceSection(
+                                ctx,
+                                colorPicker,
+                                sortDropdown,
+                                orderControl,
+                              ),
+                            ),
+                          ),
                           CardTile(
                             child: ListTile(
                               leading: Icon(
@@ -494,7 +483,7 @@ class _SettingsPageState extends State<SettingsPage> {
                                 ).colorScheme.onSurfaceVariant,
                               ),
                               onTap: () {
-                                context.read<LogsProvider>().get().then((logs) {
+                                AppLogger.getLogs().then((logs) {
                                   if (!context.mounted) return;
                                   if (logs.isEmpty) {
                                     showMessage(
@@ -539,9 +528,7 @@ class _SettingsPageState extends State<SettingsPage> {
             ),
           ),
           SliverToBoxAdapter(
-            child: SizedBox(
-              height: MediaQuery.of(context).padding.bottom,
-            ),
+            child: SizedBox(height: MediaQuery.of(context).padding.bottom),
           ),
         ],
       ),
@@ -589,9 +576,7 @@ class _SettingsPageState extends State<SettingsPage> {
                   sliver: SliverToBoxAdapter(child: childBuilder(ctx)),
                 ),
                 SliverToBoxAdapter(
-                  child: SizedBox(
-                    height: MediaQuery.of(ctx).padding.bottom,
-                  ),
+                  child: SizedBox(height: MediaQuery.of(ctx).padding.bottom),
                 ),
               ],
             ),
@@ -655,6 +640,11 @@ class _SettingsPageState extends State<SettingsPage> {
         ],
       ],
       ToggleTile(
+        label: tr('enableCertificatePinning'),
+        value: settingsProvider.enableCertificatePinning,
+        onChanged: (value) => settingsProvider.enableCertificatePinning = value,
+      ),
+      ToggleTile(
         label: tr('checkOnStart'),
         value: settingsProvider.checkOnStart,
         onChanged: (value) => settingsProvider.checkOnStart = value,
@@ -669,6 +659,28 @@ class _SettingsPageState extends State<SettingsPage> {
         value: settingsProvider.onlyCheckInstalledOrTrackOnlyApps,
         onChanged: (value) =>
             settingsProvider.onlyCheckInstalledOrTrackOnlyApps = value,
+      ),
+      ConnectedCard(
+        color: Theme.of(context).colorScheme.surfaceContainerHighest,
+        child: GeneratedForm(
+          tileMode: true,
+          items: [
+            [
+              GeneratedFormTextField(
+                'globalApkFilterRegEx',
+                label: tr('globalApkFilterRegEx'),
+                required: false,
+                additionalValidators: [regExValidator],
+              )..value = settingsProvider.globalApkFilterRegEx,
+            ],
+          ],
+          onValueChanges: (values, valid, isBuilding) {
+            if (valid && !isBuilding) {
+              settingsProvider.globalApkFilterRegEx =
+                  values['globalApkFilterRegEx'];
+            }
+          },
+        ),
       ),
       ToggleTile(
         label: tr('removeOnExternalUninstall'),
@@ -691,6 +703,16 @@ class _SettingsPageState extends State<SettingsPage> {
         label: tr('hideDowngrades'),
         value: settingsProvider.hideDowngrades,
         onChanged: (value) => settingsProvider.hideDowngrades = value,
+      ),
+      ToggleTile(
+        label: tr('skipBulkUpdateConfirmation'),
+        value: settingsProvider.skipBulkUpdateConfirmation,
+        onChanged: (value) =>
+            settingsProvider.skipBulkUpdateConfirmation = value,
+      ),
+      const CardTile(
+        padding: EdgeInsets.fromLTRB(16, 8, 16, 8),
+        child: _MinimumUpdateAgeSliderTile(),
       ),
       ToggleTile(
         label: tr('parallelDownloads'),
@@ -824,8 +846,7 @@ class _SettingsPageState extends State<SettingsPage> {
               borderRadius: BorderRadius.circular(connectedTileBigRadius),
             ),
             title: Text(
-              tr('selectX',
-                  args: [lowerCaseUnlessLang(tr('colour'), 'de')]),
+              tr('selectX', args: [lowerCaseUnlessLang(tr('colour'), 'de')]),
             ),
             subtitle: Text(
               '${ColorTools.nameThatColor(settingsProvider.themeColor)} '
@@ -843,8 +864,7 @@ class _SettingsPageState extends State<SettingsPage> {
                   settingsProvider,
                   obtainiumThemeColor.toSwatch(),
                 ))) {
-                  handleColorPickerCancel(
-                      colorBeforeDialog, settingsProvider);
+                  handleColorPickerCancel(colorBeforeDialog, settingsProvider);
                 }
               },
             ),
@@ -920,6 +940,11 @@ class _SettingsPageState extends State<SettingsPage> {
         onChanged: (value) => settingsProvider.hideTrackOnlyWarning = value,
       ),
       ToggleTile(
+        label: tr('collapseGroupsOnStartup'),
+        value: settingsProvider.collapseGroupsOnStartup,
+        onChanged: (value) => settingsProvider.collapseGroupsOnStartup = value,
+      ),
+      ToggleTile(
         label: tr('dontShowAPKOriginWarnings'),
         value: settingsProvider.hideAPKOriginWarning,
         onChanged: (value) => settingsProvider.hideAPKOriginWarning = value,
@@ -977,6 +1002,130 @@ class _SettingsPageState extends State<SettingsPage> {
 
 extension on Color {
   ColorSwatch<Object> toSwatch() => ColorTools.createPrimarySwatch(this);
+}
+
+/// Slider tile for the minimum-age-for-updates setting. Kept as its own
+/// [StatefulWidget] so that dragging the slider only rebuilds this tile
+/// rather than the entire settings page; the chosen value is only committed
+/// to the [SettingsProvider] when the drag ends.
+class _MinimumUpdateAgeSliderTile extends StatefulWidget {
+  const _MinimumUpdateAgeSliderTile();
+
+  @override
+  State<_MinimumUpdateAgeSliderTile> createState() =>
+      _MinimumUpdateAgeSliderTileState();
+}
+
+class _MinimumUpdateAgeSliderTileState
+    extends State<_MinimumUpdateAgeSliderTile> {
+  double sliderVal = 0;
+  bool showLabel = true;
+
+  int get _days =>
+      minimumUpdateAgeOptions[sliderVal.round().clamp(
+        0,
+        minimumUpdateAgeOptions.length - 1,
+      )];
+
+  String get _label => _days == 0 ? tr('none') : plural('day', _days);
+
+  @override
+  void initState() {
+    super.initState();
+    _syncFromSettings();
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _syncFromSettings();
+  }
+
+  void _syncFromSettings() {
+    final days = context.read<SettingsProvider>().minimumUpdateAgeDays;
+    final index = minimumUpdateAgeOptions.indexOf(days);
+    sliderVal = (index >= 0 ? index : 0).toDouble();
+  }
+
+  void _commit() {
+    context.read<SettingsProvider>().minimumUpdateAgeDays = _days;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final settingsProvider = context.read<SettingsProvider>();
+    final rawSlider = Slider(
+      value: sliderVal,
+      max: (minimumUpdateAgeOptions.length - 1).toDouble(),
+      divisions: minimumUpdateAgeOptions.length - 1,
+      label: _label,
+      onChanged: (double value) {
+        setState(() {
+          sliderVal = value;
+        });
+      },
+      onChangeStart: (double value) {
+        setState(() {
+          showLabel = false;
+        });
+      },
+      onChangeEnd: (double value) {
+        setState(() {
+          showLabel = true;
+        });
+        _commit();
+      },
+    );
+
+    final Widget ageSlider = settingsProvider.isTV
+        ? Row(
+            children: [
+              IconButton(
+                icon: const Icon(Icons.remove),
+                onPressed: sliderVal <= 0
+                    ? null
+                    : () {
+                        final newVal = (sliderVal - 1).clamp(
+                          0.0,
+                          (minimumUpdateAgeOptions.length - 1).toDouble(),
+                        );
+                        setState(() {
+                          sliderVal = newVal;
+                        });
+                        _commit();
+                      },
+              ),
+              Expanded(child: Text(_label, textAlign: TextAlign.center)),
+              IconButton(
+                icon: const Icon(Icons.add),
+                onPressed:
+                    sliderVal >= (minimumUpdateAgeOptions.length - 1).toDouble()
+                    ? null
+                    : () {
+                        final newVal = (sliderVal + 1).clamp(
+                          0.0,
+                          (minimumUpdateAgeOptions.length - 1).toDouble(),
+                        );
+                        setState(() {
+                          sliderVal = newVal;
+                        });
+                        _commit();
+                      },
+              ),
+            ],
+          )
+        : rawSlider;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        showLabel
+            ? Text("${tr('minimumUpdateAgeDays')}: $_label")
+            : const SizedBox(height: 20),
+        ageSlider,
+      ],
+    );
+  }
 }
 
 /// The background-update-interval slider tile. Kept as its own [StatefulWidget]
@@ -1322,9 +1471,9 @@ class _ExternalInstallerTileState extends State<_ExternalInstallerTile> {
       future: _targetsFuture,
       builder: (context, snapshot) {
         if (snapshot.connectionState != ConnectionState.done) {
-          return ListTile(
-            contentPadding: const EdgeInsets.symmetric(horizontal: 8),
-            leading: const SizedBox(
+          return const ListTile(
+            contentPadding: EdgeInsets.symmetric(horizontal: 8),
+            leading: SizedBox(
               width: 24,
               height: 24,
               child: CircularProgressIndicator(),
