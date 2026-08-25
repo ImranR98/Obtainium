@@ -1378,9 +1378,17 @@ class HttpService {
     return certsBytes;
   }
 
+  static String _extractRootHost(String host) {
+    final parts = host.split('.');
+    return parts.length > 2
+        ? parts.sublist(parts.length - 2).join('.')
+        : host;
+  }
+
   Future<SecurityContext?> _createCertPinning(String url) async {
     final uri = Uri.parse(url);
     final host = uri.host;
+    final rootHost = _extractRootHost(host);
     if (_certificatePins.containsKey(host)) {
       final certsBytes = await _certificatePins[host]!;
       final securityContext = SecurityContext();
@@ -1388,7 +1396,16 @@ class HttpService {
         securityContext.setTrustedCertificatesBytes(certBytes);
       }
       return securityContext;
-    } else {
+    }
+    else if (_certificatePins.containsKey(rootHost)) {
+      final certsBytes = await _certificatePins[rootHost]!;
+      final securityContext = SecurityContext();
+      for (final certBytes in certsBytes) {
+        securityContext.setTrustedCertificatesBytes(certBytes);
+      }
+      return securityContext;
+    }
+    else {
       return null;
     }
   }
