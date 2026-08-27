@@ -10,6 +10,8 @@ If you want to be excellent, please consider implementing this guide, [The Art O
 
 ## Development
 
+Please see the [developer guide](docs/DEVELOPER_GUIDE.md) for in-depth details about Obtanium's architecture.
+
 ### Logging
 
 Please use our [AppLogger](lib/core/logging/app_logger.dart) for any internal logging.
