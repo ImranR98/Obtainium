@@ -2,11 +2,13 @@
 
 Policies and procedures on contributing to Obtanium.
 
-## Bug Reports
+## Bug Reports / Testing
 
 Welcomed!
 
 If you want to be excellent, please consider implementing this guide, [The Art Of The Bug Report](https://www.ministryoftesting.com/insights/11b82aee), when writing bug reports.
+
+And for any testers out there [How to think like a Tester](https://medium.com/@blakenorrish/how-to-think-like-a-tester-7a174ff6aeaf) is a good introduction.
 
 ## Development
 
