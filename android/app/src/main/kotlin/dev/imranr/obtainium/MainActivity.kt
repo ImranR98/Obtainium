@@ -13,7 +13,7 @@ import java.io.File
 /**
  * The native surface is intentionally tiny: the capabilities below
  * have no Flutter-plugin equivalent. Everything else (intent dispatch,
- * foreground tracking, install verification, batching) lives in Dart.
+ * foreground tracking, install verification, batching) lives in Dart. 
  */
 class MainActivity : FlutterActivity() {
     private companion object {
