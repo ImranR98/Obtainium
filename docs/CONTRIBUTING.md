@@ -14,6 +14,9 @@ And for any testers out there [How to think like a Tester](https://medium.com/@b
 
 Please see the [developer guide](docs/DEVELOPER_GUIDE.md) for in-depth details about Obtanium's architecture.
 
+It is encouraged that all commits be have their signature verified, that is signed. 
+Please see [GitHub documentation](https://docs.github.com/en/authentication/managing-commit-signature-verification/about-commit-signature-verification#ssh-commit-signature-verification); this links to SSH key signing, but other signing is acceptable.
+
 ### Logging
 
 Please use our [AppLogger](lib/core/logging/app_logger.dart) for any internal logging.
