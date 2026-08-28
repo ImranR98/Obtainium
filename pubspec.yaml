@@ -12,6 +12,9 @@ dependencies:
   flutter:
     sdk: flutter
 
+  native_download:
+    path: packages/native_download
+
   cupertino_icons: ^1.0.9
   path_provider: ^2.1.6
   flutter_fgbg: ^0.8.0

@@ -6,6 +6,7 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 import 'dart:math';
+import 'dart:typed_data';
 
 import 'package:android_package_manager/android_package_manager.dart';
 import 'package:battery_plus/battery_plus.dart';
@@ -13,11 +14,11 @@ import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:crypto/crypto.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:http/io_client.dart';
 import 'package:obtainium/custom_errors.dart';
 import 'package:obtainium/core/logging/app_logger.dart';
 import 'package:obtainium/providers/notifications_provider.dart';
+import 'package:native_download/native_download.dart';
 import 'package:obtainium/providers/settings_provider.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:flutter_fgbg/flutter_fgbg.dart';
@@ -54,35 +55,6 @@ const int _bgClientExceptionRetryWaitSeconds = 15 * 60;
 final packageManager = AndroidPackageManager();
 final packageInfoFlags = PackageInfoFlags({PMFlag.getSigningCertificates});
 
-const MethodChannel _nativeDownloadChannel = MethodChannel(
-  'dev.imranr.obtainium/native_download',
-);
-final Map<String, void Function(double?, int?, int?)> _nativeDownloadProgress =
-    {};
-bool _nativeDownloadHandlerReady = false;
-
-void _ensureNativeDownloadHandler() {
-  if (_nativeDownloadHandlerReady) return;
-  _nativeDownloadHandlerReady = true;
-  _nativeDownloadChannel.setMethodCallHandler((call) async {
-    if (call.method != 'downloadProgress') return null;
-    final args = Map<Object?, Object?>.from(call.arguments as Map);
-    final callback = _nativeDownloadProgress[args['requestId']];
-    if (callback != null) {
-      final received = (args['received'] as num?)?.toInt();
-      final total = (args['total'] as num?)?.toInt();
-      callback(
-        total != null && total > 0
-            ? (received! / total * 100).clamp(0, 100).toDouble()
-            : _downloadProgressFallback.toDouble(),
-        received,
-        total,
-      );
-    }
-    return null;
-  });
-}
-
 Future<File> _downloadWithNativeTransport(
   String url,
   String outputPath,
@@ -93,36 +65,22 @@ Future<File> _downloadWithNativeTransport(
   Function? onProgress,
   CancellationToken? cancellationToken,
 ) async {
-  _ensureNativeDownloadHandler();
-  final requestId = '${DateTime.now().microsecondsSinceEpoch}-${url.hashCode}';
-  if (onProgress != null) {
-    _nativeDownloadProgress[requestId] = (progress, received, total) {
-      onProgress(progress, received, total);
-    };
-  }
-  void cancelNative() {
-    unawaited(
-      _nativeDownloadChannel.invokeMethod<void>('cancel', {
-        'requestId': requestId,
-      }),
-    );
-  }
-
-  cancellationToken?.addOnCancelCallback(cancelNative);
+  final request = NativeDownloadRequest.start(
+    url: url,
+    outputPath: outputPath,
+    headers: headers,
+    rangeStart: rangeStart,
+    totalLength: totalLength,
+    rangeSupported: rangeSupported,
+    onProgress: onProgress == null
+        ? null
+        : (progress, received, total) => onProgress(progress, received, total),
+  );
+  cancellationToken?.addOnCancelCallback(request.cancel);
   try {
-    await _nativeDownloadChannel.invokeMethod<String>('download', {
-      'requestId': requestId,
-      'url': url,
-      'outputPath': outputPath,
-      'headers': headers ?? const <String, String>{},
-      'rangeStart': rangeStart,
-      'totalLength': totalLength,
-      'rangeSupported': rangeSupported,
-    });
-    return File(outputPath);
+    return await request.future;
   } finally {
-    cancellationToken?.removeOnCancelCallback(cancelNative);
-    _nativeDownloadProgress.remove(requestId);
+    cancellationToken?.removeOnCancelCallback(request.cancel);
   }
 }
 
