@@ -63,7 +63,6 @@ class MainActivity : FlutterActivity() {
                 else -> result.notImplemented()
             }
         }
-        NativeDownloadChannel.register(flutterEngine)
         pendingShareIntent?.let {
             super.onNewIntent(it)
             pendingShareIntent = null
