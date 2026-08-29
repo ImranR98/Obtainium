@@ -681,13 +681,14 @@ abstract class AppSource {
       ),
     ],
     [
-      GeneratedFormDropdown(
+      GeneratedFormSlider(
         'minimumUpdateAgeDays',
         [
+          MapEntry('', 'useGlobalDefault'),
           for (final days in minimumUpdateAgeOptions)
             MapEntry(
-              days == 0 ? '' : days.toString(),
-              days == 0 ? tr('useGlobalDefault') : plural('day', days),
+              days.toString(),
+              days == 0 ? 'none' : days.toString(),
             ),
         ],
         label: tr('minimumUpdateAgeDays'),

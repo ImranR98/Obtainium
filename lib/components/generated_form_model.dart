@@ -165,6 +165,39 @@ List<List<GeneratedFormItem>> cloneFormItems(
   return clonedItems;
 }
 
+class GeneratedFormSlider extends GeneratedFormItem {
+  /// Maps each slider stop's value to a label. Labels are either translation
+  /// keys or plain numeric day counts (resolved by the renderer with the
+  /// pluralized "day" string).
+  final List<MapEntry<String, String>>? opts;
+
+  GeneratedFormSlider(
+    super.key,
+    this.opts, {
+    super.label,
+    super.belowWidgets,
+    String super.value = '',
+    List<String? Function(String? value)> super.additionalValidators = const [],
+  });
+
+  @override
+  String ensureType(val) {
+    return val.toString();
+  }
+
+  @override
+  GeneratedFormSlider clone() {
+    return GeneratedFormSlider(
+      key,
+      opts?.map((e) => MapEntry(e.key, e.value)).toList(),
+      label: label,
+      belowWidgets: belowWidgets,
+      value: value,
+      additionalValidators: List.from(additionalValidators),
+    );
+  }
+}
+
 class GeneratedFormSubForm extends GeneratedFormItem {
   final List<List<GeneratedFormItem>> items;
 
