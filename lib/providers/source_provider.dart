@@ -1099,17 +1099,6 @@ class SourceProvider {
     return source;
   }
 
-  bool ifRequiredAppSpecificSettingsExist(AppSource source) {
-    for (var row in source.combinedAppSpecificSettingFormItems) {
-      for (var element in row) {
-        if (element is GeneratedFormTextField && element.required) {
-          return true;
-        }
-      }
-    }
-    return false;
-  }
-
   String generateTempID(
     String standardUrl,
     Map<String, dynamic> additionalSettings,
