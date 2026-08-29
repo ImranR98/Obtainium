@@ -1827,6 +1827,14 @@ class ApkFilterService {
     return apkUrls;
   }
 
+  /// Non-canonical ABI names commonly used in APK filenames, mapped to the
+  /// canonical device ABI strings they correspond to (see #3249).
+  static const Map<String, List<String>> abiNameAliases = {
+    'arm64-v8a': ['aarch64', 'arm64'],
+    'armeabi-v7a': ['armv7', 'armeabi'],
+    'x86_64': ['x64'],
+  };
+
   Future<List<MapEntry<String, String>>> filterApksByArch(
     List<MapEntry<String, String>> apkUrls,
     List<String> abis, {
@@ -1834,7 +1842,11 @@ class ApkFilterService {
   }) async {
     if (apkUrls.length > 1) {
       for (var abi in abis) {
-        final abiRegex = RegExp('.*$abi.*', caseSensitive: false);
+        final variants = [abi, ...?abiNameAliases[abi]];
+        final abiRegex = RegExp(
+          '.*(?:${variants.join('|')}).*',
+          caseSensitive: false,
+        );
         final urls2 = apkUrls
             .where((element) => abiRegex.hasMatch(element.key))
             .toList();
