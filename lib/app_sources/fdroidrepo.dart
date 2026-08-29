@@ -17,12 +17,17 @@ class _FdroidVersion {
   final String apkName;
   final List<String> nativecode;
   final DateTime? added;
+
+  /// Release channels this build is published under (index-v2's
+  /// `releaseChannels`, e.g. `["Beta"]`); empty for v1 entries.
+  final List<String> releaseChannels;
   const _FdroidVersion({
     required this.versionName,
     required this.versionCode,
     required this.apkName,
     this.nativecode = const [],
     this.added,
+    this.releaseChannels = const [],
   });
 }
 
@@ -289,6 +294,7 @@ class FDroidRepo extends AppSource {
             return;
           }
           final nativecode = manifest['nativecode'];
+          final channels = v['releaseChannels'];
           versionList.add(
             _FdroidVersion(
               versionName: versionName,
@@ -298,6 +304,9 @@ class FDroidRepo extends AppSource {
                   ? nativecode.whereType<String>().toList()
                   : const [],
               added: _parseV2Timestamp(v['added']),
+              releaseChannels: channels is List
+                  ? channels.whereType<String>().toList()
+                  : const [],
             ),
           );
         });
@@ -492,12 +501,29 @@ class FDroidRepo extends AppSource {
             .where((v) => v.versionCode == entry.marketVersionCode)
             .toList();
       }
+      var candidates = releases;
+      if (selected.isEmpty && trySelectingSuggestedVersionCode) {
+        // index-v2 has no suggested version code; the toggle instead means
+        // "prefer stable" — drop builds marked as non-stable (e.g. Beta).
+        final nonStable = releases
+            .where(
+              (v) =>
+                  v.releaseChannels.isNotEmpty &&
+                  !v.releaseChannels.any(
+                    (c) => c.toLowerCase() == 'stable',
+                  ),
+            )
+            .toList();
+        if (nonStable.isNotEmpty && nonStable.length < releases.length) {
+          candidates = releases.where((v) => !nonStable.contains(v)).toList();
+        }
+      }
       if (selected.isEmpty) {
         if (pickHighestVersionCode) {
-          selected = [releases.first];
+          selected = [candidates.first];
         } else {
-          final latestVersionName = releases.first.versionName;
-          selected = releases
+          final latestVersionName = candidates.first.versionName;
+          selected = candidates
               .where((v) => v.versionName == latestVersionName)
               .toList();
         }
