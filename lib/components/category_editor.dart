@@ -230,7 +230,8 @@ class _CategoryEditorSheetState extends State<_CategoryEditorSheet> {
     // Account for both the on-screen keyboard and the system navigation bar,
     // and keep the sheet scrollable so the action row never ends up hidden
     // behind them (see #3240).
-    final bottomPadding = 20 +
+    final bottomPadding =
+        20 +
         MediaQuery.of(context).viewInsets.bottom +
         MediaQuery.of(context).padding.bottom;
     return Padding(
@@ -450,55 +451,50 @@ class _CategorySelectorState extends State<CategorySelector> {
       );
     }
 
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Expanded(
-          child: Wrap(
-            alignment: widget.alignment,
-            spacing: 8,
-            runSpacing: 8,
-            children: [
-              for (final name in names)
-                Tooltip(
-                  message: tr('editCategory'),
-                  child: Semantics(
-                    onLongPress: () => _edit(name),
-                    child: GestureDetector(
-                      onLongPress: () => _edit(name),
-                      child: FilterChip(
-                        avatar: CircleAvatar(
-                          backgroundColor: Color(
-                            categories[name] ?? 0xFFCCCCCC,
-                          ),
-                          radius: 7,
-                        ),
-                        label: Text(
-                          name,
-                          softWrap: true,
-                          maxLines: 3,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                        selected: _selected.contains(name),
-                        onSelected: (v) => _toggle(name, v),
-                        selectedColor: Color(
-                          categories[name] ?? 0xFFCCCCCC,
-                        ).withValues(alpha: 0.22),
-                        showCheckmark: true,
-                      ),
+    return SizedBox(
+      width: double.infinity,
+      child: Wrap(
+        alignment: widget.alignment,
+        spacing: 8,
+        runSpacing: 8,
+        children: [
+          for (final name in names)
+            Tooltip(
+              message: tr('editCategory'),
+              child: Semantics(
+                onLongPress: () => _edit(name),
+                child: GestureDetector(
+                  onLongPress: () => _edit(name),
+                  child: FilterChip(
+                    avatar: CircleAvatar(
+                      backgroundColor: Color(categories[name] ?? 0xFFCCCCCC),
+                      radius: 7,
                     ),
+                    label: Text(
+                      name,
+                      softWrap: true,
+                      maxLines: 3,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    selected: _selected.contains(name),
+                    onSelected: (v) => _toggle(name, v),
+                    selectedColor: Color(
+                      categories[name] ?? 0xFFCCCCCC,
+                    ).withValues(alpha: 0.22),
+                    showCheckmark: true,
                   ),
                 ),
-            ],
-          ),
-        ),
-        if (widget.allowCreate) const SizedBox(width: 8),
-        if (widget.allowCreate)
-          Tooltip(
-            message: tr('newCategory'),
-            child: ActionChip(label: const Text('+'), onPressed: _create),
-          ),
-      ],
+              ),
+            ),
+          // Inline with the categories so the row doesn't take extra space
+          // when the list wraps (see #3221).
+          if (widget.allowCreate)
+            Tooltip(
+              message: tr('newCategory'),
+              child: ActionChip(label: const Text('+'), onPressed: _create),
+            ),
+        ],
+      ),
     );
   }
 }
@@ -537,42 +533,38 @@ class CategoryManager extends StatelessWidget {
         ],
       );
     }
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Expanded(
-          child: Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            crossAxisAlignment: WrapCrossAlignment.center,
-            children: [
-              for (final name in names)
-                ActionChip(
-                  avatar: CircleAvatar(
-                    backgroundColor: Color(categories[name]!),
-                    radius: 7,
-                  ),
-                  label: Text(
-                    name,
-                    softWrap: true,
-                    maxLines: 3,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  onPressed: () =>
-                      showCategoryEditor(context, existingName: name),
-                ),
-            ],
+    return SizedBox(
+      width: double.infinity,
+      child: Wrap(
+        spacing: 8,
+        runSpacing: 8,
+        crossAxisAlignment: WrapCrossAlignment.center,
+        children: [
+          for (final name in names)
+            ActionChip(
+              avatar: CircleAvatar(
+                backgroundColor: Color(categories[name]!),
+                radius: 7,
+              ),
+              label: Text(
+                name,
+                softWrap: true,
+                maxLines: 3,
+                overflow: TextOverflow.ellipsis,
+              ),
+              onPressed: () => showCategoryEditor(context, existingName: name),
+            ),
+          // Inline with the categories so the row doesn't take extra space
+          // when the list wraps (see #3221).
+          Tooltip(
+            message: tr('newCategory'),
+            child: ActionChip(
+              label: const Text('+'),
+              onPressed: () => showCategoryEditor(context),
+            ),
           ),
-        ),
-        const SizedBox(width: 8),
-        Tooltip(
-          message: tr('newCategory'),
-          child: ActionChip(
-            label: const Text('+'),
-            onPressed: () => showCategoryEditor(context),
-          ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 }
