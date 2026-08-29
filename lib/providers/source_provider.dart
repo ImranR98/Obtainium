@@ -1341,6 +1341,15 @@ class HttpService {
     'github.com': _loadCertificateFromAsset([
       'assets/ca-certs/sectigo-pub-serv-auth-r46.crt',
       'assets/ca-certs/sectigo-pub-serv-auth-e46.crt',
+
+      // redirects from api.github.com for obtaining release assets point to
+      // release-assets.githubusercontent.com which uses ISRG (Let's Encrypt)
+      // adding that as another section doesn't work because of
+      // HttpClient follows redirects (as intended)
+      'assets/ca-certs/isrg-root-x1.crt',
+      'assets/ca-certs/isrg-root-x2.crt',
+      'assets/ca-certs/isrg-root-ye.crt',
+      'assets/ca-certs/isrg-root-yr.crt',
     ]),
     'codeberg.org': _loadCertificateFromAsset([
       'assets/ca-certs/isrg-root-x1.crt',
