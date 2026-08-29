@@ -128,12 +128,16 @@ class AddAppPageState extends State<AddAppPage> {
           overrideChanged ||
           (prevHost != null && prevHost != source?.hosts.firstOrNull)) {
         pickedSource = source;
-        pickedSource?.runOnAddAppInputChange(userInput);
         additionalSettings = source != null
             ? getDefaultValuesFromFormItems(
                 source.combinedAppSpecificSettingFormItems,
               )
             : {};
+        if (pickedSource != null) {
+          additionalSettings.addAll(
+            pickedSource!.runOnAddAppInputChange(userInput),
+          );
+        }
         additionalSettingsValid = source != null
             ? !sourceProvider.ifRequiredAppSpecificSettingsExist(source)
             : true;

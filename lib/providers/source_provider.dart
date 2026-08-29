@@ -554,7 +554,7 @@ abstract class AppSource {
     );
   }
 
-  void runOnAddAppInputChange(String inputUrl) {}
+  Map<String, dynamic> runOnAddAppInputChange(String inputUrl) => {};
 
   /// Delegates to [ApkFilterService.apkContainerExtensions].
   static List<String> get apkContainerExtensions =>
