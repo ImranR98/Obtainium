@@ -166,6 +166,10 @@ extension AppsProviderUpdates on AppsProvider {
       }
       total = appIds.length;
       final List<App> fetched = [];
+      // Apps whose check failed: their check time is still advanced so the
+      // background task doesn't retry them every 15 minutes; they become due
+      // again after one full update interval (#3187).
+      final List<App> failedApps = [];
       var lastSaveTime = DateTime.now();
       const saveInterval = Duration(seconds: 3);
 
@@ -220,6 +224,10 @@ extension AppsProviderUpdates on AppsProvider {
             await updatePendingRepoRename(appId, e.newUrl);
           } else {
             errors.add(appId, e, appName: apps[appId]?.name);
+            final app = apps[appId]?.app;
+            if (app != null) {
+              failedApps.add(app.copyWith(lastUpdateCheck: DateTime.now()));
+            }
           }
         }
         return null;
@@ -254,6 +262,9 @@ extension AppsProviderUpdates on AppsProvider {
       );
       if (fetched.isNotEmpty) {
         await saveApps(fetched, reuseInstalledInfo: true);
+      }
+      if (failedApps.isNotEmpty) {
+        await saveApps(failedApps, attemptToCorrectInstallStatus: false);
       }
       if (errors.idsByErrorString.isNotEmpty) {
         final ex = CheckUpdatesException(updates, errors);
