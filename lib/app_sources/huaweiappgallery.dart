@@ -100,30 +100,11 @@ class HuaweiAppGallery extends AppSource {
           releaseDate: DateTime.tryParse(info['releaseDate']?.toString() ?? ''),
         );
       }
-      // Fallback: public appdl redirect, parsing package and a YYMMDDHHMM
-      // timestamp (used as a pseudo-version) out of the APK filename.
-      final location = await _getAppdlRedirect(
-        _getDlUrl(standardUrl),
-        additionalSettings,
-      );
-      if (location == null) {
-        throw NoReleasesError();
-      }
-      final parsed = _parseRedirectApkName(location);
-      if (parsed == null) throw NoReleasesError();
-      final (appId, relDateStr) = parsed;
-      final formattedDate =
-          '${relDateStr.substring(0, 2)}-${relDateStr.substring(2, 4)}-${relDateStr.substring(4, 6)}-${relDateStr.substring(6, 8)}-${relDateStr.substring(8, 10)}';
-      final relDate = DateFormat(
-        'yy-MM-dd-HH-mm',
-        'en_US',
-      ).parseStrict(formattedDate);
-      return APKDetails(
-        relDateStr,
-        [MapEntry('$appId.apk', location)],
-        AppNames(name, appId),
-        releaseDate: relDate,
-      );
+      // The store API is the only source of the real version name. The legacy
+      // appdl redirect only exposes a YYMMDDHHMM build timestamp, which would
+      // surface as a bogus "new version" whenever the API fails (see #3247);
+      // fail the check with a clear error instead.
+      throw ObtainiumError(tr('huaweiAppGalleryApiError'));
     } catch (e) {
       rethrowOrWrapError(e);
     }
@@ -274,45 +255,12 @@ class HuaweiAppGallery extends AppSource {
         // Non-zero rtnCode - possibly an expired sign. Refresh once and retry.
         lastError = 'rtnCode=$rtnCode rtnDesc=${resp['rtnDesc']}';
       }
-      AppLogger.warn(
-        '$name: appDetailById failed ($lastError), using appdl fallback',
-      );
+      AppLogger.warn('$name: appDetailById failed ($lastError)');
       return null;
     } catch (e) {
-      AppLogger.warn('$name: store API failed ($e), using appdl fallback');
+      AppLogger.warn('$name: store API failed ($e)');
       return null;
     }
-  }
-
-  String _getDlUrl(String standardUrl) {
-    final dlHost = hosts.length > 1 ? hosts[1] : hosts[0];
-    return 'https://$dlHost/appdl/${standardUrl.split('/').last}';
-  }
-
-  Future<String?> _getAppdlRedirect(
-    String dlUrl,
-    Map<String, dynamic> additionalSettings,
-  ) async {
-    final res = await sourceRequest(
-      dlUrl,
-      additionalSettings,
-      followRedirects: false,
-    );
-    if (res.statusCode != 200 && res.statusCode != 302) {
-      throw getObtainiumHttpError(res);
-    }
-    return res.headers['location'];
-  }
-
-  /// Redirect APK filenames look like `<appId>.<YYMMDDHHMM>.apk`. Returns
-  /// (appId, dateString), or null if the filename doesn't match.
-  (String, String)? _parseRedirectApkName(String redirectUrl) {
-    final pathSegments = Uri.tryParse(redirectUrl)?.pathSegments;
-    if (pathSegments == null || pathSegments.isEmpty) return null;
-    final match = RegExp(
-      r'^(.+)\.(\d{10})\.apk$',
-    ).firstMatch(pathSegments.last);
-    return match == null ? null : (match[1]!, match[2]!);
   }
 }
 
