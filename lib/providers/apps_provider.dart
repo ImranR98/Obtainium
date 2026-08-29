@@ -18,6 +18,7 @@ import 'package:http/io_client.dart';
 import 'package:obtainium/custom_errors.dart';
 import 'package:obtainium/core/logging/app_logger.dart';
 import 'package:obtainium/providers/notifications_provider.dart';
+import 'package:native_download/native_download.dart';
 import 'package:obtainium/providers/settings_provider.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:flutter_fgbg/flutter_fgbg.dart';
@@ -46,7 +47,6 @@ const int _partialHashCheckDecrement = 256;
 const int _maxDownloadPolls = 43;
 const int _downloadPollIntervalSeconds = 7;
 const int _progressUpdateIntervalMs = 500;
-const int _downloadBufferSize = 32 * 1024;
 const int _downloadProgressFallback = 30;
 const int _bgUpdateMaxAttempts = 4;
 const int _bgUpdateMaxRetryWaitSeconds = 30;
@@ -54,6 +54,35 @@ const int _bgClientExceptionRetryWaitSeconds = 15 * 60;
 
 final packageManager = AndroidPackageManager();
 final packageInfoFlags = PackageInfoFlags({PMFlag.getSigningCertificates});
+
+Future<File> _downloadWithNativeTransport(
+  String url,
+  String outputPath,
+  Map<String, String>? headers,
+  int rangeStart,
+  int? totalLength,
+  bool rangeSupported,
+  Function? onProgress,
+  CancellationToken? cancellationToken,
+) async {
+  final request = NativeDownloadRequest.start(
+    url: url,
+    outputPath: outputPath,
+    headers: headers,
+    rangeStart: rangeStart,
+    totalLength: totalLength,
+    rangeSupported: rangeSupported,
+    onProgress: onProgress == null
+        ? null
+        : (progress, received, total) => onProgress(progress, received, total),
+  );
+  cancellationToken?.addOnCancelCallback(request.cancel);
+  try {
+    return await request.future;
+  } finally {
+    cancellationToken?.removeOnCancelCallback(request.cancel);
+  }
+}
 
 /// Live download state for an app: the progress percent (listenable, with -1
 /// meaning "installing" and null meaning "idle") plus the bytes downloaded and
@@ -469,6 +498,28 @@ Future<File> downloadFile(
     return null;
   }();
   int rangeStart = targetFileLength ?? 0;
+
+  if (Platform.isAndroid) {
+    final nativeFile = await _downloadWithNativeTransport(
+      url,
+      tempDownloadedFile.path,
+      reqHeaders,
+      rangeStart,
+      fullContentLength,
+      rangeFeatureEnabled,
+      onProgress,
+      cancellationToken,
+    );
+    if (nativeFile.existsSync()) {
+      onProgress?.call(null, null, null);
+      if (downloadedFile.existsSync()) {
+        deleteFile(downloadedFile);
+      }
+      nativeFile.renameSync(downloadedFile.path);
+      return downloadedFile;
+    }
+  }
+
   IOSink? sink;
   bool sentRangeRequest = false;
   if (rangeFeatureEnabled && fullContentLength != null && rangeStart > 0) {
@@ -510,7 +561,6 @@ Future<File> downloadFile(
     const downloadUIUpdateInterval = Duration(
       milliseconds: _progressUpdateIntervalMs,
     );
-    const downloadBufferSizeLocal = _downloadBufferSize;
 
     // Check status code BEFORE finishing the download stream so we can
     // abort early on errors and avoid wasting bandwidth reading a body
@@ -534,43 +584,40 @@ Future<File> downloadFile(
       )..url = url;
     }
 
-    final downloadBuffer = BytesBuilder();
     try {
-      await response
-          .map((chunk) {
-            cancellationToken?.throwIfCancelled();
-            received += chunk.length;
-            final now = DateTime.now();
-            if (onProgress != null &&
-                (lastProgressUpdate == null ||
-                    now.difference(lastProgressUpdate!) >=
-                        downloadUIUpdateInterval)) {
-              progress = fullContentLength != null
-                  ? (received / fullContentLength * 100).clamp(0, 100)
-                  : _downloadProgressFallback.toDouble();
-              onProgress(progress, received, fullContentLength);
-              lastProgressUpdate = now;
-            }
-            return chunk;
-          })
-          .transform(
-            StreamTransformer<List<int>, List<int>>.fromHandlers(
-              handleData: (List<int> data, EventSink<List<int>> s) {
-                downloadBuffer.add(data);
-                if (downloadBuffer.length >= downloadBufferSizeLocal) {
-                  s.add(downloadBuffer.takeBytes());
-                }
-              },
-              handleDone: (EventSink<List<int>> s) {
-                if (downloadBuffer.isNotEmpty) {
-                  s.add(downloadBuffer.takeBytes());
-                }
-                s.close();
-              },
-            ),
-          )
-          .pipe(sink);
+      await sink.addStream(
+        response
+            .transform(
+              StreamTransformer<List<int>, List<int>>.fromHandlers(
+                handleData: (chunk, sink) {
+                  cancellationToken?.throwIfCancelled();
+                  received += chunk.length;
+                  final now = DateTime.now();
+                  if (onProgress != null &&
+                      (lastProgressUpdate == null ||
+                          now.difference(lastProgressUpdate!) >=
+                              downloadUIUpdateInterval)) {
+                    progress = fullContentLength != null
+                        ? (received / fullContentLength * 100).clamp(0, 100)
+                        : _downloadProgressFallback.toDouble();
+                    onProgress(progress, received, fullContentLength);
+                    lastProgressUpdate = now;
+                  }
+                  sink.add(chunk);
+                },
+              ),
+            )
+            .timeout(const Duration(seconds: 60)),
+      );
     } catch (e) {
+      if (e is TimeoutException) {
+        try {
+          await sink.close();
+        } catch (_) {
+          sink = null;
+        }
+        throw ObtainiumError(tr('downloadTimeoutError'))..url = url;
+      }
       // Release the file handle, ignoring "file already closed" races that can
       // happen when the stream is torn down mid-write. The .part file is kept so
       // the download can be resumed later.
@@ -1282,9 +1329,29 @@ class CancellationException implements Exception {}
 
 class CancellationToken {
   bool _cancelled = false;
+  final List<void Function()> _onCancelCallbacks = [];
   bool get isCancelled => _cancelled;
 
-  void cancel() => _cancelled = true;
+  void addOnCancelCallback(void Function() callback) {
+    if (_cancelled) {
+      callback();
+    } else {
+      _onCancelCallbacks.add(callback);
+    }
+  }
+
+  void removeOnCancelCallback(void Function() callback) {
+    _onCancelCallbacks.remove(callback);
+  }
+
+  void cancel() {
+    if (_cancelled) return;
+    _cancelled = true;
+    for (final callback in List<void Function()>.from(_onCancelCallbacks)) {
+      callback();
+    }
+    _onCancelCallbacks.clear();
+  }
 
   void throwIfCancelled() {
     if (_cancelled) throw CancellationException();
