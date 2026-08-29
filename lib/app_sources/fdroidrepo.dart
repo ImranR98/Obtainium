@@ -214,71 +214,17 @@ class FDroidRepo extends AppSource {
     return res;
   }
 
-  /// Fetches and parses the repository index. Tries `index-v2.json`
-  /// (canonical, includes every architecture — see #3249) and the legacy
-  /// `index.xml`, combining the results so apps and versions listed by only
-  /// one format are still found, and v1-only data (the suggested version
-  /// code) is preserved. Falls back to whichever format the repo publishes.
+  /// Fetches and parses the repository index. Prefers the canonical
+  /// `index-v2.json` (the only index some modern repos publish, and the only
+  /// one that lists every architecture — see #3249); falls back to the legacy
+  /// `index.xml` format otherwise.
   Future<_FdroidIndex> _fetchIndex(
     String url,
     Map<String, dynamic> additionalSettings,
   ) async {
     final v2 = await _tryFetchIndexV2(url, additionalSettings);
-    _FdroidIndex? v1;
-    Object? v1Error;
-    try {
-      v1 = await _fetchIndexV1(url, additionalSettings);
-    } catch (e) {
-      v1Error = e;
-    }
-    if (v2 != null && v1 != null) return _combineIndexes(v2, v1);
     if (v2 != null) return v2;
-    if (v1 != null) return v1;
-    throw v1Error ?? NoReleasesError();
-  }
-
-  /// Combines a v2 index with a v1 index for the same repository, keeping
-  /// every app and version either format lists. v2 metadata takes precedence
-  /// (except when it is only the id fallback); v1-only data such as the
-  /// suggested version code is carried over.
-  _FdroidIndex _combineIndexes(_FdroidIndex v2, _FdroidIndex v1) {
-    final byId = <String, _FdroidIndexEntry>{};
-    for (final entry in [...v2.entries, ...v1.entries]) {
-      final existing = byId[entry.id];
-      if (existing == null) {
-        byId[entry.id] = entry;
-        continue;
-      }
-      byId[entry.id] = _FdroidIndexEntry(
-        id: entry.id,
-        name: existing.name != existing.id ? existing.name : entry.name,
-        summary: existing.summary.isNotEmpty ? existing.summary : entry.summary,
-        author: existing.author ?? entry.author,
-        changelog: existing.changelog ?? entry.changelog,
-        marketVersionCode:
-            existing.marketVersionCode ?? entry.marketVersionCode,
-        versions: _mergeVersions(existing.versions, entry.versions),
-      );
-    }
-    return _FdroidIndex(baseUrl: v2.baseUrl, entries: byId.values.toList());
-  }
-
-  /// Unions two version lists for the same app, deduplicating by version code
-  /// and APK name (preferring entries from the first list) and keeping them
-  /// sorted newest-first.
-  List<_FdroidVersion> _mergeVersions(
-    List<_FdroidVersion> a,
-    List<_FdroidVersion> b,
-  ) {
-    final merged = <_FdroidVersion>[];
-    final seen = <String>{};
-    for (final v in [...a, ...b]) {
-      if (seen.add('${v.versionCode}|${v.apkName}')) {
-        merged.add(v);
-      }
-    }
-    merged.sort((x, y) => y.versionCode.compareTo(x.versionCode));
-    return merged;
+    return _fetchIndexV1(url, additionalSettings);
   }
 
   Future<_FdroidIndex?> _tryFetchIndexV2(
