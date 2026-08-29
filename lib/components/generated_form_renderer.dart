@@ -753,14 +753,17 @@ class _SliderFormItemState extends State<_SliderFormItem> {
             },
           );
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        showLabel
-            ? Text('${tr(widget.formItem.label)}: $_label')
-            : const SizedBox(height: 20),
-        slider,
-      ],
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(20, 8, 20, 4),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          showLabel
+              ? Text('${tr(widget.formItem.label)}: $_label')
+              : const SizedBox(height: 20),
+          slider,
+        ],
+      ),
     );
   }
 }
