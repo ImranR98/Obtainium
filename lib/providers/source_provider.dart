@@ -684,12 +684,9 @@ abstract class AppSource {
       GeneratedFormSlider(
         'minimumUpdateAgeDays',
         [
-          MapEntry('', 'useGlobalDefault'),
+          const MapEntry('', 'useGlobalDefault'),
           for (final days in minimumUpdateAgeOptions)
-            MapEntry(
-              days.toString(),
-              days == 0 ? 'none' : days.toString(),
-            ),
+            MapEntry(days.toString(), days == 0 ? 'none' : days.toString()),
         ],
         label: tr('minimumUpdateAgeDays'),
         value: '',

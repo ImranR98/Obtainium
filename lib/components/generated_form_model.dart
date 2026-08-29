@@ -2,9 +2,6 @@ import 'dart:math';
 
 import 'package:flutter/widgets.dart';
 
-
-
-
 abstract class GeneratedFormItem {
   late String key;
   late String label;
@@ -21,7 +18,6 @@ abstract class GeneratedFormItem {
     this.value,
     this.additionalValidators = const [],
   });
-
 }
 
 class GeneratedFormTextField extends GeneratedFormItem {
@@ -170,6 +166,7 @@ class GeneratedFormSlider extends GeneratedFormItem {
   /// keys or plain numeric day counts (resolved by the renderer with the
   /// pluralized "day" string).
   final List<MapEntry<String, String>>? opts;
+  late bool required;
 
   GeneratedFormSlider(
     super.key,
@@ -177,6 +174,7 @@ class GeneratedFormSlider extends GeneratedFormItem {
     super.label,
     super.belowWidgets,
     String super.value = '',
+    this.required = true,
     List<String? Function(String? value)> super.additionalValidators = const [],
   });
 
@@ -193,6 +191,7 @@ class GeneratedFormSlider extends GeneratedFormItem {
       label: label,
       belowWidgets: belowWidgets,
       value: value,
+      required: required,
       additionalValidators: List.from(additionalValidators),
     );
   }
