@@ -128,15 +128,18 @@ class AddAppPageState extends State<AddAppPage> {
           overrideChanged ||
           (prevHost != null && prevHost != source?.hosts.firstOrNull)) {
         pickedSource = source;
-        pickedSource?.runOnAddAppInputChange(userInput);
         additionalSettings = source != null
             ? getDefaultValuesFromFormItems(
                 source.combinedAppSpecificSettingFormItems,
               )
             : {};
-        additionalSettingsValid = source != null
-            ? !sourceProvider.ifRequiredAppSpecificSettingsExist(source)
-            : true;
+        if (pickedSource != null) {
+          additionalSettings.addAll(
+            pickedSource!.runOnAddAppInputChange(userInput),
+          );
+        }
+        additionalSettingsValid =
+            source == null || _requiredFormFieldsFilled(source, additionalSettings);
         inferAppIdIfOptional = true;
       } else if (valid && !updateUrlInput && _prevValid) {
         return;
@@ -145,6 +148,25 @@ class AddAppPageState extends State<AddAppPage> {
       _updateSourceNote();
       if (mounted) setState(() {});
     }
+  }
+
+  /// Returns whether all required text fields in the source's app-specific
+  /// settings form have non-empty values in [additionalSettings].
+  bool _requiredFormFieldsFilled(
+    AppSource source,
+    Map<String, dynamic> additionalSettings,
+  ) {
+    for (var row in source.combinedAppSpecificSettingFormItems) {
+      for (var item in row) {
+        if (item is GeneratedFormTextField && item.required) {
+          final value = additionalSettings[item.key];
+          if (value == null || value.toString().trim().isEmpty) {
+            return false;
+          }
+        }
+      }
+    }
+    return true;
   }
 
   void setSourceOverride(String? override) {

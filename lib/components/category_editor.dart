@@ -227,99 +227,103 @@ class _CategoryEditorSheetState extends State<_CategoryEditorSheet> {
   @override
   Widget build(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
+    // Account for both the on-screen keyboard and the system navigation bar,
+    // and keep the sheet scrollable so the action row never ends up hidden
+    // behind them (see #3240).
+    final bottomPadding =
+        20 +
+        MediaQuery.of(context).viewInsets.bottom +
+        MediaQuery.of(context).padding.bottom;
     return Padding(
-      padding: EdgeInsets.fromLTRB(
-        20,
-        4,
-        20,
-        20 + MediaQuery.of(context).viewInsets.bottom,
-      ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Text(
-            _isEditing ? tr('editCategory') : tr('newCategory'),
-            style: textTheme.titleLarge,
-          ),
-          const SizedBox(height: 16),
-          ConnectedCard(
-            child: TextField(
-              controller: _nameCtrl,
-              autofocus: !_isEditing,
-              textCapitalization: TextCapitalization.sentences,
-              decoration: InputDecoration(labelText: tr('categoryName')),
-              onChanged: (value) => _nameNotifier.value = value,
-              onSubmitted: (_) {
-                if (_nameCtrl.text.trim().isNotEmpty) _save();
-              },
+      padding: EdgeInsets.fromLTRB(20, 4, 20, bottomPadding),
+      child: SingleChildScrollView(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Text(
+              _isEditing ? tr('editCategory') : tr('newCategory'),
+              style: textTheme.titleLarge,
             ),
-          ),
-          const SizedBox(height: 20),
-          Text(tr('colour'), style: textTheme.titleSmall),
-          const SizedBox(height: 8),
-          Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            children: [
-              for (final c in kCategoryPalette)
-                _swatch(
-                  color: c,
-                  selected: c.toARGB32() == _color.toARGB32(),
-                  onTap: () => setState(() => _color = c),
-                ),
-              _swatch(
-                color: Theme.of(context).colorScheme.surfaceContainerHighest,
-                selected: false,
-                onTap: () =>
-                    setState(() => _color = generateRandomLightColor()),
-                icon: Tooltip(
-                  message: tr('randomColour'),
-                  child: const Icon(Icons.casino_outlined, size: 20),
-                ),
-              ),
-              _swatch(
-                color: Theme.of(context).colorScheme.surfaceContainerHighest,
-                selected: false,
-                onTap: _pickCustomColor,
-                icon: Tooltip(
-                  message: tr('custom'),
-                  child: const Icon(Icons.colorize_outlined, size: 20),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 24),
-          Row(
-            children: [
-              if (_isEditing)
-                TextButton.icon(
-                  onPressed: _delete,
-                  icon: const Icon(Icons.delete_outline),
-                  label: Text(tr('remove')),
-                  style: TextButton.styleFrom(
-                    foregroundColor: Theme.of(context).colorScheme.error,
-                  ),
-                ),
-              const Spacer(),
-              TextButton(
-                onPressed: () => Navigator.of(context).pop(),
-                child: Text(tr('cancel')),
-              ),
-              const SizedBox(width: 8),
-              ValueListenableBuilder<String>(
-                valueListenable: _nameNotifier,
-                builder: (context, value, _) {
-                  final canSave = value.trim().isNotEmpty;
-                  return FilledButton(
-                    onPressed: canSave ? _save : null,
-                    child: Text(tr('continue')),
-                  );
+            const SizedBox(height: 16),
+            ConnectedCard(
+              child: TextField(
+                controller: _nameCtrl,
+                autofocus: !_isEditing,
+                textCapitalization: TextCapitalization.sentences,
+                decoration: InputDecoration(labelText: tr('categoryName')),
+                onChanged: (value) => _nameNotifier.value = value,
+                onSubmitted: (_) {
+                  if (_nameCtrl.text.trim().isNotEmpty) _save();
                 },
               ),
-            ],
-          ),
-        ],
+            ),
+            const SizedBox(height: 20),
+            Text(tr('colour'), style: textTheme.titleSmall),
+            const SizedBox(height: 8),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: [
+                for (final c in kCategoryPalette)
+                  _swatch(
+                    color: c,
+                    selected: c.toARGB32() == _color.toARGB32(),
+                    onTap: () => setState(() => _color = c),
+                  ),
+                _swatch(
+                  color: Theme.of(context).colorScheme.surfaceContainerHighest,
+                  selected: false,
+                  onTap: () =>
+                      setState(() => _color = generateRandomLightColor()),
+                  icon: Tooltip(
+                    message: tr('randomColour'),
+                    child: const Icon(Icons.casino_outlined, size: 20),
+                  ),
+                ),
+                _swatch(
+                  color: Theme.of(context).colorScheme.surfaceContainerHighest,
+                  selected: false,
+                  onTap: _pickCustomColor,
+                  icon: Tooltip(
+                    message: tr('custom'),
+                    child: const Icon(Icons.colorize_outlined, size: 20),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 24),
+            Row(
+              children: [
+                if (_isEditing)
+                  TextButton.icon(
+                    onPressed: _delete,
+                    icon: const Icon(Icons.delete_outline),
+                    label: Text(tr('remove')),
+                    style: TextButton.styleFrom(
+                      foregroundColor: Theme.of(context).colorScheme.error,
+                    ),
+                  ),
+                const Spacer(),
+                TextButton(
+                  onPressed: () => Navigator.of(context).pop(),
+                  child: Text(tr('cancel')),
+                ),
+                const SizedBox(width: 8),
+                ValueListenableBuilder<String>(
+                  valueListenable: _nameNotifier,
+                  builder: (context, value, _) {
+                    final canSave = value.trim().isNotEmpty;
+                    return FilledButton(
+                      onPressed: canSave ? _save : null,
+                      child: Text(tr('continue')),
+                    );
+                  },
+                ),
+              ],
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -447,55 +451,50 @@ class _CategorySelectorState extends State<CategorySelector> {
       );
     }
 
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Expanded(
-          child: Wrap(
-            alignment: widget.alignment,
-            spacing: 8,
-            runSpacing: 8,
-            children: [
-              for (final name in names)
-                Tooltip(
-                  message: tr('editCategory'),
-                  child: Semantics(
-                    onLongPress: () => _edit(name),
-                    child: GestureDetector(
-                      onLongPress: () => _edit(name),
-                      child: FilterChip(
-                        avatar: CircleAvatar(
-                          backgroundColor: Color(
-                            categories[name] ?? 0xFFCCCCCC,
-                          ),
-                          radius: 7,
-                        ),
-                        label: Text(
-                          name,
-                          softWrap: true,
-                          maxLines: 3,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                        selected: _selected.contains(name),
-                        onSelected: (v) => _toggle(name, v),
-                        selectedColor: Color(
-                          categories[name] ?? 0xFFCCCCCC,
-                        ).withValues(alpha: 0.22),
-                        showCheckmark: true,
-                      ),
+    return SizedBox(
+      width: double.infinity,
+      child: Wrap(
+        alignment: widget.alignment,
+        spacing: 8,
+        runSpacing: 8,
+        children: [
+          for (final name in names)
+            Tooltip(
+              message: tr('editCategory'),
+              child: Semantics(
+                onLongPress: () => _edit(name),
+                child: GestureDetector(
+                  onLongPress: () => _edit(name),
+                  child: FilterChip(
+                    avatar: CircleAvatar(
+                      backgroundColor: Color(categories[name] ?? 0xFFCCCCCC),
+                      radius: 7,
                     ),
+                    label: Text(
+                      name,
+                      softWrap: true,
+                      maxLines: 3,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    selected: _selected.contains(name),
+                    onSelected: (v) => _toggle(name, v),
+                    selectedColor: Color(
+                      categories[name] ?? 0xFFCCCCCC,
+                    ).withValues(alpha: 0.22),
+                    showCheckmark: true,
                   ),
                 ),
-            ],
-          ),
-        ),
-        if (widget.allowCreate) const SizedBox(width: 8),
-        if (widget.allowCreate)
-          Tooltip(
-            message: tr('newCategory'),
-            child: ActionChip(label: const Text('+'), onPressed: _create),
-          ),
-      ],
+              ),
+            ),
+          // Inline with the categories so the row doesn't take extra space
+          // when the list wraps (see #3221).
+          if (widget.allowCreate)
+            Tooltip(
+              message: tr('newCategory'),
+              child: ActionChip(label: const Text('+'), onPressed: _create),
+            ),
+        ],
+      ),
     );
   }
 }
@@ -534,42 +533,38 @@ class CategoryManager extends StatelessWidget {
         ],
       );
     }
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Expanded(
-          child: Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            crossAxisAlignment: WrapCrossAlignment.center,
-            children: [
-              for (final name in names)
-                ActionChip(
-                  avatar: CircleAvatar(
-                    backgroundColor: Color(categories[name]!),
-                    radius: 7,
-                  ),
-                  label: Text(
-                    name,
-                    softWrap: true,
-                    maxLines: 3,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  onPressed: () =>
-                      showCategoryEditor(context, existingName: name),
-                ),
-            ],
+    return SizedBox(
+      width: double.infinity,
+      child: Wrap(
+        spacing: 8,
+        runSpacing: 8,
+        crossAxisAlignment: WrapCrossAlignment.center,
+        children: [
+          for (final name in names)
+            ActionChip(
+              avatar: CircleAvatar(
+                backgroundColor: Color(categories[name]!),
+                radius: 7,
+              ),
+              label: Text(
+                name,
+                softWrap: true,
+                maxLines: 3,
+                overflow: TextOverflow.ellipsis,
+              ),
+              onPressed: () => showCategoryEditor(context, existingName: name),
+            ),
+          // Inline with the categories so the row doesn't take extra space
+          // when the list wraps (see #3221).
+          Tooltip(
+            message: tr('newCategory'),
+            child: ActionChip(
+              label: const Text('+'),
+              onPressed: () => showCategoryEditor(context),
+            ),
           ),
-        ),
-        const SizedBox(width: 8),
-        Tooltip(
-          message: tr('newCategory'),
-          child: ActionChip(
-            label: const Text('+'),
-            onPressed: () => showCategoryEditor(context),
-          ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 }

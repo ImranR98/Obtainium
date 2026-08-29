@@ -243,7 +243,11 @@ class GitHub extends AppSource {
     String url, {
     bool forAPKDownload = false,
   }) async {
-    final token = await getTokenIfAny(additionalSettings);
+    // A request with skipAuth is retried without the configured token (e.g.
+    // after the token was rejected for this repository); see #3211.
+    final token = additionalSettings['skipAuth'] == true
+        ? null
+        : await getTokenIfAny(additionalSettings);
     final headers = <String, String>{};
     if (token != null && token.isNotEmpty) {
       headers[HttpHeaders.authorizationHeader] = 'Token $token';
@@ -304,6 +308,40 @@ class GitHub extends AppSource {
 
   Future<String> getAPIHost(Map<String, dynamic> additionalSettings) async =>
       'https://api.${hosts[0]}';
+
+  /// Whether [res] is a 401/403 whose JSON body says the configured token is
+  /// the problem (e.g. "Resource not accessible by personal access token").
+  static bool _isAuthRejection(Response res) {
+    if (res.statusCode != 401 && res.statusCode != 403) return false;
+    try {
+      final message =
+          (jsonDecode(res.body)['message'] as String? ?? '').toLowerCase();
+      return message.contains('access token') ||
+          message.contains('bad credentials');
+    } catch (_) {
+      return false;
+    }
+  }
+
+  /// Runs [url] through [sourceRequest], retrying without the configured
+  /// token when GitHub rejects the authenticated request (a token that is not
+  /// authorized for this repository must not block updates of public repos).
+  Future<Response> _sourceRequestWithAuthFallback(
+    String url,
+    Map<String, dynamic> additionalSettings,
+  ) async {
+    var res = await sourceRequest(url, additionalSettings);
+    if (_isAuthRejection(res)) {
+      AppLogger.info(
+        'GitHub request for $url rejected due to token access, retrying without token.',
+      );
+      res = await sourceRequest(
+        url,
+        Map<String, dynamic>.from(additionalSettings)..['skipAuth'] = true,
+      );
+    }
+    return res;
+  }
 
   Future<String> convertStandardUrlToAPIUrl(
     String standardUrl,
@@ -680,7 +718,7 @@ class GitHub extends AppSource {
     if (verifyLatestTag) {
       final uri = Uri.parse(requestUrl);
       final latestUrl = uri.replace(query: null, path: '${uri.path}/latest');
-      final Response res = await sourceRequest(
+      final Response res = await _sourceRequestWithAuthFallback(
         latestUrl.toString(),
         additionalSettings,
       );
@@ -692,7 +730,10 @@ class GitHub extends AppSource {
       }
       latestRelease = jsonDecode(res.body);
     }
-    final Response res = await sourceRequest(requestUrl, additionalSettings);
+    final Response res = await _sourceRequestWithAuthFallback(
+      requestUrl,
+      additionalSettings,
+    );
     if (res.statusCode == 200) {
       final decoded = jsonDecode(res.body);
       if (decoded is! List) {
@@ -802,7 +843,7 @@ class GitHub extends AppSource {
           return '${await convertStandardUrlToAPIUrl(standardUrl, additionalSettings)}/${useTagUrl ? 'tags' : 'releases'}?per_page=100';
         },
         (Response res) {
-          rateLimitErrorCheck(res);
+          githubErrorCheck(res);
         },
       );
     } catch (e) {
@@ -876,7 +917,7 @@ class GitHub extends AppSource {
       '${await getAPIHost({})}/search/repositories?q=${Uri.encodeQueryComponent(query)}&per_page=100',
       'items',
       onHttpErrorCode: (Response res) {
-        rateLimitErrorCheck(res);
+        githubErrorCheck(res);
       },
       querySettings: querySettings,
     );
@@ -902,6 +943,26 @@ class GitHub extends AppSource {
           .ceil()
           .clamp(0, 9999);
       throw RateLimitError(remainingMinutes);
+    }
+  }
+
+  /// Throws the actual GitHub error for failed API responses: rate limits
+  /// (when the headers say so) and auth problems (e.g. a token that is not
+  /// authorized for this repository), which the generic handler would
+  /// otherwise mislabel as a rate limit (see #3211).
+  void githubErrorCheck(Response res) {
+    rateLimitErrorCheck(res);
+    if (res.statusCode == 401 || res.statusCode == 403) {
+      try {
+        final message = (jsonDecode(res.body)['message'] as String?)?.trim();
+        if (message != null &&
+            message.isNotEmpty &&
+            !message.toLowerCase().contains('rate limit')) {
+          throw ObtainiumError(message);
+        }
+      } catch (_) {
+        // Not a JSON error body; fall through to the generic handler.
+      }
     }
   }
 }

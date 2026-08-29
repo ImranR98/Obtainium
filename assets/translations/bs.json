@@ -195,6 +195,7 @@
     "skipBulkUpdateConfirmation": "Skip update/install confirmation dialog",
     "highlightTouchTargets": "Istaknite manje vidljive touch mete",
     "huaweiAppGallery": "Huawei AppGallery",
+    "huaweiAppGalleryApiError": "Could not get app details from the Huawei AppGallery API",
     "import": "Import",
     "hour": {
         "one": "{} sat",
@@ -222,6 +223,7 @@
     "installedVersionX": "Instalirana verzija: {}",
     "insecureRedirect": "Refused to follow a redirect from HTTPS to insecure HTTP",
     "installing": "Instaliranje",
+    "installConfirmationError": "Install confirmation was not received in time — the app may not have been installed",
     "intermediateLink": "Intermediate veza",
     "intermediateLinkNotFound": "Intermediate veza nije nađena",
     "intermediateLinkRegex": "Filter za 'srednju' vezu za posjetu",

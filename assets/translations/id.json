@@ -195,6 +195,7 @@
     "skipBulkUpdateConfirmation": "Skip update/install confirmation dialog",
     "highlightTouchTargets": "Sorot target sentuh yang kurang jelas",
     "huaweiAppGallery": "Huawei AppGallery",
+    "huaweiAppGalleryApiError": "Could not get app details from the Huawei AppGallery API",
     "import": "Import",
     "hour": {
         "one": "{} jam",
@@ -222,6 +223,7 @@
     "installedVersionX": "Terpasang: {}",
     "insecureRedirect": "Refused to follow a redirect from HTTPS to insecure HTTP",
     "installing": "Memasang",
+    "installConfirmationError": "Install confirmation was not received in time — the app may not have been installed",
     "intermediateLink": "Tautan perantara",
     "intermediateLinkNotFound": "Tautan perantara tidak ditemukan",
     "intermediateLinkRegex": "Filter tautan 'perantara' untuk dikunjungi",

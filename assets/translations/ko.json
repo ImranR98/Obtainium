@@ -195,6 +195,7 @@
     "skipBulkUpdateConfirmation": "Skip update/install confirmation dialog",
     "highlightTouchTargets": "덜 명확한 터치 대상 강조",
     "huaweiAppGallery": "Huawei 앱갤러리",
+    "huaweiAppGalleryApiError": "Could not get app details from the Huawei AppGallery API",
     "import": "가져오기",
     "hour": {
         "one": "{}시간",
@@ -222,6 +223,7 @@
     "installedVersionX": "설치됨: {}",
     "insecureRedirect": "Refused to follow a redirect from HTTPS to insecure HTTP",
     "installing": "설치 중",
+    "installConfirmationError": "Install confirmation was not received in time — the app may not have been installed",
     "intermediateLink": "중간 링크",
     "intermediateLinkNotFound": "중간 링크를 찾을 수 없습니다",
     "intermediateLinkRegex": "'중간' 링크 방문 필터",

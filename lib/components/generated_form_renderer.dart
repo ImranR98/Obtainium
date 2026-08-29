@@ -300,6 +300,19 @@ class _GeneratedFormState extends State<GeneratedForm> {
     );
   }
 
+  Widget _initSlider(GeneratedFormSlider formItem) {
+    return _SliderFormItem(
+      formItem: formItem,
+      initialValue: values[formItem.key],
+      onCommit: (value) {
+        setState(() {
+          values[formItem.key] = value;
+          notifyFormChange();
+        });
+      },
+    );
+  }
+
   void _initSubForm(GeneratedFormSubForm formItem) {
     values[formItem.key] = [];
     final initValue = formItem.value;
@@ -349,6 +362,8 @@ class _GeneratedFormState extends State<GeneratedForm> {
           return _initTextField(formItem);
         } else if (formItem is GeneratedFormDropdown) {
           return _initDropdown(formItem);
+        } else if (formItem is GeneratedFormSlider) {
+          return _initSlider(formItem);
         } else if (formItem is GeneratedFormSubForm) {
           _initSubForm(formItem);
           return Container();
@@ -596,7 +611,8 @@ class _GeneratedFormState extends State<GeneratedForm> {
       bool isFieldRow(int r) =>
           widget.items[r].isNotEmpty &&
           (widget.items[r][0] is GeneratedFormTextField ||
-              widget.items[r][0] is GeneratedFormDropdown);
+              widget.items[r][0] is GeneratedFormDropdown ||
+              widget.items[r][0] is GeneratedFormSlider);
       bool isSubFormRow(int r) =>
           widget.items[r].isNotEmpty &&
           widget.items[r][0] is GeneratedFormSubForm;
@@ -635,6 +651,120 @@ class _GeneratedFormState extends State<GeneratedForm> {
     }
 
     return Column(children: children);
+  }
+}
+
+/// A discrete-value slider backed by a [GeneratedFormSlider]. Kept as its own
+/// [StatefulWidget] so dragging only rebuilds the slider; the chosen value is
+/// committed to the form when the drag ends (or per step on TV).
+class _SliderFormItem extends StatefulWidget {
+  const _SliderFormItem({
+    required this.formItem,
+    required this.initialValue,
+    required this.onCommit,
+  });
+
+  final GeneratedFormSlider formItem;
+  final dynamic initialValue;
+  final ValueChanged<String> onCommit;
+
+  @override
+  State<_SliderFormItem> createState() => _SliderFormItemState();
+}
+
+class _SliderFormItemState extends State<_SliderFormItem> {
+  late final List<MapEntry<String, String>> opts;
+  late double sliderVal;
+  bool showLabel = true;
+
+  int get _index => sliderVal.round().clamp(0, opts.length - 1);
+
+  String _optLabel(MapEntry<String, String> opt) {
+    final days = int.tryParse(opt.value);
+    return days != null ? plural('day', days) : tr(opt.value);
+  }
+
+  String get _label => _optLabel(opts[_index]);
+
+  @override
+  void initState() {
+    super.initState();
+    opts = widget.formItem.opts ?? const <MapEntry<String, String>>[];
+    final index = opts.indexWhere((e) => e.key == widget.initialValue);
+    sliderVal = (index >= 0 ? index : 0).toDouble();
+  }
+
+  void _commit() {
+    widget.onCommit(opts[_index].key);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final max = (opts.length - 1).toDouble();
+    final settingsProvider = context.read<SettingsProvider>();
+    final Widget slider = settingsProvider.isTV
+        ? Row(
+            children: [
+              IconButton(
+                icon: const Icon(Icons.remove),
+                onPressed: sliderVal <= 0
+                    ? null
+                    : () {
+                        setState(() {
+                          sliderVal = (sliderVal - 1).clamp(0.0, max);
+                        });
+                        _commit();
+                      },
+              ),
+              Expanded(child: Text(_label, textAlign: TextAlign.center)),
+              IconButton(
+                icon: const Icon(Icons.add),
+                onPressed: sliderVal >= max
+                    ? null
+                    : () {
+                        setState(() {
+                          sliderVal = (sliderVal + 1).clamp(0.0, max);
+                        });
+                        _commit();
+                      },
+              ),
+            ],
+          )
+        : Slider(
+            value: sliderVal,
+            max: max,
+            divisions: opts.length - 1,
+            label: _label,
+            onChanged: (double value) {
+              setState(() {
+                sliderVal = value;
+              });
+            },
+            onChangeStart: (double value) {
+              setState(() {
+                showLabel = false;
+              });
+            },
+            onChangeEnd: (double value) {
+              setState(() {
+                showLabel = true;
+              });
+              _commit();
+            },
+          );
+
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(20, 8, 20, 4),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          showLabel
+              ? Text('${tr(widget.formItem.label)}: $_label')
+              : const SizedBox(height: 20),
+          slider,
+        ],
+      ),
+    );
   }
 }
 

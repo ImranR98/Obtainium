@@ -195,6 +195,7 @@
     "skipBulkUpdateConfirmation": "Skip update/install confirmation dialog",
     "highlightTouchTargets": "Fremhæv mindre åbenlyse berøringsmål",
     "huaweiAppGallery": "Huawei AppGallery",
+    "huaweiAppGalleryApiError": "Could not get app details from the Huawei AppGallery API",
     "import": "Import",
     "hour": {
         "one": "{} time",
@@ -222,6 +223,7 @@
     "installedVersionX": "Installeret: {}",
     "insecureRedirect": "Refused to follow a redirect from HTTPS to insecure HTTP",
     "installing": "Installerer",
+    "installConfirmationError": "Install confirmation was not received in time — the app may not have been installed",
     "intermediateLink": "Mellemliggende link",
     "intermediateLinkNotFound": "Mellemliggende link ikke fundet",
     "intermediateLinkRegex": "Filtrer efter et 'mellemliggende' link at besøge",

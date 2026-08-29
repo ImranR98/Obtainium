@@ -195,6 +195,7 @@
     "skipBulkUpdateConfirmation": "Skip update/install confirmation dialog",
     "highlightTouchTargets": "突顯較不明顯的觸控目標",
     "huaweiAppGallery": "Huawei AppGallery",
+    "huaweiAppGalleryApiError": "Could not get app details from the Huawei AppGallery API",
     "import": "Import",
     "hour": {
         "one": "{} 小時",
@@ -222,6 +223,7 @@
     "installedVersionX": "已安裝：{}",
     "insecureRedirect": "Refused to follow a redirect from HTTPS to insecure HTTP",
     "installing": "安裝中",
+    "installConfirmationError": "Install confirmation was not received in time — the app may not have been installed",
     "intermediateLink": "中間連結",
     "intermediateLinkNotFound": "找不到中間連結",
     "intermediateLinkRegex": "過濾要造訪的「中間」連結",
