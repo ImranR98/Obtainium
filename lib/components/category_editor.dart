@@ -227,99 +227,102 @@ class _CategoryEditorSheetState extends State<_CategoryEditorSheet> {
   @override
   Widget build(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
+    // Account for both the on-screen keyboard and the system navigation bar,
+    // and keep the sheet scrollable so the action row never ends up hidden
+    // behind them (see #3240).
+    final bottomPadding = 20 +
+        MediaQuery.of(context).viewInsets.bottom +
+        MediaQuery.of(context).padding.bottom;
     return Padding(
-      padding: EdgeInsets.fromLTRB(
-        20,
-        4,
-        20,
-        20 + MediaQuery.of(context).viewInsets.bottom,
-      ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Text(
-            _isEditing ? tr('editCategory') : tr('newCategory'),
-            style: textTheme.titleLarge,
-          ),
-          const SizedBox(height: 16),
-          ConnectedCard(
-            child: TextField(
-              controller: _nameCtrl,
-              autofocus: !_isEditing,
-              textCapitalization: TextCapitalization.sentences,
-              decoration: InputDecoration(labelText: tr('categoryName')),
-              onChanged: (value) => _nameNotifier.value = value,
-              onSubmitted: (_) {
-                if (_nameCtrl.text.trim().isNotEmpty) _save();
-              },
+      padding: EdgeInsets.fromLTRB(20, 4, 20, bottomPadding),
+      child: SingleChildScrollView(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Text(
+              _isEditing ? tr('editCategory') : tr('newCategory'),
+              style: textTheme.titleLarge,
             ),
-          ),
-          const SizedBox(height: 20),
-          Text(tr('colour'), style: textTheme.titleSmall),
-          const SizedBox(height: 8),
-          Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            children: [
-              for (final c in kCategoryPalette)
-                _swatch(
-                  color: c,
-                  selected: c.toARGB32() == _color.toARGB32(),
-                  onTap: () => setState(() => _color = c),
-                ),
-              _swatch(
-                color: Theme.of(context).colorScheme.surfaceContainerHighest,
-                selected: false,
-                onTap: () =>
-                    setState(() => _color = generateRandomLightColor()),
-                icon: Tooltip(
-                  message: tr('randomColour'),
-                  child: const Icon(Icons.casino_outlined, size: 20),
-                ),
-              ),
-              _swatch(
-                color: Theme.of(context).colorScheme.surfaceContainerHighest,
-                selected: false,
-                onTap: _pickCustomColor,
-                icon: Tooltip(
-                  message: tr('custom'),
-                  child: const Icon(Icons.colorize_outlined, size: 20),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 24),
-          Row(
-            children: [
-              if (_isEditing)
-                TextButton.icon(
-                  onPressed: _delete,
-                  icon: const Icon(Icons.delete_outline),
-                  label: Text(tr('remove')),
-                  style: TextButton.styleFrom(
-                    foregroundColor: Theme.of(context).colorScheme.error,
-                  ),
-                ),
-              const Spacer(),
-              TextButton(
-                onPressed: () => Navigator.of(context).pop(),
-                child: Text(tr('cancel')),
-              ),
-              const SizedBox(width: 8),
-              ValueListenableBuilder<String>(
-                valueListenable: _nameNotifier,
-                builder: (context, value, _) {
-                  final canSave = value.trim().isNotEmpty;
-                  return FilledButton(
-                    onPressed: canSave ? _save : null,
-                    child: Text(tr('continue')),
-                  );
+            const SizedBox(height: 16),
+            ConnectedCard(
+              child: TextField(
+                controller: _nameCtrl,
+                autofocus: !_isEditing,
+                textCapitalization: TextCapitalization.sentences,
+                decoration: InputDecoration(labelText: tr('categoryName')),
+                onChanged: (value) => _nameNotifier.value = value,
+                onSubmitted: (_) {
+                  if (_nameCtrl.text.trim().isNotEmpty) _save();
                 },
               ),
-            ],
-          ),
-        ],
+            ),
+            const SizedBox(height: 20),
+            Text(tr('colour'), style: textTheme.titleSmall),
+            const SizedBox(height: 8),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: [
+                for (final c in kCategoryPalette)
+                  _swatch(
+                    color: c,
+                    selected: c.toARGB32() == _color.toARGB32(),
+                    onTap: () => setState(() => _color = c),
+                  ),
+                _swatch(
+                  color: Theme.of(context).colorScheme.surfaceContainerHighest,
+                  selected: false,
+                  onTap: () =>
+                      setState(() => _color = generateRandomLightColor()),
+                  icon: Tooltip(
+                    message: tr('randomColour'),
+                    child: const Icon(Icons.casino_outlined, size: 20),
+                  ),
+                ),
+                _swatch(
+                  color: Theme.of(context).colorScheme.surfaceContainerHighest,
+                  selected: false,
+                  onTap: _pickCustomColor,
+                  icon: Tooltip(
+                    message: tr('custom'),
+                    child: const Icon(Icons.colorize_outlined, size: 20),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 24),
+            Row(
+              children: [
+                if (_isEditing)
+                  TextButton.icon(
+                    onPressed: _delete,
+                    icon: const Icon(Icons.delete_outline),
+                    label: Text(tr('remove')),
+                    style: TextButton.styleFrom(
+                      foregroundColor: Theme.of(context).colorScheme.error,
+                    ),
+                  ),
+                const Spacer(),
+                TextButton(
+                  onPressed: () => Navigator.of(context).pop(),
+                  child: Text(tr('cancel')),
+                ),
+                const SizedBox(width: 8),
+                ValueListenableBuilder<String>(
+                  valueListenable: _nameNotifier,
+                  builder: (context, value, _) {
+                    final canSave = value.trim().isNotEmpty;
+                    return FilledButton(
+                      onPressed: canSave ? _save : null,
+                      child: Text(tr('continue')),
+                    );
+                  },
+                ),
+              ],
+            ),
+          ],
+        ),
       ),
     );
   }
