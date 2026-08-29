@@ -127,6 +127,7 @@
     "debugMenu": "Hibakeresési menü",
     "defaultPseudoVersioningMethod": "Alapértelmezett pszeudoverziós módszer",
     "deleteCategoriesQuestion": "Biztosan törli a kategóriákat?",
+    "deleteCategoryQuestion": "Szeretné törölni ezt a kategóriát?",
     "descending": "Csökkenő",
     "deselectX": "A(z) {} kiválasztásának elvetése",
     "deviceSupportsFollowingArchs": "Ez az eszköz a következő CPU-architektúrákat támogatja:",

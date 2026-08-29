@@ -127,6 +127,7 @@
     "debugMenu": "调试选项",
     "defaultPseudoVersioningMethod": "默认虚拟版本方案",
     "deleteCategoriesQuestion": "是否删除选中的类别？",
+    "deleteCategoryQuestion": "是否删除选中的类别？",
     "descending": "降序",
     "deselectX": "取消选择 {}",
     "deviceSupportsFollowingArchs": "您的设备支持下列架构：",

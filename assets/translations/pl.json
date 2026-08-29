@@ -141,6 +141,7 @@
     "debugMenu": "Menu debugowania",
     "defaultPseudoVersioningMethod": "Domyślna metoda pseudowersji",
     "deleteCategoriesQuestion": "Usunąć kategorie?",
+    "deleteCategoryQuestion": "Czy chcesz usunąć tę kategorię?",
     "descending": "Malejąco",
     "deselectX": "Odznacz {}",
     "deviceSupportsFollowingArchs": "Urządzenie obsługuje następujące architektury:",

@@ -127,6 +127,7 @@
     "debugMenu": "디버그 메뉴",
     "defaultPseudoVersioningMethod": "기본 의사 버전 관리 방법",
     "deleteCategoriesQuestion": "카테고리를 삭제하시겠습니까?",
+    "deleteCategoryQuestion": "카테고리를 삭제하시겠습니까?",
     "descending": "내림차순",
     "deselectX": "{} 선택 해제",
     "deviceSupportsFollowingArchs": "장치는 다음 CPU 아키텍처를 지원합니다:",

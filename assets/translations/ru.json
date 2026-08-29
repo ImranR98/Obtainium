@@ -132,6 +132,7 @@
     "debugMenu": "Меню отладки",
     "defaultPseudoVersioningMethod": "Метод псевдоверсионирования по умолчанию",
     "deleteCategoriesQuestion": "Удалить категории?",
+    "deleteCategoryQuestion": "Хотите удалить эту категорию?",
     "descending": "По убыванию",
     "deselectX": "Отменить выбор {}",
     "deviceSupportsFollowingArchs": "Ваше устройство поддерживает следующие архитектуры процессора:",

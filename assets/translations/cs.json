@@ -132,6 +132,7 @@
     "debugMenu": "Nabídka ladění",
     "defaultPseudoVersioningMethod": "Výchozí metoda pseudoverze",
     "deleteCategoriesQuestion": "Smazat kategorie?",
+    "deleteCategoryQuestion": "Chcete tuto kategorii smazat?",
     "descending": "Sestupně",
     "deselectX": "Zrušit výběr {}",
     "deviceSupportsFollowingArchs": "Vaše zařízení podporuje následující architektury CPU:",

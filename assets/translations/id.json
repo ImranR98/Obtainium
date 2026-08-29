@@ -127,6 +127,7 @@
     "debugMenu": "Menu debug",
     "defaultPseudoVersioningMethod": "Metode versi semu standar",
     "deleteCategoriesQuestion": "Hapus kategori?",
+    "deleteCategoryQuestion": "Apakah Anda ingin menghapus kategori ini?",
     "descending": "Menurun",
     "deselectX": "Batal pilih {}",
     "deviceSupportsFollowingArchs": "Perangkat anda mendukung arsitektur CPU berikut:",

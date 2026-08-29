@@ -127,6 +127,7 @@
     "debugMenu": "Danh sách gỡ lỗi",
     "defaultPseudoVersioningMethod": "Phương pháp tạo phiên bản giả mặc định",
     "deleteCategoriesQuestion": "Xóa danh mục?",
+    "deleteCategoryQuestion": "Có nên xóa danh mục này không?",
     "descending": "Giảm dần",
     "deselectX": "Bỏ chọn {}",
     "deviceSupportsFollowingArchs": "Thiết bị của bạn hỗ trợ các kiến trúc CPU sau:",

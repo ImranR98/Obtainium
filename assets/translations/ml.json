@@ -127,6 +127,7 @@
     "debugMenu": "ഡീബഗ് മെനു",
     "defaultPseudoVersioningMethod": "സ്ഥിരസ്ഥിതി സ്യൂഡോ-പതിപ്പ് രീതി",
     "deleteCategoriesQuestion": "വിഭാഗങ്ങൾ ഇല്ലാതാക്കണോ?",
+    "deleteCategoryQuestion": "ഈ വിഭാഗം ഇല്ലാതാക്കാൻ ആഗ്രഹിക്കുന്നുണ്ടോ?",
     "descending": "അവരോഹണ ക്രമത്തിൽ",
     "deselectX": "{} തിരഞ്ഞെടുക്കൽ റദ്ദാക്കുക",
     "deviceSupportsFollowingArchs": "നിങ്ങളുടെ ഉപകരണം ഇനിപ്പറയുന്ന CPU ആർക്കിടെക്ചറുകളെ പിന്തുണയ്ക്കുന്നു:",

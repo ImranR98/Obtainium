@@ -127,6 +127,7 @@
     "debugMenu": "Felsökningsmeny",
     "defaultPseudoVersioningMethod": "Standard pseudoversionsmetod",
     "deleteCategoriesQuestion": "Ta Bort Kategorier?",
+    "deleteCategoryQuestion": "Vill du ta bort den här kategorin?",
     "descending": "Fallande",
     "deselectX": "Avmarkera {}",
     "deviceSupportsFollowingArchs": "YDin enhet stödjer följande CPU-arkitekturer:",

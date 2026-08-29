@@ -127,6 +127,7 @@
     "debugMenu": "Меню налагодження",
     "defaultPseudoVersioningMethod": "Метод за замовчуванням псевдо-версіонування",
     "deleteCategoriesQuestion": "Видалити категорії?",
+    "deleteCategoryQuestion": "Чи слід видалити цю категорію?",
     "descending": "За спаданням",
     "deselectX": "Скасувати вибір {}",
     "deviceSupportsFollowingArchs": "Ваш пристрій підтримує наступні архітектури процесора:",

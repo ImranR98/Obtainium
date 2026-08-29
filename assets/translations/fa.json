@@ -127,6 +127,7 @@
     "debugMenu": "منوی اشکال زدایی",
     "defaultPseudoVersioningMethod": "روش پیش فرض شبه نسخه",
     "deleteCategoriesQuestion": "دسته بندی ها حذف شوند؟",
+    "deleteCategoryQuestion": "آیا باید این دسته حذف شود؟",
     "descending": "نزولی",
     "deselectX": "لغو انتخاب {}",
     "deviceSupportsFollowingArchs": "دستگاه شما از معماری های پردازنده زیر پشتیبانی می کند:",

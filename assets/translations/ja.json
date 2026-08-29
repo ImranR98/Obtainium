@@ -127,6 +127,7 @@
     "debugMenu": "デバッグメニュー",
     "defaultPseudoVersioningMethod": "デフォルトの疑似バージョン管理方法",
     "deleteCategoriesQuestion": "カテゴリを削除しますか？",
+    "deleteCategoryQuestion": "カテゴリを削除しますか？",
     "descending": "降順",
     "deselectX": "{} 件の選択を解除",
     "deviceSupportsFollowingArchs": "お使いのデバイスは、以下のCPUアーキテクチャをサポートしています:",

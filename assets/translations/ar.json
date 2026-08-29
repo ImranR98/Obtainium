@@ -127,6 +127,7 @@
     "debugMenu": "قائمة التصحيح",
     "defaultPseudoVersioningMethod": "طريقة الإصدار الوهمي الافتراضية",
     "deleteCategoriesQuestion": "حذف التصنيفات؟",
+    "deleteCategoryQuestion": "هل ترغب في حذف هذه الفئة؟",
     "descending": "تنازلي",
     "deselectX": "ألغِ تحديد {}",
     "deviceSupportsFollowingArchs": "جهازك يدعم بنى المعالج التالية:",

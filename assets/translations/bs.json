@@ -127,6 +127,7 @@
     "debugMenu": "Meni za otkrivanje grešaka",
     "defaultPseudoVersioningMethod": "Zadana metoda pseudo-verzija",
     "deleteCategoriesQuestion": "Želite li izbrisati kategorije?",
+    "deleteCategoryQuestion": "Želite li izbrisati kategoriju?",
     "descending": "Silazno",
     "deselectX": "Poništi odabir {}",
     "deviceSupportsFollowingArchs": "Vaš uređaj podržava sljedeće arhitekture procesora:",

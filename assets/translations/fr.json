@@ -127,6 +127,7 @@
     "debugMenu": "Menu de débogage",
     "defaultPseudoVersioningMethod": "Méthode de version fictive par défaut",
     "deleteCategoriesQuestion": "Supprimer les catégories ?",
+    "deleteCategoryQuestion": "Souhaitez-vous supprimer cette catégorie ?",
     "descending": "Décroissant",
     "deselectX": "Désélectionner {}",
     "deviceSupportsFollowingArchs": "Votre appareil prend en charge les architectures CPU suivantes : ",

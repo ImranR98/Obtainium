@@ -138,7 +138,7 @@ class _CategoryEditorSheetState extends State<_CategoryEditorSheet> {
     final settingsProvider = context.read<SettingsProvider>();
     final confirmed = await showConfirmDialog(
       context,
-      title: tr('deleteCategoriesQuestion'),
+      title: tr('deleteCategoryQuestion'),
       content: Text(tr('categoryDeleteWarning')),
       autofocusConfirm: context.read<SettingsProvider>().isTV,
     );

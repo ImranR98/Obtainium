@@ -127,6 +127,7 @@
     "debugMenu": "Menu debug",
     "defaultPseudoVersioningMethod": "Método de pseudo-versionamento padrão",
     "deleteCategoriesQuestion": "Deletar  categorias?",
+    "deleteCategoryQuestion": "Gostaria de eliminar esta categoria?",
     "descending": "Descendente",
     "deselectX": "Deselecionar {}",
     "deviceSupportsFollowingArchs": "Seu dispositivo suporta as seguintes arquiteturas de CPU:",
