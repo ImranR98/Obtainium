@@ -1365,6 +1365,11 @@ class HttpService {
       'assets/ca-certs/sectigo-pub-serv-auth-r46.crt',
       'assets/ca-certs/sectigo-pub-serv-auth-e46.crt',
     ]),
+    'rustore.ru': _loadCertificateFromAsset([
+      'assets/ca-certs/harica-tls-root-2021-rsa.crt',
+      'assets/ca-certs/harica-tls-root-2021-ecc.crt',
+      'assets/ca-certs/russian-mintsifry-root.crt',
+    ])
   };
 
   static Future<List<Uint8List>> _loadCertificateFromAsset(
@@ -1378,9 +1383,17 @@ class HttpService {
     return certsBytes;
   }
 
+  static String _extractRootHost(String host) {
+    final parts = host.split('.');
+    return parts.length > 2
+        ? parts.sublist(parts.length - 2).join('.')
+        : host;
+  }
+
   Future<SecurityContext?> _createCertPinning(String url) async {
     final uri = Uri.parse(url);
     final host = uri.host;
+    final rootHost = _extractRootHost(host);
     if (_certificatePins.containsKey(host)) {
       final certsBytes = await _certificatePins[host]!;
       final securityContext = SecurityContext();
@@ -1388,9 +1401,30 @@ class HttpService {
         securityContext.setTrustedCertificatesBytes(certBytes);
       }
       return securityContext;
-    } else {
+    }
+    else if (_certificatePins.containsKey(rootHost)) {
+      final certsBytes = await _certificatePins[rootHost]!;
+      final securityContext = SecurityContext();
+      for (final certBytes in certsBytes) {
+        securityContext.setTrustedCertificatesBytes(certBytes);
+      }
+      return securityContext;
+    }
+    else {
       return null;
     }
+  }
+
+  /* Basically RuStore switched partially (and in the future it may be fully)
+     to russian government Mintsifry CA, which isnt trusted by Android nor
+     Chrome Root Store. This is workaround to trust Mintsifry CA for network
+     requests made to RuStore domains and subdomains
+   */
+  Future<SecurityContext> _ruStoreWorkaroundSecurityContext() async {
+    final securityContext = SecurityContext(withTrustedRoots: true);
+    final cert = await rootBundle.load('assets/ca-certs/russian-mintsifry-root.crt');
+    securityContext.setTrustedCertificatesBytes(cert.buffer.asUint8List());
+    return securityContext;
   }
 
   Future<HttpClient> createHttpClient(
@@ -1400,8 +1434,12 @@ class HttpService {
     final url = additionalSettings['url'] as String;
     final pinning = additionalSettings['enableCertificatePinning'] == true;
     SecurityContext? securityContext;
+    final host = Uri.parse(url).host;
     if (pinning) {
       securityContext = await _createCertPinning(url);
+    }
+    else if (_extractRootHost(host) == 'rustore.ru') {
+      securityContext = await _ruStoreWorkaroundSecurityContext();
     }
     final client = securityContext != null
         ? HttpClient(context: securityContext)
