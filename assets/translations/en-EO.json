@@ -473,5 +473,8 @@
     "yes": "Jes",
     "yesMarkUpdated": "Jes, marki kiel ĝisdata",
     "youPickedTrackOnly": "Vi selektis la opcion 'Nur sekvitaj'.",
-    "zippedApkFilterRegEx": "Filter APKs inside ZIP"
+    "zippedApkFilterRegEx": "Filter APKs inside ZIP",
+    "installMethodRoot": "Radiko",
+    "rootNotFound": "su ne trovita en PATH - Donu radikajn permesojn al la aplikaĵo",
+    "rootFailed": "Radika ekzekuto malsukcesis - kontrolu vian radik-administrilon"
 }

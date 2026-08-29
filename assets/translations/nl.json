@@ -473,5 +473,8 @@
     "yes": "Ja",
     "yesMarkUpdated": "Ja, markeren als bijgewerkt",
     "youPickedTrackOnly": "De optie 'Alleen volgen' is geselecteerd.",
-    "zippedApkFilterRegEx": "APK's in ZIP-bestand filteren"
+    "zippedApkFilterRegEx": "APK's in ZIP-bestand filteren",
+    "installMethodRoot": "Root",
+    "rootNotFound": "su niet gevonden in PATH - Geef de app root-rechten",
+    "rootFailed": "Root-uitvoering mislukt - controleer uw root-beheerder"
 }

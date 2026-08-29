@@ -473,5 +473,8 @@
     "yes": "نعم",
     "yesMarkUpdated": "نعم، علِّم كمحدث",
     "youPickedTrackOnly": "لقد اخترت خيار 'التعقب فقط'.",
-    "zippedApkFilterRegEx": "تصفية ملفات APK داخل ZIP"
+    "zippedApkFilterRegEx": "تصفية ملفات APK داخل ZIP",
+    "installMethodRoot": "الجذر",
+    "rootNotFound": "su غير موجود في PATH - امنح التطبيق صلاحيات الجذر",
+    "rootFailed": "فشل تنفيذ الجذر - تحقق من مدير الجذر الخاص بك"
 }

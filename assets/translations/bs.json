@@ -473,5 +473,8 @@
     "yes": "Da",
     "yesMarkUpdated": "Da, označi kao ažurirano",
     "youPickedTrackOnly": "Odabrali ste opciju „Samo za praćenje”.",
-    "zippedApkFilterRegEx": "Filtriraj APK-ove unutar ZIP datoteka"
+    "zippedApkFilterRegEx": "Filtriraj APK-ove unutar ZIP datoteka",
+    "installMethodRoot": "Root",
+    "rootNotFound": "su nije pronađen u PATH - Dodijelite root dozvole aplikaciji",
+    "rootFailed": "Root izvršavanje neuspješno - provjerite vaš root menadžer"
 }

@@ -473,5 +473,8 @@
     "yes": "Đúng",
     "yesMarkUpdated": "Có, Đánh dấu là đã cập nhật",
     "youPickedTrackOnly": "Bạn đã chọn tùy chọn 'Chỉ theo dõi'.",
-    "zippedApkFilterRegEx": "Lọc các tệp APK bên trong tệp ZIP"
+    "zippedApkFilterRegEx": "Lọc các tệp APK bên trong tệp ZIP",
+    "installMethodRoot": "Root",
+    "rootNotFound": "không tìm thấy su trong PATH - Cấp quyền root cho ứng dụng",
+    "rootFailed": "Thực thi Root thất bại - kiểm tra trình quản lý root của bạn"
 }

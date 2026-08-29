@@ -473,5 +473,8 @@
     "yes": "Sí",
     "yesMarkUpdated": "Sí, marcar como actualizada",
     "youPickedTrackOnly": "Debe seleccionar la opción de 'solo para seguimiento'.",
-    "zippedApkFilterRegEx": "Filtrar APKs dentro del ZIP"
+    "zippedApkFilterRegEx": "Filtrar APKs dentro del ZIP",
+    "installMethodRoot": "Root",
+    "rootNotFound": "su no encontrado en PATH - Concede permisos root a la aplicación",
+    "rootFailed": "Error al ejecutar Root - comprueba tu gestor de root"
 }

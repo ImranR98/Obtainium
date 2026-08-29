@@ -473,5 +473,8 @@
     "yes": "Ja",
     "yesMarkUpdated": "Ja, markér som opdateret",
     "youPickedTrackOnly": "Du har valgt 'Følg Kun'-indstillingen.",
-    "zippedApkFilterRegEx": "Filtrer APK'er inde i ZIP"
+    "zippedApkFilterRegEx": "Filtrer APK'er inde i ZIP",
+    "installMethodRoot": "Root",
+    "rootNotFound": "su blev ikke fundet i PATH - Giv appen root-tilladelser",
+    "rootFailed": "Root-udførelse mislykkedes - tjek din root-manager"
 }

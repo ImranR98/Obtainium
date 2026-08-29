@@ -473,5 +473,8 @@
     "yes": "Sí",
     "yesMarkUpdated": "Sí, marca com a actualitzada",
     "youPickedTrackOnly": "Has seleccionat l'opció 'només per a seguiment'.",
-    "zippedApkFilterRegEx": "Filtre APKs dins ZIPName"
+    "zippedApkFilterRegEx": "Filtre APKs dins ZIPName",
+    "installMethodRoot": "Root",
+    "rootNotFound": "su no trobat al PATH - Concedeix permisos root a l'aplicació",
+    "rootFailed": "L'execució de root ha fallat - comprova el teu gestor de root"
 }

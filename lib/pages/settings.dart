@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:io';
 
 import 'package:device_info_plus/device_info_plus.dart';
 import 'package:easy_localization/easy_localization.dart';
@@ -190,6 +191,46 @@ class _SettingsPageState extends State<SettingsPage> {
             if (!mounted) return;
             showError(e, context);
           });
+    } else if (mode == InstallerMode.root.name) {
+      // Root mode - check if su is available
+      _installerCheckSeq++;
+      final seq = _installerCheckSeq;
+      // We'll check root availability asynchronously
+      Future(() async {
+        try {
+          final result = await Process.run('which', ['su']);
+          final hasSu = result.exitCode == 0 && (result.stdout as String).isNotEmpty;
+          if (_installerCheckSeq != seq) return;
+          if (hasSu) {
+            // Additional check - try running su -v
+            try {
+              final suCheck = await Process.run('su', ['-v']);
+              if (suCheck.exitCode == 0) {
+                settingsProvider.installerMode = InstallerMode.root.name;
+              } else {
+                settingsProvider.installerMode = InstallerMode.system.name;
+                if (!mounted) return;
+                showError(ObtainiumError(tr('rootFailed')), context);
+              }
+            } catch (e) {
+              if (_installerCheckSeq != seq) return;
+              settingsProvider.installerMode = InstallerMode.system.name;
+              if (!mounted) return;
+              showError(ObtainiumError(tr('rootFailed')), context);
+            }
+          } else {
+            if (_installerCheckSeq != seq) return;
+            settingsProvider.installerMode = InstallerMode.system.name;
+            if (!mounted) return;
+            showError(ObtainiumError(tr('rootNotFound')), context);
+          }
+        } catch (e) {
+          if (_installerCheckSeq != seq) return;
+          settingsProvider.installerMode = InstallerMode.system.name;
+          if (!mounted) return;
+          showError(ObtainiumError(tr('rootNotFound')), context);
+        }
+      });
     } else {
       settingsProvider.installerMode = mode;
     }
@@ -703,6 +744,10 @@ class _SettingsPageState extends State<SettingsPage> {
             DropdownMenuEntry(
               value: InstallerMode.shizuku.name,
               label: tr('installMethodShizuku'),
+            ),
+            DropdownMenuEntry(
+              value: InstallerMode.root.name,
+              label: tr('installMethodRoot'),
             ),
             DropdownMenuEntry(
               value: InstallerMode.external.name,

@@ -473,5 +473,8 @@
     "yes": "はい",
     "yesMarkUpdated": "はい、アップデート済みとしてマークします",
     "youPickedTrackOnly": "「追跡のみ」を選択しています",
-    "zippedApkFilterRegEx": "ZIP内のAPKをフィルタリングする"
+    "zippedApkFilterRegEx": "ZIP内のAPKをフィルタリングする",
+    "installMethodRoot": "ルート",
+    "rootNotFound": "PATHにsuが見つかりません - アプリにroot権限を付与してください",
+    "rootFailed": "Rootの実行に失敗しました - rootマネージャーを確認してください"
 }
