@@ -195,6 +195,7 @@
     "skipBulkUpdateConfirmation": "Skip update/install confirmation dialog",
     "highlightTouchTargets": "Підсвічувати менш очевидні області дотику",
     "huaweiAppGallery": "Huawei AppGallery",
+    "huaweiAppGalleryApiError": "Could not get app details from the Huawei AppGallery API",
     "import": "Import",
     "hour": {
         "one": "{} година",
@@ -222,6 +223,7 @@
     "installedVersionX": "Встановлено: {}",
     "insecureRedirect": "Refused to follow a redirect from HTTPS to insecure HTTP",
     "installing": "Встановлення",
+    "installConfirmationError": "Install confirmation was not received in time — the app may not have been installed",
     "intermediateLink": "Проміжне посилання",
     "intermediateLinkNotFound": "Проміжне посилання не знайдено",
     "intermediateLinkRegex": "Фільтр для 'Проміжного' Посилання для Відвідування",

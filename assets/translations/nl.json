@@ -195,6 +195,7 @@
     "skipBulkUpdateConfirmation": "Installatievenster overslaan",
     "highlightTouchTargets": "Minder voor de hand liggende aanraakdoelen markeren",
     "huaweiAppGallery": "Huawei AppGallery",
+    "huaweiAppGalleryApiError": "Could not get app details from the Huawei AppGallery API",
     "import": "Importeren",
     "hour": {
         "one": "{} uur",
@@ -222,6 +223,7 @@
     "installedVersionX": "Geïnstalleerde versie: {}",
     "insecureRedirect": "Weigerde een omleiding van HTTPS naar onveilige HTTP te volgen",
     "installing": "Installeren",
+    "installConfirmationError": "Install confirmation was not received in time — the app may not have been installed",
     "intermediateLink": "Intermediaire link",
     "intermediateLinkNotFound": "Intermediaire link niet gevonden",
     "intermediateLinkRegex": "Filteren op een 'Intermediaire' link om te bezoeken",

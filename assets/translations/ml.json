@@ -195,6 +195,7 @@
     "skipBulkUpdateConfirmation": "Skip update/install confirmation dialog",
     "highlightTouchTargets": "കുറഞ്ഞ വ്യക്തതയുള്ള ടച്ച് ടാർഗെറ്റുകൾ ഹൈലൈറ്റ് ചെയ്യുക",
     "huaweiAppGallery": "Huawei AppGallery",
+    "huaweiAppGalleryApiError": "Could not get app details from the Huawei AppGallery API",
     "import": "Import",
     "hour": {
         "one": "{} മണിക്കൂർ",
@@ -222,6 +223,7 @@
     "installedVersionX": "ഇൻസ്റ്റാൾ ചെയ്തത്: {}",
     "insecureRedirect": "Refused to follow a redirect from HTTPS to insecure HTTP",
     "installing": "ഇൻസ്റ്റാൾ ചെയ്യുന്നു",
+    "installConfirmationError": "Install confirmation was not received in time — the app may not have been installed",
     "intermediateLink": "ഇന്റർമീഡിയറ്റ് ലിങ്ക്",
     "intermediateLinkNotFound": "ഇന്റർമീഡിയറ്റ് ലിങ്ക് കണ്ടെത്തിയില്ല",
     "intermediateLinkRegex": "സന്ദർശിക്കാൻ ഒരു 'ഇന്റർമീഡിയറ്റ്' ലിങ്കിനായി ഫിൽട്ടർ ചെയ്യുക",

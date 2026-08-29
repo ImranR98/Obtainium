@@ -200,6 +200,7 @@
     "skipBulkUpdateConfirmation": "Не показывать диалог подтверждения обновления/установки",
     "highlightTouchTargets": "Выделять менее очевидные нажимаемые элементы",
     "huaweiAppGallery": "Huawei AppGallery",
+    "huaweiAppGalleryApiError": "Could not get app details from the Huawei AppGallery API",
     "import": "Импортировать",
     "hour": {
         "one": "{} час",
@@ -228,6 +229,7 @@
     "installedVersionX": "Установленная версия: {}",
     "insecureRedirect": "Заблокировано перенаправление с HTTPS на небезопасный HTTP. Изменить поведение можно с помощью настройки «Разрешить небезопасные HTTP-запросы» для каждого приложения.",
     "installing": "Устанавливается",
+    "installConfirmationError": "Install confirmation was not received in time — the app may not have been installed",
     "intermediateLink": "Промежуточная ссылка",
     "intermediateLinkNotFound": "Промежуточная ссылка не найдена",
     "intermediateLinkRegex": "Фильтр для «промежуточной» ссылки для посещения",

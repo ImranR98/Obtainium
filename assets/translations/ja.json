@@ -195,6 +195,7 @@
     "skipBulkUpdateConfirmation": "アップデート/インストールの確認ダイアログをスキップする",
     "highlightTouchTargets": "目立たないタップ可能な対象をハイライトする",
     "huaweiAppGallery": "Huawei AppGallery",
+    "huaweiAppGalleryApiError": "Could not get app details from the Huawei AppGallery API",
     "import": "インポート",
     "hour": {
         "one": "{} 時間",
@@ -222,6 +223,7 @@
     "installedVersionX": "インストール済み: {}",
     "insecureRedirect": "HTTPSから安全でないHTTPへのリダイレクトを拒否しました。これはアプリごとの「安全でないHTTPリクエストを許可する」設定で許可できます。",
     "installing": "インストール中",
+    "installConfirmationError": "Install confirmation was not received in time — the app may not have been installed",
     "intermediateLink": "中間リンク",
     "intermediateLinkNotFound": "中間リンクが見つかりませんでした",
     "intermediateLinkRegex": "訪問する「中間」リンクのフィルター",
