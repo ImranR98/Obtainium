@@ -67,11 +67,19 @@ class HuaweiAppGallery extends AppSource {
     String standardUrl, {
     Map<String, dynamic> additionalSettings = const {},
   }) async {
-    final location = await _getAppdlRedirect(
-      _getDlUrl(standardUrl),
-      additionalSettings,
-    );
-    return location == null ? null : _parseRedirectApkName(location)?.$1;
+    // The store API is the only reliable source of the real package name
+    // (the legacy appdl redirect fallback was removed in #3247).
+    try {
+      final sp = SettingsProvider();
+      await sp.initializeSettings();
+      final mergedSettings = await buildMergedSettings(additionalSettings, sp);
+      final cId = standardUrl.split('/').last;
+      final info = await _fetchAppDetail(cId, mergedSettings, sp);
+      return info?['package']?.toString();
+    } catch (e) {
+      AppLogger.info('Failed to infer app ID from Huawei AppGallery API: $e');
+      return null;
+    }
   }
 
   @override
