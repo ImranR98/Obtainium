@@ -53,6 +53,12 @@ const List<String> _verifiedAppsPackageIds = [
 // window to confirm the install actually landed.
 const int _bgInstallConfirmAttempts = 20; // 20 × 500ms = 10 seconds
 
+// Foreground stock-installer installs race the intent-based result against
+// package polling (#3255): a lost result (e.g. the activity was recreated
+// while the user was at a system prompt) must never stall the install chain.
+const int _installConfirmPollAttempts = 300; // 300 × 1s ≈ 5 minutes
+const Duration _installConfirmTimeout = Duration(minutes: 10);
+
 class _InstallResult {
   final String id;
   final bool willBeSilent;
@@ -629,11 +635,20 @@ extension AppsProviderInstall on AppsProvider {
     }
     final allAPKs = [file.file.path];
     allAPKs.addAll(additionalAPKs.map((a) => a.file.path));
-    final InstallResult result = await getInstaller().installApk(
-      allAPKs,
-      appId: file.appId,
-      installOptions: installOptions,
-    );
+    final installer = getInstaller();
+    final InstallResult result =
+        needsBGWorkaround || installer.modeKey != 'stock'
+        ? await installer.installApk(
+            allAPKs,
+            appId: file.appId,
+            installOptions: installOptions,
+          )
+        : await _installWithPollConfirmation(
+            installer,
+            allAPKs,
+            file.appId,
+            installOptions,
+          );
     bool installed = false;
     if (result.isError) {
       try {
@@ -656,6 +671,73 @@ extension AppsProviderInstall on AppsProvider {
     // reuse it without re-downloading (matches main).
     await saveApps([apps[file.appId]!.app]);
     return installed;
+  }
+
+  /// Installs via the stock installer while racing the intent-based result
+  /// against polling for the package to land; the first conclusive outcome
+  /// wins, and the overall wait is capped, so a lost install result can never
+  /// stall the install chain (#3255).
+  Future<InstallResult> _installWithPollConfirmation(
+    Installer installer,
+    List<String> apkPaths,
+    String appId,
+    Map<String, dynamic> installOptions,
+  ) async {
+    final baseline = await captureInstallBaseline(appId);
+    final intentCompleter = Completer<InstallResult>();
+    final pollCompleter = Completer<InstallResult>();
+    unawaited(
+      installer
+          .installApk(apkPaths, appId: appId, installOptions: installOptions)
+          .then(
+            (result) {
+              if (!intentCompleter.isCompleted) {
+                intentCompleter.complete(result);
+              }
+            },
+            onError: (Object e, StackTrace st) {
+              if (!intentCompleter.isCompleted) {
+                intentCompleter.completeError(e, st);
+              }
+            },
+          ),
+    );
+    unawaited(
+      waitForPackageInstall(
+        appId,
+        baseline,
+        attempts: _installConfirmPollAttempts,
+        interval: const Duration(seconds: 1),
+      ).then((confirmed) {
+        if (confirmed) {
+          if (!pollCompleter.isCompleted) {
+            pollCompleter.complete(InstallResult.success());
+          }
+        } else if (isForeground) {
+          // Nothing landed while the app was in the foreground — the install
+          // result was lost (or the session stalled); fail rather than wait.
+          if (!pollCompleter.isCompleted) {
+            pollCompleter.completeError(
+              ObtainiumError(tr('installConfirmationError')),
+            );
+          }
+        }
+        // Backgrounded and unconfirmed: the user may still be at a system
+        // prompt, so keep awaiting the intent result until the overall cap.
+      }),
+    );
+    try {
+      return await Future.any([
+        intentCompleter.future,
+        pollCompleter.future,
+      ]).timeout(_installConfirmTimeout);
+    } on TimeoutException {
+      AppLogger.warn(
+        'Install confirmation timed out for $appId after $_installConfirmTimeout.',
+      );
+      throw ObtainiumError(tr('installConfirmationError'))
+        ..url = apps[appId]?.app.url;
+    }
   }
 
   Future<void> _shareWithVerifiedApps(

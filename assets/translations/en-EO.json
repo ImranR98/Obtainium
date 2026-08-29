@@ -195,6 +195,7 @@
     "skipBulkUpdateConfirmation": "Skip update/install confirmation dialog",
     "highlightTouchTargets": "Emfazi malpi evidentajn klavojn",
     "huaweiAppGallery": "Huawei AppGallery",
+    "huaweiAppGalleryApiError": "Could not get app details from the Huawei AppGallery API",
     "import": "Import",
     "hour": {
         "one": "{} horo",
@@ -222,6 +223,7 @@
     "installedVersionX": "Instalita versio: {}",
     "insecureRedirect": "Refused to follow a redirect from HTTPS to insecure HTTP",
     "installing": "Instalante",
+    "installConfirmationError": "Install confirmation was not received in time — the app may not have been installed",
     "intermediateLink": "Pera ligilo",
     "intermediateLinkNotFound": "Netrovebla pera ligilo",
     "intermediateLinkRegex": "Filtri por 'pera' vizitota ligilo",
