@@ -195,6 +195,7 @@
     "skipBulkUpdateConfirmation": "Frissítések és telepítések megerősítésére szolgáló párbeszédablak kihagyása",
     "highlightTouchTargets": "Kevésbé egyértelmű érintési pontok kiemelése",
     "huaweiAppGallery": "Huawei AppGallery",
+    "huaweiAppGalleryApiError": "Could not get app details from the Huawei AppGallery API",
     "import": "Import",
     "hour": {
         "one": "{} óra",
@@ -222,6 +223,7 @@
     "installedVersionX": "Telepített verzió: {}",
     "insecureRedirect": "Átirányítás HTTPS-ről nem biztonságos HTTP-re elutasítva.",
     "installing": "Telepítés",
+    "installConfirmationError": "Install confirmation was not received in time — the app may not have been installed",
     "intermediateLink": "Köztes hivatkozás",
     "intermediateLinkNotFound": "Nem található köztes hivatkozás",
     "intermediateLinkRegex": "Szűrő egy „köztes” hivatkozás felkereséséhez",

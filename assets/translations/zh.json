@@ -195,6 +195,7 @@
     "skipBulkUpdateConfirmation": "跳过批量更新/安装确认对话框",
     "highlightTouchTargets": "突出展示不明显的可交互区域",
     "huaweiAppGallery": "华为应用市场",
+    "huaweiAppGalleryApiError": "Could not get app details from the Huawei AppGallery API",
     "import": "导入",
     "hour": {
         "one": "{} 小时",
@@ -222,6 +223,7 @@
     "installedVersionX": "当前版本：{}",
     "insecureRedirect": "拒绝从 HTTPS 重定向到不安全的 HTTP。可以通过每个应用的“允许不安全连接”设置来允许此行为。",
     "installing": "正在安装",
+    "installConfirmationError": "Install confirmation was not received in time — the app may not have been installed",
     "intermediateLink": "中转链接",
     "intermediateLinkNotFound": "未找到中转链接",
     "intermediateLinkRegex": "筛选中转链接的正则表达式",
