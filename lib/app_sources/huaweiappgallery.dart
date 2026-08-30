@@ -176,7 +176,7 @@ class HuaweiAppGallery extends AppSource {
       // Non-zero rtnCode might mean an expired sign. Refresh once and retry.
       lastError = 'rtnCode=${resp['rtnCode']} rtnDesc=${resp['rtnDesc']}';
     }
-    throw ObtainiumError('$name: search failed ($lastError)');
+    throw ObtainiumError(tr('searchFailed', args: [name, '$lastError']));
   }
 
   String _hostForZone(String? zone) => switch (zone) {
