@@ -14,6 +14,7 @@ class HuaweiAppGallery extends AppSource {
   HuaweiAppGallery() {
     hosts = ['appgallery.huawei.com', 'appgallery.cloud.huawei.com'];
     trustedApkHosts = ['dbankcloud.com', 'dbankcloud.ru'];
+    canSearch = true;
   }
 
   static const String _sessionPrefsKey = 'huaweiAppGallery-session';
@@ -116,6 +117,66 @@ class HuaweiAppGallery extends AppSource {
     } catch (e) {
       rethrowOrWrapError(e);
     }
+  }
+
+  @override
+  Future<Map<String, List<String>>> search(
+    String query, {
+    Map<String, dynamic> querySettings = const {},
+  }) async {
+    final sp = SettingsProvider();
+    await sp.initializeSettings();
+    final mergedSettings = await buildMergedSettings(querySettings, sp);
+    String? lastError;
+    for (var attempt = 0; attempt < 2; attempt++) {
+      final session = await _ensureSession(
+        mergedSettings,
+        sp,
+        forceRefresh: attempt > 0,
+      );
+      final resp = await _clientApiPost(session.host, {
+        ..._commonParams(session.deviceId),
+        'method': 'client.getTabDetail',
+        'sign': session.sign,
+        'uri': 'searchApp|$query',
+        'maxResults': '25',
+        'reqPageNum': '1',
+        'isSupportPage': '1',
+      }, mergedSettings);
+      if ('${resp['rtnCode']}' == '0') {
+        final Map<String, List<String>> results = {};
+        final layoutData = resp['layoutData'];
+        if (layoutData is List) {
+          for (final layout in layoutData) {
+            if (layout is! Map) continue;
+            final dataList = layout['dataList'];
+            if (dataList is! List) continue;
+            for (final item in dataList) {
+              if (item is! Map) continue;
+              final app = item['appInfo'] is Map ? item['appInfo'] : item;
+              final appId =
+                  app['appid']?.toString() ?? app['appId']?.toString();
+              final appName = app['name']?.toString();
+              if (appId == null ||
+                  appId.isEmpty ||
+                  appName == null ||
+                  appName.isEmpty) {
+                continue;
+              }
+              final package = app['package']?.toString();
+              results['https://${hosts[0]}/app/$appId'] = [
+                appName,
+                if (package != null && package.isNotEmpty) package,
+              ];
+            }
+          }
+        }
+        return results;
+      }
+      // Non-zero rtnCode might mean an expired sign. Refresh once and retry.
+      lastError = 'rtnCode=${resp['rtnCode']} rtnDesc=${resp['rtnDesc']}';
+    }
+    throw ObtainiumError(tr('searchFailed', args: [name, '$lastError']));
   }
 
   String _hostForZone(String? zone) => switch (zone) {
