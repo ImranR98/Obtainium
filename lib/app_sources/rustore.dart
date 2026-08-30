@@ -21,10 +21,13 @@ class RuStore extends AppSource {
     showReleaseDateAsVersionToggle = true;
     changeLogIfAnyIsMarkDown = false;
     inferAppIdFromUrlPath = true;
+    canSearch = true;
   }
 
   static const String _appInfoUrl =
       'https://backapi.rustore.ru/applicationData/overallInfo';
+  static const String _searchUrl =
+      'https://backapi.rustore.ru/applicationData/apps';
   static const String _downloadLinkUrl =
       'https://backapi.rustore.ru/v3/showcase/apps/download-link';
   static const String _nonceUrl = 'https://api.rustore.ru/v1/secure/nonce';
@@ -71,7 +74,9 @@ class RuStore extends AppSource {
     final session = needsSignature ? await _getSecureSession() : _session;
     return _deviceHeaders(
       deviceType: await _getDeviceType(),
-      deviceId: session?.deviceId,
+      // Some requests (currently search) don't require a signature but still
+      // expect a deviceId
+      deviceId: session?.deviceId ?? _randomDeviceId(),
       signature: needsSignature ? session?.signature : null,
     );
   }
@@ -162,6 +167,43 @@ class RuStore extends AppSource {
     } catch (e) {
       rethrowOrWrapError(e);
     }
+  }
+
+  @override
+  Future<Map<String, List<String>>> search(
+    String query, {
+    Map<String, dynamic> querySettings = const {},
+  }) async {
+    final uri = Uri.parse(_searchUrl).replace(
+      queryParameters: {'query': query, 'pageNumber': '0', 'pageSize': '20'},
+    );
+    final response = await sourceRequest(uri.toString(), querySettings);
+    if (response.statusCode != 200) {
+      throw getObtainiumHttpError(response);
+    }
+    final decoded = await decodeJsonBody(response.bodyBytes);
+    final content = decoded is Map && decoded['body'] is Map
+        ? decoded['body']['content']
+        : null;
+    final Map<String, List<String>> results = {};
+    if (content is List) {
+      for (final app in content) {
+        if (app is! Map) continue;
+        final packageName = app['packageName']?.toString();
+        final appName = app['appName']?.toString();
+        if (packageName == null ||
+            packageName.isEmpty ||
+            appName == null ||
+            appName.isEmpty) {
+          continue;
+        }
+        results['https://${hosts[0]}/catalog/app/$packageName'] = [
+          appName,
+          packageName,
+        ];
+      }
+    }
+    return results;
   }
 
   Map<String, String> _deviceHeaders({
