@@ -83,11 +83,11 @@
   "cancelled": "Cancelled",
   "cantInstallOlderVersion": "Cannot install an older version of an app",
   "categories": "Categories",
-  "categoriesDeleteWarning": "All apps in deleted categories will be set to uncategorized.",
+  "categoriesDeleteWarning": "All apps in deleted categories will become uncategorized.",
   "categorize": "Categorize",
   "category": "Category",
   "categoryAlreadyExists": "A category with this name already exists",
-  "categoryDeleteWarning": "All apps in the deleted category will be set to uncategorized.",
+  "categoryDeleteWarning": "All apps in the deleted category will become uncategorized.",
   "categoryName": "Category name",
   "certificateHash": {
     "one": "Certificate Hash",
