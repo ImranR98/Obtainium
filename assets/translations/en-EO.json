@@ -83,10 +83,11 @@
     "cancelled": "Nuligita",
     "cantInstallOlderVersion": "Ne eblas instali malnovan version de la Apo",
     "categories": "Kategorioj",
+    "categoriesDeleteWarning": "Ĉiuj apoj el forigitaj kategorioj iĝos nekategoriitaj.",
     "categorize": "Kategorii",
     "category": "Kategorio",
     "categoryAlreadyExists": "A category with this name already exists",
-    "categoryDeleteWarning": "Ĉiuj apoj el forigitaj kategorioj iĝos nekategoriitaj.",
+    "categoryDeleteWarning": "Ĉiuj aplikaĵoj en la forigita kategorio estos agorditaj al nekategoriitaj.",
     "categoryName": "Category name",
     "certificateHash": {
         "one": "Certificate Hash",

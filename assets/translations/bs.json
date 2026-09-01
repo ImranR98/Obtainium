@@ -83,10 +83,11 @@
     "cancelled": "Otkazano",
     "cantInstallOlderVersion": "Nije moguće instalirati stariju verziju aplikacije",
     "categories": "Kategorije",
+    "categoriesDeleteWarning": "Sve aplikacije u izbrisanim kategorijama će biti postavljene kao nekategorisane.",
     "categorize": "Kategoriziraj",
     "category": "Kategorija",
     "categoryAlreadyExists": "A category with this name already exists",
-    "categoryDeleteWarning": "Sve aplikacije u izbrisanim kategorijama će biti postavljene kao nekategorisane.",
+    "categoryDeleteWarning": "Sve aplikacije u izbrisanoj kategoriji bit će postavljene kao nekategorizirane.",
     "categoryName": "Category name",
     "certificateHash": {
         "one": "Certificate Hash",

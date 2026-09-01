@@ -83,10 +83,11 @@
     "cancelled": "Скасовано",
     "cantInstallOlderVersion": "Не можна встановити старішу версію застосунку",
     "categories": "Категорії",
+    "categoriesDeleteWarning": "Усі застосунки у видалених категоріях будуть переведені у некатегоризовані.",
     "categorize": "Категоризувати",
     "category": "Категорія",
     "categoryAlreadyExists": "A category with this name already exists",
-    "categoryDeleteWarning": "Усі застосунки у видалених категоріях будуть переведені у некатегоризовані.",
+    "categoryDeleteWarning": "Усі програми у видаленій категорії стануть без категорії.",
     "categoryName": "Category name",
     "certificateHash": {
         "one": "Сертифікат Hash",

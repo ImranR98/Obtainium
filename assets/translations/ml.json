@@ -83,10 +83,11 @@
     "cancelled": "റദ്ദാക്കി",
     "cantInstallOlderVersion": "ആപ്പിന്റെ പഴയ പതിപ്പ് ഇൻസ്റ്റാൾ ചെയ്യാൻ കഴിയില്ല.",
     "categories": "വിഭാഗങ്ങൾ",
+    "categoriesDeleteWarning": "ഇല്ലാതാക്കിയ വിഭാഗങ്ങളിലെ എല്ലാ ആപ്പുകളും വിഭാഗരഹിതമായി ക്രമീകരിക്കും.",
     "categorize": "വിഭാഗീകരിക്കുക",
     "category": "വിഭാഗം",
     "categoryAlreadyExists": "A category with this name already exists",
-    "categoryDeleteWarning": "ഇല്ലാതാക്കിയ വിഭാഗങ്ങളിലെ എല്ലാ ആപ്പുകളും വിഭാഗരഹിതമായി ക്രമീകരിക്കും.",
+    "categoryDeleteWarning": "ഇല്ലാതാക്കിയ വിഭാഗത്തിലെ എല്ലാ ആപ്പുകളും തരംതിരിക്കാത്തതായി മാറും.",
     "categoryName": "Category name",
     "certificateHash": {
         "one": "Certificate Hash",

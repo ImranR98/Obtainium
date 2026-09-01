@@ -83,10 +83,11 @@
     "cancelled": "Annulleret",
     "cantInstallOlderVersion": "Kan ikke installere en ældre version af en app",
     "categories": "Kategorier",
+    "categoriesDeleteWarning": "Alle apps i slettede kategorier indstilles til ukategoriseret.",
     "categorize": "Kategoriser",
     "category": "Kategori",
     "categoryAlreadyExists": "A category with this name already exists",
-    "categoryDeleteWarning": "Alle apps i slettede kategorier indstilles til ukategoriseret.",
+    "categoryDeleteWarning": "Alle apps i den slettede kategori vil blive indstillet til ukategoriseret.",
     "categoryName": "Category name",
     "certificateHash": {
         "one": "Certifikathash",

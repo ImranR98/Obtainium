@@ -83,10 +83,11 @@
     "cancelled": "Annulé",
     "cantInstallOlderVersion": "Impossible d'installer une version antérieure de l'application",
     "categories": "Catégories",
+    "categoriesDeleteWarning": "Toutes les applications des catégories supprimées deviendront non catégorisées.",
     "categorize": "Catégoriser",
     "category": "Catégorie",
     "categoryAlreadyExists": "Une catégorie avec ce nom existe déjà",
-    "categoryDeleteWarning": "Toutes les applications des catégories supprimées deviendront non catégorisées.",
+    "categoryDeleteWarning": "Toutes les applications de la catégorie supprimée deviendront non classées.",
     "categoryName": "Nom de la catégorie",
     "certificateHash": {
         "one": "Hash de certificat",

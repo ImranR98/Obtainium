@@ -91,10 +91,11 @@
     "cancelled": "Anulowano",
     "cantInstallOlderVersion": "Nie można zainstalować starszej wersji aplikacji",
     "categories": "Kategorie",
+    "categoriesDeleteWarning": "Wszystkie aplikacje w usuniętych kategoriach zostaną ustawione jako nieskategoryzowane.",
     "categorize": "Kategoryzuj",
     "category": "Kategoria",
     "categoryAlreadyExists": "Kategoria o tej nazwie już istnieje",
-    "categoryDeleteWarning": "Wszystkie aplikacje w usuniętych kategoriach zostaną ustawione jako nieskategoryzowane.",
+    "categoryDeleteWarning": "Wszystkie aplikacje z usuniętej kategorii zostaną przeniesione do kategorii „Bez kategorii”.",
     "categoryName": "Nazwa kategorii",
     "certificateHash": {
         "one": "Hash certyfikatu",

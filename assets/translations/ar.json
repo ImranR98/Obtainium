@@ -83,10 +83,11 @@
     "cancelled": "أُلغيَ",
     "cantInstallOlderVersion": "لا يمكن تثبيت إصدار أقدم من التطبيق",
     "categories": "التصنيفات",
+    "categoresDeleteWarning": "سيتم تعيين جميع التطبيقات في التصنيفات المحذوفة كغير مصنفة.",
     "categorize": "تصنيف",
     "category": "تصنيف",
     "categoryAlreadyExists": "يوجد بالفعل تصنيف بهذا الاسم",
-    "categoryDeleteWarning": "سيتم تعيين جميع التطبيقات في التصنيفات المحذوفة كغير مصنفة.",
+    "categoryDeleteWarning": "سيتم تعيين جميع التطبيقات الموجودة في فئة «المحذوفة» على أنها «غير مصنفة».",
     "categoryName": "اسم التصنيف",
     "certificateHash": {
         "one": "بصمة الشهادة",

@@ -83,10 +83,11 @@
     "cancelled": "Geannuleerd",
     "cantInstallOlderVersion": "Kan geen oudere versie van de app installeren",
     "categories": "Categorieën",
+    "categoriesDeleteWarning": "Alle apps in verwijderde categorieën worden teruggezet naar 'ongecategoriseerd'.",
     "categorize": "Categoriseren",
     "category": "Categorie",
     "categoryAlreadyExists": "Er bestaat al een categorie met deze naam",
-    "categoryDeleteWarning": "Alle apps in verwijderde categorieën worden teruggezet naar 'ongecategoriseerd'.",
+    "categoryDeleteWarning": "Alle apps in de verwijderde categorie worden ongecategoriseerd.",
     "categoryName": "Naam categorie",
     "certificateHash": {
         "one": "Certificaat Hash",

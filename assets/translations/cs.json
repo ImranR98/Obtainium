@@ -86,10 +86,11 @@
     "cancelled": "Zrušeno",
     "cantInstallOlderVersion": "Nelze nainstalovat starší verzi aplikace",
     "categories": "Kategorie",
+    "categoriesDeleteWarning": "Všechny aplikace v odstraněných kategoriích budou nastaveny na nekategorizované.",
     "categorize": "Kategorizovat",
     "category": "Kategorie",
     "categoryAlreadyExists": "A category with this name already exists",
-    "categoryDeleteWarning": "Všechny aplikace v odstraněných kategoriích budou nastaveny na nekategorizované.",
+    "categoryDeleteWarning": "Všechny aplikace v kategorii odstraněných budou nastaveny na nekategorizované.",
     "categoryName": "Category name",
     "certificateHash": {
         "one": "Haš osvědčení",

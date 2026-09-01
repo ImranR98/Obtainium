@@ -83,10 +83,11 @@
     "cancelled": "Abgebrochen",
     "cantInstallOlderVersion": "Installation einer älteren App-Version nicht möglich",
     "categories": "Kategorien",
+    "categoriesDeleteWarning": "Alle Apps in gelöschten Kategorien werden auf nicht kategorisiert gesetzt.",
     "categorize": "Kategorisieren",
     "category": "Kategorie",
     "categoryAlreadyExists": "A category with this name already exists",
-    "categoryDeleteWarning": "Alle Apps in gelöschten Kategorien werden auf nicht kategorisiert gesetzt.",
+    "categoryDeleteWarning": "Alle Apps in gelöschten Kategorie werden auf nicht kategorisiert gesetzt.",
     "categoryName": "Name der Kategorie",
     "certificateHash": {
         "one": "Zertifikat Hash",

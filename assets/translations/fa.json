@@ -83,10 +83,11 @@
     "cancelled": "لغو شد",
     "cantInstallOlderVersion": "نمی توان نسخه قدیمی یک برنامه را نصب کرد",
     "categories": "دسته بندی ها",
+    "categoriesDeleteWarning": "همه برنامه‌ها در دسته‌های حذف شده روی دسته‌بندی نشده تنظیم می‌شوند.",
     "categorize": "دسته بندی کردن",
     "category": "دسته بندی",
     "categoryAlreadyExists": "A category with this name already exists",
-    "categoryDeleteWarning": "همه برنامه‌ها در دسته‌های حذف شده روی دسته‌بندی نشده تنظیم می‌شوند.",
+    "categoryDeleteWarning": "همه برنامه‌های موجود در دسته حذف‌شده روی «دسته‌بندی نشده» تنظیم می‌شوند.",
     "categoryName": "Category name",
     "certificateHash": {
         "one": "گواهی Hash",

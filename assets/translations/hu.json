@@ -83,10 +83,11 @@
     "cancelled": "Visszavonva",
     "cantInstallOlderVersion": "Nem telepíthető egy alkalmazás régebbi verziója",
     "categories": "Kategóriák",
+    "categoriesDeleteWarning": "A törölt kategóriákban lévő összes alkalmazás kategorizálatlanná válik.",
     "categorize": "Kategorizálás",
     "category": "Kategória",
     "categoryAlreadyExists": "Már létezik egy kategória ezen a néven",
-    "categoryDeleteWarning": "A törölt kategóriákban lévő összes alkalmazás kategorizálatlanná válik.",
+    "categoryDeleteWarning": "A törölt kategóriában található összes alkalmazás kategorizálatlanná válik.",
     "categoryName": "Kategória neve",
     "certificateHash": {
         "one": "Tanúsítványkivonat",

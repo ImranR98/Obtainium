@@ -83,10 +83,11 @@
     "cancelled": "İptal edildi",
     "cantInstallOlderVersion": "Uygulamanın eski bir sürümü yüklenemez",
     "categories": "Kategoriler",
+    "categoriesDeleteWarning": "Silinen kategorilerdeki bütün uygulamalar kategorilendirilmemiş olarak ayarlanacaktır.",
     "categorize": "Kategorize et",
     "category": "Kategori",
     "categoryAlreadyExists": "A category with this name already exists",
-    "categoryDeleteWarning": "Silinen kategorilerdeki bütün uygulamalar kategorilendirilmemiş olarak ayarlanacaktır.",
+    "categoryDeleteWarning": "Silinen kategorideki tüm uygulamalar kategorisiz hale gelecektir.",
     "categoryName": "Category name",
     "certificateHash": {
         "one": "Sertifika Hash'i",

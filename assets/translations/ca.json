@@ -83,10 +83,11 @@
     "cancelled": "Cancel·lat",
     "cantInstallOlderVersion": "No és possible instal·lar una versió més antiga de l'aplicació",
     "categories": "Categories",
+    "categoriesDeleteWarning": "Totes les aplicacions de les categories suprimides es marcaran com a no categoritzades.",
     "categorize": "Categoritza",
     "category": "Categoria",
     "categoryAlreadyExists": "A category with this name already exists",
-    "categoryDeleteWarning": "Totes les aplicacions de les categories suprimides es marcaran com a no categoritzades.",
+    "categoryDeleteWarning": "Totes les aplicacions de la categoria eliminada es marcaran com a no categoritzades.",
     "categoryName": "Category name",
     "certificateHash": {
         "one": "Suma de certificat",

@@ -83,10 +83,11 @@
     "cancelled": "Avbruten",
     "cantInstallOlderVersion": "Kan inte installera en äldre version av en app",
     "categories": "Kategorier",
+    "categoriesDeleteWarning": "Alla Appar i de borttagna kategorierna kommer att märkas som okategoriserade.",
     "categorize": "Kategorisera",
     "category": "Kategori",
     "categoryAlreadyExists": "A category with this name already exists",
-    "categoryDeleteWarning": "Alla Appar i de borttagna kategorierna kommer att märkas som okategoriserade.",
+    "categoryDeleteWarning": "Alla appar i den borttagna kategorin kommer att bli okategoriserade.",
     "categoryName": "Category name",
     "certificateHash": {
         "one": "Certificate Hash",
