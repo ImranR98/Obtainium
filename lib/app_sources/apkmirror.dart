@@ -11,6 +11,7 @@ import 'package:obtainium/core/logging/app_logger.dart';
 import 'package:obtainium/providers/settings_provider.dart';
 import 'package:obtainium/providers/source_provider.dart';
 
+/// The APKMirror maintainers do not allow for directly downloading APKs (PR #44)
 class APKMirror extends AppSource {
   APKMirror() {
     name = 'APKMirror';
