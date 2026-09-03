@@ -33,12 +33,12 @@ class GitHub extends AppSource {
       password: true,
       required: false,
       helpUrl:
-          'https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/creating-a-personal-access-token',
+          'https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/managing-your-personal-access-tokens#creating-a-fine-grained-personal-access-token',
     ),
     GeneratedFormTextField(
       'GHReqPrefix',
       label: tr('GHReqPrefix'),
-      hint: 'gh-proxy.org',
+      hint: 'gh-proxy.com',
       required: false,
       additionalValidators: [
         (value) {

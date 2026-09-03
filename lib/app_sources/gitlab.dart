@@ -30,7 +30,7 @@ class GitLab extends AppSource {
       password: true,
       required: false,
       helpUrl:
-          'https://docs.gitlab.com/ee/user/profile/personal_access_tokens.html#create-a-personal-access-token',
+          'https://docs.gitlab.com/user/profile/personal_access_tokens/#create-a-personal-access-token',
     ),
   ];
 
