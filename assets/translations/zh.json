@@ -361,6 +361,8 @@
     "installMethodSystem": "系统",
     "installMethodShizuku": "Shizuku",
     "installMethodExternal": "外部应用",
+    "installMethodRoot": "Root",
+    "rootNotGranted": "Root access was not granted",
     "chooseExternalInstaller": "选择安装器应用",
     "externalInstallerUnset": "未选择",
     "externalInstallerRequired": "请先在“设置”中选择外部安装器",

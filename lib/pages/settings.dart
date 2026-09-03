@@ -11,6 +11,7 @@ import 'package:obtainium/components/ui_widgets.dart';
 import 'package:obtainium/components/generated_form_renderer.dart';
 import 'package:obtainium/custom_errors.dart';
 import 'package:obtainium/core/logging/app_logger.dart';
+import 'package:obtainium/installers/root_installer.dart';
 import 'package:obtainium/main.dart';
 import 'package:obtainium/pages/import_export.dart';
 import 'package:obtainium/pages/logs.dart';
@@ -182,6 +183,27 @@ class _SettingsPageState extends State<SettingsPage> {
             if (errorText != null) {
               if (!mounted) return;
               showError(ObtainiumError(errorText), context);
+            }
+          })
+          .catchError((e) {
+            if (_installerCheckSeq != seq) return;
+            settingsProvider.installerMode = InstallerMode.system.name;
+            if (!mounted) return;
+            showError(e, context);
+          });
+    } else if (mode == InstallerMode.root.name) {
+      _installerCheckSeq++;
+      final seq = _installerCheckSeq;
+      RootInstaller(settingsProvider)
+          .checkPermission()
+          .then((rootGranted) {
+            if (_installerCheckSeq != seq) return;
+            settingsProvider.installerMode = rootGranted
+                ? InstallerMode.root.name
+                : InstallerMode.system.name;
+            if (!mounted) return;
+            if (!rootGranted) {
+              showError(ObtainiumError(tr('rootNotGranted')), context);
             }
           })
           .catchError((e) {
@@ -707,6 +729,10 @@ class _SettingsPageState extends State<SettingsPage> {
             DropdownMenuEntry(
               value: InstallerMode.external.name,
               label: tr('installMethodExternal'),
+            ),
+            DropdownMenuEntry(
+              value: InstallerMode.root.name,
+              label: tr('installMethodRoot'),
             ),
           ],
           onSelected: (value) {

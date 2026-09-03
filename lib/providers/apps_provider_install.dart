@@ -15,6 +15,7 @@ import 'package:obtainium/components/app_detail_widgets.dart';
 import 'package:obtainium/custom_errors.dart';
 import 'package:obtainium/installers/external_installer.dart';
 import 'package:obtainium/installers/installer.dart';
+import 'package:obtainium/installers/root_installer.dart';
 import 'package:obtainium/installers/shizuku_installer.dart';
 import 'package:obtainium/installers/stock_installer.dart';
 import 'package:obtainium/installers/install_utils.dart';
@@ -81,6 +82,8 @@ extension AppsProviderInstall on AppsProvider {
         return ShizukuInstaller(settingsProvider);
       case 'external':
         return ExternalInstaller(settingsProvider);
+      case 'root':
+        return RootInstaller(settingsProvider);
       default:
         return StockInstaller(settingsProvider);
     }

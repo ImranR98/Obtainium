@@ -361,6 +361,8 @@
     "installMethodSystem": "Systeem",
     "installMethodShizuku": "Shizuku",
     "installMethodExternal": "Externe app",
+    "installMethodRoot": "Root",
+    "rootNotGranted": "Root access was not granted",
     "chooseExternalInstaller": "Installatie-app kiezen",
     "externalInstallerUnset": "Geen gekozen",
     "externalInstallerRequired": "Kies eerst een externe installatie-app in de instellingen",

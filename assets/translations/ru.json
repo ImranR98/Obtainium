@@ -368,6 +368,8 @@
     "installMethodSystem": "Системный",
     "installMethodShizuku": "Shizuku",
     "installMethodExternal": "Внешний",
+    "installMethodRoot": "Root",
+    "rootNotGranted": "Root access was not granted",
     "chooseExternalInstaller": "Выберите установщик",
     "externalInstallerUnset": "Не выбрано",
     "externalInstallerRequired": "Сначала выберите внешний установщик в настройках",
