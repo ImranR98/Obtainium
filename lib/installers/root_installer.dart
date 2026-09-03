@@ -19,7 +19,6 @@ class RootInstaller extends Installer {
   @override
   Future<bool> checkPermission() async {
     try {
-      // Magisk/su print the effective uid; uid 0 means root was granted.
       return (await _runAsRoot('id -u')).stdout.toString().trim() == '0';
     } on ProcessException {
       AppLogger.info(
