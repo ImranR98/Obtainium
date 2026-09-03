@@ -361,6 +361,8 @@
     "installMethodSystem": "Rendszer",
     "installMethodShizuku": "Shizuku",
     "installMethodExternal": "Külső alkalmazás",
+    "installMethodRoot": "Root",
+    "rootNotGranted": "Root access was not granted",
     "chooseExternalInstaller": "Válasszon ki egy telepítő alkalmazást",
     "externalInstallerUnset": "Nincs semmi kiválasztva",
     "externalInstallerRequired": "Először válasszon ki egy külső telepítőt a „Beállítások” menüben",

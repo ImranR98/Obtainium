@@ -361,6 +361,8 @@
     "installMethodSystem": "النظام",
     "installMethodShizuku": "Shizuku",
     "installMethodExternal": "تطبيق خارجي",
+    "installMethodRoot": "Root",
+    "rootNotGranted": "Root access was not granted",
     "chooseExternalInstaller": "اختر مثبِّت للتطبيقات",
     "externalInstallerUnset": "لم يتم اختيار أي خيار",
     "externalInstallerRequired": "اختر أولاً مثبِّت خارجي من «الإعدادات»",
