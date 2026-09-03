@@ -746,7 +746,8 @@ class _SettingsPageState extends State<SettingsPage> {
           },
         ),
       ),
-      if (settingsProvider.installerMode == InstallerMode.shizuku.name)
+      if (settingsProvider.installerMode == InstallerMode.shizuku.name ||
+          settingsProvider.installerMode == InstallerMode.root.name)
         ToggleTile(
           label: tr('shizukuPretendToBeGooglePlay'),
           value: settingsProvider.shizukuPretendToBeGooglePlay,
