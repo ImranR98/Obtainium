@@ -1,0 +1,73 @@
+name: 🐞 Bug report
+description: Something isn't working right.
+labels:
+  - bug
+  - to check
+body:
+  - type: markdown
+    attributes:
+      value: |
+        ## Prerequisites
+
+        - Please ensure your request is not part of an [existing issue](https://github.com/ImranR98/Obtainium/issues?q=is%3Aissue%20label%3Abug).
+        - Please ensure you have checked the [Obtainium Wiki](https://wiki.obtainium.imranr.dev/).
+        - Please ensure your request is an actual bug and not intended behaviour (this is frequently the case for issues involving version strings and the HTML source).
+
+  - type: textarea
+    id: bug_description
+    attributes:
+      label: Describe the bug
+      description: A clear and concise description of what the bug is.
+    validations:
+      required: true
+
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: To Reproduce
+      description: Describe the steps needed to reproduce this bug.
+      placeholder: |
+        Steps to reproduce the behavior:
+        1. Go to '...'
+        2. Tap on '....'
+        3. Scroll down to '....'
+        4. See error
+    validations:
+      required: true
+
+  - type: textarea
+    id: screenshots_logs
+    attributes:
+      label: Screenshots and Logs
+      description: |
+        If applicable, add screenshots, logs, and any other artifacts (like some/all files under `/Android/data/dev.imranr.obtainium/`) that you think may help troubleshoot the issue.
+
+  - type: input
+    id: device
+    attributes:
+      label: Device
+      placeholder: 'Pixel 10'
+    validations:
+      required: true
+
+  - type: input
+    id: os
+    attributes:
+      label: OS
+      placeholder: 'GrapheneOS'
+    validations:
+      required: true
+
+  - type: input
+    id: obtainium_version
+    attributes:
+      label: Obtainium Version
+      placeholder: '1.6.10'
+    validations:
+      required: true
+
+  - type: textarea
+    id: additional_context
+    attributes:
+      label: Additional context
+      description: Add any other context about the problem here.
