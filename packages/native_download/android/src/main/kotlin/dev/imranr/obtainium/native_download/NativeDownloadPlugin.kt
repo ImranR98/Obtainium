@@ -67,6 +67,48 @@ class NativeDownloadPlugin : FlutterPlugin, MethodChannel.MethodCallHandler {
         }
     }
 
+    private class ProgressReporter(
+        private val requestId: String,
+        private val channel: MethodChannel,
+        private val handler: Handler,
+    ) {
+        private val latestReceived = AtomicLong(0)
+        private val lastPosted = AtomicLong(0)
+        private val postPending = AtomicBoolean(false)
+
+        fun report(received: Long, total: Long?) {
+            latestReceived.set(received)
+            val now = System.currentTimeMillis()
+            if (now - lastPosted.get() < PROGRESS_INTERVAL_MS ||
+                !postPending.compareAndSet(false, true)
+            ) return
+            handler.post {
+                postPending.set(false)
+                lastPosted.set(System.currentTimeMillis())
+                channel.invokeMethod(
+                    "downloadProgress",
+                    mapOf(
+                        "requestId" to requestId,
+                        "received" to latestReceived.get(),
+                        "total" to total,
+                    ),
+                )
+            }
+        }
+
+        fun complete(total: Long) {
+            latestReceived.set(total)
+            handler.post {
+                postPending.set(false)
+                lastPosted.set(System.currentTimeMillis())
+                channel.invokeMethod(
+                    "downloadProgress",
+                    mapOf("requestId" to requestId, "received" to total, "total" to total),
+                )
+            }
+        }
+    }
+
     private fun start(arguments: Map<*, *>?, result: MethodChannel.Result) {
         val id = arguments?.get("requestId") as? String
         val url = arguments?.get("url") as? String
@@ -91,7 +133,17 @@ class NativeDownloadPlugin : FlutterPlugin, MethodChannel.MethodCallHandler {
                 val completed = if (rangeStart == 0L && rangeSupported &&
                     totalLength != null && totalLength >= PARALLEL_MIN_SIZE
                 ) {
-                    parallelDownload(id, url, outputPath, headers, totalLength, pinning, allowInsecure, stop)
+                    parallelDownload(
+                        id,
+                        url,
+                        outputPath,
+                        headers,
+                        totalLength,
+                        pinning,
+                        allowInsecure,
+                        stop,
+                        channel,
+                    )
                 } else false
                 if (!completed) download(id, url, outputPath, headers, rangeStart, totalLength, pinning, allowInsecure, stop)
                 mainHandler.post { result.success(outputPath) }
@@ -116,23 +168,42 @@ class NativeDownloadPlugin : FlutterPlugin, MethodChannel.MethodCallHandler {
         pinning: Boolean,
         allowInsecure: Boolean,
         stop: AtomicBoolean,
+        channel: MethodChannel,
     ): Boolean {
         val file = File(outputPath)
         file.parentFile?.mkdirs()
         RandomAccessFile(file, "rw").use { it.setLength(total) }
         val chunk = (total + PARALLEL_DOWNLOADS - 1) / PARALLEL_DOWNLOADS
         val received = AtomicLong(0)
+        val progress = ProgressReporter(id, channel, mainHandler)
         val futures = ArrayList<Future<Boolean>>()
         try {
             for (index in 0 until PARALLEL_DOWNLOADS) {
                 val start = index * chunk
                 val end = minOf(total - 1, start + chunk - 1)
                 if (start <= end) futures += executor.submit<Boolean> {
-                    downloadRange(id, url, outputPath, headers, start, end, total, pinning, allowInsecure, stop, received)
+                    downloadRange(
+                        id,
+                        url,
+                        outputPath,
+                        headers,
+                        start,
+                        end,
+                        total,
+                        pinning,
+                        allowInsecure,
+                        stop,
+                        received,
+                        progress,
+                    )
                 }
             }
             val success = futures.all { it.get() }
-            if (!success) file.delete()
+            if (!success) {
+                file.delete()
+            } else {
+                progress.complete(total)
+            }
             return success
         } catch (_: Exception) {
             stop.set(true)
@@ -146,7 +217,7 @@ class NativeDownloadPlugin : FlutterPlugin, MethodChannel.MethodCallHandler {
     private fun downloadRange(
         id: String, url: String, outputPath: String, headers: Map<String, String>,
         start: Long, end: Long, total: Long, pinning: Boolean, allowInsecure: Boolean,
-        stop: AtomicBoolean, received: AtomicLong,
+        stop: AtomicBoolean, received: AtomicLong, progress: ProgressReporter,
     ): Boolean {
         val connection = openConnection(url, headers, "bytes=$start-$end", pinning, allowInsecure)
         val connectionId = "$id:$start"
@@ -164,7 +235,7 @@ class NativeDownloadPlugin : FlutterPlugin, MethodChannel.MethodCallHandler {
                         file.seek(position)
                         file.write(buffer, 0, count)
                         position += count
-                        received.addAndGet(count.toLong())
+                        progress.report(received.addAndGet(count.toLong()), total)
                     }
                     position > end
                 }
@@ -182,6 +253,7 @@ class NativeDownloadPlugin : FlutterPlugin, MethodChannel.MethodCallHandler {
     ) {
         val connection = openConnection(url, headers, if (rangeStart > 0) "bytes=$rangeStart-" else null, pinning, allowInsecure)
         connections[id] = connection
+        val progress = ProgressReporter(id, channel, mainHandler)
         try {
             val status = connection.responseCode
             val append = rangeStart > 0 && status == HttpURLConnection.HTTP_PARTIAL
@@ -191,7 +263,6 @@ class NativeDownloadPlugin : FlutterPlugin, MethodChannel.MethodCallHandler {
             if (rangeStart > 0 && !append) file.writeBytes(ByteArray(0))
             val expected = totalLength ?: connection.contentLengthLong.takeIf { it > 0 }?.let { if (append) it + rangeStart else it }
             var received = if (append) rangeStart else 0L
-            var lastProgress = 0L
             BufferedInputStream(connection.inputStream, BUFFER_SIZE).use { input ->
                 BufferedOutputStream(FileOutputStream(file, append), BUFFER_SIZE).use { output ->
                     val buffer = ByteArray(BUFFER_SIZE)
@@ -201,14 +272,7 @@ class NativeDownloadPlugin : FlutterPlugin, MethodChannel.MethodCallHandler {
                         if (count < 0) break
                         output.write(buffer, 0, count)
                         received += count
-                        val now = System.currentTimeMillis()
-                        if (now - lastProgress >= 500) {
-                            val progressReceived = received
-                            mainHandler.post {
-                                channel.invokeMethod("downloadProgress", mapOf("requestId" to id, "received" to progressReceived, "total" to expected))
-                            }
-                            lastProgress = now
-                        }
+                        progress.report(received, expected)
                     }
                     output.flush()
                 }
@@ -326,5 +390,6 @@ class NativeDownloadPlugin : FlutterPlugin, MethodChannel.MethodCallHandler {
         private const val BUFFER_SIZE = 256 * 1024
         private const val PARALLEL_DOWNLOADS = 4
         private const val PARALLEL_MIN_SIZE = 8L * 1024 * 1024
+        private const val PROGRESS_INTERVAL_MS = 1000L
     }
 }
