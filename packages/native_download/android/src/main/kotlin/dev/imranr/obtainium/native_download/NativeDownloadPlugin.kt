@@ -24,6 +24,7 @@ import javax.net.ssl.SSLSocketFactory
 import javax.net.ssl.TrustManager
 import javax.net.ssl.TrustManagerFactory
 import javax.net.ssl.X509TrustManager
+import java.security.cert.X509Certificate
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.Executors
 import java.util.concurrent.Future
@@ -335,7 +336,16 @@ class NativeDownloadPlugin : FlutterPlugin, MethodChannel.MethodCallHandler {
         if (allowInsecure) {
             connection.sslSocketFactory = insecureSocketFactory()
             connection.hostnameVerifier = HostnameVerifier { _, _ -> true }
+            return
         }
+        if (isRuStoreHost(host)) {
+            connection.sslSocketFactory = ruStoreSocketFactory()
+        }
+    }
+
+    private fun isRuStoreHost(host: String): Boolean {
+        val rootHost = host.split('.').takeLast(2).joinToString(".")
+        return host == "rustore.ru" || rootHost == "rustore.ru"
     }
 
     private fun pinnedCertificatesFor(host: String): List<String>? {
@@ -371,6 +381,46 @@ class NativeDownloadPlugin : FlutterPlugin, MethodChannel.MethodCallHandler {
         trustFactory.init(keyStore)
         return SSLContext.getInstance("TLS").apply {
             init(null, trustFactory.trustManagers, SecureRandom())
+        }.socketFactory
+    }
+
+    /** Uses Android system CAs plus RuStore's additional government CA. */
+    private fun ruStoreSocketFactory(): SSLSocketFactory {
+        val certificateFactory = CertificateFactory.getInstance("X.509")
+        val extraKeyStore = KeyStore.getInstance(KeyStore.getDefaultType()).apply { load(null, null) }
+        applicationContext.assets.open("flutter_assets/assets/ca-certs/russian-mintsifry-root.crt").use {
+            extraKeyStore.setCertificateEntry(
+                "native-download-rustore",
+                certificateFactory.generateCertificate(it),
+            )
+        }
+        val defaultFactory = TrustManagerFactory.getInstance(
+            TrustManagerFactory.getDefaultAlgorithm(),
+        ).apply { init(null as KeyStore?) }
+        val extraFactory = TrustManagerFactory.getInstance(
+            TrustManagerFactory.getDefaultAlgorithm(),
+        ).apply { init(extraKeyStore) }
+        val systemTrust = defaultFactory.trustManagers.filterIsInstance<X509TrustManager>().single()
+        val extraTrust = extraFactory.trustManagers.filterIsInstance<X509TrustManager>().single()
+        val combinedTrust = object : X509TrustManager {
+            override fun checkClientTrusted(chain: Array<X509Certificate>, authType: String) {
+                systemTrust.checkClientTrusted(chain, authType)
+            }
+
+            override fun checkServerTrusted(chain: Array<X509Certificate>, authType: String) {
+                try {
+                    systemTrust.checkServerTrusted(chain, authType)
+                } catch (_: Exception) {
+                    extraTrust.checkServerTrusted(chain, authType)
+                }
+            }
+
+            override fun getAcceptedIssuers(): Array<X509Certificate> =
+                (systemTrust.acceptedIssuers.asList() + extraTrust.acceptedIssuers.asList())
+                    .toTypedArray()
+        }
+        return SSLContext.getInstance("TLS").apply {
+            init(null, arrayOf<TrustManager>(combinedTrust), SecureRandom())
         }.socketFactory
     }
 
