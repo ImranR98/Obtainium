@@ -2,6 +2,7 @@ package dev.imranr.obtainium.native_download
 
 import android.os.Handler
 import android.os.Looper
+import android.content.Context
 import io.flutter.embedding.engine.plugins.FlutterPlugin
 import io.flutter.plugin.common.MethodCall
 import io.flutter.plugin.common.MethodChannel
@@ -13,6 +14,16 @@ import java.io.RandomAccessFile
 import java.net.HttpURLConnection
 import java.net.URI
 import java.net.URL
+import java.security.KeyStore
+import java.security.SecureRandom
+import java.security.cert.CertificateFactory
+import javax.net.ssl.HostnameVerifier
+import javax.net.ssl.HttpsURLConnection
+import javax.net.ssl.SSLContext
+import javax.net.ssl.SSLSocketFactory
+import javax.net.ssl.TrustManager
+import javax.net.ssl.TrustManagerFactory
+import javax.net.ssl.X509TrustManager
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.Executors
 import java.util.concurrent.Future
@@ -21,12 +32,14 @@ import java.util.concurrent.atomic.AtomicLong
 
 class NativeDownloadPlugin : FlutterPlugin, MethodChannel.MethodCallHandler {
     private lateinit var channel: MethodChannel
+    private lateinit var applicationContext: Context
     private val executor = Executors.newCachedThreadPool()
     private val cancelled = ConcurrentHashMap<String, AtomicBoolean>()
     private val connections = ConcurrentHashMap<String, HttpURLConnection>()
     private val mainHandler = Handler(Looper.getMainLooper())
 
     override fun onAttachedToEngine(binding: FlutterPlugin.FlutterPluginBinding) {
+        applicationContext = binding.applicationContext
         channel = MethodChannel(binding.binaryMessenger, CHANNEL)
         channel.setMethodCallHandler(this)
     }
@@ -73,12 +86,14 @@ class NativeDownloadPlugin : FlutterPlugin, MethodChannel.MethodCallHandler {
                 val rangeStart = (arguments["rangeStart"] as? Number)?.toLong() ?: 0L
                 val totalLength = (arguments["totalLength"] as? Number)?.toLong()
                 val rangeSupported = arguments["rangeSupported"] as? Boolean ?: false
+                val pinning = arguments["enableCertificatePinning"] as? Boolean ?: false
+                val allowInsecure = arguments["allowInsecure"] as? Boolean ?: false
                 val completed = if (rangeStart == 0L && rangeSupported &&
                     totalLength != null && totalLength >= PARALLEL_MIN_SIZE
                 ) {
-                    parallelDownload(id, url, outputPath, headers, totalLength, stop)
+                    parallelDownload(id, url, outputPath, headers, totalLength, pinning, allowInsecure, stop)
                 } else false
-                if (!completed) download(id, url, outputPath, headers, rangeStart, totalLength, stop)
+                if (!completed) download(id, url, outputPath, headers, rangeStart, totalLength, pinning, allowInsecure, stop)
                 mainHandler.post { result.success(outputPath) }
             } catch (_: InterruptedException) {
                 mainHandler.post { result.error("CANCELLED", "Download cancelled", null) }
@@ -98,6 +113,8 @@ class NativeDownloadPlugin : FlutterPlugin, MethodChannel.MethodCallHandler {
         outputPath: String,
         headers: Map<String, String>,
         total: Long,
+        pinning: Boolean,
+        allowInsecure: Boolean,
         stop: AtomicBoolean,
     ): Boolean {
         val file = File(outputPath)
@@ -111,7 +128,7 @@ class NativeDownloadPlugin : FlutterPlugin, MethodChannel.MethodCallHandler {
                 val start = index * chunk
                 val end = minOf(total - 1, start + chunk - 1)
                 if (start <= end) futures += executor.submit<Boolean> {
-                    downloadRange(id, url, outputPath, headers, start, end, total, stop, received)
+                    downloadRange(id, url, outputPath, headers, start, end, total, pinning, allowInsecure, stop, received)
                 }
             }
             val success = futures.all { it.get() }
@@ -128,9 +145,10 @@ class NativeDownloadPlugin : FlutterPlugin, MethodChannel.MethodCallHandler {
 
     private fun downloadRange(
         id: String, url: String, outputPath: String, headers: Map<String, String>,
-        start: Long, end: Long, total: Long, stop: AtomicBoolean, received: AtomicLong,
+        start: Long, end: Long, total: Long, pinning: Boolean, allowInsecure: Boolean,
+        stop: AtomicBoolean, received: AtomicLong,
     ): Boolean {
-        val connection = openConnection(url, headers, "bytes=$start-$end")
+        val connection = openConnection(url, headers, "bytes=$start-$end", pinning, allowInsecure)
         val connectionId = "$id:$start"
         connections[connectionId] = connection
         return try {
@@ -159,9 +177,10 @@ class NativeDownloadPlugin : FlutterPlugin, MethodChannel.MethodCallHandler {
 
     private fun download(
         id: String, url: String, outputPath: String, headers: Map<String, String>,
-        rangeStart: Long, totalLength: Long?, stop: AtomicBoolean,
+        rangeStart: Long, totalLength: Long?, pinning: Boolean, allowInsecure: Boolean,
+        stop: AtomicBoolean,
     ) {
-        val connection = openConnection(url, headers, if (rangeStart > 0) "bytes=$rangeStart-" else null)
+        val connection = openConnection(url, headers, if (rangeStart > 0) "bytes=$rangeStart-" else null, pinning, allowInsecure)
         connections[id] = connection
         try {
             val status = connection.responseCode
@@ -200,7 +219,13 @@ class NativeDownloadPlugin : FlutterPlugin, MethodChannel.MethodCallHandler {
         }
     }
 
-    private fun openConnection(initialUrl: String, headers: Map<String, String>, range: String?): HttpURLConnection {
+    private fun openConnection(
+        initialUrl: String,
+        headers: Map<String, String>,
+        range: String?,
+        pinning: Boolean,
+        allowInsecure: Boolean,
+    ): HttpURLConnection {
         var currentUrl = URI(initialUrl)
         var currentHeaders = headers.toMutableMap()
         repeat(10) {
@@ -214,6 +239,7 @@ class NativeDownloadPlugin : FlutterPlugin, MethodChannel.MethodCallHandler {
                 setRequestProperty("Accept-Encoding", "identity")
                 if (range != null) setRequestProperty("Range", range)
             }
+            configureTls(connection, currentUrl.host, pinning, allowInsecure)
             val status = connection.responseCode
             if (status !in 300..399) return connection
             val location = connection.getHeaderField("Location")
@@ -228,6 +254,71 @@ class NativeDownloadPlugin : FlutterPlugin, MethodChannel.MethodCallHandler {
             currentUrl = nextUrl
         }
         throw IllegalStateException("Too many redirects")
+    }
+
+    private fun configureTls(
+        connection: HttpURLConnection,
+        host: String,
+        pinning: Boolean,
+        allowInsecure: Boolean,
+    ) {
+        if (connection !is HttpsURLConnection) return
+        val certificates = pinnedCertificatesFor(host)
+        if (pinning && certificates != null) {
+            connection.sslSocketFactory = pinnedSocketFactory(certificates)
+            return
+        }
+        if (allowInsecure) {
+            connection.sslSocketFactory = insecureSocketFactory()
+            connection.hostnameVerifier = HostnameVerifier { _, _ -> true }
+        }
+    }
+
+    private fun pinnedCertificatesFor(host: String): List<String>? {
+        val rootHost = host.split('.').takeLast(2).joinToString(".")
+        return when {
+            host == "github.com" || rootHost == "github.com" -> listOf(
+                "sectigo-pub-serv-auth-r46.crt", "sectigo-pub-serv-auth-e46.crt",
+                "isrg-root-x1.crt", "isrg-root-x2.crt", "isrg-root-ye.crt", "isrg-root-yr.crt",
+            )
+            host == "codeberg.org" || rootHost == "codeberg.org" -> listOf(
+                "isrg-root-x1.crt", "isrg-root-x2.crt", "isrg-root-ye.crt", "isrg-root-yr.crt",
+            )
+            host == "gitlab.com" || rootHost == "gitlab.com" -> listOf(
+                "sectigo-pub-serv-auth-r46.crt", "sectigo-pub-serv-auth-e46.crt",
+            )
+            host == "rustore.ru" || rootHost == "rustore.ru" -> listOf(
+                "harica-tls-root-2021-rsa.crt", "harica-tls-root-2021-ecc.crt",
+                "russian-mintsifry-root.crt",
+            )
+            else -> null
+        }
+    }
+
+    private fun pinnedSocketFactory(certificates: List<String>): SSLSocketFactory {
+        val certificateFactory = CertificateFactory.getInstance("X.509")
+        val keyStore = KeyStore.getInstance(KeyStore.getDefaultType()).apply { load(null, null) }
+        certificates.forEachIndexed { index, name ->
+            applicationContext.assets.open("flutter_assets/assets/ca-certs/$name").use {
+                keyStore.setCertificateEntry("native-download-$index", certificateFactory.generateCertificate(it))
+            }
+        }
+        val trustFactory = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm())
+        trustFactory.init(keyStore)
+        return SSLContext.getInstance("TLS").apply {
+            init(null, trustFactory.trustManagers, SecureRandom())
+        }.socketFactory
+    }
+
+    private fun insecureSocketFactory(): SSLSocketFactory {
+        val trustAll = arrayOf<TrustManager>(object : X509TrustManager {
+            override fun getAcceptedIssuers(): Array<java.security.cert.X509Certificate> = emptyArray()
+            override fun checkClientTrusted(chain: Array<java.security.cert.X509Certificate>, authType: String) = Unit
+            override fun checkServerTrusted(chain: Array<java.security.cert.X509Certificate>, authType: String) = Unit
+        })
+        return SSLContext.getInstance("TLS").apply {
+            init(null, trustAll, SecureRandom())
+        }.socketFactory
     }
 
     companion object {

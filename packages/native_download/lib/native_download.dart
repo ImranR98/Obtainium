@@ -49,6 +49,8 @@ class NativeDownloadRequest {
     int rangeStart = 0,
     int? totalLength,
     bool rangeSupported = false,
+    bool enableCertificatePinning = false,
+    bool allowInsecure = false,
     void Function(double?, int?, int?)? onProgress,
   }) {
     _installProgressHandler();
@@ -64,6 +66,8 @@ class NativeDownloadRequest {
           'rangeStart': rangeStart,
           'totalLength': totalLength,
           'rangeSupported': rangeSupported,
+          'enableCertificatePinning': enableCertificatePinning,
+          'allowInsecure': allowInsecure,
         })
         .then((path) => File(path ?? outputPath))
         .whenComplete(() => _progress.remove(requestId));

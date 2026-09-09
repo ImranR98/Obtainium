@@ -62,6 +62,7 @@ Future<File> _downloadWithNativeTransport(
   int rangeStart,
   int? totalLength,
   bool rangeSupported,
+  Map<String, dynamic> additionalSettings,
   Function? onProgress,
   CancellationToken? cancellationToken,
 ) async {
@@ -72,6 +73,9 @@ Future<File> _downloadWithNativeTransport(
     rangeStart: rangeStart,
     totalLength: totalLength,
     rangeSupported: rangeSupported,
+    enableCertificatePinning:
+        additionalSettings['enableCertificatePinning'] == true,
+    allowInsecure: additionalSettings['allowInsecure'] == true,
     onProgress: onProgress == null
         ? null
         : (progress, received, total) => onProgress(progress, received, total),
@@ -507,6 +511,7 @@ Future<File> downloadFile(
       rangeStart,
       fullContentLength,
       rangeFeatureEnabled,
+      additionalSettings,
       onProgress,
       cancellationToken,
     );
