@@ -49,8 +49,8 @@ class NativeDownloadRequest {
     int rangeStart = 0,
     int? totalLength,
     bool rangeSupported = false,
-    bool enableCertificatePinning = false,
     bool allowInsecure = false,
+    Map<String, dynamic>? tlsPolicy,
     void Function(double?, int?, int?)? onProgress,
   }) {
     _installProgressHandler();
@@ -66,8 +66,8 @@ class NativeDownloadRequest {
           'rangeStart': rangeStart,
           'totalLength': totalLength,
           'rangeSupported': rangeSupported,
-          'enableCertificatePinning': enableCertificatePinning,
           'allowInsecure': allowInsecure,
+          'tlsPolicy': tlsPolicy,
         })
         .then((path) => File(path ?? outputPath))
         .whenComplete(() => _progress.remove(requestId));
