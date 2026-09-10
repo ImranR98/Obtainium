@@ -17,7 +17,9 @@ class NativeDownloadRequest {
 
   void cancel() {
     unawaited(
-      _channel.invokeMethod<void>('cancel', {'requestId': _requestId}),
+      _channel
+          .invokeMethod<void>('cancel', {'requestId': _requestId})
+          .catchError((_) {}),
     );
   }
 

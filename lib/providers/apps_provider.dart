@@ -83,11 +83,12 @@ Future<File> _downloadWithNativeTransport(
         ? null
         : (progress, received, total) => onProgress(progress, received, total),
   );
-  cancellationToken?.addOnCancelCallback(request.cancel);
+  final cancelRequest = request.cancel;
+  cancellationToken?.addOnCancelCallback(cancelRequest);
   try {
     return await request.future;
   } finally {
-    cancellationToken?.removeOnCancelCallback(request.cancel);
+    cancellationToken?.removeOnCancelCallback(cancelRequest);
   }
 }
 

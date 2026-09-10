@@ -153,13 +153,20 @@ class NativeDownloadPlugin : FlutterPlugin, MethodChannel.MethodCallHandler {
                         channel,
                     )
                 } else false
-                if (!completed) download(id, url, outputPath, headers, rangeStart, totalLength, tlsPolicy, allowInsecure, stop)
+                if (!completed) {
+                    if (stop.get()) throw InterruptedException()
+                    download(id, url, outputPath, headers, rangeStart, totalLength, tlsPolicy, allowInsecure, stop)
+                }
                 mainHandler.post { result.success(outputPath) }
             } catch (_: InterruptedException) {
                 mainHandler.post { result.error("CANCELLED", "Download cancelled", null) }
             } catch (error: Exception) {
                 mainHandler.post {
-                    result.error("DOWNLOAD_FAILED", error.message ?: error.javaClass.simpleName, null)
+                    if (stop.get()) {
+                        result.error("CANCELLED", "Download cancelled", null)
+                    } else {
+                        result.error("DOWNLOAD_FAILED", error.message ?: error.javaClass.simpleName, null)
+                    }
                 }
             } finally {
                 cancelled.remove(id)
@@ -214,10 +221,11 @@ class NativeDownloadPlugin : FlutterPlugin, MethodChannel.MethodCallHandler {
             }
             return success
         } catch (_: Exception) {
+            val externallyCancelled = stop.get()
             stop.set(true)
             futures.forEach { it.cancel(true) }
             file.delete()
-            stop.set(false)
+            if (!externallyCancelled) stop.set(false)
             return false
         }
     }
