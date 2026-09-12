@@ -121,7 +121,6 @@ class _HomePageState extends State<HomePage> {
               FilledButton.tonal(
                 autofocus: sp.isTV,
                 onPressed: () {
-                  sp.welcomeShown = true;
                   Navigator.of(context).pop(null);
                 },
                 child: Text(tr('ok')),
@@ -130,6 +129,9 @@ class _HomePageState extends State<HomePage> {
           );
         },
       );
+      // Also treat a barrier/back dismissal as acknowledged, so the welcome
+      // dialog doesn't reappear on every launch.
+      if (!sp.welcomeShown) sp.welcomeShown = true;
     }
     if (!mounted) return;
     if (!sp.googleVerificationWarningShown) {
@@ -156,7 +158,6 @@ class _HomePageState extends State<HomePage> {
               FilledButton.tonal(
                 autofocus: sp.isTV,
                 onPressed: () {
-                  sp.googleVerificationWarningShown = true;
                   Navigator.of(context).pop(null);
                 },
                 child: Text(tr('ok')),
@@ -165,6 +166,9 @@ class _HomePageState extends State<HomePage> {
           );
         },
       );
+      if (!sp.googleVerificationWarningShown) {
+        sp.googleVerificationWarningShown = true;
+      }
     }
   }
 
