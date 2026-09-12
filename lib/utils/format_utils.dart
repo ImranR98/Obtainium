@@ -7,7 +7,14 @@ String formatBytes(int bytes) {
     size /= 1024;
     unit++;
   }
-  final value = unit == 0 ? size.toStringAsFixed(0) : size.toStringAsFixed(1);
+  var value = unit == 0 ? size.toStringAsFixed(0) : size.toStringAsFixed(1);
+  // Rounding can push the value up to the next unit (e.g. 1048525 B would
+  // otherwise display as "1024.0 KB" instead of "1.0 MB").
+  if (unit > 0 && unit < units.length - 1 && double.parse(value) >= 1024) {
+    size /= 1024;
+    unit++;
+    value = size.toStringAsFixed(1);
+  }
   return '$value ${units[unit]}';
 }
 

@@ -24,7 +24,10 @@ class TranslationLoader {
       useFallbackTranslations: true,
       path: localeDir,
       onLoadError: (FlutterError e) {
-        throw e;
+        // Do not rethrow: a failed translation asset load (e.g. only the
+        // fallback locale missing) must not abort the background task. The
+        // translations that did load remain usable.
+        debugPrint('Failed to load translations: ${e.message}');
       },
     );
     await controller.loadTranslations();
