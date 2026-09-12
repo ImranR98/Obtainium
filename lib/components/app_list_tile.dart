@@ -118,12 +118,14 @@ class AppIconWidget extends StatefulWidget {
   final String appId;
   final bool installed;
   final AppsProvider appsProvider;
+  final double size;
 
   const AppIconWidget({
     super.key,
     required this.appId,
     required this.installed,
     required this.appsProvider,
+    this.size = 44,
   });
 
   @override
@@ -170,7 +172,7 @@ class _AppIconWidgetState extends State<AppIconWidget> {
           future: _iconFuture,
           builder: (ctx, val) => AppIcon(
             bytes: widget.appsProvider.apps[widget.appId]?.icon,
-            size: 44,
+            size: widget.size,
             dimmed: !widget.installed,
           ),
         ),
@@ -445,6 +447,10 @@ class AppListTile extends StatelessWidget {
                     ),
             ),
             child: () {
+              final density = settingsProvider.appListDensity;
+              final isCompact = density == AppListDensity.compact;
+              final isDense = density == AppListDensity.dense;
+              final isStandard = density == AppListDensity.standard;
               final tile = ListTile(
                 autofocus: autofocus,
                 shape: borderRadius != null
@@ -458,12 +464,18 @@ class AppListTile extends StatelessWidget {
                 selectedTileColor: Theme.of(context).colorScheme.primary
                     .withValues(alpha: _app.pinned ? 0.2 : 0.1),
                 selected: multiSelected || detailSelected,
-                leading: settingsProvider.isTV
+                visualDensity: isStandard
+                    ? null
+                    : const VisualDensity(horizontal: -4, vertical: -4),
+                minVerticalPadding: isDense ? 0 : (isCompact ? 2 : 4),
+                dense: isDense,
+                leading: settingsProvider.isTV || isDense
                     ? null
                     : AppIconWidget(
                         appId: _app.id,
                         installed: appInMemory.installedInfo != null,
                         appsProvider: appsProvider,
+                        size: isCompact ? 36 : 44,
                       ),
                 onLongPress: () {
                   settingsProvider.selectionClick();
@@ -479,7 +491,9 @@ class AppListTile extends StatelessWidget {
                         : FontWeight.normal,
                   ),
                 ),
-                subtitle: _app.hasPendingRepoRename
+                subtitle: isDense
+                    ? null
+                    : _app.hasPendingRepoRename
                     ? Column(
                         mainAxisSize: MainAxisSize.min,
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -964,9 +978,12 @@ class _VersionLabel extends StatelessWidget {
         ? Theme.of(context).colorScheme.primary
         : Theme.of(context).colorScheme.onSurfaceVariant;
     final highlight = settingsProvider.highlightTouchTargets;
+    final isDense = settingsProvider.appListDensity == AppListDensity.dense;
 
     Widget content = Padding(
-      padding: const EdgeInsets.all(4),
+      padding: isDense
+          ? const EdgeInsets.symmetric(horizontal: 4)
+          : const EdgeInsets.all(4),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.end,
@@ -974,7 +991,7 @@ class _VersionLabel extends StatelessWidget {
           Container(
             constraints: BoxConstraints(maxWidth: maxWidth),
             child: DefaultTextStyle.merge(
-              style: const TextStyle(fontSize: 14),
+              style: TextStyle(fontSize: isDense ? 11 : 14),
               child: Directionality(
                 // The "old → new" version transition uses an LTR-only arrow
                 // glyph; under an RTL Directionality it gets bidi-mirrored
@@ -1000,7 +1017,7 @@ class _VersionLabel extends StatelessWidget {
             style: TextStyle(
               fontStyle: FontStyle.italic,
               color: updateColor,
-              fontSize: 13,
+              fontSize: isDense ? 10 : 13,
               decoration: showChangesFn == null
                   ? TextDecoration.none
                   : TextDecoration.underline,
@@ -1010,26 +1027,29 @@ class _VersionLabel extends StatelessWidget {
       ),
     );
 
-    if (showChangesFn == null) return content;
-
-    if (highlight) {
-      content = DecoratedBox(
-        decoration: BoxDecoration(
-          color: Theme.of(context).colorScheme.surfaceContainerHighest,
-          borderRadius: BorderRadius.circular(10),
-        ),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 6),
-          child: content,
-        ),
+    if (showChangesFn != null) {
+      if (highlight) {
+        content = DecoratedBox(
+          decoration: BoxDecoration(
+            color: Theme.of(context).colorScheme.surfaceContainerHighest,
+            borderRadius: BorderRadius.circular(10),
+          ),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 6),
+            child: content,
+          ),
+        );
+      }
+      content = InkWell(
+        borderRadius: BorderRadius.circular(10),
+        onTap: showChangesFn,
+        child: content,
       );
     }
 
-    return InkWell(
-      borderRadius: BorderRadius.circular(10),
-      onTap: showChangesFn,
-      child: content,
-    );
+    // Scale down rather than overflow when the row is too short (e.g. the
+    // compact/dense app list densities) or the text is large.
+    return FittedBox(fit: BoxFit.scaleDown, child: content);
   }
 
   bool isVersionUpdate(App app) {

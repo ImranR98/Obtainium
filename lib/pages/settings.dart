@@ -969,6 +969,33 @@ class _SettingsPageState extends State<SettingsPage> {
       ),
       _fieldTile(
         context,
+        TvDropdownMenu<AppListDensity>(
+          expandedInsets: EdgeInsets.zero,
+          label: Text(tr('appListDensity')),
+          initialSelection: settingsProvider.appListDensity,
+          dropdownMenuEntries: [
+            DropdownMenuEntry(
+              value: AppListDensity.standard,
+              label: tr('appListDensityStandard'),
+            ),
+            DropdownMenuEntry(
+              value: AppListDensity.compact,
+              label: tr('appListDensityCompact'),
+            ),
+            DropdownMenuEntry(
+              value: AppListDensity.dense,
+              label: tr('appListDensityDense'),
+            ),
+          ],
+          onSelected: (value) {
+            if (value != null) {
+              settingsProvider.appListDensity = value;
+            }
+          },
+        ),
+      ),
+      _fieldTile(
+        context,
         TvDropdownMenu<ActionBannerMode>(
           expandedInsets: EdgeInsets.zero,
           label: Text(tr('actionBanner')),

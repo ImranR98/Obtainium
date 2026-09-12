@@ -56,6 +56,9 @@ enum ColourSchemeMode { standard, vibrant, expressive, materialYou }
 
 enum ActionBannerMode { all, updatesOnly, none }
 
+/// How much vertical space each app row uses in the app list.
+enum AppListDensity { standard, compact, dense }
+
 class SettingsProvider with ChangeNotifier {
   SharedPreferences? prefs;
   String? defaultAppDir;
@@ -812,6 +815,19 @@ class SettingsProvider with ChangeNotifier {
 
   set parallelDownloads(bool val) {
     prefs?.setBool('parallelDownloads', val);
+    notifyListeners();
+  }
+
+  AppListDensity get appListDensity {
+    final stored = _getString('appListDensity');
+    if (stored != null && AppListDensity.values.any((d) => d.name == stored)) {
+      return AppListDensity.values.byName(stored);
+    }
+    return AppListDensity.standard;
+  }
+
+  set appListDensity(AppListDensity val) {
+    prefs?.setString('appListDensity', val.name);
     notifyListeners();
   }
 
