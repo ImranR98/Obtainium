@@ -64,9 +64,7 @@ ThemeData buildObtainiumTheme(ColorScheme colorScheme, String fontFamily) {
     filledButtonTheme: const FilledButtonThemeData(style: pillButtonStyle),
     elevatedButtonTheme: const ElevatedButtonThemeData(style: pillButtonStyle),
     outlinedButtonTheme: const OutlinedButtonThemeData(style: pillButtonStyle),
-    textButtonTheme: const TextButtonThemeData(
-      style: ButtonStyle(shape: WidgetStatePropertyAll(buttonShape)),
-    ),
+    textButtonTheme: const TextButtonThemeData(style: pillButtonStyle),
     floatingActionButtonTheme: FloatingActionButtonThemeData(
       shape: RoundedSuperellipseBorder(borderRadius: BorderRadius.circular(20)),
       // FAB shadow depth. Tweak these to try different values (M3 default is 6).
@@ -164,8 +162,7 @@ abstract final class ExpressiveMotion {
 }
 
 abstract final class AppPaddings {
-  static const EdgeInsets pageHorizontal =
-      EdgeInsets.symmetric(horizontal: 16);
+  static const EdgeInsets pageHorizontal = EdgeInsets.symmetric(horizontal: 16);
   static const EdgeInsets page = EdgeInsets.fromLTRB(16, 0, 16, 0);
   static const EdgeInsets cardInner = EdgeInsets.all(16);
 }
