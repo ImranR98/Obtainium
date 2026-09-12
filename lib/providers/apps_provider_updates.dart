@@ -6,6 +6,7 @@ import 'package:obtainium/custom_errors.dart';
 import 'package:obtainium/providers/apps_provider.dart';
 import 'package:obtainium/providers/settings_provider.dart';
 import 'package:obtainium/providers/source_provider.dart';
+import 'package:obtainium/utils/min_update_age.dart';
 
 /// Update checking and pending-update bookkeeping for [AppsProvider].
 extension AppsProviderUpdates on AppsProvider {
@@ -31,14 +32,10 @@ extension AppsProviderUpdates on AppsProvider {
       currentApp.additionalSettings,
       currentApp: currentApp,
     );
-    if (_isReleaseYoungerThanMinAge(currentApp, newApp)) {
+    if (await _isReleaseYoungerThanMinAge(currentApp, newApp)) {
       // Suppress the update until the release has reached the configured
       // minimum age (supply-chain delay).
-      newApp = newApp.copyWith(
-        latestVersion: currentApp.latestVersion,
-        releaseDate: currentApp.releaseDate,
-        changeLog: currentApp.changeLog,
-      );
+      newApp = applyMinAgeSuppression(currentApp, newApp);
     }
     if (currentApp.preferredApkIndex < newApp.apkUrls.length) {
       newApp = newApp.copyWith(preferredApkIndex: currentApp.preferredApkIndex);
@@ -75,18 +72,15 @@ extension AppsProviderUpdates on AppsProvider {
 
   /// Returns true when [newApp]'s release is newer than the configured
   /// minimum update age and should therefore be suppressed.
-  bool _isReleaseYoungerThanMinAge(App currentApp, App newApp) {
-    final releaseDate = newApp.releaseDate;
-    if (releaseDate == null ||
-        newApp.latestVersion == currentApp.latestVersion) {
+  Future<bool> _isReleaseYoungerThanMinAge(App currentApp, App newApp) async {
+    if (newApp.latestVersion == currentApp.latestVersion) {
       return false;
     }
-    final raw = currentApp.additionalSettings['minimumUpdateAgeDays'];
-    final minAgeDays = raw is String && raw.isNotEmpty
-        ? int.tryParse(raw) ?? settingsProvider.minimumUpdateAgeDays
-        : settingsProvider.minimumUpdateAgeDays;
-    if (minAgeDays <= 0) return false;
-    return DateTime.now().difference(releaseDate) < Duration(days: minAgeDays);
+    final minAgeDays = await effectiveMinUpdateAgeDays(
+      currentApp.additionalSettings,
+      settingsProvider: settingsProvider,
+    );
+    return isReleaseTooYoung(newApp.releaseDate, minAgeDays);
   }
 
   Future<App?> checkUpdate(String appId) async {
