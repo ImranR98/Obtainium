@@ -59,14 +59,9 @@ void showChangeLogDialog(
                   data: changeLog,
                   onTapLink: (text, href, title) {
                     if (href != null) {
-                      unawaited(
-                        launchUrlString(
-                          href.startsWith('http://') ||
-                                  href.startsWith('https://')
-                              ? href
-                              : '${Uri.parse(app.url).origin}/$href',
-                          mode: LaunchMode.externalApplication,
-                        ),
+                      launchExternalUrlSafe(
+                        href,
+                        baseOrigin: Uri.parse(app.url).origin,
                       );
                     }
                   },
