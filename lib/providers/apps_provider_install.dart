@@ -174,14 +174,24 @@ extension AppsProviderInstall on AppsProvider {
       );
       final additionalSettingsPlusSourceConfig = await source
           .buildMergedSettings(app.additionalSettings, settingsProvider);
-      final String downloadUrl = await source.assetUrlPrefetchModifier(
-        await source.generalReqPrefetchModifier(
-          app.apkUrls[app.preferredApkIndex].value,
-          additionalSettingsPlusSourceConfig,
-        ),
-        app.url,
-        additionalSettingsPlusSourceConfig,
+      final List<String> apkUrlValues = splitMultiApkUrl(
+        app.apkUrls[app.preferredApkIndex].value,
       );
+      final List<String> downloadUrls = [];
+      for (final apkUrlValue in apkUrlValues) {
+        downloadUrls.add(
+          await source.assetUrlPrefetchModifier(
+            await source.generalReqPrefetchModifier(
+              apkUrlValue,
+              additionalSettingsPlusSourceConfig,
+            ),
+            app.url,
+            additionalSettingsPlusSourceConfig,
+          ),
+        );
+      }
+      final String downloadUrl = downloadUrls.first;
+      final bool multipleApks = downloadUrls.length > 1;
       var notif = DownloadNotification(
         app.finalName,
         _downloadCompleteProgress,
@@ -194,56 +204,65 @@ extension AppsProviderInstall on AppsProvider {
         fileNameNoExt =
             '$fileNameNoExt.${app.apkUrls[app.preferredApkIndex].key.split('.').last}';
       }
-      final headers = await source.getRequestHeaders(
-        app.additionalSettings,
-        downloadUrl,
-        forAPKDownload: true,
-      );
-      additionalSettingsPlusSourceConfig['url'] = downloadUrl;
       additionalSettingsPlusSourceConfig['allowInsecure'] = app.settings
           .getBool('allowInsecure');
       additionalSettingsPlusSourceConfig['allowInsecureRedirects'] =
           source.allowInsecureRedirects;
       additionalSettingsPlusSourceConfig['enableCertificatePinning'] =
           settingsProvider.enableCertificatePinning;
+      // Multiple URLs (a base APK plus splits) are downloaded sequentially, so
+      // each file's 0-100 progress is scaled into the overall progress.
+      int completedDownloads = 0;
+      void reportProgress(double? progress, [int? received, int? total]) {
+        final double? overallProgress = progress == null
+            ? null
+            : (completedDownloads * 100 + progress) / downloadUrls.length;
+        final int? prog = overallProgress?.ceil();
+        if (apps[app.id] != null) {
+          apps[app.id]!.downloadReceivedBytes = received;
+          apps[app.id]!.downloadTotalBytes = total;
+          apps[app.id]!.downloadProgress = overallProgress;
+          // Only rebuild listeners when the displayed (integer) percent
+          // actually changes, to avoid redundant whole-page rebuilds on
+          // every sub-percent download tick.
+          if (prevProg != prog) {
+            notify();
+          }
+        }
+        notif = DownloadNotification(
+          app.finalName,
+          prog ?? _downloadCompleteProgress,
+          // Only foreground downloads are cancellable from the notification;
+          // the background isolate's token isn't reachable from the main
+          // isolate that handles the action tap.
+          appId: isBg ? null : app.id,
+          idKey: app.id,
+          receivedBytes: received,
+          totalBytes: total,
+        );
+        if (prog != null && prevProg != prog) {
+          unawaited(notificationsProvider?.notify(notif));
+        }
+        prevProg = prog;
+      }
+
+      final headers = await source.getRequestHeaders(
+        app.additionalSettings,
+        downloadUrl,
+        forAPKDownload: true,
+      );
+      additionalSettingsPlusSourceConfig['url'] = downloadUrl;
       var downloadedFile = await downloadFileWithRetry(
         fileNameNoExt,
         source.urlsAlwaysHaveExtension,
         headers: headers,
-        (double? progress, [int? received, int? total]) {
-          final int? prog = progress?.ceil();
-          if (apps[app.id] != null) {
-            apps[app.id]!.downloadReceivedBytes = received;
-            apps[app.id]!.downloadTotalBytes = total;
-            apps[app.id]!.downloadProgress = progress;
-            // Only rebuild listeners when the displayed (integer) percent
-            // actually changes, to avoid redundant whole-page rebuilds on
-            // every sub-percent download tick.
-            if (prevProg != prog) {
-              notify();
-            }
-          }
-          notif = DownloadNotification(
-            app.finalName,
-            prog ?? _downloadCompleteProgress,
-            // Only foreground downloads are cancellable from the notification;
-            // the background isolate's token isn't reachable from the main
-            // isolate that handles the action tap.
-            appId: isBg ? null : app.id,
-            idKey: app.id,
-            receivedBytes: received,
-            totalBytes: total,
-          );
-          if (prog != null && prevProg != prog) {
-            unawaited(notificationsProvider?.notify(notif));
-          }
-          prevProg = prog;
-        },
+        reportProgress,
         this.apkDir.path,
         additionalSettingsPlusSourceConfig,
         useExisting: useExisting,
         cancellationToken: cancellationToken,
       );
+      completedDownloads = 1;
       if (apps[app.id] != null) {
         apps[app.id]!.downloadProgress = _remainingStepsProgress.toDouble();
         notify();
@@ -265,7 +284,7 @@ extension AppsProviderInstall on AppsProvider {
           originalAssetName.endsWith('.tar.bz2') ||
           originalAssetName.endsWith('.tar.xz');
       Directory? apkDir;
-      if (isAPK) {
+      if (isAPK && !multipleApks) {
         newInfo = await packageManager.getPackageArchiveInfo(
           archiveFilePath: downloadedFile.path,
         );
@@ -273,8 +292,46 @@ extension AppsProviderInstall on AppsProvider {
         final String apkDirPath = '${downloadedFile.path}-dir';
         if (isTarball) {
           await extractTarballFile(downloadedFile.path, apkDirPath);
+        } else if (isAPK) {
+          // A base APK plus split URLs: move the base into the bundle dir so
+          // everything is installed together.
+          downloadedFile = downloadedFile.renameSync(
+            '$apkDirPath/${downloadedFile.path.split('/').last}',
+          );
         } else {
           await unzipFile(downloadedFile.path, apkDirPath);
+        }
+        if (multipleApks) {
+          // Download the remaining split URLs into the same directory.
+          for (var i = 1; i < downloadUrls.length; i++) {
+            final splitUrl = downloadUrls[i];
+            final splitHeaders = await source.getRequestHeaders(
+              app.additionalSettings,
+              splitUrl,
+              forAPKDownload: true,
+            );
+            additionalSettingsPlusSourceConfig['url'] = splitUrl;
+            completedDownloads = i;
+            final splitFile = await downloadFileWithRetry(
+              '$fileNameNoExt-$i',
+              false,
+              reportProgress,
+              this.apkDir.path,
+              additionalSettingsPlusSourceConfig,
+              useExisting: useExisting,
+              headers: splitHeaders,
+              cancellationToken: cancellationToken,
+            );
+            if (splitFile.path.toLowerCase().endsWith('.apk')) {
+              splitFile.renameSync(
+                '$apkDirPath/${splitFile.path.split('/').last}',
+              );
+            } else {
+              await unzipFile(splitFile.path, apkDirPath);
+              unawaited(splitFile.delete());
+            }
+          }
+          completedDownloads = downloadUrls.length;
         }
         apkDir = Directory(apkDirPath);
         var apks = apkDir
@@ -283,6 +340,9 @@ extension AppsProviderInstall on AppsProvider {
             .toList();
 
         apks = _preferMatchingApk(apks, app.id);
+        if (multipleApks) {
+          apks = _moveSplitBaseFirst(apks);
+        }
 
         String? filterRegEx;
         if (isTarball &&
@@ -352,11 +412,13 @@ extension AppsProviderInstall on AppsProvider {
           unawaited(file.delete(recursive: true));
         }
       }
-      if (isAPK) {
+      if (isAPK && !multipleApks) {
         return DownloadedApk(resolvedAppId, downloadedFile);
       } else {
         DownloadedDirType dirType;
-        if (isXAPK) {
+        if (multipleApks) {
+          dirType = DownloadedDirType.splitApks;
+        } else if (isXAPK) {
           dirType = DownloadedDirType.xapk;
         } else if (isTarball) {
           dirType = DownloadedDirType.tarball;
@@ -517,6 +579,11 @@ extension AppsProviderInstall on AppsProvider {
       }
 
       if (installer.wantsContainerHandoff) {
+        if (dir.type == DownloadedDirType.splitApks) {
+          // The external installer opens one file per intent, so it can't run
+          // an install session for base + split APKs from separate downloads.
+          throw ObtainiumError(tr('splitApksUnsupportedByExternalInstaller'));
+        }
         // Hand off the original bundle file (XAPK/ZIP/tarball) to the
         // third-party installer rather than the extracted split APKs.
         try {
@@ -549,6 +616,9 @@ extension AppsProviderInstall on AppsProvider {
       }
 
       apkFiles = _preferMatchingApk(apkFiles, dir.appId).cast<File>().toList();
+      if (dir.type == DownloadedDirType.splitApks) {
+        apkFiles = _moveSplitBaseFirst(apkFiles);
+      }
 
       if (apkFiles.isEmpty) {
         throw NoAPKError();
@@ -1220,6 +1290,18 @@ extension AppsProviderInstall on AppsProvider {
     return apks;
   }
 
+  /// Moves a `base.apk` to the front of a split APK set, so package info and
+  /// the install session start from the base.
+  List<T> _moveSplitBaseFirst<T extends FileSystemEntity>(List<T> apks) {
+    final int baseIndex = apks.indexWhere(
+      (e) => e.uri.pathSegments.last.toLowerCase() == 'base.apk',
+    );
+    if (baseIndex > 0) {
+      apks.insert(0, apks.removeAt(baseIndex));
+    }
+    return apks;
+  }
+
   /// Applies the per-app expected signing certificate hashes and, unless
   /// disabled, the installed app's certificate to [apkHashes]. Throws
   /// [SigningCertMismatchError] when the install must not proceed.
@@ -1572,55 +1654,65 @@ extension AppsProviderInstall on AppsProvider {
     NotificationsProvider notificationsProvider,
     bool enableCertificatePinning,
   ) async {
-    app.additionalSettings['url'] = fileUrl.value;
-    app.additionalSettings['enableCertificatePinning'] =
-        enableCertificatePinning;
-    final notifId = DownloadNotification(
-      fileUrl.key,
-      0,
-      idKey: '${app.id}|${fileUrl.value}',
-    ).id;
-    try {
-      final String downloadPath = '${await getStorageRootPath()}/Download';
-      await downloadFileWithRetry(
-        fileUrl.key,
-        true,
-        (double? progress, [int? received, int? total]) {
-          unawaited(
-            notificationsProvider.notify(
-              DownloadNotification(
-                fileUrl.key,
-                progress?.ceil() ?? 0,
-                idKey: '${app.id}|${fileUrl.value}',
-                receivedBytes: received,
-                totalBytes: total,
+    // A single entry can hold a split APK set (base first, then splits), so
+    // each URL is downloaded as its own file.
+    final List<String> urls = splitMultiApkUrl(fileUrl.value);
+    for (var i = 0; i < urls.length; i++) {
+      final url = urls[i];
+      final String fileName = i == 0
+          ? fileUrl.key
+          : (Uri.tryParse(url)?.pathSegments.lastOrNull ??
+                '${fileUrl.key}-split$i');
+      app.additionalSettings['url'] = url;
+      app.additionalSettings['enableCertificatePinning'] =
+          enableCertificatePinning;
+      final notifId = DownloadNotification(
+        fileName,
+        0,
+        idKey: '${app.id}|$url',
+      ).id;
+      try {
+        final String downloadPath = '${await getStorageRootPath()}/Download';
+        await downloadFileWithRetry(
+          fileName,
+          true,
+          (double? progress, [int? received, int? total]) {
+            unawaited(
+              notificationsProvider.notify(
+                DownloadNotification(
+                  fileName,
+                  progress?.ceil() ?? 0,
+                  idKey: '${app.id}|$url',
+                  receivedBytes: received,
+                  totalBytes: total,
+                ),
               ),
-            ),
-          );
-        },
-        downloadPath,
-        app.additionalSettings,
-        headers: await SourceProvider()
-            .getSource(app.url, overrideSource: app.overrideSource)
-            .getRequestHeaders(
-              app.additionalSettings,
-              fileUrl.value,
-              forAPKDownload: AppSource.isApkOrContainerFile(fileUrl.key),
-            ),
-        useExisting: false,
-      );
-      unawaited(
-        notificationsProvider.notify(
-          DownloadedNotification(fileUrl.key, fileUrl.value, appId: app.id),
-        ),
-      );
-      downloadedIds.add(fileUrl.key);
-    } catch (e) {
-      if (e is! CancellationException) {
-        errors.add(fileUrl.key, e);
+            );
+          },
+          downloadPath,
+          app.additionalSettings,
+          headers: await SourceProvider()
+              .getSource(app.url, overrideSource: app.overrideSource)
+              .getRequestHeaders(
+                app.additionalSettings,
+                url,
+                forAPKDownload: AppSource.isApkOrContainerFile(fileName),
+              ),
+          useExisting: false,
+        );
+        unawaited(
+          notificationsProvider.notify(
+            DownloadedNotification(fileName, url, appId: app.id),
+          ),
+        );
+        downloadedIds.add(fileName);
+      } catch (e) {
+        if (e is! CancellationException) {
+          errors.add(fileName, e);
+        }
+      } finally {
+        unawaited(notificationsProvider.cancel(notifId));
       }
-    } finally {
-      unawaited(notificationsProvider.cancel(notifId));
     }
   }
 }

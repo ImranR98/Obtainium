@@ -35,6 +35,21 @@ class ApkFilterService {
         (includeTarballs && endsWithAny(tarballExtensions));
   }
 
+  /// Separates the URLs of a split APK set stored in a single `apkUrls` value
+  /// (base first, splits after). A newline cannot appear in a legal URL, so it
+  /// cannot collide with real URLs.
+  static const String multiApkUrlSeparator = '\n';
+
+  static List<String> splitMultiApkUrl(String value) {
+    if (value.isEmpty) return [];
+    return value.contains(multiApkUrlSeparator)
+        ? value.split(multiApkUrlSeparator).where((e) => e.isNotEmpty).toList()
+        : [value];
+  }
+
+  static String joinMultiApkUrl(Iterable<String> urls) =>
+      urls.join(multiApkUrlSeparator);
+
   List<MapEntry<String, String>> getApkUrlsFromUrls(List<String> urls) =>
       urls.map((e) {
         final segments = e.split('/').where((el) => el.trim().isNotEmpty);
@@ -92,6 +107,14 @@ class ApkFilterService {
 /// Delegates to [ApkFilterService.getApkUrlsFromUrls].
 List<MapEntry<String, String>> getApkUrlsFromUrls(List<String> urls) =>
     ApkFilterService().getApkUrlsFromUrls(urls);
+
+/// Delegates to [ApkFilterService.splitMultiApkUrl].
+List<String> splitMultiApkUrl(String value) =>
+    ApkFilterService.splitMultiApkUrl(value);
+
+/// Delegates to [ApkFilterService.joinMultiApkUrl].
+String joinMultiApkUrl(Iterable<String> urls) =>
+    ApkFilterService.joinMultiApkUrl(urls);
 
 /// Delegates to [ApkFilterService.filterApksByArch].
 Future<List<MapEntry<String, String>>> filterApksByArch(

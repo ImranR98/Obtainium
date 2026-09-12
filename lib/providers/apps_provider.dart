@@ -139,7 +139,7 @@ class DownloadedApk {
   DownloadedApk(this.appId, this.file);
 }
 
-enum DownloadedDirType { xapk, zip, tarball }
+enum DownloadedDirType { xapk, zip, tarball, splitApks }
 
 class DownloadedDir {
   String appId;

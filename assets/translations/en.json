@@ -407,6 +407,7 @@
     "source": "Source",
     "sourceIsXButPackageFromYPrompt": "The app source is '{}' but the release package comes from '{}'. Continue?",
     "sourceSpecific": "Source-specific",
+    "splitApksUnsupportedByExternalInstaller": "This app is downloaded as split APKs, which the external installer can't install. Use the built-in installer instead.",
     "standard": "Standard",
     "standardVersionDetection": "Standard version detection",
     "stayOneVersionBehind": "Stay one version behind latest",

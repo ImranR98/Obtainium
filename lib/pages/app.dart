@@ -77,7 +77,8 @@ class _AppPageState extends State<AppPage> {
             app.app.preferredApkIndex < app.app.apkUrls.length)
         ? app.app.preferredApkIndex
         : 0;
-    final url = app.app.apkUrls[idx].value;
+    final urls = splitMultiApkUrl(app.app.apkUrls[idx].value);
+    final url = urls.isNotEmpty ? urls.first : '';
     if (url.isEmpty || url == 'placeholder') return;
     final key = '${app.app.id}|$url';
     if (key == _sizeProbeKey) return;
