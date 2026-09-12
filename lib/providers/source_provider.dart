@@ -1330,11 +1330,27 @@ class TypedSettings {
 class HttpService {
   static const int maxRedirects = 10;
 
-  /// Headers that must never be forwarded to a different origin on redirect.
-  static const Set<String> sensitiveRedirectHeaders = {
-    'authorization',
-    'proxy-authorization',
-    'cookie',
+  /// Headers that may be forwarded to a different origin on redirect.
+  /// Source-configured auth headers (e.g. PRIVATE-TOKEN, X-Api-Key) and other
+  /// caller-supplied headers are dropped, since a redirect can point at an
+  /// arbitrary third-party host.
+  static const Set<String> safeRedirectHeaders = {
+    'accept',
+    'accept-charset',
+    'accept-encoding',
+    'accept-language',
+    'cache-control',
+    'content-length',
+    'content-type',
+    'if-modified-since',
+    'if-none-match',
+    'if-range',
+    'origin',
+    'pragma',
+    'range',
+    'referer',
+    'user-agent',
+    'x-requested-with',
   };
 
   static final Map<String, Future<List<Uint8List>>> _certificatePins = {
@@ -1526,14 +1542,16 @@ class HttpService {
               throw ObtainiumError(tr('insecureRedirect'));
             }
             if (!isSameOrigin(currentUrl, nextUrl)) {
-              // Do not forward credentials or session cookies to a
-              // different origin.
+              // Do not forward credentials or any other caller-supplied
+              // headers to a different origin; keep only protocol-level ones.
               requestHeaders = requestHeaders == null
                   ? null
-                  : (Map<String, String>.from(requestHeaders)..removeWhere(
-                      (key, _) =>
-                          sensitiveRedirectHeaders.contains(key.toLowerCase()),
-                    ));
+                  : Map<String, String>.fromEntries(
+                      requestHeaders.entries.where(
+                        (e) =>
+                            safeRedirectHeaders.contains(e.key.toLowerCase()),
+                      ),
+                    );
               cookies = [];
             } else {
               cookies = response.cookies;

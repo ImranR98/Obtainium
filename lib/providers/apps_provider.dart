@@ -14,7 +14,6 @@ import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:crypto/crypto.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
-import 'package:http/io_client.dart';
 import 'package:obtainium/custom_errors.dart';
 import 'package:obtainium/core/logging/app_logger.dart';
 import 'package:obtainium/providers/notifications_provider.dart';
@@ -269,21 +268,24 @@ Future<String> checkPartialDownloadHash(
   Map<String, String>? headers,
 }) async {
   final url = additionalSettings['url'] as String;
-  final req = Request('GET', Uri.parse(url));
-  if (headers != null) {
-    req.headers.addAll(headers);
-  }
-  req.headers[HttpHeaders.rangeHeader] = 'bytes=0-$bytesToGrab';
-  final client = IOClient(await createHttpClient(additionalSettings));
+  final reqHeaders = <String, String>{...?headers};
+  reqHeaders[HttpHeaders.rangeHeader] = 'bytes=0-$bytesToGrab';
+  final responseWithClient = await sourceRequestStreamResponse(
+    'GET',
+    reqHeaders,
+    additionalSettings,
+  );
+  final client = responseWithClient.value.key;
+  final response = responseWithClient.value.value;
   try {
-    final response = await client.send(req);
     if (response.statusCode < 200 || response.statusCode > 299) {
-      throw ObtainiumError(response.reasonPhrase ?? tr('unexpectedError'))
-        ..url = url;
+      throw ObtainiumError(
+        response.reasonPhrase.isNotEmpty
+            ? response.reasonPhrase
+            : tr('unexpectedError'),
+      )..url = url;
     }
-    final List<List<int>> bytes = await response.stream
-        .take(bytesToGrab)
-        .toList();
+    final List<List<int>> bytes = await response.take(bytesToGrab).toList();
     return hashListOfLists(bytes);
   } finally {
     client.close();
@@ -294,17 +296,20 @@ Future<String?> checkETagHeader(
   Map<String, dynamic> additionalSettings, {
   Map<String, String>? headers,
 }) async {
-  final url = additionalSettings['url'] as String;
-  final reqHeaders = headers ?? {};
-  final req = Request('GET', Uri.parse(url));
-  req.headers.addAll(reqHeaders);
-  final client = IOClient(await createHttpClient(additionalSettings));
+  final responseWithClient = await sourceRequestStreamResponse(
+    'GET',
+    headers ?? {},
+    additionalSettings,
+  );
+  final client = responseWithClient.value.key;
+  final response = responseWithClient.value.value;
   try {
-    final StreamedResponse response = await client.send(req);
     if (response.statusCode < 200 || response.statusCode >= 300) {
       return null;
     }
-    final etag = response.headers[HttpHeaders.etagHeader]?.replaceAll('"', '');
+    final etag = response.headers
+        .value(HttpHeaders.etagHeader)
+        ?.replaceAll('"', '');
     return etag != null
         ? sha256.convert(utf8.encode(etag)).toString().substring(0, 12)
         : null;
@@ -388,23 +393,24 @@ Future<File> downloadFile(
   final reqHeaders = headers == null
       ? <String, String>{}
       : Map<String, String>.of(headers);
-  final headersClient = IOClient(await createHttpClient(additionalSettings));
   final url = additionalSettings['url'] as String;
-  late final StreamedResponse headersResponse;
-  try {
-    final getReq = Request('GET', Uri.parse(url));
-    getReq.headers.addAll(reqHeaders);
-    headersResponse = await headersClient.send(getReq);
-  } finally {
-    headersClient.close();
-  }
-
+  // Probe through the shared redirect handler so caller-supplied headers are
+  // not forwarded to a different origin by the underlying HTTP client.
+  final probeResponse = await sourceRequestStreamResponse(
+    'GET',
+    reqHeaders,
+    additionalSettings,
+  );
+  final headersClient = probeResponse.value.key;
+  final HttpClientResponse headersResponse = probeResponse.value.value;
   final resHeaders = headersResponse.headers;
+  headersClient.close();
 
   // Use the headers to decide what the file extension is, and
   // whether it supports partial downloads (range request), and
   // what the total size of the file is (if provided)
-  String ext = resHeaders['content-disposition']?.split('.').last ?? 'apk';
+  String ext =
+      resHeaders.value('content-disposition')?.split('.').last ?? 'apk';
   if (ext.endsWith('"')) {
     ext = ext.substring(0, ext.length - 1);
   }
@@ -434,14 +440,17 @@ Future<File> downloadFile(
   }
 
   bool rangeFeatureEnabled = false;
-  if (resHeaders['accept-ranges']?.isNotEmpty == true) {
-    rangeFeatureEnabled =
-        resHeaders['accept-ranges']?.trim().toLowerCase() == 'bytes';
+  final acceptRanges = resHeaders.value('accept-ranges');
+  if (acceptRanges?.isNotEmpty == true) {
+    rangeFeatureEnabled = acceptRanges?.trim().toLowerCase() == 'bytes';
   }
 
   // If you have an existing file that is usable,
   // decide whether you can use it (either return full or resume partial)
-  final fullContentLength = headersResponse.contentLength;
+  // HttpClientResponse reports -1 for an unknown length; normalize to null.
+  final int? fullContentLength = headersResponse.contentLength > 0
+      ? headersResponse.contentLength
+      : null;
   if (useExisting && downloadedFile.existsSync()) {
     final length = downloadedFile.lengthSync();
     if (fullContentLength == null || !rangeFeatureEnabled) {
@@ -672,16 +681,20 @@ Future<int?> getDownloadSize(
     'url': url,
     'enableCertificatePinning': enableCertificatePinning,
   };
-  final client = IOClient(await createHttpClient(additionalSettings));
+  final responseWithClient = await sourceRequestStreamResponse(
+    'GET',
+    reqHeaders,
+    additionalSettings,
+  );
+  final client = responseWithClient.value.key;
+  final response = responseWithClient.value.value;
   try {
-    final getReq = Request('GET', Uri.parse(url));
-    getReq.headers.addAll(reqHeaders);
-    final response = await client.send(getReq);
     if (response.statusCode < 200 || response.statusCode >= 300) {
       return null;
     }
+    // HttpClientResponse reports -1 for an unknown length.
     final length = response.contentLength;
-    return (length != null && length > 0) ? length : null;
+    return length > 0 ? length : null;
   } on SocketException {
     return null;
   } on TimeoutException {
