@@ -217,6 +217,7 @@ Future<File> downloadFileWithRetry(
         (e is ClientException ||
             e is SocketException ||
             e is TimeoutException ||
+            e is HttpException ||
             retryableHTTPError)) {
       await Future.delayed(const Duration(seconds: _retryDelaySeconds));
       return await downloadFileWithRetry(
@@ -606,6 +607,16 @@ Future<File> downloadFile(
     progress = null;
     if (onProgress != null) {
       onProgress(progress, null, null);
+    }
+    // A stream can end without an error yet still be short (e.g. a server that
+    // reports Content-Length but closes early). Keep the .part file so the
+    // retry can resume via Range instead of accepting a truncated download.
+    if (fullContentLength != null &&
+        received < fullContentLength &&
+        !(cancellationToken?.isCancelled ?? false)) {
+      throw ClientException(
+        'Incomplete download: received $received of $fullContentLength bytes',
+      );
     }
     try {
       if (tempDownloadedFile.existsSync()) {
