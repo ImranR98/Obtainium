@@ -399,16 +399,20 @@ class HTML extends AppSource {
             ? versionExtractionWholePageString
             : relDecoded,
       );
-      additionalSettings['url'] = rel;
+      // Use a local copy for the request helpers: additionalSettings is stored
+      // on the App, and writing the transient resolved URL into it would leak
+      // into the app's persisted configuration.
+      final requestSettings = Map<String, dynamic>.from(additionalSettings)
+        ..['url'] = rel;
       final apkReqHeaders = await getRequestHeaders(
-        additionalSettings,
+        requestSettings,
         rel,
         forAPKDownload: true,
       );
       if (version == null &&
-          additionalSettings['defaultPseudoVersioningMethod'] == 'ETag') {
+          requestSettings['defaultPseudoVersioningMethod'] == 'ETag') {
         version = await checkETagHeader(
-          additionalSettings,
+          requestSettings,
           headers: apkReqHeaders,
         );
         if (version == null || version.isEmpty) {
@@ -416,10 +420,10 @@ class HTML extends AppSource {
         }
       }
       version ??=
-          additionalSettings['defaultPseudoVersioningMethod'] == 'APKLinkHash'
+          requestSettings['defaultPseudoVersioningMethod'] == 'APKLinkHash'
           ? rel.hashCode.toString()
           : (await checkPartialDownloadHashDynamic(
-              additionalSettings,
+              requestSettings,
               headers: apkReqHeaders,
             )).toString();
       return APKDetails(
