@@ -191,6 +191,7 @@
     "followSystem": "Follow system",
     "followSystemThemeExplanation": "Following system theme is possible only by using third-party applications",
     "followingURLsHadErrors": "The following URLs had errors:",
+    "forgejoTokenLabel": "ForgeJo access token",
     "functionNotImplemented": "This class has not implemented this function",
     "githubPATLabel": "GitHub personal access token (increases rate limit)",
     "githubSourceNote": "GitHub rate limiting can be avoided using an API key.",

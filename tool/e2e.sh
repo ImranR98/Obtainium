@@ -88,6 +88,7 @@ PHONE_SUITES=(
   add_remove_app_test.dart
   html_links_test.dart
   app_list_density_test.dart
+  codeberg_auth_test.dart
   screens_navigation_test.dart
 )
 TV_SUITES=(

@@ -1,3 +1,4 @@
+import 'package:easy_localization/easy_localization.dart';
 import 'package:obtainium/app_sources/github.dart';
 import 'package:obtainium/components/generated_form_model.dart';
 import 'package:obtainium/custom_errors.dart';
@@ -14,7 +15,22 @@ class Codeberg extends AppSource {
   @override
   List<List<GeneratedFormItem>>
   get additionalSourceAppSpecificSettingFormItems => [
-    ..._gh.sourceConfigSettingFormItems.map((item) => [item]),
+    // Same storage key as GitHub's token so the delegated header logic keeps
+    // working, but presented as a ForgeJo token (see #2788).
+    for (final item in _gh.sourceConfigSettingFormItems)
+      [
+        if (item.key == 'github-creds')
+          GeneratedFormTextField(
+            'github-creds',
+            label: tr('forgejoTokenLabel'),
+            password: true,
+            required: false,
+            helpUrl:
+                'https://forgejo.org/docs/latest/user/api-usage/#authentication',
+          )
+        else
+          item,
+      ],
     ..._gh.additionalSourceAppSpecificSettingFormItems,
   ];
 
