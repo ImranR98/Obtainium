@@ -142,10 +142,13 @@ class RuStore extends AppSource {
             followRedirects: false,
             postBody: {'appId': appDetails['appId'], 'firstInstall': true},
           );
+      if (downloadLinksResponse.statusCode != 200) {
+        throw getObtainiumHttpError(downloadLinksResponse);
+      }
       final downloadDetails = await decodeJsonBody(
         downloadLinksResponse.bodyBytes,
       );
-      if (downloadLinksResponse.statusCode != 200 || downloadDetails == null) {
+      if (downloadDetails == null) {
         throw getObtainiumHttpError(downloadLinksResponse);
       }
       final downloadUrls = downloadDetails['downloadUrls'];

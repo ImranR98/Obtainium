@@ -84,8 +84,15 @@ class APKCombo extends AppSource {
             }
             final String verCode =
                 a.querySelector('.info .header .vercode')?.text.trim() ?? '';
+            final String fallbackName;
+            final fallbackSegments = Uri.tryParse(url)?.pathSegments;
+            if (fallbackSegments != null && fallbackSegments.isNotEmpty) {
+              fallbackName = fallbackSegments.last;
+            } else {
+              fallbackName = 'app-$verCode.apk';
+            }
             return MapEntry<String, String>(
-              arch != null ? '$arch-$verCode.apk' : '',
+              arch != null ? '$arch-$verCode.apk' : fallbackName,
               url,
             );
           }
