@@ -62,6 +62,9 @@ class _AppPageState extends State<AppPage> {
   int? _appCacheSig;
   AppInMemory? _appCache;
 
+  String? _aboutCacheKey;
+  Widget? _aboutCache;
+
   // Best-effort download-size probe for the currently-selected APK URL.
   String? _sizeProbeKey;
   int? _probedDownloadSize;
@@ -206,7 +209,6 @@ class _AppPageState extends State<AppPage> {
   int appSignature(AppInMemory a) {
     final app = a.app;
     return Object.hashAll([
-      a.downloadProgress,
       identityHashCode(a.icon),
       identityHashCode(a.installedInfo),
       app.id,
@@ -960,36 +962,34 @@ class _AppPageState extends State<AppPage> {
   List<Widget> _buildAboutSection(AppInMemory? app) {
     final about = app?.app.additionalSettings['about'];
     if (about is! String || about.isEmpty) return const [];
+    // Reuse the built MarkdownBody while the content is unchanged: returning
+    // the identical widget instance lets Flutter skip re-parsing it on every
+    // rebuild (download ticks, probes, etc.).
+    if (_aboutCacheKey != about || _aboutCache == null) {
+      _aboutCacheKey = about;
+      _aboutCache = MarkdownBody(
+        data: about,
+        styleSheet: MarkdownStyleSheet(
+          blockquoteDecoration: BoxDecoration(
+            color: Theme.of(context).cardColor,
+          ),
+        ),
+        onTapLink: (text, href, title) {
+          if (href != null) {
+            unawaited(
+              launchUrlString(href, mode: LaunchMode.externalApplication),
+            );
+          }
+        },
+        extensionSet: md.ExtensionSet(
+          md.ExtensionSet.gitHubFlavored.blockSyntaxes,
+          [md.EmojiSyntax(), ...md.ExtensionSet.gitHubFlavored.inlineSyntaxes],
+        ),
+      );
+    }
     return [
       const SliverToBoxAdapter(child: SizedBox(height: AppSpacings.sectionGap)),
-      _buildSection(
-        true,
-        true,
-        children: [
-          MarkdownBody(
-            data: about,
-            styleSheet: MarkdownStyleSheet(
-              blockquoteDecoration: BoxDecoration(
-                color: Theme.of(context).cardColor,
-              ),
-            ),
-            onTapLink: (text, href, title) {
-              if (href != null) {
-                unawaited(
-                  launchUrlString(href, mode: LaunchMode.externalApplication),
-                );
-              }
-            },
-            extensionSet: md.ExtensionSet(
-              md.ExtensionSet.gitHubFlavored.blockSyntaxes,
-              [
-                md.EmojiSyntax(),
-                ...md.ExtensionSet.gitHubFlavored.inlineSyntaxes,
-              ],
-            ),
-          ),
-        ],
-      ),
+      _buildSection(true, true, children: [_aboutCache!]),
     ];
   }
 
@@ -1227,7 +1227,11 @@ class _AppPageState extends State<AppPage> {
         app.downloadProgress == null &&
         !updating &&
         !areDownloadsRunning) {
-      _maybeProbeDownloadSize(app);
+      // Probe from a post-frame callback: build must stay side-effect free, and
+      // the key guard inside makes repeat scheduling a cheap no-op.
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) _maybeProbeDownloadSize(app);
+      });
     }
     final source = this.source;
 
