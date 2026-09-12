@@ -270,7 +270,11 @@ extension AppsProviderUpdates on AppsProvider {
         await saveApps(fetched, reuseInstalledInfo: true);
       }
       if (failedApps.isNotEmpty) {
-        await saveApps(failedApps, attemptToCorrectInstallStatus: false);
+        await saveApps(
+          failedApps,
+          attemptToCorrectInstallStatus: false,
+          reuseInstalledInfo: true,
+        );
       }
       if (errors.idsByErrorString.isNotEmpty) {
         final ex = CheckUpdatesException(updates, errors);
