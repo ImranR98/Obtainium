@@ -46,7 +46,7 @@ class AppPage extends StatefulWidget {
 class _AppPageState extends State<AppPage> {
   late final AppsProvider appsProvider;
   late final SettingsProvider settingsProvider;
-  late final String appId;
+  late String appId;
   bool _initialized = false;
 
   late final SourceProvider _sourceProvider;
@@ -130,8 +130,12 @@ class _AppPageState extends State<AppPage> {
     // UI updates until the WebView has finished loading to avoid
     // predictive-back crashes.
     if (_initialized && oldWidget.appId != widget.appId) {
+      // This state object can be reused for a different app (two-pane layout
+      // and list reuse); keep actions pointed at the currently shown app.
+      appId = widget.appId;
       prevApp = null;
       webViewLoaded = false;
+      _webViewError = null;
       _pendingAppIdChange = true;
       if (webViewReady) {
         _pendingAppIdChange = false;
