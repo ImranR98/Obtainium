@@ -251,7 +251,7 @@ class _LogsPageState extends State<LogsPage> {
               slivers: [
                 SliverAppBar(
                   pinned: true,
-                  automaticallyImplyLeading: false,
+                  automaticallyImplyLeading: true,
                   title: Text(tr('appLogs')),
                 ),
                 if (_loading)

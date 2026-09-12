@@ -333,7 +333,7 @@ class _AppPageState extends State<AppPage> {
               slivers: [
                 SliverAppBar(
                   pinned: true,
-                  automaticallyImplyLeading: false,
+                  automaticallyImplyLeading: true,
                   title: Text(
                     tr('additionalOptsFor', args: [app?.name ?? tr('app')]),
                   ),
@@ -540,7 +540,7 @@ class _AppPageState extends State<AppPage> {
   }
 
   AppBar _appScreenAppBar() => AppBar(
-    automaticallyImplyLeading: false,
+    automaticallyImplyLeading: widget.onClose == null,
     leading: widget.onClose != null
         ? IconButton(
             icon: const Icon(Icons.close_rounded),
@@ -1266,7 +1266,6 @@ class _AppPageState extends State<AppPage> {
                     builder: (_) => AppPage(
                       appId: widget.appId,
                       showOppositeOfPreferredView: true,
-                      onClose: widget.onClose,
                     ),
                   ),
                 );
