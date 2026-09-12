@@ -97,7 +97,7 @@ TV_SUITES=(
   tv_layout_test.dart
 )
 if [ "$TARGET" = "phone" ] && $WITH_INSTALL; then
-  PHONE_SUITES+=( install_update_test.dart )
+  PHONE_SUITES+=( install_update_test.dart install_as_downloaded_test.dart )
 fi
 
 echo "Device:  $DEV ($TARGET)"
@@ -112,8 +112,9 @@ echo
 E2E_PUBLIC_BASE_URL="http://10.0.2.2:$PORT" "$SCRIPT_DIR/e2e_assets.sh" >/dev/null
 
 # Serve them over HTTP for the emulator (10.0.2.2 maps to the host loopback).
-python3 -m http.server "$PORT" --bind 0.0.0.0 \
-  --directory "$REPO_DIR/build/e2e_assets" >/dev/null 2>&1 &
+# The custom server adds delayed /slow/ paths used by the install-ordering
+# suite (#2611) and is threaded so parallel downloads really overlap.
+python3 "$SCRIPT_DIR/e2e_server.py" "$PORT" "$REPO_DIR/build/e2e_assets" >/dev/null 2>&1 &
 SERVER_PID=$!
 
 # Animation scales make focus and route transitions flaky; store originals.
@@ -126,6 +127,7 @@ restore_device_state() {
   "$ADB" -s "$DEV" shell settings put global transition_animation_scale "${ORIG_TRANSITION:-1.0}" >/dev/null 2>&1 || true
   "$ADB" -s "$DEV" shell settings put global animator_duration_scale "${ORIG_ANIMATOR:-1.0}" >/dev/null 2>&1 || true
   "$ADB" -s "$DEV" uninstall com.obtainium.e2etest >/dev/null 2>&1 || true
+  "$ADB" -s "$DEV" uninstall com.obtainium.e2etest2 >/dev/null 2>&1 || true
 }
 trap restore_device_state EXIT
 
@@ -134,13 +136,20 @@ trap restore_device_state EXIT
 "$ADB" -s "$DEV" shell settings put global animator_duration_scale 0.0
 
 if [ "$TARGET" = "phone" ] && $WITH_INSTALL; then
-  # Install the target with Obtainium as its installer so the stock installer
-  # is allowed to update it without a user prompt.
-  if ! "$ADB" -s "$DEV" install -r -i dev.imranr.obtainium.debug \
-    "$REPO_DIR/build/e2e_assets/testapp-v1.apk" >/dev/null; then
-    echo "Failed to pre-install testapp-v1.apk with Obtainium as installer" >&2
-    exit 1
-  fi
+  # Start from a clean install so an interrupted previous run (which may have
+  # left a newer version behind) cannot cause a downgrade failure.
+  for pkg in com.obtainium.e2etest com.obtainium.e2etest2; do
+    "$ADB" -s "$DEV" uninstall "$pkg" >/dev/null 2>&1 || true
+  done
+  # Install the targets with Obtainium as their installer so the stock
+  # installer is allowed to update them without a user prompt.
+  for apk in testapp-v1.apk testapp2-v1.apk; do
+    if ! "$ADB" -s "$DEV" install -r -i dev.imranr.obtainium.debug \
+      "$REPO_DIR/build/e2e_assets/$apk" >/dev/null; then
+      echo "Failed to pre-install $apk with Obtainium as installer" >&2
+      exit 1
+    fi
+  done
 fi
 
 run_suite() {

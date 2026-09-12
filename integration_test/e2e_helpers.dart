@@ -27,6 +27,9 @@ const e2eRunInstall = bool.fromEnvironment(
 
 const e2eTestPackageId = 'com.obtainium.e2etest';
 
+/// Second fixture package used by the install-ordering suite (#2611).
+const e2eSecondTestPackageId = 'com.obtainium.e2etest2';
+
 /// Seeds SharedPreferences with deterministic defaults. Must run before
 /// [launchApp].
 Future<void> seedPrefs({Map<String, Object> overrides = const {}}) async {

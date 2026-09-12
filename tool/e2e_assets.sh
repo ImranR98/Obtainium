@@ -25,7 +25,6 @@ AAPT2="$BUILD_TOOLS/aapt2"
 ALIGN="$BUILD_TOOLS/zipalign"
 APKSIGNER="$BUILD_TOOLS/apksigner"
 KEYSTORE="$HOME/.android/debug.keystore"
-PKG="com.obtainium.e2etest"
 OUT_DIR="${1:-$REPO_DIR/build/e2e_assets}"
 
 if [ ! -f "$KEYSTORE" ]; then
@@ -40,23 +39,33 @@ mkdir -p "$OUT_DIR"
 work="$(mktemp -d)"
 trap 'rm -rf "$work"' EXIT
 
-for v in 1 2; do
-  cat > "$work/AndroidManifest-$v.xml" <<EOF
+# Two packages: the update suite updates testapp, and the install-ordering
+# suite (#2611) uses testapp2 as a second, independently installable app.
+declare -A PKG_NAMES=(
+  [com.obtainium.e2etest]=testapp
+  [com.obtainium.e2etest2]=testapp2
+)
+
+for pkg in "${!PKG_NAMES[@]}"; do
+  prefix="${PKG_NAMES[$pkg]}"
+  for v in 1 2; do
+    cat > "$work/AndroidManifest-$prefix-$v.xml" <<EOF
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="$PKG"
+    package="$pkg"
     android:versionCode="$v"
     android:versionName="$v">
     <uses-sdk android:minSdkVersion="26" android:targetSdkVersion="36" />
     <application android:label="E2E Test App" android:hasCode="false" />
 </manifest>
 EOF
-  "$AAPT2" link -o "$work/unsigned-$v.apk" \
-    --manifest "$work/AndroidManifest-$v.xml" \
-    -I "$PLATFORM_JAR"
-  "$ALIGN" -f -p 4 "$work/unsigned-$v.apk" "$work/aligned-$v.apk"
-  "$APKSIGNER" sign --ks "$KEYSTORE" --ks-pass pass:android \
-    --key-pass pass:android --ks-key-alias androiddebugkey \
-    --out "$OUT_DIR/testapp-v$v.apk" "$work/aligned-$v.apk"
+    "$AAPT2" link -o "$work/unsigned-$prefix-$v.apk" \
+      --manifest "$work/AndroidManifest-$prefix-$v.xml" \
+      -I "$PLATFORM_JAR"
+    "$ALIGN" -f -p 4 "$work/unsigned-$prefix-$v.apk" "$work/aligned-$prefix-$v.apk"
+    "$APKSIGNER" sign --ks "$KEYSTORE" --ks-pass pass:android \
+      --key-pass pass:android --ks-key-alias androiddebugkey \
+      --out "$OUT_DIR/$prefix-v$v.apk" "$work/aligned-$prefix-$v.apk"
+  done
 done
 
 # Fixtures for the HTML source's link extraction (issue #2816): the APK URL is
