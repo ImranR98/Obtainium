@@ -243,7 +243,8 @@ class SettingsProvider with ChangeNotifier {
   }
 
   int get updateInterval {
-    return _getInt('updateInterval') ?? 360;
+    final stored = _getInt('updateInterval') ?? 360;
+    return stored < 0 ? 0 : stored;
   }
 
   set updateInterval(int min) {
@@ -252,7 +253,8 @@ class SettingsProvider with ChangeNotifier {
   }
 
   double get updateIntervalSliderVal {
-    return _getDouble('updateIntervalSliderVal') ?? 6.0;
+    final stored = _getDouble('updateIntervalSliderVal') ?? 6.0;
+    return stored < 0 ? 0.0 : stored;
   }
 
   set updateIntervalSliderVal(double val) {
@@ -661,8 +663,15 @@ class SettingsProvider with ChangeNotifier {
     // The directory may be temporarily unreadable (e.g. a WebDAV mount not
     // yet available right after a reboot). Keep the stored URI so it can be
     // retried later, and only clear it via pickExportDir.
-    if (!(await saf.canRead(uri) ?? false) ||
-        !(await saf.canWrite(uri) ?? false)) {
+    try {
+      if (!(await saf.canRead(uri) ?? false) ||
+          !(await saf.canWrite(uri) ?? false)) {
+        return null;
+      }
+    } catch (e) {
+      // A revoked grant or unavailable provider can throw from the platform
+      // channel; treat it as "not currently available" rather than crashing.
+      AppLogger.error(e, message: 'Failed to check export directory access');
       return null;
     }
     return uri;

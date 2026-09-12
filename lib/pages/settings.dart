@@ -1147,7 +1147,12 @@ class _UpdateIntervalSliderTileState extends State<_UpdateIntervalSliderTile> {
   void initState() {
     super.initState();
     initUpdateIntervalInterpolator();
-    sliderVal = context.read<SettingsProvider>().updateIntervalSliderVal;
+    // Clamp: imported/corrupt values outside the slider range would otherwise
+    // trip the Slider's value-in-range assertion.
+    sliderVal = context
+        .read<SettingsProvider>()
+        .updateIntervalSliderVal
+        .clamp(0.0, updateIntervalNodes.length.toDouble());
     processIntervalSliderValue(sliderVal);
   }
 
@@ -1199,6 +1204,7 @@ class _UpdateIntervalSliderTileState extends State<_UpdateIntervalSliderTile> {
 
   void _commit(double value) {
     final settingsProvider = context.read<SettingsProvider>();
+    value = value.clamp(0.0, updateIntervalNodes.length.toDouble());
     settingsProvider.updateIntervalSliderVal = value;
     settingsProvider.updateInterval = updateInterval;
   }
