@@ -152,7 +152,7 @@ extension AppsProviderInstall on AppsProvider {
     NotificationsProvider? notificationsProvider,
     bool useExisting = true,
   }) async {
-    final notifId = DownloadNotification(app.finalName, 0).id;
+    final notifId = DownloadNotification(app.finalName, 0, idKey: app.id).id;
     final cancellationToken = registerDownloadCancellation(app.id);
     try {
       if (apps[app.id] != null) {
@@ -184,6 +184,7 @@ extension AppsProviderInstall on AppsProvider {
       var notif = DownloadNotification(
         app.finalName,
         _downloadCompleteProgress,
+        idKey: app.id,
       );
       unawaited(notificationsProvider?.cancel(notif.id));
       int? prevProg;
@@ -228,6 +229,7 @@ extension AppsProviderInstall on AppsProvider {
             // the background isolate's token isn't reachable from the main
             // isolate that handles the action tap.
             appId: isBg ? null : app.id,
+            idKey: app.id,
             receivedBytes: received,
             totalBytes: total,
           );
@@ -244,7 +246,11 @@ extension AppsProviderInstall on AppsProvider {
       if (apps[app.id] != null) {
         apps[app.id]!.downloadProgress = _remainingStepsProgress.toDouble();
         notify();
-        notif = DownloadNotification(app.finalName, _remainingStepsProgress);
+        notif = DownloadNotification(
+          app.finalName,
+          _remainingStepsProgress,
+          idKey: app.id,
+        );
         unawaited(notificationsProvider?.notify(notif));
       }
       PackageInfo? newInfo;
@@ -835,11 +841,16 @@ extension AppsProviderInstall on AppsProvider {
     if (pickAnyAsset) {
       urlsToSelectFrom = [...urlsToSelectFrom, ...app.otherAssetUrls];
     }
+    if (urlsToSelectFrom.isEmpty) {
+      throw NoAPKError();
+    }
     // If the App has more than one APK, the user should pick one (if context provided)
-    MapEntry<String, String>? appFileUrl =
-        urlsToSelectFrom[app.preferredApkIndex >= 0
-            ? app.preferredApkIndex
-            : 0];
+    final int preferredIndex =
+        app.preferredApkIndex >= 0 &&
+            app.preferredApkIndex < urlsToSelectFrom.length
+        ? app.preferredApkIndex
+        : 0;
+    MapEntry<String, String>? appFileUrl = urlsToSelectFrom[preferredIndex];
     // When picking any asset, use the APK filter regex to pre-select the best matching
     // asset by default, without hiding other assets from the user.
     if (pickAnyAsset &&
@@ -914,6 +925,7 @@ extension AppsProviderInstall on AppsProvider {
   Future<(List<String>, List<String>)> _resolveAppsToInstall(
     List<String> appIds,
     BuildContext? context,
+    MultiAppMultiError errors,
   ) async {
     final List<String> appsToInstall = [];
     final List<String> trackOnlyAppsToUpdate = [];
@@ -925,7 +937,14 @@ extension AppsProviderInstall on AppsProvider {
       final trackOnly = apps[id]!.app.settings.getBool('trackOnly');
       final refreshBeforeDownload = apps[id]!.needsRefreshBeforeDownload;
       if (refreshBeforeDownload) {
-        await checkUpdate(apps[id]!.app.id);
+        try {
+          await checkUpdate(apps[id]!.app.id);
+        } catch (e) {
+          // A single app failing to refresh must not abort the whole batch;
+          // record it and let the remaining apps proceed.
+          errors.add(id, e, appName: apps[id]?.name);
+          continue;
+        }
       }
       if (!trackOnly) {
         // ignore: use_build_context_synchronously
@@ -965,9 +984,11 @@ extension AppsProviderInstall on AppsProvider {
     notificationsProvider =
         notificationsProvider ?? context?.read<NotificationsProvider>();
 
+    final MultiAppMultiError errors = MultiAppMultiError();
     var (appsToInstall, trackOnlyAppsToUpdate) = await _resolveAppsToInstall(
       appIds,
       context,
+      errors,
     );
 
     // Mark all specified track-only apps as latest
@@ -979,7 +1000,6 @@ extension AppsProviderInstall on AppsProvider {
       }).toList(),
     );
 
-    final MultiAppMultiError errors = MultiAppMultiError();
     final List<String> installedIds = [];
 
     // Move Obtainium to the end of the line (let all other apps update first)
@@ -1233,7 +1253,13 @@ extension AppsProviderInstall on AppsProvider {
               installOptions: {
                 'shizukuPretendToBeGooglePlay': shizukuPretendToBeGooglePlay,
               },
-            ),
+            ).catchError((Object e) {
+              // The await is intentionally not observed (the stock installer
+              // never returns in the background), but a thrown error must not
+              // escape as an unhandled async error.
+              AppLogger.warn('Background install threw for $id: $e');
+              return false;
+            }),
           );
           sayInstalled = await waitForPackageInstall(
             id,
@@ -1269,7 +1295,14 @@ extension AppsProviderInstall on AppsProvider {
         if (needBGWorkaround) {
           final baseline = await captureInstallBaseline(id);
           unawaited(
-            installApkDir(downloadedDir!, null, needsBGWorkaround: true),
+            installApkDir(
+              downloadedDir!,
+              null,
+              needsBGWorkaround: true,
+            ).catchError((Object e) {
+              AppLogger.warn('Background install directory threw for $id: $e');
+              return false;
+            }),
           );
           sayInstalled = await waitForPackageInstall(
             id,
@@ -1418,6 +1451,7 @@ extension AppsProviderInstall on AppsProvider {
               DownloadNotification(
                 fileUrl.key,
                 progress?.ceil() ?? 0,
+                idKey: '${app.id}|${fileUrl.value}',
                 receivedBytes: received,
                 totalBytes: total,
               ),
@@ -1437,7 +1471,7 @@ extension AppsProviderInstall on AppsProvider {
       );
       unawaited(
         notificationsProvider.notify(
-          DownloadedNotification(fileUrl.key, fileUrl.value),
+          DownloadedNotification(fileUrl.key, fileUrl.value, appId: app.id),
         ),
       );
       downloadedIds.add(fileUrl.key);
@@ -1447,7 +1481,13 @@ extension AppsProviderInstall on AppsProvider {
       }
     } finally {
       unawaited(
-        notificationsProvider.cancel(DownloadNotification(fileUrl.key, 0).id),
+        notificationsProvider.cancel(
+          DownloadNotification(
+            fileUrl.key,
+            0,
+            idKey: '${app.id}|${fileUrl.value}',
+          ).id,
+        ),
       );
     }
   }
