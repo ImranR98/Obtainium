@@ -2,7 +2,7 @@ name: obtainium
 description: Get Android app updates straight from the source.
 publish_to: 'none'
 
-version: 1.6.15+2354
+version: 1.6.16+2355
 
 environment:
   sdk: ^3.12.0
@@ -26,7 +26,7 @@ dependencies:
   permission_handler: ^13.0.2
   fluttertoast: ^10.0.0
   device_info_plus: ^13.2.0
-  file_picker: ^12.2.0
+  file_picker: ^12.3.0
   animations: ^3.0.0
   android_package_installer: # TODO: Upstream PR pending; if not accepted, keep fork maintained
     git:
@@ -37,7 +37,7 @@ dependencies:
       url: https://github.com/ImranR98/android_package_manager
       ref: 98661a5824c94ae990ae0f7bf0bdb1478300c4f7
   share_plus: ^13.3.0
-  sqflite: ^2.4.3
+  sqflite: ^2.4.4
   easy_localization: ^3.0.8
   intl: ^0.20.3
   android_intent_plus: ^6.1.0
@@ -67,7 +67,7 @@ dependencies:
   battery_plus: ^7.1.1
   flutter_charset_detector: ^6.0.0
   flutter_markdown_plus: ^1.0.12
-  workmanager: ^0.10.9
+  workmanager: ^0.10.10
   logger: ^2.8.0
 
 dev_dependencies:
