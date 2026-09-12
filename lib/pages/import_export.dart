@@ -248,6 +248,27 @@ class _ImportSectionState extends State<ImportSection> {
             } catch (e) {
               throw ObtainiumError(tr('invalidInput'));
             }
+            // Importing overwrites matching apps and applies the file's
+            // settings; make that explicit before touching existing data.
+            final conflictCount = appsProvider
+                .appIdsInImportJSON(data)
+                .where((id) => appsProvider.apps.containsKey(id))
+                .length;
+            if (conflictCount > 0) {
+              if (!context.mounted) return;
+              final proceed = await showConfirmDialog(
+                context,
+                title: tr('importX', args: [tr('appsString').toLowerCase()]),
+                content: Text(
+                  tr(
+                    'importOverwriteWarning',
+                    args: [conflictCount.toString()],
+                  ),
+                ),
+                confirmText: tr('continue'),
+              );
+              if (!proceed) return;
+            }
             final value = await appsProvider.import(data);
             appsProvider.addMissingCategories(settingsProvider);
             if (!context.mounted) return;
