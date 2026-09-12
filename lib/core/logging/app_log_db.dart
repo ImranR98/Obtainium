@@ -33,12 +33,17 @@ class LogEntry {
   }
 
   factory LogEntry.fromMap(Map<String, Object?> map) {
+    final rawLevel = map[levelColumn];
+    final level =
+        rawLevel is int && rawLevel >= 0 && rawLevel < AppLogLevel.values.length
+        ? AppLogLevel.values[rawLevel]
+        : AppLogLevel.info;
     return LogEntry(
-      id: map[idColumn] as int,
-      level: AppLogLevel.values[map[levelColumn] as int],
-      message: map[messageColumn] as String,
+      id: map[idColumn] as int?,
+      level: level,
+      message: map[messageColumn]?.toString() ?? '',
       timestamp: DateTime.fromMillisecondsSinceEpoch(
-        map[timestampColumn] as int,
+        (map[timestampColumn] as int?) ?? 0,
       ),
     );
   }
@@ -55,7 +60,7 @@ class AppLogDb {
   Future<Database> _open() async {
     _db ??= await openDatabase(
       dbPath,
-      version: 1,
+      version: 2,
       onCreate: (Database db, int version) async {
         await db.execute('''
 create table if not exists $logTable (
@@ -64,10 +69,23 @@ create table if not exists $logTable (
   $messageColumn text not null,
   $timestampColumn integer not null)
 ''');
+        await _createTimestampIndex(db);
+      },
+      onUpgrade: (Database db, int oldVersion, int newVersion) async {
+        if (oldVersion < 2) {
+          await _createTimestampIndex(db);
+        }
       },
     );
     return _db!;
   }
+
+  /// `query`, `delete` and `purgeOlderThan` all filter on the timestamp, so
+  /// without this index they scan the entire table.
+  Future<void> _createTimestampIndex(Database db) => db.execute(
+    'create index if not exists logs_timestamp_idx '
+    'on $logTable ($timestampColumn)',
+  );
 
   Future<void> insert(LogEntry entry) async {
     final map = entry.toMap();

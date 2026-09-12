@@ -103,6 +103,8 @@
     "checkingForUpdates": "Checking for updates",
     "checkingForUpdatesNotifChannel": "Checking for updates",
     "checkingForUpdatesNotifDescription": "Transient notification that appears when checking for updates",
+    "clearLogs": "Clear logs",
+    "clearLogsWarning": "This will delete all stored logs. Continue?",
     "clearedNLogsBeforeXAfterY": {
         "one": "Cleared {n} log (before = {before}, after = {after})",
         "other": "Cleared {n} logs (before = {before}, after = {after})"
@@ -125,6 +127,7 @@
     "customLinkFilterRegex": "Custom APK link filter by regular expression (default '.apk$')",
     "customLinkMessage": "These links work on devices with Obtainium installed",
     "dark": "Dark",
+    "debug": "Debug",
     "day": {
         "one": "{} day",
         "other": "{} days"
@@ -217,6 +220,7 @@
     "includeSettings": "Include settings",
     "includeTarballs": "Include tarball files (tar.gz, etc.)",
     "includeZips": "Include ZIP files",
+    "info": "Info",
     "install": "Install",
     "installStatusOfXWillBeResetExplanation": "The install status of any selected apps will be reset.\n\nThis can help when the app version shown in Obtainium is incorrect due to failed updates or other issues.",
     "installUpdateApps": "Install/update apps",
@@ -242,6 +246,7 @@
     "latestVersionX": "Latest: {}",
     "light": "Light",
     "line": "Line",
+    "logsCleared": "Logs cleared",
     "markInstalled": "Mark installed",
     "markSelectedAppsUpdated": "Mark selected apps as updated",
     "markUpdated": "Mark updated",

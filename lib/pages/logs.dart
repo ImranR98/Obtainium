@@ -39,9 +39,15 @@ class _LogsPageState extends State<LogsPage> {
 
   Future<void> _loadLogs(int days) async {
     setState(() => _loading = true);
-    final value = await AppLogger.getLogs(
-      after: DateTime.now().subtract(Duration(days: days)),
-    );
+    List<LogEntry> value;
+    try {
+      value = await AppLogger.getLogs(
+        after: DateTime.now().subtract(Duration(days: days)),
+      );
+    } catch (e, s) {
+      AppLogger.error(e, stackTrace: s, message: 'Failed to load logs');
+      value = [];
+    }
     if (!mounted) return;
     setState(() {
       _days = days;
@@ -71,12 +77,13 @@ class _LogsPageState extends State<LogsPage> {
   Future<void> _clearLogs() async {
     final cont = await showContinueCancelDialog(
       context,
-      title: tr('appLogs'),
-      message: tr('removeFromObtainium'),
+      title: tr('clearLogs'),
+      message: tr('clearLogsWarning'),
     );
     if (!cont) return;
     await AppLogger.clearLogs();
     if (!mounted) return;
+    showMessage(tr('logsCleared'), context);
     await _loadLogs(_days);
   }
 
@@ -109,6 +116,13 @@ class _LogsPageState extends State<LogsPage> {
     };
   }
 
+  String _levelLabel(AppLogLevel level) => switch (level) {
+    AppLogLevel.error => tr('error'),
+    AppLogLevel.warning => tr('warning'),
+    AppLogLevel.debug => tr('debug'),
+    AppLogLevel.info => tr('info'),
+  };
+
   Widget _logTile(LogEntry log) {
     final color = _levelColor(context, log.level);
     return Padding(
@@ -117,7 +131,8 @@ class _LogsPageState extends State<LogsPage> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            '${log.timestamp.toString()} · ${log.level.name}',
+            '${DateFormat.yMd().add_Hms().format(log.timestamp.toLocal())} · '
+            '${_levelLabel(log.level)}',
             style: Theme.of(context).textTheme.labelSmall?.copyWith(
               color: color.withValues(alpha: 0.8),
               fontWeight: FontWeight.bold,
