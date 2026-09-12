@@ -77,10 +77,11 @@ class _AppPageState extends State<AppPage> {
             app.app.preferredApkIndex < app.app.apkUrls.length)
         ? app.app.preferredApkIndex
         : 0;
-    final urls = splitMultiApkUrl(app.app.apkUrls[idx].value);
-    final url = urls.isNotEmpty ? urls.first : '';
-    if (url.isEmpty || url == 'placeholder') return;
-    final key = '${app.app.id}|$url';
+    final urls = splitMultiApkUrl(
+      app.app.apkUrls[idx].value,
+    ).where((u) => u.isNotEmpty && u != 'placeholder').toList();
+    if (urls.isEmpty) return;
+    final key = '${app.app.id}|${app.app.apkUrls[idx].value}';
     if (key == _sizeProbeKey) return;
     _sizeProbeKey = key;
     _probedDownloadSize = null;
@@ -90,28 +91,37 @@ class _AppPageState extends State<AppPage> {
           app.app.url,
           overrideSource: app.app.overrideSource,
         );
-        final resolvedUrl = await source.assetUrlPrefetchModifier(
-          url,
-          app.app.url,
-          app.app.additionalSettings,
+        // A split set is downloaded in full, so report the combined size.
+        final sizes = await Future.wait(
+          urls.map((url) async {
+            final resolvedUrl = await source.assetUrlPrefetchModifier(
+              url,
+              app.app.url,
+              app.app.additionalSettings,
+            );
+            final headers = await source.getRequestHeaders(
+              app.app.additionalSettings,
+              resolvedUrl,
+              forAPKDownload: true,
+            );
+            return getDownloadSize(
+              resolvedUrl,
+              headers: headers,
+              allowInsecure: app.app.settings.getBool('allowInsecure'),
+              enableCertificatePinning:
+                  settingsProvider.enableCertificatePinning,
+            );
+          }),
         );
-        final headers = await source.getRequestHeaders(
-          app.app.additionalSettings,
-          resolvedUrl,
-          forAPKDownload: true,
-        );
-        final size = await getDownloadSize(
-          resolvedUrl,
-          headers: headers,
-          allowInsecure: app.app.settings.getBool('allowInsecure'),
-          enableCertificatePinning: settingsProvider.enableCertificatePinning,
-        );
-        if (mounted && _sizeProbeKey == key && size != null) {
-          setState(() => _probedDownloadSize = size);
+        final knownSizes = sizes.whereType<int>();
+        if (mounted && _sizeProbeKey == key && knownSizes.isNotEmpty) {
+          setState(
+            () => _probedDownloadSize = knownSizes.reduce((a, b) => a + b),
+          );
         }
       } catch (e) {
         // Best-effort only: leave the size unknown when it can't be resolved.
-        AppLogger.info('Size probe failed for $url: $e');
+        AppLogger.info('Size probe failed for $urls: $e');
       }
     }();
   }
