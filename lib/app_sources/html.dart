@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 
 import 'package:easy_localization/easy_localization.dart';
+import 'package:html/dom.dart';
 import 'package:html/parser.dart';
 import 'package:http/http.dart';
 import 'package:obtainium/components/generated_form_model.dart';
@@ -40,6 +41,13 @@ List<MapEntry<String, String>> getLinksInLines(String lines) =>
               MapEntry(match.group(0)!, match.group(0)?.split('/').last ?? ''),
         )
         .toList();
+
+List<MapEntry<String, String>> getLinksInHtmlAttributes(Document html) => html
+    .querySelectorAll('*')
+    .expand((element) => element.attributes.values)
+    .where((value) => RegExp(r'^https?://').hasMatch(value))
+    .map((value) => MapEntry<String, String>(value, value.split('/').last))
+    .toList();
 
 /// Given an HTTP response, grab some links according to the common additional settings
 /// (those that apply to intermediate and final steps)
@@ -99,6 +107,12 @@ Future<List<MapEntry<String, String>>> grabLinksCommon(
         allLinks = getLinksInLines(rawBody);
       }
     }
+  }
+  if (matchLinksOutsideATags) {
+    allLinks = {
+      for (final link in [...allLinks, ...getLinksInHtmlAttributes(html)])
+        link.key: link,
+    }.values.toList();
   }
   List<MapEntry<String, String>> links = [];
   final bool skipSort = additionalSettings['skipSort'] == true;
