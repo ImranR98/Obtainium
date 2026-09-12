@@ -16,6 +16,7 @@ import 'package:obtainium/providers/apps_provider.dart';
 import 'package:obtainium/providers/notifications_provider.dart';
 import 'package:obtainium/providers/settings_provider.dart';
 import 'package:obtainium/providers/source_provider.dart';
+import 'package:obtainium/utils/version_normalization.dart';
 import 'package:path_provider/path_provider.dart';
 
 /// App persistence (load/save/remove), icons, and version-detection helpers.
@@ -49,24 +50,52 @@ extension AppsProviderLifecycle on AppsProvider {
   }
 
   Future<Directory> getAppsDir() async {
-    if (cachedAppsDir != null) return cachedAppsDir!;
+    final cached = cachedAppsDir;
+    if (cached != null && cached.existsSync()) return cached;
+    // The cached directory can disappear at runtime (external storage
+    // remounted after a system update, storage cleanup). Drop the stale
+    // reference and re-create it instead of renaming into a missing path.
+    cachedAppsDir = null;
     final Directory appsDir = Directory(
       '${(await getAppStorageDir()).path}/app_data',
     );
-    if (!appsDir.existsSync()) {
-      try {
-        appsDir.createSync();
-      } catch (_) {
-        final fallbackDir = Directory(
-          '${(await getApplicationDocumentsDirectory()).path}/app_data',
-        );
-        if (!fallbackDir.existsSync()) {
-          fallbackDir.createSync(recursive: true);
-        }
-        return cachedAppsDir = fallbackDir;
+    try {
+      if (!appsDir.existsSync()) {
+        appsDir.createSync(recursive: true);
       }
+    } catch (_) {
+      final fallbackDir = Directory(
+        '${(await getApplicationDocumentsDirectory()).path}/app_data',
+      );
+      if (!fallbackDir.existsSync()) {
+        fallbackDir.createSync(recursive: true);
+      }
+      return cachedAppsDir = fallbackDir;
     }
     return cachedAppsDir = appsDir;
+  }
+
+  /// Writes [app]'s JSON file, re-resolving the apps directory and retrying
+  /// once if the filesystem reports a missing path. Without the retry, a
+  /// directory that vanished between the existence check and the rename makes
+  /// saves/imports fail with a user-visible PathNotFoundException. See #2860.
+  Future<void> _writeAppJson(App app) async {
+    Future<void> attempt() async {
+      final String filePath = '${(await getAppsDir()).path}/${app.id}.json';
+      // Unique temp path: two concurrent saves of the same app must not
+      // interleave writes or race each other's rename. #2089
+      final String tmpPath =
+          '$filePath.${DateTime.now().microsecondsSinceEpoch}-${_saveTempCounter++}.tmp';
+      await File(tmpPath).writeAsString(jsonEncode(app.toJson()));
+      await File(tmpPath).rename(filePath);
+    }
+
+    try {
+      await attempt();
+    } on FileSystemException {
+      cachedAppsDir = null;
+      await attempt();
+    }
   }
 
   bool isVersionDetectionPossible(AppInMemory? app) {
@@ -90,18 +119,33 @@ extension AppsProviderLifecycle on AppsProvider {
                 .getStringOrNull('versionExtractionRegEx')
                 ?.isNotEmpty !=
             true);
+    // A cosmetic difference (leading "v", packaging qualifiers such as
+    // "strip"/"debug") still means the versions can be compared.
+    final String? trackedVersion = app.app.installedVersion;
+    final bool formatsReconcile =
+        realInstalledVersion != null &&
+        trackedVersion != null &&
+        (reconcileVersionDifferences(realInstalledVersion, trackedVersion) !=
+                null ||
+            versionsAreCosmeticallyEqual(
+              realInstalledVersion,
+              trackedVersion,
+            ) ||
+            versionsAreCosmeticallyEqual(
+              realInstalledVersion,
+              app.app.latestVersion,
+            ) ||
+            isPreReleaseMajorMatch(
+              app.app.latestVersion,
+              realInstalledVersion,
+            ));
     return !app.app.settings.getBool('trackOnly') &&
         !app.app.settings.getBool('releaseDateAsVersion') &&
         !isHTMLWithNoVersionDetection &&
         !source.versionDetectionDisallowed &&
         realInstalledVersion != null &&
-        app.app.installedVersion != null &&
-        (reconcileVersionDifferences(
-                  realInstalledVersion,
-                  app.app.installedVersion!,
-                ) !=
-                null ||
-            naiveStandardVersionDetection);
+        trackedVersion != null &&
+        (formatsReconcile || naiveStandardVersionDetection);
   }
 
   /// Reconciles reported vs. real installed/latest versions for [app].
@@ -128,6 +172,21 @@ extension AppsProviderLifecycle on AppsProvider {
       app = app.copyWith(installedVersion: realInstalledVersion);
       modded = true;
     }
+    // 1.5 Collapse purely cosmetic version-format differences (leading "v",
+    // packaging qualifiers like "strip"/"debug", or a rolling pre-release tag)
+    // so an app doesn't stay permanently "outdated" against its own release.
+    // Without this, version detection gets disabled and every background pass
+    // silently re-installs the same APK.
+    if (app.installedVersion != null &&
+        app.installedVersion != app.latestVersion &&
+        (versionsAreCosmeticallyEqual(
+              app.installedVersion!,
+              app.latestVersion,
+            ) ||
+            isPreReleaseMajorMatch(app.latestVersion, app.installedVersion!))) {
+      app = app.copyWith(installedVersion: app.latestVersion);
+      modded = true;
+    }
     // 2. Reconcile differences between reported and real installed versions.
     if (realInstalledVersion != null &&
         app.installedVersion != null &&
@@ -144,7 +203,11 @@ extension AppsProviderLifecycle on AppsProvider {
           installedVersion: correctedInstalledVersion!.version,
         );
         modded = true;
-      } else if (naiveStandardVersionDetection) {
+      } else if (naiveStandardVersionDetection &&
+          !versionsAreCosmeticallyEqual(
+            realInstalledVersion,
+            app.installedVersion!,
+          )) {
         app = app.copyWith(installedVersion: realInstalledVersion);
         modded = true;
       }
@@ -424,13 +487,7 @@ extension AppsProviderLifecycle on AppsProvider {
           app = getCorrectedInstallStatusAppIfPossible(app, info) ?? app;
         }
         if (!onlyIfExists || this.apps.containsKey(app.id)) {
-          final String filePath = '${(await getAppsDir()).path}/${app.id}.json';
-          // Unique temp path: two concurrent saves of the same app must not
-          // interleave writes or race each other's rename. #2089
-          final String tmpPath =
-              '$filePath.${DateTime.now().microsecondsSinceEpoch}-${_saveTempCounter++}.tmp';
-          await File(tmpPath).writeAsString(jsonEncode(app.toJson()));
-          await File(tmpPath).rename(filePath);
+          await _writeAppJson(app);
         }
         if (this.apps.containsKey(app.id)) {
           this.apps[app.id] = this.apps[app.id]!.copyWith(

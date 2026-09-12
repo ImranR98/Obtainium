@@ -10,6 +10,22 @@ import 'package:obtainium/components/generated_form_model.dart';
 import 'package:easy_localization/easy_localization.dart';
 
 class GitLab extends AppSource {
+  /// Whether a GitLab release-asset link is an installable Android package.
+  ///
+  /// GitLab package links do not always carry a file extension: for example
+  /// Forkyz publishes its APK at `.../-/releases/v86/downloads/apk` under the
+  /// name "Android APK Install File". Extension-only checks miss those, so
+  /// package links whose name or URL mentions APK as a token are accepted too.
+  static bool isApkAsset(String name, String url, String? linkType) {
+    if (AppSource.isApkOrContainerFile(name) ||
+        AppSource.isApkOrContainerFile(url)) {
+      return true;
+    }
+    if (linkType != 'package') return false;
+    final apkToken = RegExp(r'(^|[^a-z])apk([^a-z]|$)', caseSensitive: false);
+    return apkToken.hasMatch(name) || apkToken.hasMatch(url);
+  }
+
   // Reused for getAppNames, API URL building, search, and getRequestHeaders
   // so a single GitHub instance handles all delegated behaviour.
   final GitHub _gh = GitHub(hostChanged: true);
@@ -175,6 +191,13 @@ class GitLab extends AppSource {
       apkDetailsList = json.map((e) {
         final apkUrlsFromAssets =
             (e['assets']?['links'] as List<dynamic>? ?? [])
+                .where(
+                  (e) => isApkAsset(
+                    e['name'] as String? ?? '',
+                    (e['direct_asset_url'] ?? e['url'] ?? '') as String,
+                    e['link_type'] as String?,
+                  ),
+                )
                 .map((e) {
                   final url =
                       (e['direct_asset_url'] ?? e['url'] ?? '') as String;
@@ -189,12 +212,7 @@ class GitLab extends AppSource {
                     (e['direct_asset_url'] ?? e['url'] ?? '') as String,
                   );
                 })
-                .where(
-                  (s) =>
-                      s.key.isNotEmpty &&
-                      (AppSource.isApkOrContainerFile(s.key) ||
-                          AppSource.isApkOrContainerFile(s.value)),
-                )
+                .where((s) => s.key.isNotEmpty)
                 .toList();
         final uploadedAPKsFromDescription = ((e['description'] ?? '') as String)
             .split('](')
