@@ -333,6 +333,7 @@
     "releaseDateAsVersion": "Use release date as version string",
     "releaseDateAsVersionExplanation": "This option should only be used for apps where version detection does not work correctly, but a release date is available.",
     "releaseTitleAsVersion": "Use release title as version string",
+    "releaseTooYoungForMinAge": "The latest release is younger than the minimum update age ({} days) and this source does not provide older releases.",
     "remove": "Remove",
     "removeAppQuestion": {
         "one": "Remove app?",

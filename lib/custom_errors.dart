@@ -133,6 +133,19 @@ class NoAPKError extends ObtainiumError {
   NoAPKError() : super.withCode('NO_APK');
 }
 
+/// The latest release is younger than the configured minimum update age and
+/// the source cannot provide an older release (#3303).
+class MinUpdateAgeError extends ObtainiumError {
+  MinUpdateAgeError(DateTime releaseDate, int minAgeDays)
+    : super.withCode(
+        'MIN_UPDATE_AGE',
+        data: {
+          'releaseDate': releaseDate.toIso8601String(),
+          'minAgeDays': minAgeDays,
+        },
+      );
+}
+
 /// RuStore lists some apps only as aggregated cards pulled from an external
 /// source and does not host an APK for them (see #3298).
 class RuStoreAggregatedAppError extends ObtainiumError {
@@ -281,6 +294,10 @@ String localizeErrorCode(String code, Map<String, dynamic>? data) {
       args: [data?['sourceName'] ?? ''],
     ),
     'NO_APK' => tr('noAPKFound'),
+    'MIN_UPDATE_AGE' => tr(
+      'releaseTooYoungForMinAge',
+      args: ['${data?['minAgeDays'] ?? ''}'],
+    ),
     'RUSTORE_AGGREGATED_APP' => tr('rustoreAggregatedAppNoApk'),
     'NO_VERSION' => tr('noVersionFound'),
     'UNSUPPORTED_URL' => tr('urlMatchesNoSource'),

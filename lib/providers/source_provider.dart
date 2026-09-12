@@ -49,6 +49,7 @@ import 'package:obtainium/models/app.dart';
 import 'package:obtainium/providers/settings_provider.dart';
 import 'package:obtainium/services/apk_filter_service.dart';
 import 'package:obtainium/services/version_service.dart';
+import 'package:obtainium/utils/min_update_age.dart';
 import 'package:obtainium/utils/url_utils.dart';
 
 export 'package:obtainium/app_sources/app_source.dart';
@@ -234,6 +235,17 @@ class SourceProvider {
       apk = await source.getLatestAPKDetails(standardUrl, additionalSettings);
     } on ObtainiumError catch (e) {
       throw e..withUrlContext(standardUrl);
+    }
+
+    // Adding an app must honor the minimum update age too. Sources that can
+    // look back already return an older eligible release, so this only blocks
+    // sources whose latest release is too young and has no older alternative.
+    if (currentApp == null && !trackOnly) {
+      final minAgeDays = await effectiveMinUpdateAgeDays(additionalSettings);
+      if (isReleaseTooYoung(apk.releaseDate, minAgeDays)) {
+        throw MinUpdateAgeError(apk.releaseDate!, minAgeDays)
+          ..url = standardUrl;
+      }
     }
 
     if (!source.suppressStandardVersionExtraction) {
