@@ -227,16 +227,22 @@ class _SettingsPageState extends State<SettingsPage> {
     child: field,
   );
 
+  void _openExternalUrl(BuildContext context, String url) {
+    unawaited(
+      launchUrlString(url, mode: LaunchMode.externalApplication).catchError((
+        Object e,
+      ) {
+        if (context.mounted) showError(e, context);
+        return false;
+      }),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final SettingsProvider settingsProvider = context.watch<SettingsProvider>();
     final sourceProvider = context.read<SourceProvider>();
     final sdk = androidSdkInt ?? 0;
-
-    final colorPicker = _ThemeColorPickerTile(
-      showColorPickerDialog: showColorPickerDialog,
-      handleColorPickerCancel: handleColorPickerCancel,
-    );
 
     final sortDropdown = DropdownMenu<SortColumnSettings>(
       expandedInsets: EdgeInsets.zero,
@@ -398,7 +404,6 @@ class _SettingsPageState extends State<SettingsPage> {
                               title: tr('appearance'),
                               childBuilder: (ctx) => _buildAppearanceSection(
                                 ctx,
-                                colorPicker,
                                 sortDropdown,
                                 orderControl,
                               ),
@@ -418,9 +423,9 @@ class _SettingsPageState extends State<SettingsPage> {
                                 ).colorScheme.onSurfaceVariant,
                                 size: 20,
                               ),
-                              onTap: () => launchUrlString(
+                              onTap: () => _openExternalUrl(
+                                context,
                                 context.read<SettingsProvider>().sourceUrl,
-                                mode: LaunchMode.externalApplication,
                               ),
                               shape: RoundedSuperellipseBorder(
                                 borderRadius: BorderRadius.circular(12),
@@ -441,9 +446,9 @@ class _SettingsPageState extends State<SettingsPage> {
                                 ).colorScheme.onSurfaceVariant,
                                 size: 20,
                               ),
-                              onTap: () => launchUrlString(
+                              onTap: () => _openExternalUrl(
+                                context,
                                 'https://wiki.obtainium.imranr.dev/',
-                                mode: LaunchMode.externalApplication,
                               ),
                               shape: RoundedSuperellipseBorder(
                                 borderRadius: BorderRadius.circular(12),
@@ -766,7 +771,6 @@ class _SettingsPageState extends State<SettingsPage> {
 
   Widget _buildAppearanceSection(
     BuildContext context,
-    Widget colorPicker,
     Widget sortDropdown,
     Widget orderControl,
   ) {
@@ -1492,56 +1496,6 @@ class _ExternalInstallerTileState extends State<_ExternalInstallerTile> {
           onTap: () => _choose(targets, settingsProvider),
         );
       },
-    );
-  }
-}
-
-class _ThemeColorPickerTile extends StatelessWidget {
-  final Future<bool> Function(SettingsProvider, ColorSwatch<Object>)
-  showColorPickerDialog;
-  final void Function(Color, SettingsProvider) handleColorPickerCancel;
-
-  const _ThemeColorPickerTile({
-    required this.showColorPickerDialog,
-    required this.handleColorPickerCancel,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final settingsProvider = context.read<SettingsProvider>();
-    final themeColor = context.select<SettingsProvider, Color>(
-      (p) => p.themeColor,
-    );
-    return CardTile(
-      child: ListTile(
-        contentPadding: EdgeInsets.zero,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(connectedTileBigRadius),
-        ),
-        title: Text(
-          tr('selectX', args: [lowerCaseUnlessLang(tr('colour'), 'de')]),
-        ),
-        subtitle: Text(
-          '${ColorTools.nameThatColor(themeColor)} '
-          '(${ColorTools.materialNameAndCode(themeColor)})',
-        ),
-        trailing: ColorIndicator(
-          width: 40,
-          height: 40,
-          borderRadius: 20,
-          color: themeColor,
-          onSelectFocus: false,
-          onSelect: () async {
-            final Color colorBeforeDialog = themeColor;
-            if (!(await showColorPickerDialog(
-              settingsProvider,
-              obtainiumThemeColor.toSwatch(),
-            ))) {
-              handleColorPickerCancel(colorBeforeDialog, settingsProvider);
-            }
-          },
-        ),
-      ),
     );
   }
 }
