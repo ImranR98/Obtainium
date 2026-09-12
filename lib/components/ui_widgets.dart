@@ -190,11 +190,14 @@ class EmptyState extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(
-              icon,
-              size: 56,
-              color: colorScheme.onSurfaceVariant,
-              semanticLabel: message,
+            ExcludeSemantics(
+              child: Icon(
+                icon,
+                size: 56,
+                color: colorScheme.onSurfaceVariant,
+                // The message is rendered below (announced once by the Text).
+                semanticLabel: message,
+              ),
             ),
             if (message != null) ...[
               const SizedBox(height: 16),
@@ -341,7 +344,9 @@ class CustomAppBar extends StatelessWidget {
   Widget build(BuildContext context) {
     return SliverAppBar(
       pinned: true,
-      automaticallyImplyLeading: false,
+      // Root pages have nothing to pop so no leading is shown; pushed pages
+      // (Settings, Add app) get the standard back button.
+      automaticallyImplyLeading: true,
       title: Text(title),
       actions: actions,
     );
@@ -349,14 +354,15 @@ class CustomAppBar extends StatelessWidget {
 }
 
 class _TileClipper extends CustomClipper<Path> {
-  final ShapeBorder shape;
+  final RoundedSuperellipseBorder shape;
   const _TileClipper(this.shape);
 
   @override
   Path getClip(Size size) => shape.getOuterPath(Offset.zero & size);
 
   @override
-  bool shouldReclip(_TileClipper oldClipper) => oldClipper.shape != shape;
+  bool shouldReclip(_TileClipper oldClipper) =>
+      oldClipper.shape.borderRadius != shape.borderRadius;
 }
 
 Future<void> showHelpDialog(
@@ -409,13 +415,19 @@ Widget _wrapChildWithRadius(Widget w, BorderRadius radius) {
     final r = radius;
     final isFirst = r.topLeft.x == connectedTileBigRadius;
     final isLast = r.bottomLeft.x == connectedTileBigRadius;
-    return ConnectedCard(isFirst: isFirst, isLast: isLast, child: w);
+    return ConnectedCard(
+      key: w.key,
+      isFirst: isFirst,
+      isLast: isLast,
+      child: w,
+    );
   }
   if (w is ConnectedCard) {
     final r = radius;
     final isFirst = r.topLeft.x == connectedTileBigRadius;
     final isLast = r.bottomLeft.x == connectedTileBigRadius;
     return ConnectedCard(
+      key: w.key,
       isFirst: isFirst,
       isLast: isLast,
       color: w.color,
