@@ -414,6 +414,8 @@
     "uninstallFromDevice": "Uninstall from device",
     "unknown": "Unknown",
     "unpinFromTop": "Unpin from top",
+    "uptodownDownloadError": "Uptodown could not resolve the download",
+    "uptodownInvalidAuthResponse": "Invalid Uptodown authentication response",
     "upToDateApps": "Up to date apps",
     "update": "Update",
     "updateAvailable": "Update available",
