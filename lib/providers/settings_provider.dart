@@ -868,6 +868,18 @@ class SettingsProvider with ChangeNotifier {
     notifyListeners();
   }
 
+  /// Warn (and require confirmation) when a downloaded APK's signing
+  /// certificate differs from the installed app's certificate. User-provided
+  /// expected hashes are enforced regardless of this setting.
+  bool get verifySigningCertHashes {
+    return _getBool('verifySigningCertHashes') ?? true;
+  }
+
+  set verifySigningCertHashes(bool val) {
+    prefs?.setBool('verifySigningCertHashes', val);
+    notifyListeners();
+  }
+
   bool get shizukuPretendToBeGooglePlay {
     return _getBool('shizukuPretendToBeGooglePlay') ?? false;
   }

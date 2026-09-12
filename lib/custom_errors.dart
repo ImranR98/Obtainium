@@ -169,6 +169,23 @@ class InstallError extends ObtainiumError {
       );
 }
 
+/// The downloaded APK's signing certificate does not match the expected hash
+/// (user-provided) or the installed app's certificate.
+class SigningCertMismatchError extends ObtainiumError {
+  SigningCertMismatchError({
+    required bool hardBlock,
+    required Set<String> expected,
+    required Set<String> actual,
+  }) : super.withCode(
+         'SIGNING_CERT_MISMATCH',
+         data: {
+           'hardBlock': hardBlock,
+           'expected': expected.toList(),
+           'actual': actual.toList(),
+         },
+       );
+}
+
 class IDChangedError extends ObtainiumError {
   IDChangedError(String newId)
     : super.withCode('ID_CHANGED', data: {'newId': newId});
@@ -270,6 +287,10 @@ String localizeErrorCode(String code, Map<String, dynamic>? data) {
     'DOWNGRADE' =>
       '${tr('cantInstallOlderVersion')} (versionCode ${data?['currentVersionCode'] ?? '?'} → ${data?['newVersionCode'] ?? '?'})',
     'INSTALL_FAILED' => data?['message']?.toString() ?? tr('installFailed'),
+    'SIGNING_CERT_MISMATCH' =>
+      data?['hardBlock'] == true
+          ? tr('signingCertMismatchHardBlock')
+          : tr('signingCertMismatchMessage'),
     'ID_CHANGED' => '${tr('appIdMismatch')} - ${data?['newId'] ?? ''}',
     'REPO_RENAMED' => tr('repoRenamed'),
     'NOT_IMPLEMENTED' => tr('functionNotImplemented'),

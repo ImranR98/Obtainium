@@ -25,6 +25,7 @@ AAPT2="$BUILD_TOOLS/aapt2"
 ALIGN="$BUILD_TOOLS/zipalign"
 APKSIGNER="$BUILD_TOOLS/apksigner"
 KEYSTORE="$HOME/.android/debug.keystore"
+BAD_KEYSTORE="$HOME/.android/obtainium-e2e-bad.keystore"
 OUT_DIR="${1:-$REPO_DIR/build/e2e_assets}"
 
 if [ ! -f "$KEYSTORE" ]; then
@@ -32,6 +33,13 @@ if [ ! -f "$KEYSTORE" ]; then
   keytool -genkeypair -v -keystore "$KEYSTORE" -storepass android \
     -alias androiddebugkey -keypass android -keyalg RSA -keysize 2048 \
     -validity 10000 -dname "CN=Android Debug,O=Android,C=US"
+fi
+
+if [ ! -f "$BAD_KEYSTORE" ]; then
+  echo "Creating a mismatched e2e keystore at $BAD_KEYSTORE"
+  keytool -genkeypair -v -keystore "$BAD_KEYSTORE" -storepass android \
+    -alias bade2ekey -keypass android -keyalg RSA -keysize 2048 \
+    -validity 10000 -dname "CN=Obtainium E2E Wrong Key,O=Obtainium,C=US"
 fi
 
 rm -rf "$OUT_DIR"
@@ -67,6 +75,27 @@ EOF
       --out "$OUT_DIR/$prefix-v$v.apk" "$work/aligned-$prefix-$v.apk"
   done
 done
+
+# Signature-verification fixture (#2922): the same package/version as
+# testapp-v2.apk but signed with a different key, so updating an installed
+# debug-signed package is rejected.
+cat > "$work/AndroidManifest-testapp-badkey-v2.xml" <<EOF
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="com.obtainium.e2etest"
+    android:versionCode="2"
+    android:versionName="2">
+    <uses-sdk android:minSdkVersion="26" android:targetSdkVersion="36" />
+    <application android:label="E2E Test App" android:hasCode="false" />
+</manifest>
+EOF
+"$AAPT2" link -o "$work/unsigned-testapp-badkey-v2.apk" \
+  --manifest "$work/AndroidManifest-testapp-badkey-v2.xml" \
+  -I "$PLATFORM_JAR"
+"$ALIGN" -f -p 4 "$work/unsigned-testapp-badkey-v2.apk" \
+  "$work/aligned-testapp-badkey-v2.apk"
+"$APKSIGNER" sign --ks "$BAD_KEYSTORE" --ks-pass pass:android \
+  --key-pass pass:android --ks-key-alias bade2ekey \
+  --out "$OUT_DIR/testapp-badkey-v2.apk" "$work/aligned-testapp-badkey-v2.apk"
 
 # Fixtures for the HTML source's link extraction (issue #2816): the APK URL is
 # only reachable via a relative <script src>, and inside the JS it is quoted

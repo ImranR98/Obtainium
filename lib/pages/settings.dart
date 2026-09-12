@@ -733,6 +733,12 @@ class _SettingsPageState extends State<SettingsPage> {
           style: const TextStyle(fontSize: 12),
         ),
       ),
+      ToggleTile(
+        label: tr('verifySigningCertHashes'),
+        value: settingsProvider.verifySigningCertHashes,
+        onChanged: (value) => settingsProvider.verifySigningCertHashes = value,
+        helpWidgets: [Text(tr('verifySigningCertHashesHelp'))],
+      ),
       _fieldTile(
         context,
         TvDropdownMenu<String>(

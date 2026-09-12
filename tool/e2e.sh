@@ -96,8 +96,13 @@ TV_SUITES=(
   tv_controls_test.dart
   tv_layout_test.dart
 )
+INSTALL_SUITES=(
+  install_update_test.dart
+  install_as_downloaded_test.dart
+  signing_cert_test.dart
+)
 if [ "$TARGET" = "phone" ] && $WITH_INSTALL; then
-  PHONE_SUITES+=( install_update_test.dart install_as_downloaded_test.dart )
+  PHONE_SUITES+=("${INSTALL_SUITES[@]}")
 fi
 
 echo "Device:  $DEV ($TARGET)"
@@ -135,14 +140,14 @@ trap restore_device_state EXIT
 "$ADB" -s "$DEV" shell settings put global transition_animation_scale 0.0
 "$ADB" -s "$DEV" shell settings put global animator_duration_scale 0.0
 
-if [ "$TARGET" = "phone" ] && $WITH_INSTALL; then
-  # Start from a clean install so an interrupted previous run (which may have
-  # left a newer version behind) cannot cause a downgrade failure.
+# Resets and reinstalls the fixture packages at v1 with Obtainium as their
+# installer, so the stock installer can update them without a user prompt.
+# Called before every install suite because earlier suites leave newer
+# versions installed (and an interrupted run may leave a downgrade blocker).
+reset_install_targets() {
   for pkg in com.obtainium.e2etest com.obtainium.e2etest2; do
     "$ADB" -s "$DEV" uninstall "$pkg" >/dev/null 2>&1 || true
   done
-  # Install the targets with Obtainium as their installer so the stock
-  # installer is allowed to update them without a user prompt.
   for apk in testapp-v1.apk testapp2-v1.apk; do
     if ! "$ADB" -s "$DEV" install -r -i dev.imranr.obtainium.debug \
       "$REPO_DIR/build/e2e_assets/$apk" >/dev/null; then
@@ -150,11 +155,19 @@ if [ "$TARGET" = "phone" ] && $WITH_INSTALL; then
       exit 1
     fi
   done
+}
+
+if [ "$TARGET" = "phone" ] && $WITH_INSTALL; then
+  reset_install_targets
 fi
 
 run_suite() {
   local suite="$1"
   echo "=== $suite ==="
+  if [ "$TARGET" = "phone" ] && $WITH_INSTALL && \
+    [[ " ${INSTALL_SUITES[*]} " == *" $suite "* ]]; then
+    reset_install_targets
+  fi
   # Bound each suite so a hung test cannot block the run indefinitely.
   timeout 600 "$FLUTTER" test "integration_test/$suite" \
     -d "$DEV" --flavor normal --no-uninstall \

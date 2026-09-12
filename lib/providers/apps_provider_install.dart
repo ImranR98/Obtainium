@@ -24,6 +24,7 @@ import 'package:obtainium/core/logging/app_logger.dart';
 import 'package:obtainium/providers/notifications_provider.dart';
 import 'package:obtainium/providers/settings_provider.dart';
 import 'package:obtainium/providers/source_provider.dart';
+import 'package:obtainium/utils/signing_cert_utils.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:provider/provider.dart';
 import 'package:share_plus/share_plus.dart';
@@ -1211,6 +1212,96 @@ extension AppsProviderInstall on AppsProvider {
     return apks;
   }
 
+  /// Applies the per-app expected signing certificate hashes and, unless
+  /// disabled, the installed app's certificate to [apkHashes]. Throws
+  /// [SigningCertMismatchError] when the install must not proceed.
+  ///
+  /// A user-provided hash list is a hard block (no override); a mismatch
+  /// against the installed app warns in the foreground (with an install-anyway
+  /// option) and is treated as blocked when there is no context (background).
+  Future<void> _verifyDownloadedApkSignatures(
+    AppInMemory appEntry,
+    Set<String> apkHashes,
+    BuildContext? context,
+  ) async {
+    final userHashes = parseAllowedSigningCertHashes(
+      appEntry.app.settings.getStringOrNull('allowedSigningCertHashes'),
+    );
+    final installedHashes = appEntry.certificateHashes.toSet();
+    final name = appEntry.name;
+
+    Future<void> showMismatch({
+      required Set<String> expected,
+      required bool hardBlock,
+    }) async {
+      if (context == null || !context.mounted) return;
+      await showDialog<void>(
+        context: context,
+        builder: (_) => SigningCertMismatchDialog(
+          appName: name,
+          expectedHashes: expected.toList(),
+          actualHashes: apkHashes.toList(),
+          hardBlock: hardBlock,
+        ),
+      );
+    }
+
+    // Signing info unavailable (pre-API 28 or unreadable archive). A
+    // user-provided hash cannot be checked, so refuse to install unverified.
+    if (apkHashes.isEmpty) {
+      if (userHashes.isNotEmpty) {
+        AppLogger.warn(
+          'Signing certificate unreadable for ${appEntry.app.id}; '
+          'blocking because expected hashes are configured',
+        );
+        await showMismatch(expected: userHashes, hardBlock: true);
+        throw SigningCertMismatchError(
+          hardBlock: true,
+          expected: userHashes,
+          actual: apkHashes,
+        );
+      }
+      return;
+    }
+
+    if (userHashes.isNotEmpty && !apkHashes.every(userHashes.contains)) {
+      await showMismatch(expected: userHashes, hardBlock: true);
+      throw SigningCertMismatchError(
+        hardBlock: true,
+        expected: userHashes,
+        actual: apkHashes,
+      );
+    }
+
+    if (!settingsProvider.verifySigningCertHashes ||
+        installedHashes.isEmpty ||
+        apkHashes.every(installedHashes.contains)) {
+      return;
+    }
+
+    var proceed = false;
+    if (context != null && context.mounted) {
+      proceed =
+          await showDialog<bool>(
+            context: context,
+            builder: (_) => SigningCertMismatchDialog(
+              appName: name,
+              expectedHashes: installedHashes.toList(),
+              actualHashes: apkHashes.toList(),
+              hardBlock: false,
+            ),
+          ) ==
+          true;
+    }
+    if (!proceed) {
+      throw SigningCertMismatchError(
+        hardBlock: false,
+        expected: installedHashes,
+        actual: apkHashes,
+      );
+    }
+  }
+
   Future<void> _installDownloadedApp(
     String id,
     bool willBeSilent,
@@ -1225,6 +1316,41 @@ extension AppsProviderInstall on AppsProvider {
     if (appEntry == null) return;
     // Nothing to install (e.g. the download was cancelled): skip silently.
     if (downloadedFile == null && downloadedDir == null) return;
+    // Verify the signing certificate(s) before any install attempt so a
+    // mismatched or unverifiable APK never reaches the installer (#2922).
+    final apkHashes = downloadedFile != null
+        ? await apkSigningCertHashes(downloadedFile.file.path)
+        : await apkFilesSigningCertHashes(
+            downloadedDir!.extracted
+                .listSync(recursive: true, followLinks: false)
+                .whereType<File>()
+                .where((f) => f.path.toLowerCase().endsWith('.apk'))
+                .map((f) => f.path),
+          );
+    try {
+      final verificationContext = context != null && context.mounted
+          ? context
+          : null;
+      await _verifyDownloadedApkSignatures(
+        appEntry,
+        apkHashes,
+        // ignore: use_build_context_synchronously
+        verificationContext,
+      );
+    } on SigningCertMismatchError {
+      // A blocked APK is useless; remove it so it isn't retried or reused.
+      try {
+        if (downloadedFile != null) {
+          downloadedFile.file.deleteSync();
+        } else {
+          downloadedDir!.extracted.deleteSync(recursive: true);
+          downloadedDir.file.deleteSync();
+        }
+      } catch (e) {
+        AppLogger.warn('Failed to delete blocked APK for $id: ${e.toString()}');
+      }
+      rethrow;
+    }
     // Installation has actually begun: use -1 (installing) so the UI shows an
     // indeterminate "Installing" indicator rather than a frozen percentage.
     appEntry.downloadProgress = _installingProgressSentinel;
@@ -1283,9 +1409,14 @@ extension AppsProviderInstall on AppsProvider {
             );
           }
         } else {
+          final installContext =
+              contextIfNewInstall != null && contextIfNewInstall.mounted
+              ? contextIfNewInstall
+              : null;
           sayInstalled = await installApk(
             downloadedFile,
-            contextIfNewInstall,
+            // ignore: use_build_context_synchronously
+            installContext,
             installOptions: {
               'shizukuPretendToBeGooglePlay': shizukuPretendToBeGooglePlay,
             },
@@ -1326,9 +1457,14 @@ extension AppsProviderInstall on AppsProvider {
             );
           }
         } else {
+          final installContext =
+              contextIfNewInstall != null && contextIfNewInstall.mounted
+              ? contextIfNewInstall
+              : null;
           sayInstalled = await installApkDir(
             downloadedDir!,
-            contextIfNewInstall,
+            // ignore: use_build_context_synchronously
+            installContext,
             installOptions: {
               'shizukuPretendToBeGooglePlay': shizukuPretendToBeGooglePlay,
             },

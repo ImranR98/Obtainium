@@ -29,6 +29,7 @@ import 'package:obtainium/providers/apps_provider_install.dart';
 import 'package:obtainium/providers/apps_provider_lifecycle.dart';
 import 'package:obtainium/providers/apps_provider_updates.dart';
 
+import 'package:obtainium/utils/signing_cert_utils.dart';
 import 'package:obtainium/utils/translation_loader.dart';
 
 export 'apps_provider_import_export.dart';
@@ -128,20 +129,8 @@ class AppInMemory {
     return installedInfo?.signingInfo?.hasMultipleSigners ?? false;
   }
 
-  List<String> get certificateHashes {
-    // https://developer.android.com/reference/android/content/pm/SigningInfo#getApkContentsSigners()
-    final signatures = hasMultipleSigners
-        ? installedInfo?.signingInfo?.apkContentSigners
-        : installedInfo?.signingInfo?.signingCertificateHistory;
-
-    return signatures?.map((signature) {
-          final digest = sha256.convert(signature);
-          return digest.bytes
-              .map((b) => b.toRadixString(16).padLeft(2, '0').toUpperCase())
-              .join(':');
-        }).toList() ??
-        [];
-  }
+  List<String> get certificateHashes =>
+      certHashesFromSigningInfo(installedInfo?.signingInfo).toList();
 }
 
 class DownloadedApk {

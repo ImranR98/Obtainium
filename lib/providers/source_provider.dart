@@ -48,6 +48,7 @@ import 'package:obtainium/custom_errors.dart';
 import 'package:obtainium/app_sources/githubstars.dart';
 import 'package:obtainium/core/logging/app_logger.dart';
 import 'package:obtainium/providers/settings_provider.dart';
+import 'package:obtainium/utils/signing_cert_utils.dart';
 
 part 'app_json_migration.dart';
 
@@ -707,6 +708,20 @@ abstract class AppSource {
         'allowInsecure',
         label: tr('allowInsecure'),
         value: false,
+      ),
+    ],
+    [
+      GeneratedFormTextField(
+        'allowedSigningCertHashes',
+        label: tr('allowedSigningCertHashes'),
+        hint: 'AA:BB:CC:…',
+        required: false,
+        max: 4,
+        helpUrl: 'https://developer.android.com/tools/apksigner',
+        additionalValidators: [
+          (value) =>
+              isValidCertHashList(value) ? null : tr('invalidSigningCertHash'),
+        ],
       ),
     ],
     [
