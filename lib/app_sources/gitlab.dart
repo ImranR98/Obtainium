@@ -93,9 +93,7 @@ class GitLab extends AppSource {
     final url =
         'https://${hosts[0]}/api/v4/projects?search=${Uri.encodeQueryComponent(query)}';
     final res = await sourceRequest(url, {});
-    if (res.statusCode != 200) {
-      throw getObtainiumHttpError(res);
-    }
+    ensureHttpSuccess(res);
     final json = jsonDecode(res.body) as List<dynamic>;
     final Map<String, List<String>> results = {};
     for (var element in json) {
@@ -159,9 +157,7 @@ class GitLab extends AppSource {
         'https://${hosts[0]}/api/v4/projects/$projectUriComponent?$optionalAuth',
         additionalSettings,
       );
-      if (res0.statusCode != 200) {
-        throw getObtainiumHttpError(res0);
-      }
+      ensureHttpSuccess(res0);
       final int? projectId = jsonDecode(res0.body)['id'];
       if (projectId == null) {
         throw NoReleasesError();
@@ -177,9 +173,7 @@ class GitLab extends AppSource {
         'https://${hosts[0]}/api/v4/projects/$projectUriComponent/$releasesPath?$query',
         additionalSettings,
       );
-      if (res.statusCode != 200) {
-        throw getObtainiumHttpError(res);
-      }
+      ensureHttpSuccess(res);
 
       // Extract .apk details from received data
       Iterable<APKDetails> apkDetailsList = [];

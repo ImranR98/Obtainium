@@ -726,215 +726,16 @@ class AddAppPageState extends State<AddAppPage> {
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  Row(
-                    children: [
-                      Expanded(
-                        child: GeneratedForm(
-                          key: Key('url-$urlInputKey'),
-                          tileMode: true,
-                          items: [
-                            [
-                              GeneratedFormTextField(
-                                'appSourceURL',
-                                label: tr('appSourceURL'),
-                                value: userInput,
-                                required: false,
-                                additionalValidators: [
-                                  (value) {
-                                    if (value == null || value.trim().isEmpty) {
-                                      return null;
-                                    }
-                                    try {
-                                      sourceProvider
-                                          .getSource(
-                                            value,
-                                            overrideSource:
-                                                pickedSourceOverride,
-                                          )
-                                          .standardizeUrl(value);
-                                    } catch (e) {
-                                      return e is String
-                                          ? e
-                                          : e is ObtainiumError
-                                          ? e.toString()
-                                          : tr('error');
-                                    }
-                                    return null;
-                                  },
-                                ],
-                              ),
-                            ],
-                          ],
-                          onValueChanges: (values, valid, isBuilding) {
-                            changeUserInput(
-                              values['appSourceURL']!,
-                              valid,
-                              isBuilding,
-                            );
-                          },
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      gettingAppInfo
-                          ? const Padding(
-                              padding: EdgeInsets.all(12),
-                              child: SizedBox(
-                                width: 20,
-                                height: 20,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2,
-                                ),
-                              ),
-                            )
-                          : IconButton(
-                              icon: const Icon(Icons.add_rounded),
-                              visualDensity: VisualDensity.compact,
-                              tooltip: tr('add'),
-                              onPressed:
-                                  doingSomething ||
-                                      pickedSource == null ||
-                                      !_urlValid ||
-                                      userInput.trim().isEmpty ||
-                                      (pickedSource!
-                                              .combinedAppSpecificSettingFormItems
-                                              .isNotEmpty &&
-                                          !additionalSettingsValid)
-                                  ? null
-                                  : () {
-                                      settingsProvider.selectionClick();
-                                      addApp(context);
-                                    },
-                            ),
-                    ],
-                  ),
+                  _buildUrlRow(context, settingsProvider, doingSomething),
                   if (pickedSource != null) ...[
                     const SizedBox(height: 13),
-                    GeneratedForm(
-                      tileMode: true,
-                      items: [
-                        [
-                          GeneratedFormDropdown(
-                            'overrideSource',
-                            value: pickedSourceOverride ?? '',
-                            [
-                              MapEntry('', tr('none')),
-                              ...sourceProvider.sources
-                                  .where(
-                                    (s) =>
-                                        s.allowOverride ||
-                                        (pickedSource!.sourceIdentifier ==
-                                            s.sourceIdentifier),
-                                  )
-                                  .map(
-                                    (s) => MapEntry(s.sourceIdentifier, s.name),
-                                  ),
-                            ],
-                            label: tr('overrideSource'),
-                          ),
-                        ],
-                      ],
-                      onValueChanges: (values, valid, isBuilding) {
-                        final newOverride =
-                            (values['overrideSource'] == null ||
-                                values['overrideSource'] == '')
-                            ? null
-                            : values['overrideSource'] as String?;
-                        setSourceOverride(newOverride);
-                      },
-                    ),
+                    _buildSourceOverrideField(context),
                   ],
                   if (shouldShowSearchBar) ...[
                     const SizedBox(height: 13),
-                    Row(
-                      children: [
-                        Expanded(
-                          child: GeneratedForm(
-                            tileMode: true,
-                            items: [
-                              [
-                                GeneratedFormTextField(
-                                  'searchSomeSources',
-                                  label: tr('searchSomeSourcesLabel'),
-                                  required: false,
-                                ),
-                              ],
-                            ],
-                            onValueChanges: (values, valid, isBuilding) {
-                              if (values.isNotEmpty && valid && !isBuilding) {
-                                setState(() {
-                                  searchQuery = values['searchSomeSources']!
-                                      .trim();
-                                });
-                              }
-                            },
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        searching
-                            ? const Padding(
-                                padding: EdgeInsets.all(12),
-                                child: SizedBox(
-                                  width: 20,
-                                  height: 20,
-                                  child: CircularProgressIndicator(
-                                    strokeWidth: 2,
-                                  ),
-                                ),
-                              )
-                            : IconButton(
-                                icon: const Icon(Icons.search_rounded),
-                                visualDensity: VisualDensity.compact,
-                                tooltip: tr('search'),
-                                onPressed: doingSomething
-                                    ? null
-                                    : () => runSearch(context),
-                              ),
-                      ],
-                    ),
+                    _buildSearchRow(doingSomething),
                   ],
-                  if (pickedSource != null)
-                    FutureBuilder(
-                      future: _sourceNoteFuture,
-                      builder: (ctx, val) {
-                        if (val.data != null && val.data!.isNotEmpty) {
-                          return Padding(
-                            padding: const EdgeInsets.fromLTRB(0, 16, 0, 0),
-                            child: ConnectedCard(
-                              isFirst: true,
-                              isLast: true,
-                              padding: const EdgeInsets.all(16),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    pickedSource!.name,
-                                    style: Theme.of(context)
-                                        .textTheme
-                                        .titleMedium
-                                        ?.copyWith(
-                                          color: Theme.of(
-                                            context,
-                                          ).colorScheme.primary,
-                                          fontWeight: FontWeight.bold,
-                                        ),
-                                  ),
-                                  Padding(
-                                    padding: const EdgeInsets.only(top: 4),
-                                    child: Text(
-                                      val.data!,
-                                      style: Theme.of(
-                                        context,
-                                      ).textTheme.bodySmall,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          );
-                        }
-                        return const SizedBox.shrink();
-                      },
-                    ),
+                  if (pickedSource != null) _buildSourceNoteCard(context),
                   if (pickedSource != null)
                     _getAdditionalOptsCol(context, settingsProvider),
                 ],
@@ -942,6 +743,198 @@ class AddAppPageState extends State<AddAppPage> {
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildUrlRow(
+    BuildContext context,
+    SettingsProvider settingsProvider,
+    bool doingSomething,
+  ) {
+    return Row(
+      children: [
+        Expanded(
+          child: GeneratedForm(
+            key: Key('url-$urlInputKey'),
+            tileMode: true,
+            items: [
+              [
+                GeneratedFormTextField(
+                  'appSourceURL',
+                  label: tr('appSourceURL'),
+                  value: userInput,
+                  required: false,
+                  additionalValidators: [
+                    (value) {
+                      if (value == null || value.trim().isEmpty) {
+                        return null;
+                      }
+                      try {
+                        sourceProvider
+                            .getSource(
+                              value,
+                              overrideSource: pickedSourceOverride,
+                            )
+                            .standardizeUrl(value);
+                      } catch (e) {
+                        return e is String
+                            ? e
+                            : e is ObtainiumError
+                            ? e.toString()
+                            : tr('error');
+                      }
+                      return null;
+                    },
+                  ],
+                ),
+              ],
+            ],
+            onValueChanges: (values, valid, isBuilding) {
+              changeUserInput(values['appSourceURL']!, valid, isBuilding);
+            },
+          ),
+        ),
+        const SizedBox(width: 8),
+        gettingAppInfo
+            ? _smallSpinner()
+            : IconButton(
+                icon: const Icon(Icons.add_rounded),
+                visualDensity: VisualDensity.compact,
+                tooltip: tr('add'),
+                onPressed:
+                    doingSomething ||
+                        pickedSource == null ||
+                        !_urlValid ||
+                        userInput.trim().isEmpty ||
+                        (pickedSource!
+                                .combinedAppSpecificSettingFormItems
+                                .isNotEmpty &&
+                            !additionalSettingsValid)
+                    ? null
+                    : () {
+                        settingsProvider.selectionClick();
+                        addApp(context);
+                      },
+              ),
+      ],
+    );
+  }
+
+  Widget _buildSourceOverrideField(BuildContext context) {
+    return GeneratedForm(
+      tileMode: true,
+      items: [
+        [
+          GeneratedFormDropdown(
+            'overrideSource',
+            value: pickedSourceOverride ?? '',
+            [
+              MapEntry('', tr('none')),
+              ...sourceProvider.sources
+                  .where(
+                    (s) =>
+                        s.allowOverride ||
+                        (pickedSource!.sourceIdentifier == s.sourceIdentifier),
+                  )
+                  .map((s) => MapEntry(s.sourceIdentifier, s.name)),
+            ],
+            label: tr('overrideSource'),
+          ),
+        ],
+      ],
+      onValueChanges: (values, valid, isBuilding) {
+        final newOverride =
+            (values['overrideSource'] == null || values['overrideSource'] == '')
+            ? null
+            : values['overrideSource'] as String?;
+        setSourceOverride(newOverride);
+      },
+    );
+  }
+
+  Widget _buildSearchRow(bool doingSomething) {
+    return Row(
+      children: [
+        Expanded(
+          child: GeneratedForm(
+            tileMode: true,
+            items: [
+              [
+                GeneratedFormTextField(
+                  'searchSomeSources',
+                  label: tr('searchSomeSourcesLabel'),
+                  required: false,
+                ),
+              ],
+            ],
+            onValueChanges: (values, valid, isBuilding) {
+              if (values.isNotEmpty && valid && !isBuilding) {
+                setState(() {
+                  searchQuery = values['searchSomeSources']!.trim();
+                });
+              }
+            },
+          ),
+        ),
+        const SizedBox(width: 8),
+        searching
+            ? _smallSpinner()
+            : IconButton(
+                icon: const Icon(Icons.search_rounded),
+                visualDensity: VisualDensity.compact,
+                tooltip: tr('search'),
+                onPressed: doingSomething ? null : () => runSearch(context),
+              ),
+      ],
+    );
+  }
+
+  Widget _buildSourceNoteCard(BuildContext context) {
+    return FutureBuilder(
+      future: _sourceNoteFuture,
+      builder: (ctx, val) {
+        if (val.data != null && val.data!.isNotEmpty) {
+          return Padding(
+            padding: const EdgeInsets.fromLTRB(0, 16, 0, 0),
+            child: ConnectedCard(
+              isFirst: true,
+              isLast: true,
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    pickedSource!.name,
+                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                      color: Theme.of(context).colorScheme.primary,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.only(top: 4),
+                    child: Text(
+                      val.data!,
+                      style: Theme.of(context).textTheme.bodySmall,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          );
+        }
+        return const SizedBox.shrink();
+      },
+    );
+  }
+
+  Widget _smallSpinner() {
+    return const Padding(
+      padding: EdgeInsets.all(12),
+      child: SizedBox(
+        width: 20,
+        height: 20,
+        child: CircularProgressIndicator(strokeWidth: 2),
       ),
     );
   }

@@ -52,9 +52,7 @@ class Farsroid extends AppSource {
       final String appName = Uri.parse(standardUrl).pathSegments.last;
 
       final res = await sourceRequest(standardUrl, additionalSettings);
-      if (res.statusCode != 200) {
-        throw getObtainiumHttpError(res);
-      }
+      ensureHttpSuccess(res);
       final html = parse(res.body);
       final dlinks = html.querySelectorAll('.download-links');
       if (dlinks.isEmpty) {
@@ -71,9 +69,7 @@ class Farsroid extends AppSource {
         'https://${hosts[0]}/api/download-box/?post_id=$postId&post_version=$version',
         additionalSettings,
       );
-      if (res2.statusCode != 200) {
-        throw getObtainiumHttpError(res2);
-      }
+      ensureHttpSuccess(res2);
       Map<String, dynamic>? farsroidJson;
       try {
         farsroidJson = jsonDecode(res2.body) as Map<String, dynamic>?;

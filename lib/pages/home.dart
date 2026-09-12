@@ -98,78 +98,78 @@ class _HomePageState extends State<HomePage> {
   Future<void> showWelcomeDialogs() async {
     final sp = settingsProvider;
     if (!sp.welcomeShown) {
-      await showDialog(
-        context: context,
-        builder: (BuildContext ctx) {
-          return AlertDialog(
-            title: Text(tr('welcome')),
-            content: Column(
-              mainAxisSize: MainAxisSize.min,
-              spacing: 20,
-              children: [
-                Text(tr('documentationLinksNote')),
-                const LinkText(
-                  text:
-                      'https://github.com/ImranR98/Obtainium/blob/main/README.md',
-                  url:
-                      'https://github.com/ImranR98/Obtainium/blob/main/README.md',
-                  style: TextStyle(fontWeight: FontWeight.bold),
-                ),
-              ],
+      await _showAcknowledgedDialog(
+        isAcknowledged: () => sp.welcomeShown,
+        markAcknowledged: () => sp.welcomeShown = true,
+        title: Text(tr('welcome')),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          spacing: 20,
+          children: [
+            Text(tr('documentationLinksNote')),
+            const LinkText(
+              text: 'https://github.com/ImranR98/Obtainium/blob/main/README.md',
+              url: 'https://github.com/ImranR98/Obtainium/blob/main/README.md',
+              style: TextStyle(fontWeight: FontWeight.bold),
             ),
-            actions: [
-              FilledButton.tonal(
-                autofocus: sp.isTV,
-                onPressed: () {
-                  Navigator.of(context).pop(null);
-                },
-                child: Text(tr('ok')),
-              ),
-            ],
-          );
-        },
+          ],
+        ),
       );
-      // Also treat a barrier/back dismissal as acknowledged, so the welcome
-      // dialog doesn't reappear on every launch.
-      if (!sp.welcomeShown) sp.welcomeShown = true;
     }
     if (!mounted) return;
     if (!sp.googleVerificationWarningShown) {
-      await showDialog(
-        context: context,
-        builder: (BuildContext ctx) {
-          return AlertDialog(
-            title: Text(tr('note')),
-            scrollable: true,
-            content: Column(
-              mainAxisSize: MainAxisSize.min,
-              spacing: 20,
-              children: [
-                Text(tr('googleVerificationWarningP1')),
-                LinkText(
-                  text: tr('googleVerificationWarningP2'),
-                  url: 'https://keepandroidopen.org/',
-                  style: const TextStyle(fontWeight: FontWeight.bold),
-                ),
-                Text(tr('googleVerificationWarningP3')),
-              ],
+      await _showAcknowledgedDialog(
+        isAcknowledged: () => sp.googleVerificationWarningShown,
+        markAcknowledged: () => sp.googleVerificationWarningShown = true,
+        title: Text(tr('note')),
+        scrollable: true,
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          spacing: 20,
+          children: [
+            Text(tr('googleVerificationWarningP1')),
+            LinkText(
+              text: tr('googleVerificationWarningP2'),
+              url: 'https://keepandroidopen.org/',
+              style: const TextStyle(fontWeight: FontWeight.bold),
             ),
-            actions: [
-              FilledButton.tonal(
-                autofocus: sp.isTV,
-                onPressed: () {
-                  Navigator.of(context).pop(null);
-                },
-                child: Text(tr('ok')),
-              ),
-            ],
-          );
-        },
+            Text(tr('googleVerificationWarningP3')),
+          ],
+        ),
       );
-      if (!sp.googleVerificationWarningShown) {
-        sp.googleVerificationWarningShown = true;
-      }
     }
+  }
+
+  /// Shows a single-OK dialog and marks it as acknowledged even when it is
+  /// dismissed via the barrier or back button, so it doesn't reappear on every
+  /// launch.
+  Future<void> _showAcknowledgedDialog({
+    required bool Function() isAcknowledged,
+    required VoidCallback markAcknowledged,
+    required Widget title,
+    required Widget content,
+    bool scrollable = false,
+  }) async {
+    await showDialog(
+      context: context,
+      builder: (BuildContext ctx) {
+        return AlertDialog(
+          title: title,
+          scrollable: scrollable,
+          content: content,
+          actions: [
+            FilledButton.tonal(
+              autofocus: settingsProvider.isTV,
+              onPressed: () {
+                Navigator.of(context).pop(null);
+              },
+              child: Text(tr('ok')),
+            ),
+          ],
+        );
+      },
+    );
+    if (!isAcknowledged()) markAcknowledged();
   }
 
   Future<void> initDeepLinks() async {
@@ -413,12 +413,12 @@ class _HomePageState extends State<HomePage> {
     }
 
     return PopScope(
-      canPop: true,
+      canPop: selectedAppId == null,
       onPopInvokedWithResult: (didPop, result) {
+        if (didPop) return;
         // The first BACK while editing dismisses the keyboard only.
-        if (!didPop && selectedAppId != null && !isEditingTextField()) {
-          clearSelectedApp();
-        }
+        if (isEditingTextField()) return;
+        clearSelectedApp();
       },
       child: Scaffold(
         backgroundColor: Theme.of(context).colorScheme.surface,

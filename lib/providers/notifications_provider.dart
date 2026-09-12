@@ -161,7 +161,7 @@ class TrackOnlyUpdateNotification extends ObtainiumNotification {
 class SilentUpdateNotification extends ObtainiumNotification {
   SilentUpdateNotification(List<App> updates, bool succeeded, {int? id})
     : super(
-        id ?? 3,
+        id ?? silentUpdateNotificationId,
         succeeded ? tr('appsUpdated') : tr('appsNotUpdated'),
         _buildUpdateMessage(
           updates,
@@ -182,7 +182,7 @@ class SilentUpdateNotification extends ObtainiumNotification {
 class SilentUpdateAttemptNotification extends ObtainiumNotification {
   SilentUpdateAttemptNotification(List<App> updates, {int? id})
     : super(
-        id ?? 8,
+        id ?? silentUpdateAttemptNotificationId,
         tr('appsPossiblyUpdated'),
         _buildUpdateMessage(
           updates,
@@ -201,7 +201,7 @@ class SilentUpdateAttemptNotification extends ObtainiumNotification {
 class ErrorCheckingUpdatesNotification extends ObtainiumNotification {
   ErrorCheckingUpdatesNotification(String error, {int? id})
     : super(
-        id ?? 5,
+        id ?? errorCheckingUpdatesNotificationId,
         tr('errorCheckingUpdates'),
         error,
         'BG_UPDATE_CHECK_ERROR',

@@ -11,7 +11,6 @@ import 'package:obtainium/providers/notifications_provider.dart';
 import 'package:obtainium/providers/settings_provider.dart';
 import 'package:obtainium/providers/source_provider.dart';
 import 'package:obtainium/utils/native_features.dart';
-import 'package:obtainium/utils/tv_focus.dart';
 import 'package:obtainium/pages/home.dart';
 import 'package:obtainium/theme.dart';
 import 'package:provider/provider.dart';
@@ -421,7 +420,7 @@ class _ObtainiumState extends State<Obtainium> {
             // for touch devices.
             return isTV
                 ? FocusTraversalGroup(
-                    policy: TvDirectionalTraversalPolicy(),
+                    policy: WidgetOrderTraversalPolicy(),
                     child: content,
                   )
                 : content;

@@ -63,9 +63,7 @@ class Uptodown extends AppSource {
     Map<String, dynamic> additionalSettings,
   ) async {
     final res = await sourceRequest(standardUrl, additionalSettings);
-    if (res.statusCode != 200) {
-      throw getObtainiumHttpError(res);
-    }
+    ensureHttpSuccess(res);
     final html = parse(res.body);
     final String? version = html.querySelector('div.version')?.innerHtml;
     final appNameElement = html.querySelector('#detail-app-name');
@@ -169,9 +167,7 @@ class Uptodown extends AppSource {
     Map<String, dynamic> additionalSettings,
   ) async {
     final res = await sourceRequest(assetUrl, additionalSettings);
-    if (res.statusCode != 200) {
-      throw getObtainiumHttpError(res);
-    }
+    ensureHttpSuccess(res);
     final html = parse(res.body);
     final urlDataKey = html
         .querySelector('#detail-download-button')

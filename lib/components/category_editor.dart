@@ -31,6 +31,9 @@ const List<Color> kCategoryPalette = [
   Color(0xFF78909C),
 ];
 
+/// Fallback swatch colour for a category that has no registered colour.
+const int kDefaultCategoryColor = 0xFFCCCCCC;
+
 /// The outcome of editing a category via [showCategoryEditor].
 class CategoryEditResult {
   /// The resulting category name; null if the category was deleted.
@@ -80,9 +83,6 @@ class _CategoryEditorSheetState extends State<_CategoryEditorSheet> {
   late final TextEditingController _nameCtrl = TextEditingController(
     text: widget.existingName ?? '',
   );
-  late final ValueNotifier<String> _nameNotifier = ValueNotifier(
-    widget.existingName ?? '',
-  );
   final FocusNode _nameFocus = FocusNode();
   late Color _color = widget.initialColor;
 
@@ -91,7 +91,6 @@ class _CategoryEditorSheetState extends State<_CategoryEditorSheet> {
   @override
   void dispose() {
     _nameCtrl.dispose();
-    _nameNotifier.dispose();
     _nameFocus.dispose();
     super.dispose();
   }
@@ -266,7 +265,6 @@ class _CategoryEditorSheetState extends State<_CategoryEditorSheet> {
                   autofocus: !_isEditing && !isTV,
                   textCapitalization: TextCapitalization.sentences,
                   decoration: InputDecoration(labelText: tr('categoryName')),
-                  onChanged: (value) => _nameNotifier.value = value,
                   onSubmitted: (_) {
                     if (_nameCtrl.text.trim().isNotEmpty) _save();
                   },
@@ -332,10 +330,10 @@ class _CategoryEditorSheetState extends State<_CategoryEditorSheet> {
                   child: Text(tr('cancel')),
                 ),
                 const SizedBox(width: 8),
-                ValueListenableBuilder<String>(
-                  valueListenable: _nameNotifier,
+                ValueListenableBuilder<TextEditingValue>(
+                  valueListenable: _nameCtrl,
                   builder: (context, value, _) {
-                    final canSave = value.trim().isNotEmpty;
+                    final canSave = value.text.trim().isNotEmpty;
                     return FilledButton(
                       onPressed: canSave ? _save : null,
                       child: Text(tr('continue')),
@@ -489,7 +487,9 @@ class _CategorySelectorState extends State<CategorySelector> {
                   onLongPress: () => _edit(name),
                   child: FilterChip(
                     avatar: CircleAvatar(
-                      backgroundColor: Color(categories[name] ?? 0xFFCCCCCC),
+                      backgroundColor: Color(
+                        categories[name] ?? kDefaultCategoryColor,
+                      ),
                       radius: 7,
                     ),
                     label: Text(
@@ -501,7 +501,7 @@ class _CategorySelectorState extends State<CategorySelector> {
                     selected: _selected.contains(name),
                     onSelected: (v) => _toggle(name, v),
                     selectedColor: Color(
-                      categories[name] ?? 0xFFCCCCCC,
+                      categories[name] ?? kDefaultCategoryColor,
                     ).withValues(alpha: 0.22),
                     showCheckmark: true,
                   ),

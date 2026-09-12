@@ -170,28 +170,11 @@ extension AppsProviderUpdates on AppsProvider {
       List<String> appIds;
       if (specificIds != null) {
         appIds = List.from(specificIds);
-      } else if (forceAll) {
-        appIds = apps.values.map((e) => e.app.id).toList();
-        appIds.sort(
-          (a, b) =>
-              (apps[a]!.app.lastUpdateCheck ??
-                      DateTime.fromMicrosecondsSinceEpoch(0))
-                  .compareTo(
-                    apps[b]!.app.lastUpdateCheck ??
-                        DateTime.fromMicrosecondsSinceEpoch(0),
-                  ),
-        );
-        if (settingsProvider.onlyCheckInstalledOrTrackOnlyApps) {
-          appIds.removeWhere((id) {
-            final a = apps[id]?.app;
-            return a?.installedVersion == null &&
-                a?.settings.getBool('trackOnly') != true;
-          });
-        }
       } else {
         appIds = getAppsSortedByUpdateCheckTime(
           onlyCheckInstalledOrTrackOnlyApps:
               settingsProvider.onlyCheckInstalledOrTrackOnlyApps,
+          forceAll: forceAll,
         );
       }
       total = appIds.length;
@@ -304,50 +287,36 @@ extension AppsProviderUpdates on AppsProvider {
     final List<String> updateAppIds = [];
     for (final appId in apps.keys) {
       final app = apps[appId]!.app;
+      final installed = app.installedVersion;
       if (installedOnly) {
-        if (app.installedVersion != null) {
-          final regex =
-              (app.additionalSettings['versionExtractionRegEx'] as String?) ??
-              '';
-          if (regex.isEmpty) {
-            if (app.installedVersion != app.latestVersion &&
-                isAppUpdateable(app, settingsProvider)) {
-              updateAppIds.add(app.id);
-            }
-          } else if (!doStringsMatchUnderRegEx(
-                regex,
-                app.installedVersion!,
-                app.latestVersion,
-              ) &&
-              isAppUpdateable(app, settingsProvider)) {
-            updateAppIds.add(app.id);
-          }
+        if (installed != null &&
+            _installedVersionDiffers(app, installed) &&
+            isAppUpdateable(app, settingsProvider)) {
+          updateAppIds.add(app.id);
         }
       } else if (nonInstalledOnly) {
-        if (app.installedVersion == null) {
-          updateAppIds.add(app.id);
-        }
-      } else if (app.installedVersion != app.latestVersion) {
-        if (app.installedVersion == null) {
-          updateAppIds.add(app.id);
-        } else {
-          final regex =
-              (app.additionalSettings['versionExtractionRegEx'] as String?) ??
-              '';
-          if (regex.isNotEmpty &&
-              doStringsMatchUnderRegEx(
-                regex,
-                app.installedVersion!,
-                app.latestVersion,
-              )) {
-            continue;
-          }
-          if (isAppUpdateable(app, settingsProvider)) {
-            updateAppIds.add(app.id);
-          }
-        }
+        if (installed == null) updateAppIds.add(app.id);
+      } else if (installed == null) {
+        updateAppIds.add(app.id);
+      } else if (_installedVersionDiffers(app, installed) &&
+          isAppUpdateable(app, settingsProvider)) {
+        updateAppIds.add(app.id);
       }
     }
     return updateAppIds;
+  }
+
+  /// Whether [installed] differs from the app's latest version, either
+  /// directly or after extracting the app's `versionExtractionRegEx` portion.
+  bool _installedVersionDiffers(App app, String installed) {
+    final regex =
+        (app.additionalSettings['versionExtractionRegEx'] as String?) ?? '';
+    return regex.isEmpty
+        ? installed != app.latestVersion
+        : !VersionService().doStringsMatchUnderRegEx(
+            regex,
+            installed,
+            app.latestVersion,
+          );
   }
 }

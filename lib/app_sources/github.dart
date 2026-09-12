@@ -6,7 +6,6 @@ import 'package:http/http.dart';
 import 'package:obtainium/utils/string_compare.dart';
 import 'package:obtainium/components/generated_form_model.dart';
 import 'package:obtainium/custom_errors.dart';
-import 'package:obtainium/providers/apps_provider.dart';
 import 'package:obtainium/core/logging/app_logger.dart';
 import 'package:obtainium/providers/settings_provider.dart';
 import 'package:obtainium/providers/source_provider.dart';
@@ -480,7 +479,10 @@ class GitHub extends AppSource {
       for (final r in releases) {
         if (r == null) continue;
         final name = (r['tag_name'] ?? r['name'])?.toString() ?? '';
-        formats[r] = findStandardFormatsForVersion(name, false);
+        formats[r] = VersionService().findStandardFormatsForVersion(
+          name,
+          false,
+        );
       }
     }
 

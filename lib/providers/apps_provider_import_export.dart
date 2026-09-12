@@ -7,6 +7,7 @@ import 'package:easy_localization/easy_localization.dart';
 import 'package:obtainium/custom_errors.dart';
 import 'package:obtainium/core/logging/app_logger.dart';
 
+import 'package:obtainium/providers/app_json_migration.dart';
 import 'package:obtainium/providers/apps_provider.dart';
 import 'package:obtainium/providers/settings_provider.dart';
 import 'package:obtainium/providers/source_provider.dart';
@@ -176,12 +177,12 @@ extension AppsProviderImportExport on AppsProvider {
     try {
       if (hasSchemaVersion) {
         schema = ExportSchema.fromJson(decodedJSON as Map<String, dynamic>);
-        importedApps = schema.apps.map((e) => App.fromJson(e)).toList();
+        importedApps = schema.apps.map(appFromStoredJson).toList();
       } else {
         final newFormat = decodedJSON is! List;
         importedApps =
             ((newFormat ? decodedJSON['apps'] : decodedJSON) as List<dynamic>)
-                .map((e) => App.fromJson(e))
+                .map((e) => appFromStoredJson(e))
                 .toList();
       }
     } catch (e) {
@@ -192,9 +193,7 @@ extension AppsProviderImportExport on AppsProvider {
       final a = importedApps[i];
       final installedInfo = await getInstalledInfo(a.id);
       importedApps[i] = a.copyWith(
-        installedVersion: a.settings.getBool('useVersionCodeAsOSVersion')
-            ? installedInfo?.versionCode.toString()
-            : installedInfo?.versionName,
+        installedVersion: realInstalledVersionOf(a, installedInfo),
       );
     }
     await saveApps(importedApps, onlyIfExists: false);

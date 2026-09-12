@@ -30,15 +30,13 @@ class Jenkins extends AppSource {
     return match.group(0)!;
   }
 
-  String trimJobUrl(String url) => sourceSpecificStandardizeURL(url);
-
   @override
   Future<APKDetails> getLatestAPKDetails(
     String standardUrl,
     Map<String, dynamic> additionalSettings,
   ) async {
     try {
-      standardUrl = trimJobUrl(standardUrl);
+      standardUrl = sourceSpecificStandardizeURL(standardUrl);
       final Response res = await sourceRequest(
         '$standardUrl/lastSuccessfulBuild/api/json',
         additionalSettings,

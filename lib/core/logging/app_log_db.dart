@@ -1,11 +1,11 @@
 import 'package:sqflite/sqflite.dart';
 
-const String logTable = 'logs';
-const String idColumn = '_id';
-const String levelColumn = 'level';
-const String messageColumn = 'message';
-const String timestampColumn = 'timestamp';
-const String dbPath = 'logs.db';
+const String _logTable = 'logs';
+const String _idColumn = '_id';
+const String _levelColumn = 'level';
+const String _messageColumn = 'message';
+const String _timestampColumn = 'timestamp';
+const String _dbPath = 'logs.db';
 
 /// Order must match legacy [LogLevels] indices in logs.db.
 enum AppLogLevel { debug, info, warning, error }
@@ -25,25 +25,25 @@ class LogEntry {
 
   Map<String, Object?> toMap() {
     return {
-      idColumn: id,
-      levelColumn: level.index,
-      messageColumn: message,
-      timestampColumn: timestamp.millisecondsSinceEpoch,
+      _idColumn: id,
+      _levelColumn: level.index,
+      _messageColumn: message,
+      _timestampColumn: timestamp.millisecondsSinceEpoch,
     };
   }
 
   factory LogEntry.fromMap(Map<String, Object?> map) {
-    final rawLevel = map[levelColumn];
+    final rawLevel = map[_levelColumn];
     final level =
         rawLevel is int && rawLevel >= 0 && rawLevel < AppLogLevel.values.length
         ? AppLogLevel.values[rawLevel]
         : AppLogLevel.info;
     return LogEntry(
-      id: map[idColumn] as int?,
+      id: map[_idColumn] as int?,
       level: level,
-      message: map[messageColumn]?.toString() ?? '',
+      message: map[_messageColumn]?.toString() ?? '',
       timestamp: DateTime.fromMillisecondsSinceEpoch(
-        (map[timestampColumn] as int?) ?? 0,
+        (map[_timestampColumn] as int?) ?? 0,
       ),
     );
   }
@@ -59,15 +59,15 @@ class AppLogDb {
 
   Future<Database> _open() async {
     _db ??= await openDatabase(
-      dbPath,
+      _dbPath,
       version: 2,
       onCreate: (Database db, int version) async {
         await db.execute('''
-create table if not exists $logTable (
-  $idColumn integer primary key autoincrement,
-  $levelColumn integer not null,
-  $messageColumn text not null,
-  $timestampColumn integer not null)
+create table if not exists $_logTable (
+  $_idColumn integer primary key autoincrement,
+  $_levelColumn integer not null,
+  $_messageColumn text not null,
+  $_timestampColumn integer not null)
 ''');
         await _createTimestampIndex(db);
       },
@@ -84,19 +84,19 @@ create table if not exists $logTable (
   /// without this index they scan the entire table.
   Future<void> _createTimestampIndex(Database db) => db.execute(
     'create index if not exists logs_timestamp_idx '
-    'on $logTable ($timestampColumn)',
+    'on $_logTable ($_timestampColumn)',
   );
 
   Future<void> insert(LogEntry entry) async {
     final map = entry.toMap();
-    map.remove(idColumn);
-    entry.id = await (await _open()).insert(logTable, map);
+    map.remove(_idColumn);
+    entry.id = await (await _open()).insert(_logTable, map);
   }
 
   Future<List<LogEntry>> query({DateTime? before, DateTime? after}) async {
     final where = _whereDates(before: before, after: after);
     final rows = await (await _open()).query(
-      logTable,
+      _logTable,
       where: where.key,
       whereArgs: where.value,
     );
@@ -106,7 +106,7 @@ create table if not exists $logTable (
   Future<int> delete({DateTime? before, DateTime? after}) async {
     final where = _whereDates(before: before, after: after);
     return (await _open()).delete(
-      logTable,
+      _logTable,
       where: where.key,
       whereArgs: where.value,
     );
@@ -123,11 +123,11 @@ create table if not exists $logTable (
     final where = <String>[];
     final whereArgs = <int>[];
     if (before != null) {
-      where.add('$timestampColumn < ?');
+      where.add('$_timestampColumn < ?');
       whereArgs.add(before.millisecondsSinceEpoch);
     }
     if (after != null) {
-      where.add('$timestampColumn > ?');
+      where.add('$_timestampColumn > ?');
       whereArgs.add(after.millisecondsSinceEpoch);
     }
     return whereArgs.isEmpty

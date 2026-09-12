@@ -60,18 +60,11 @@ class AppLogger {
   }
 
   static void error(Object error, {StackTrace? stackTrace, String? message}) {
-    final text = message ?? 'Unexpected error';
-    _logToConsole(
+    _log(
       AppLogLevel.error,
-      text,
+      message ?? 'Unexpected error',
       error: error,
       stackTrace: stackTrace,
-    );
-    _persist(
-      LogEntry(
-        message: _formatPersistedError(text, error),
-        level: AppLogLevel.error,
-      ),
     );
   }
 
@@ -137,10 +130,6 @@ class AppLogger {
 
   static String _formatPersistedMessage(String message, Object? error) {
     if (error == null) return message;
-    return error.toString() == message ? message : '$message: $error';
-  }
-
-  static String _formatPersistedError(String message, Object error) {
     return error.toString() == message ? message : '$message: $error';
   }
 }

@@ -41,9 +41,7 @@ class Aptoide extends AppSource {
     Map<String, dynamic> additionalSettings,
   ) async {
     final res = await sourceRequest(standardUrl, additionalSettings);
-    if (res.statusCode != 200) {
-      throw getObtainiumHttpError(res);
-    }
+    ensureHttpSuccess(res);
     final idMatch = RegExp(
       r'"app"\s*:\s*\{\s*"id"\s*:\s*([0-9]+)',
     ).firstMatch(res.body);
@@ -54,9 +52,7 @@ class Aptoide extends AppSource {
       throw NoReleasesError();
     }
     final res2 = await sourceRequest('$_apiBaseUrl/$id', additionalSettings);
-    if (res2.statusCode != 200) {
-      throw getObtainiumHttpError(res2);
-    }
+    ensureHttpSuccess(res2);
     final data = jsonDecode(res2.body)?['nodes']?['meta']?['data'];
     if (data == null) {
       throw NoReleasesError();

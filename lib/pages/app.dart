@@ -560,7 +560,6 @@ class _AppPageState extends State<AppPage> {
   Widget _getPrimaryButton(
     BuildContext context,
     AppInMemory? app,
-    AppsProvider appsProvider,
     bool areDownloadsRunning,
   ) {
     final installed = app?.app.installedVersion;
@@ -873,6 +872,14 @@ class _AppPageState extends State<AppPage> {
     );
   }
 
+  String _installedVersionLabel(App? app) {
+    var label = appInstalledVersionText(app);
+    if (app?.installedVersion != app?.latestVersion) {
+      label += '\n${app?.latestVersion} ${tr('latest')}';
+    }
+    return label;
+  }
+
   List<Widget> _buildVersionInfoSections(AppInMemory? app) {
     final cs = Theme.of(context).colorScheme;
     final tt = Theme.of(context).textTheme;
@@ -887,18 +894,10 @@ class _AppPageState extends State<AppPage> {
         children: [
           if (trackOnly) _detailNote(tr('xIsTrackOnly', args: [tr('app')])),
           if (pseudo) _detailNote(tr('pseudoVersionInUse')),
-          () {
-            String l = appInstalledVersionText(app?.app);
-            final upToDate =
-                app?.app.installedVersion == app?.app.latestVersion;
-            if (!upToDate) {
-              l += '\n${app?.app.latestVersion} ${tr('latest')}';
-            }
-            return Text(
-              l,
-              style: tt.bodyMedium?.copyWith(fontWeight: FontWeight.bold),
-            );
-          }(),
+          Text(
+            _installedVersionLabel(app?.app),
+            style: tt.bodyMedium?.copyWith(fontWeight: FontWeight.bold),
+          ),
           if (apkCount > 0)
             _detailNote(
               apkCount == 1 ? app!.app.apkUrls[0].key : plural('apk', apkCount),
@@ -1007,7 +1006,6 @@ class _AppPageState extends State<AppPage> {
   List<Widget> _buildSourceInfoSections(
     AppInMemory? app,
     AppsProvider appsProvider,
-    SettingsProvider settingsProvider,
     bool certs,
     bool hasAssets,
   ) {
@@ -1202,12 +1200,7 @@ class _AppPageState extends State<AppPage> {
                 trackOnly,
               ),
               const Spacer(),
-              _getPrimaryButton(
-                context,
-                app,
-                appsProvider,
-                areDownloadsRunning,
-              ),
+              _getPrimaryButton(context, app, areDownloadsRunning),
             ],
           ),
         ),
@@ -1227,7 +1220,10 @@ class _AppPageState extends State<AppPage> {
     final bool areDownloadsRunning = context.select<AppsProvider, bool>(
       (p) => p.areDownloadsRunning(),
     );
-    final _ = context.select<AppsProvider, double?>(
+    // Subscribe to this app's download progress so the page rebuilds as it
+    // changes: DownloadState.progress is a ValueNotifier and does not notify
+    // the provider's listeners.
+    context.select<AppsProvider, double?>(
       (p) => p.apps[widget.appId]?.downloadProgress,
     );
 
@@ -1271,15 +1267,10 @@ class _AppPageState extends State<AppPage> {
           ? FloatingActionButton(
               onPressed: () {
                 settingsProvider.selectionClick();
-                Navigator.push(
+                NavHelper.pushAppPage(
                   context,
-                  MaterialPageRoute(
-                    traversalEdgeBehavior: traversalEdgeBehaviorFor(context),
-                    builder: (_) => AppPage(
-                      appId: widget.appId,
-                      showOppositeOfPreferredView: true,
-                    ),
-                  ),
+                  widget.appId,
+                  showOppositeOfPreferredView: true,
                 );
               },
               tooltip: tr('more'),
@@ -1317,7 +1308,6 @@ class _AppPageState extends State<AppPage> {
                         ..._buildSourceInfoSections(
                           app,
                           appsProvider,
-                          settingsProvider,
                           certs,
                           hasAssets,
                         ),

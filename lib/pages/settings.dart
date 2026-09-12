@@ -14,7 +14,6 @@ import 'package:obtainium/core/logging/app_logger.dart';
 import 'package:obtainium/installers/root_installer.dart';
 import 'package:obtainium/main.dart';
 import 'package:obtainium/pages/import_export.dart';
-import 'package:obtainium/pages/logs.dart';
 import 'package:obtainium/providers/apps_provider.dart';
 import 'package:obtainium/providers/external_install_bridge.dart';
 import 'package:obtainium/providers/settings_provider.dart';
@@ -242,100 +241,7 @@ class _SettingsPageState extends State<SettingsPage> {
   @override
   Widget build(BuildContext context) {
     final SettingsProvider settingsProvider = context.watch<SettingsProvider>();
-    final sourceProvider = context.read<SourceProvider>();
     final sdk = androidSdkInt ?? 0;
-
-    final sortDropdown = TvDropdownMenu<SortColumnSettings>(
-      expandedInsets: EdgeInsets.zero,
-      label: Text(tr('appSortBy')),
-      initialSelection: settingsProvider.sortColumn,
-      dropdownMenuEntries: [
-        DropdownMenuEntry(
-          value: SortColumnSettings.authorName,
-          label: tr('authorName'),
-        ),
-        DropdownMenuEntry(
-          value: SortColumnSettings.nameAuthor,
-          label: tr('nameAuthor'),
-        ),
-        DropdownMenuEntry(
-          value: SortColumnSettings.added,
-          label: tr('asAdded'),
-        ),
-        DropdownMenuEntry(
-          value: SortColumnSettings.releaseDate,
-          label: tr('releaseDate'),
-        ),
-      ],
-      onSelected: (value) {
-        if (value != null) {
-          settingsProvider.sortColumn = value;
-        }
-      },
-    );
-
-    final orderControl = CardTile(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Flexible(child: Text(tr('appSortOrder'))),
-          const SizedBox(width: 12),
-          SegmentedButton<SortOrderSettings>(
-            showSelectedIcon: false,
-            segments: [
-              ButtonSegment(
-                value: SortOrderSettings.ascending,
-                icon: const Icon(Icons.arrow_upward_rounded),
-                tooltip: tr('ascending'),
-              ),
-              ButtonSegment(
-                value: SortOrderSettings.descending,
-                icon: const Icon(Icons.arrow_downward_rounded),
-                tooltip: tr('descending'),
-              ),
-            ],
-            selected: {settingsProvider.sortOrder},
-            onSelectionChanged: (selection) {
-              settingsProvider.selectionClick();
-              settingsProvider.sortOrder = selection.first;
-            },
-          ),
-        ],
-      ),
-    );
-
-    final allSourceConfigItems = sourceProvider.sources
-        .expand((e) => e.sourceConfigSettingFormItems)
-        .map((e) => e.clone())
-        .toList();
-    for (var item in allSourceConfigItems) {
-      if (item is GeneratedFormSwitch) {
-        item.value = settingsProvider.getSettingBool(item.key);
-      } else {
-        item.value = settingsProvider.getSettingString(item.key);
-      }
-    }
-    final Widget? sourceSpecificForm = allSourceConfigItems.isEmpty
-        ? null
-        : GeneratedForm(
-            tileMode: true,
-            items: allSourceConfigItems.map((e) => [e]).toList(),
-            onValueChanges: (values, valid, isBuilding) {
-              if (valid && !isBuilding) {
-                values.forEach((key, value) {
-                  final formItem = allSourceConfigItems
-                      .where((i) => i.key == key)
-                      .firstOrNull;
-                  if (formItem is GeneratedFormSwitch) {
-                    settingsProvider.setSettingBool(key, value == true);
-                  } else {
-                    settingsProvider.setSettingString(key, value ?? '');
-                  }
-                });
-              }
-            },
-          );
 
     final bool showBgSection =
         settingsProvider.updateInterval > 0 &&
@@ -354,176 +260,7 @@ class _SettingsPageState extends State<SettingsPage> {
                       padding: EdgeInsets.symmetric(vertical: 48),
                       child: Center(child: CircularProgressIndicator()),
                     )
-                  : Builder(
-                      builder: (ctx) {
-                        final rows = <Widget>[
-                          _settingsRow(
-                            context,
-                            icon: Icons.import_export,
-                            title: tr('importExport'),
-                            onTap: () => _pushPage(
-                              context,
-                              title: tr('importExport'),
-                              childBuilder: (_) => const Column(
-                                crossAxisAlignment: CrossAxisAlignment.stretch,
-                                children: [
-                                  ExportSection(),
-                                  SizedBox(height: 14),
-                                  ImportSection(),
-                                ],
-                              ),
-                            ),
-                          ),
-                          _settingsRow(
-                            context,
-                            icon: Icons.update_outlined,
-                            title: tr('updates'),
-                            onTap: () => _pushPage(
-                              context,
-                              title: tr('updates'),
-                              childBuilder: (ctx) =>
-                                  _buildUpdatesSection(ctx, showBgSection, sdk),
-                            ),
-                          ),
-                          if (sourceSpecificForm != null)
-                            _settingsRow(
-                              context,
-                              icon: Icons.tune_outlined,
-                              title: tr('sourceSpecific'),
-                              onTap: () => _pushPage(
-                                context,
-                                title: tr('sourceSpecific'),
-                                childBuilder: (_) => sourceSpecificForm,
-                              ),
-                            ),
-                          _settingsRow(
-                            context,
-                            icon: Icons.palette_outlined,
-                            title: tr('appearance'),
-                            onTap: () => _pushPage(
-                              context,
-                              title: tr('appearance'),
-                              childBuilder: (ctx) => _buildAppearanceSection(
-                                ctx,
-                                sortDropdown,
-                                orderControl,
-                              ),
-                            ),
-                          ),
-                          CardTile(
-                            child: TvFocusRing(
-                              borderRadius: 12,
-                              child: ListTile(
-                                leading: Icon(
-                                  Icons.code,
-                                  color: Theme.of(context).colorScheme.primary,
-                                ),
-                                title: Text(tr('appSource')),
-                                trailing: Icon(
-                                  Icons.open_in_new,
-                                  color: Theme.of(
-                                    context,
-                                  ).colorScheme.onSurfaceVariant,
-                                  size: 20,
-                                ),
-                                onTap: () => _openExternalUrl(
-                                  context,
-                                  context.read<SettingsProvider>().sourceUrl,
-                                ),
-                                shape: RoundedSuperellipseBorder(
-                                  borderRadius: BorderRadius.circular(12),
-                                ),
-                              ),
-                            ),
-                          ),
-                          CardTile(
-                            child: TvFocusRing(
-                              borderRadius: 12,
-                              child: ListTile(
-                                leading: Icon(
-                                  Icons.help_outline_rounded,
-                                  color: Theme.of(context).colorScheme.primary,
-                                ),
-                                title: Text(tr('wiki')),
-                                trailing: Icon(
-                                  Icons.open_in_new,
-                                  color: Theme.of(
-                                    context,
-                                  ).colorScheme.onSurfaceVariant,
-                                  size: 20,
-                                ),
-                                onTap: () => _openExternalUrl(
-                                  context,
-                                  'https://wiki.obtainium.imranr.dev/',
-                                ),
-                                shape: RoundedSuperellipseBorder(
-                                  borderRadius: BorderRadius.circular(12),
-                                ),
-                              ),
-                            ),
-                          ),
-                          CardTile(
-                            child: TvFocusRing(
-                              borderRadius: 12,
-                              child: ListTile(
-                                leading: Icon(
-                                  Icons.bug_report_outlined,
-                                  color: Theme.of(context).colorScheme.primary,
-                                ),
-                                title: Text(tr('appLogs')),
-                                trailing: Icon(
-                                  Icons.chevron_right,
-                                  color: Theme.of(
-                                    context,
-                                  ).colorScheme.onSurfaceVariant,
-                                ),
-                                onTap: () {
-                                  AppLogger.getLogs().then((logs) {
-                                    if (!context.mounted) return;
-                                    if (logs.isEmpty) {
-                                      showMessage(
-                                        ObtainiumError(tr('noLogs')),
-                                        context,
-                                      );
-                                    } else {
-                                      Navigator.of(context).push(
-                                        MaterialPageRoute(
-                                          traversalEdgeBehavior:
-                                              traversalEdgeBehaviorFor(context),
-                                          builder: (context) =>
-                                              const LogsPage(),
-                                        ),
-                                      );
-                                    }
-                                  });
-                                },
-                                shape: RoundedSuperellipseBorder(
-                                  borderRadius: BorderRadius.circular(12),
-                                ),
-                              ),
-                            ),
-                          ),
-                        ];
-                        final settingTiles = rows.sublist(0, rows.length - 3);
-                        final footerTiles = rows.sublist(rows.length - 3);
-                        return Column(
-                          crossAxisAlignment: CrossAxisAlignment.stretch,
-                          spacing: 20,
-                          children: [
-                            Column(
-                              crossAxisAlignment: CrossAxisAlignment.stretch,
-                              spacing: 3,
-                              children: shapeCardTiles(settingTiles),
-                            ),
-                            Column(
-                              crossAxisAlignment: CrossAxisAlignment.stretch,
-                              spacing: 3,
-                              children: shapeCardTiles(footerTiles),
-                            ),
-                          ],
-                        );
-                      },
-                    ),
+                  : _buildLandingList(context, sdk, showBgSection),
             ),
           ),
           SliverToBoxAdapter(
@@ -534,11 +271,158 @@ class _SettingsPageState extends State<SettingsPage> {
     );
   }
 
+  Widget _buildLandingList(BuildContext context, int sdk, bool showBgSection) {
+    final settingsProvider = context.read<SettingsProvider>();
+    final bool hasSourceSpecificSettings = context
+        .read<SourceProvider>()
+        .sources
+        .any((e) => e.sourceConfigSettingFormItems.isNotEmpty);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      spacing: 20,
+      children: [
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          spacing: 3,
+          children: shapeCardTiles([
+            _settingsRow(
+              context,
+              icon: Icons.import_export,
+              title: tr('importExport'),
+              onTap: () => _pushPage(
+                context,
+                title: tr('importExport'),
+                childBuilder: (_) => const Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    ExportSection(),
+                    SizedBox(height: 14),
+                    ImportSection(),
+                  ],
+                ),
+              ),
+            ),
+            _settingsRow(
+              context,
+              icon: Icons.update_outlined,
+              title: tr('updates'),
+              onTap: () => _pushPage(
+                context,
+                title: tr('updates'),
+                childBuilder: (ctx) =>
+                    _buildUpdatesSection(ctx, showBgSection, sdk),
+              ),
+            ),
+            if (hasSourceSpecificSettings)
+              _settingsRow(
+                context,
+                icon: Icons.tune_outlined,
+                title: tr('sourceSpecific'),
+                onTap: () => _pushPage(
+                  context,
+                  title: tr('sourceSpecific'),
+                  childBuilder: (ctx) => _buildSourceSpecificForm(ctx),
+                ),
+              ),
+            _settingsRow(
+              context,
+              icon: Icons.palette_outlined,
+              title: tr('appearance'),
+              onTap: () => _pushPage(
+                context,
+                title: tr('appearance'),
+                childBuilder: (ctx) => _buildAppearanceSection(ctx),
+              ),
+            ),
+          ]),
+        ),
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          spacing: 3,
+          children: shapeCardTiles([
+            _settingsRow(
+              context,
+              icon: Icons.code,
+              title: tr('appSource'),
+              trailingIcon: Icons.open_in_new,
+              trailingIconSize: 20,
+              onTap: () =>
+                  _openExternalUrl(context, settingsProvider.sourceUrl),
+            ),
+            _settingsRow(
+              context,
+              icon: Icons.help_outline_rounded,
+              title: tr('wiki'),
+              trailingIcon: Icons.open_in_new,
+              trailingIconSize: 20,
+              onTap: () => _openExternalUrl(
+                context,
+                'https://wiki.obtainium.imranr.dev/',
+              ),
+            ),
+            _settingsRow(
+              context,
+              icon: Icons.bug_report_outlined,
+              title: tr('appLogs'),
+              onTap: () {
+                AppLogger.getLogs().then((logs) {
+                  if (!context.mounted) return;
+                  if (logs.isEmpty) {
+                    showMessage(ObtainiumError(tr('noLogs')), context);
+                  } else {
+                    NavHelper.pushLogsPage(context);
+                  }
+                });
+              },
+            ),
+          ]),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildSourceSpecificForm(BuildContext context) {
+    final settingsProvider = context.read<SettingsProvider>();
+    final allSourceConfigItems = context
+        .read<SourceProvider>()
+        .sources
+        .expand((e) => e.sourceConfigSettingFormItems)
+        .map((e) => e.clone())
+        .toList();
+    for (var item in allSourceConfigItems) {
+      if (item is GeneratedFormSwitch) {
+        item.value = settingsProvider.getSettingBool(item.key);
+      } else {
+        item.value = settingsProvider.getSettingString(item.key);
+      }
+    }
+    return GeneratedForm(
+      tileMode: true,
+      items: allSourceConfigItems.map((e) => [e]).toList(),
+      onValueChanges: (values, valid, isBuilding) {
+        if (valid && !isBuilding) {
+          values.forEach((key, value) {
+            final formItem = allSourceConfigItems
+                .where((i) => i.key == key)
+                .firstOrNull;
+            if (formItem is GeneratedFormSwitch) {
+              settingsProvider.setSettingBool(key, value == true);
+            } else {
+              settingsProvider.setSettingString(key, value ?? '');
+            }
+          });
+        }
+      },
+    );
+  }
+
   Widget _settingsRow(
     BuildContext context, {
     required IconData icon,
     required String title,
     required VoidCallback onTap,
+    IconData trailingIcon = Icons.chevron_right,
+    double? trailingIconSize,
   }) {
     final cs = Theme.of(context).colorScheme;
     return CardTile(
@@ -547,7 +431,11 @@ class _SettingsPageState extends State<SettingsPage> {
         child: ListTile(
           leading: Icon(icon, color: cs.primary),
           title: Text(title),
-          trailing: Icon(Icons.chevron_right, color: cs.onSurfaceVariant),
+          trailing: Icon(
+            trailingIcon,
+            color: cs.onSurfaceVariant,
+            size: trailingIconSize,
+          ),
           onTap: () {
             context.read<SettingsProvider>().selectionClick();
             onTap();
@@ -792,13 +680,67 @@ class _SettingsPageState extends State<SettingsPage> {
     );
   }
 
-  Widget _buildAppearanceSection(
-    BuildContext context,
-    Widget sortDropdown,
-    Widget orderControl,
-  ) {
+  Widget _buildAppearanceSection(BuildContext context) {
     final settingsProvider = context.read<SettingsProvider>();
     final sdk = androidSdkInt ?? 0;
+    final sortDropdown = TvDropdownMenu<SortColumnSettings>(
+      expandedInsets: EdgeInsets.zero,
+      label: Text(tr('appSortBy')),
+      initialSelection: settingsProvider.sortColumn,
+      dropdownMenuEntries: [
+        DropdownMenuEntry(
+          value: SortColumnSettings.authorName,
+          label: tr('authorName'),
+        ),
+        DropdownMenuEntry(
+          value: SortColumnSettings.nameAuthor,
+          label: tr('nameAuthor'),
+        ),
+        DropdownMenuEntry(
+          value: SortColumnSettings.added,
+          label: tr('asAdded'),
+        ),
+        DropdownMenuEntry(
+          value: SortColumnSettings.releaseDate,
+          label: tr('releaseDate'),
+        ),
+      ],
+      onSelected: (value) {
+        if (value != null) {
+          settingsProvider.sortColumn = value;
+        }
+      },
+    );
+    final orderControl = CardTile(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Flexible(child: Text(tr('appSortOrder'))),
+          const SizedBox(width: 12),
+          SegmentedButton<SortOrderSettings>(
+            showSelectedIcon: false,
+            segments: [
+              ButtonSegment(
+                value: SortOrderSettings.ascending,
+                icon: const Icon(Icons.arrow_upward_rounded),
+                tooltip: tr('ascending'),
+              ),
+              ButtonSegment(
+                value: SortOrderSettings.descending,
+                icon: const Icon(Icons.arrow_downward_rounded),
+                tooltip: tr('descending'),
+              ),
+            ],
+            selected: {settingsProvider.sortOrder},
+            onSelectionChanged: (selection) {
+              settingsProvider.selectionClick();
+              settingsProvider.sortOrder = selection.first;
+            },
+          ),
+        ],
+      ),
+    );
     final children = <Widget>[
       // Theme segmented button wrapped in CardTile so shapeCardTiles finds it.
       CardTile(

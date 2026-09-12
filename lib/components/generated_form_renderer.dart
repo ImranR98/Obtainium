@@ -145,12 +145,9 @@ class _TvTextFieldFocusState extends State<TvTextFieldFocus> {
 
 class _GeneratedFormState extends State<GeneratedForm> {
   Map<String, dynamic> values = {};
-  late List<List<Widget>> formInputs;
-  Key? initKey;
-  int? _itemsHash;
-  int _subFormGenerationCount = 0;
-  final List<TextEditingController> _textControllers = [];
-  final List<GlobalKey<FormFieldState>> _fieldKeys = [];
+  final Map<String, TextEditingController> _textControllers = {};
+  final Map<String, GlobalKey<FormFieldState>> _fieldKeys = {};
+  final Map<String, int> _subFormGenerations = {};
 
   InputDecoration _fieldDecoration({
     required String labelText,
@@ -167,28 +164,13 @@ class _GeneratedFormState extends State<GeneratedForm> {
     );
   }
 
-  Widget? _buildHelpSuffixIcon(
-    String label,
-    String? helpUrl,
-    List<dynamic> belowWidgets,
-  ) {
+  Widget? _buildHelpSuffixIcon(String? helpUrl) {
     if (helpUrl != null) {
       return IconButton(
         icon: const Icon(Icons.open_in_new),
         tooltip: tr('about'),
         onPressed: () => unawaited(
           launchUrlString(helpUrl, mode: LaunchMode.externalApplication),
-        ),
-      );
-    }
-    if (belowWidgets.isNotEmpty) {
-      return IconButton(
-        icon: const Icon(Icons.help_outline),
-        tooltip: tr('about'),
-        onPressed: () => showHelpDialog(
-          context,
-          title: label,
-          content: belowWidgets.cast<Widget>(),
         ),
       );
     }
@@ -202,28 +184,31 @@ class _GeneratedFormState extends State<GeneratedForm> {
     // FormFieldState.isValid is synchronous, so the fields are already mounted.
     // Callers use isBuilding to skip side effects, but the reported validity
     // must be real (e.g. GeneratedFormModal enables its primary action).
-    for (final key in _fieldKeys) {
+    for (final key in _fieldKeys.values) {
       valid = valid && key.currentState?.isValid == true;
     }
     if (forceInvalid) {
       valid = false;
     }
     widget.onValueChanges(returnValues, valid, isBuilding);
-    setState(() {});
   }
 
-  Widget _initTextField(GeneratedFormTextField formItem) {
-    final formFieldKey = GlobalKey<FormFieldState>();
-    _fieldKeys.add(formFieldKey);
-    final ctrl = TextEditingController(text: values[formItem.key]);
-    _textControllers.add(ctrl);
+  Widget _buildTextField(GeneratedFormTextField formItem) {
+    final fieldKey = formItem.key;
+    final formFieldKey = _fieldKeys.putIfAbsent(
+      fieldKey,
+      () => GlobalKey<FormFieldState>(),
+    );
+    final ctrl = _textControllers.putIfAbsent(
+      fieldKey,
+      () => TextEditingController(text: values[fieldKey]?.toString() ?? ''),
+    );
     return TypeAheadField<String>(
       controller: ctrl,
       builder: (context, controller, focusNode) {
         final textField = TextFormField(
           controller: ctrl,
           focusNode: focusNode,
-          keyboardType: formItem.textInputType,
           obscureText: formItem.password,
           autocorrect: !formItem.password,
           enableSuggestions: !formItem.password,
@@ -231,20 +216,14 @@ class _GeneratedFormState extends State<GeneratedForm> {
           autovalidateMode: AutovalidateMode.onUserInteraction,
           onChanged: (value) {
             setState(() {
-              values[formItem.key] = value;
+              values[fieldKey] = value;
               notifyFormChange();
             });
           },
           decoration: _fieldDecoration(
             labelText: tr(formItem.label) + (formItem.required ? ' *' : ''),
             hintText: formItem.hint,
-            suffixIcon:
-                formItem.trailing ??
-                _buildHelpSuffixIcon(
-                  tr(formItem.label),
-                  formItem.helpUrl,
-                  formItem.belowWidgets,
-                ),
+            suffixIcon: _buildHelpSuffixIcon(formItem.helpUrl),
           ),
           minLines: formItem.max <= 1 ? null : formItem.max,
           maxLines: formItem.max <= 1 ? 1 : formItem.max,
@@ -272,7 +251,7 @@ class _GeneratedFormState extends State<GeneratedForm> {
       onSelected: (value) {
         ctrl.text = value;
         setState(() {
-          values[formItem.key] = value;
+          values[fieldKey] = value;
           notifyFormChange();
         });
       },
@@ -285,7 +264,7 @@ class _GeneratedFormState extends State<GeneratedForm> {
     );
   }
 
-  Widget _initDropdown(GeneratedFormDropdown formItem) {
+  Widget _buildDropdown(GeneratedFormDropdown formItem) {
     if (formItem.opts == null || formItem.opts!.isEmpty) {
       return Text(tr('dropdownNoOptsError'));
     }
@@ -294,23 +273,11 @@ class _GeneratedFormState extends State<GeneratedForm> {
       child: DropdownButtonFormField(
         decoration: _fieldDecoration(
           labelText: tr(formItem.label) + (formItem.required ? ' *' : ''),
-          suffixIcon: _buildHelpSuffixIcon(
-            tr(formItem.label),
-            formItem.helpUrl,
-            formItem.belowWidgets,
-          ),
+          suffixIcon: _buildHelpSuffixIcon(formItem.helpUrl),
         ),
         initialValue: values[formItem.key],
         items: formItem.opts!.map((e2) {
-          final enabled = formItem.disabledOptKeys?.contains(e2.key) != true;
-          return DropdownMenuItem(
-            value: e2.key,
-            enabled: enabled,
-            child: Opacity(
-              opacity: enabled ? 1 : 0.5,
-              child: Text(tr(e2.value)),
-            ),
-          );
+          return DropdownMenuItem(value: e2.key, child: Text(tr(e2.value)));
         }).toList(),
         onChanged: (value) {
           setState(() {
@@ -322,7 +289,7 @@ class _GeneratedFormState extends State<GeneratedForm> {
     );
   }
 
-  Widget _initSlider(GeneratedFormSlider formItem) {
+  Widget _buildSlider(GeneratedFormSlider formItem) {
     return _SliderFormItem(
       formItem: formItem,
       initialValue: values[formItem.key],
@@ -335,70 +302,49 @@ class _GeneratedFormState extends State<GeneratedForm> {
     );
   }
 
-  void _initSubForm(GeneratedFormSubForm formItem) {
-    values[formItem.key] = [];
+  /// Expands the sub-form's saved entries into [values], filling any missing
+  /// keys with the item defaults.
+  void _initSubFormValues(GeneratedFormSubForm formItem) {
+    final List<Map<String, dynamic>> entries = [];
     final initValue = formItem.value;
-    if (initValue is! List) return;
-    for (Map<String, dynamic> v in initValue.cast<Map<String, dynamic>>()) {
-      final fullDefaults = getDefaultValuesFromFormItems(formItem.items);
-      for (var element in v.entries) {
-        fullDefaults[element.key] = element.value;
+    if (initValue is List) {
+      for (Map<String, dynamic> v in initValue.cast<Map<String, dynamic>>()) {
+        final fullDefaults = getDefaultValuesFromFormItems(formItem.items);
+        for (var element in v.entries) {
+          fullDefaults[element.key] = element.value;
+        }
+        entries.add(fullDefaults);
       }
-      values[formItem.key].add(fullDefaults);
     }
+    values[formItem.key] = entries;
   }
 
-  int _computeItemsHash(List<List<GeneratedFormItem>> items) {
+  /// Signature of the form's structure, used to detect when [values] and the
+  /// field controllers must be re-initialized after a widget update.
+  int _itemsSignature(List<List<GeneratedFormItem>> items) {
     return Object.hashAll(
-      items.expand(
-        (row) => row.map((e) {
-          return Object.hash(
-            e.key,
-            e.runtimeType,
-            e is GeneratedFormTextField ? e.trailingKey : null,
-          );
-        }),
-      ),
+      items.expand((row) => row.map((e) => Object.hash(e.key, e.runtimeType))),
     );
   }
 
   void _initFormData() {
-    initKey = widget.key;
-    _itemsHash = _computeItemsHash(widget.items);
-    for (final c in _textControllers) {
+    for (final c in _textControllers.values) {
       c.dispose();
     }
     _textControllers.clear();
     _fieldKeys.clear();
-    values.clear();
-    for (var row in widget.items) {
-      for (var e in row) {
-        values[e.key] = e.value;
+    _subFormGenerations.clear();
+    values = {
+      for (final row in widget.items)
+        for (final item in row) item.key: item.value,
+    };
+    for (final row in widget.items) {
+      for (final item in row) {
+        if (item is GeneratedFormSubForm) {
+          _initSubFormValues(item);
+        }
       }
     }
-
-    formInputs = widget.items.asMap().entries.map((row) {
-      return row.value.asMap().entries.map((e) {
-        final formItem = e.value;
-        if (formItem is GeneratedFormTextField) {
-          return _initTextField(formItem);
-        } else if (formItem is GeneratedFormDropdown) {
-          return _initDropdown(formItem);
-        } else if (formItem is GeneratedFormSlider) {
-          return _initSlider(formItem);
-        } else if (formItem is GeneratedFormSubForm) {
-          _initSubForm(formItem);
-          return Container();
-        } else if (formItem is GeneratedFormSwitch) {
-          return const SizedBox.shrink();
-        } else {
-          throw ObtainiumError(
-            'Unrecognized form item type: ${formItem.runtimeType}',
-            unexpected: true,
-          );
-        }
-      }).toList();
-    }).toList();
   }
 
   @override
@@ -414,8 +360,7 @@ class _GeneratedFormState extends State<GeneratedForm> {
   @override
   void didUpdateWidget(covariant GeneratedForm oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (widget.key != initKey ||
-        _computeItemsHash(widget.items) != _itemsHash) {
+    if (_itemsSignature(widget.items) != _itemsSignature(oldWidget.items)) {
       _initFormData();
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (!mounted) return;
@@ -426,7 +371,7 @@ class _GeneratedFormState extends State<GeneratedForm> {
 
   @override
   void dispose() {
-    for (final c in _textControllers) {
+    for (final c in _textControllers.values) {
       c.dispose();
     }
     _fieldKeys.clear();
@@ -440,12 +385,15 @@ class _GeneratedFormState extends State<GeneratedForm> {
     bool isLast = true,
   }) {
     final compact = item.items.length == 1 && item.items[0].length == 1;
-    final n = values[fieldKey].length;
+    final List<Map<String, dynamic>> entries =
+        values[fieldKey] as List<Map<String, dynamic>>;
+    final n = entries.length;
+    // Bumping the generation changes every child's key, so all entries are
+    // re-initialized from [values] after a structural add/remove instead of
+    // reusing another entry's field state.
+    final generation = _subFormGenerations[fieldKey] ?? 0;
     final List<Widget> cards = [];
     for (int i = 0; i < n; i++) {
-      final internalFormKey = ValueKey(
-        generateDeterministicId(n, seed2: i, seed3: _subFormGenerationCount),
-      );
       final isLastEntry = i == n - 1;
       cards.add(
         ConnectedCard(
@@ -468,23 +416,19 @@ class _GeneratedFormState extends State<GeneratedForm> {
                 const SizedBox(height: 8),
               ],
               GeneratedForm(
-                key: internalFormKey,
+                key: ValueKey('$fieldKey#$i#$generation'),
                 noTilePadding: widget.noTilePadding,
                 items: cloneFormItems(item.items)
                     .map(
                       (x) => x.map((y) {
-                        y.value = values[fieldKey]?[i]?[y.key];
-                        y.key = '${y.key.toString()},$internalFormKey';
+                        y.value = entries[i][y.key];
                         return y;
                       }).toList(),
                     )
                     .toList(),
                 onValueChanges: (subValues, valid, isBuilding) {
-                  final cleaned = subValues.map(
-                    (key, value) => MapEntry(key.split(',')[0], value),
-                  );
                   if (valid) {
-                    values[fieldKey]?[i] = cleaned;
+                    entries[i] = subValues;
                   }
                   notifyFormChange(
                     forceInvalid: !valid,
@@ -503,15 +447,14 @@ class _GeneratedFormState extends State<GeneratedForm> {
                       visualDensity: VisualDensity.compact,
                       tooltip: tr('remove'),
                       icon: const Icon(Icons.delete_outline_rounded),
-                      onPressed: n > 0
-                          ? () {
-                              final temp = List.from(values[fieldKey]);
-                              temp.removeAt(i);
-                              values[fieldKey] = List.from(temp);
-                              _subFormGenerationCount++;
-                              notifyFormChange();
-                            }
-                          : null,
+                      onPressed: () {
+                        final temp = List<Map<String, dynamic>>.from(entries);
+                        temp.removeAt(i);
+                        values[fieldKey] = temp;
+                        _subFormGenerations[fieldKey] = generation + 1;
+                        setState(() {});
+                        notifyFormChange();
+                      },
                     ),
                     const Spacer(),
                     if (isLastEntry)
@@ -522,10 +465,11 @@ class _GeneratedFormState extends State<GeneratedForm> {
                           ).colorScheme.primary,
                         ),
                         onPressed: () {
-                          values[fieldKey].add(
+                          entries.add(
                             getDefaultValuesFromFormItems(item.items),
                           );
-                          _subFormGenerationCount++;
+                          _subFormGenerations[fieldKey] = generation + 1;
+                          setState(() {});
                           notifyFormChange();
                         },
                         icon: const Icon(Icons.add),
@@ -555,10 +499,9 @@ class _GeneratedFormState extends State<GeneratedForm> {
                     foregroundColor: Theme.of(context).colorScheme.primary,
                   ),
                   onPressed: () {
-                    values[fieldKey].add(
-                      getDefaultValuesFromFormItems(item.items),
-                    );
-                    _subFormGenerationCount++;
+                    entries.add(getDefaultValuesFromFormItems(item.items));
+                    _subFormGenerations[fieldKey] = generation + 1;
+                    setState(() {});
                     notifyFormChange();
                   },
                   icon: const Icon(Icons.add),
@@ -577,49 +520,57 @@ class _GeneratedFormState extends State<GeneratedForm> {
     );
   }
 
+  Widget _buildItem(
+    GeneratedFormItem item, {
+    required bool isFirst,
+    required bool isLast,
+  }) {
+    if (item is GeneratedFormTextField) return _buildTextField(item);
+    if (item is GeneratedFormDropdown) return _buildDropdown(item);
+    if (item is GeneratedFormSlider) return _buildSlider(item);
+    if (item is GeneratedFormSwitch) {
+      return ToggleTile(
+        label: tr(item.label),
+        value: values[item.key] as bool,
+        noPadding: widget.noTilePadding,
+        onChanged: item.disabled
+            ? null
+            : hapticSwitchOnChanged(context, (value) {
+                setState(() {
+                  values[item.key] = value;
+                  notifyFormChange();
+                });
+              }),
+      );
+    }
+    if (item is GeneratedFormSubForm) {
+      return _buildSubForm(item, item.key, isFirst: isFirst, isLast: isLast);
+    }
+    throw ObtainiumError(
+      'Unrecognized form item type: ${item.runtimeType}',
+      unexpected: true,
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
-    final List<List<Widget>> renderedInputs = [
-      for (final row in formInputs) [...row],
-    ];
-    for (var r = 0; r < renderedInputs.length; r++) {
-      for (var e = 0; e < renderedInputs[r].length; e++) {
-        final item = widget.items[r][e];
-        final String fieldKey = item.key;
-        if (item is GeneratedFormSwitch) {
-          renderedInputs[r][e] = ToggleTile(
-            label: tr(item.label),
-            value: values[fieldKey] as bool,
-            noPadding: widget.noTilePadding,
-            onChanged: item.disabled
-                ? null
-                : hapticSwitchOnChanged(context, (value) {
-                    setState(() {
-                      values[fieldKey] = value;
-                      notifyFormChange();
-                    });
-                  }),
-          );
-        } else if (item is GeneratedFormSubForm) {
-          renderedInputs[r][e] = _buildSubForm(
-            item,
-            fieldKey,
-            isFirst: r == 0,
-            isLast: r == widget.items.length - 1,
-          );
-        }
-      }
-    }
-
     final List<Widget> inputRowWidgets = [];
-    renderedInputs.asMap().entries.forEach((rowInputs) {
+    for (var r = 0; r < widget.items.length; r++) {
       final List<Widget> rowItems = [];
-      rowInputs.value.asMap().entries.forEach((rowInput) {
-        if (rowInput.key > 0) {
+      for (var e = 0; e < widget.items[r].length; e++) {
+        if (e > 0) {
           rowItems.add(const SizedBox(width: 20));
         }
-        rowItems.add(Expanded(child: rowInput.value));
-      });
+        rowItems.add(
+          Expanded(
+            child: _buildItem(
+              widget.items[r][e],
+              isFirst: r == 0,
+              isLast: r == widget.items.length - 1,
+            ),
+          ),
+        );
+      }
       inputRowWidgets.add(
         Row(
           mainAxisAlignment: MainAxisAlignment.start,
@@ -627,7 +578,7 @@ class _GeneratedFormState extends State<GeneratedForm> {
           children: rowItems,
         ),
       );
-    });
+    }
 
     if (widget.tileMode) {
       bool isFieldRow(int r) =>

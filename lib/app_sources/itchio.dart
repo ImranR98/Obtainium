@@ -275,9 +275,7 @@ class ItchIO extends AppSource {
       final String baseUrl = standardUrl.replaceAll(RegExp(r'/$'), '');
 
       final res = await sourceRequest(standardUrl, additionalSettings);
-      if (res.statusCode != 200) {
-        throw getObtainiumHttpError(res);
-      }
+      ensureHttpSuccess(res);
       final body = res.body;
       final csrfToken = _findCsrf(body);
       final cookies = res.headers['set-cookie'];

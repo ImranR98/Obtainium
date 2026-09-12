@@ -228,148 +228,6 @@ class _ImportSectionState extends State<ImportSection> {
 
   @override
   Widget build(BuildContext context) {
-    final appsProvider = context.read<AppsProvider>();
-    final settingsProvider = context.read<SettingsProvider>();
-
-    void runObtainiumImport() {
-      settingsProvider.selectionClick();
-      FilePicker.pickFile()
-          .then((file) async {
-            if (file == null) {
-              if (!context.mounted) return;
-              showMessage(tr('cancelled'), context);
-              return;
-            }
-            if (mounted) {
-              setState(() {
-                importInProgress = true;
-              });
-            }
-            final String data;
-            if (file.path != null) {
-              data = await File(file.path!).readAsString();
-            } else {
-              final bytesData = await file.readAsBytes();
-              if (bytesData.isNotEmpty) {
-                data = utf8.decode(bytesData);
-              } else {
-                throw ObtainiumError(tr('noFilePickerAvailable'));
-              }
-            }
-            try {
-              jsonDecode(data);
-            } catch (e) {
-              throw ObtainiumError(tr('invalidInput'));
-            }
-            // Importing overwrites matching apps and applies the file's
-            // settings; make that explicit before touching existing data.
-            final conflictCount = appsProvider
-                .appIdsInImportJSON(data)
-                .where((id) => appsProvider.apps.containsKey(id))
-                .length;
-            if (conflictCount > 0) {
-              if (!context.mounted) return;
-              final proceed = await showConfirmDialog(
-                context,
-                title: tr('importX', args: [tr('appsString').toLowerCase()]),
-                content: Text(
-                  tr(
-                    'importOverwriteWarning',
-                    args: [conflictCount.toString()],
-                  ),
-                ),
-                confirmText: tr('continue'),
-              );
-              if (!proceed) return;
-            }
-            final value = await appsProvider.import(data);
-            appsProvider.addMissingCategories(settingsProvider);
-            if (!context.mounted) return;
-            showMessage(
-              '${tr('importedX', args: [plural('apps', value.key.length).toLowerCase()])}${value.value ? ' + ${tr('settings').toLowerCase()}' : ''}',
-              context,
-            );
-          })
-          .catchError((e) {
-            if (!context.mounted) return;
-            _showImportError(e, context);
-          })
-          .whenComplete(() {
-            if (mounted) {
-              setState(() {
-                importInProgress = false;
-              });
-            }
-          });
-    }
-
-    Future<void> runMassSourceImport(MassAppUrlSource source) async {
-      try {
-        final values = await showDialog<Map<String, dynamic>?>(
-          context: context,
-          builder: (BuildContext ctx) {
-            return GeneratedFormModal(
-              title: tr('importX', args: [source.name]),
-              items: source.requiredArgs
-                  .map((e) => [GeneratedFormTextField(e, label: e)])
-                  .toList(),
-            );
-          },
-        );
-        if (values != null) {
-          if (mounted) {
-            setState(() {
-              importInProgress = true;
-            });
-          }
-          final urlsWithDescriptions = await source.getUrlsWithDescriptions(
-            values.values.map((e) => e.toString()).toList(),
-          );
-          if (!context.mounted) return;
-          final selectedUrls = await showDialog<List<String>?>(
-            context: context,
-            builder: (BuildContext ctx) {
-              return SelectionModal(entries: urlsWithDescriptions);
-            },
-          );
-          if (selectedUrls != null) {
-            final errors = await appsProvider.addAppsByURL(selectedUrls);
-            if (!context.mounted) return;
-            if (errors.isEmpty) {
-              showMessage(
-                tr(
-                  'importedX',
-                  args: [plural('apps', selectedUrls.length).toLowerCase()],
-                ),
-                context,
-              );
-            } else {
-              unawaited(
-                showDialog(
-                  context: context,
-                  builder: (BuildContext ctx) {
-                    return ImportErrorDialog(
-                      urlsLength: selectedUrls.length,
-                      errors: errors,
-                    );
-                  },
-                ),
-              );
-            }
-          }
-        }
-      } catch (e) {
-        if (!context.mounted) return;
-        showError(e, context);
-      } finally {
-        if (mounted) {
-          setState(() {
-            importInProgress = false;
-          });
-        }
-      }
-    }
-
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       spacing: 12,
@@ -381,7 +239,7 @@ class _ImportSectionState extends State<ImportSection> {
           child: ActionListTile(
             icon: Icons.download_outlined,
             label: tr('obtainiumImport'),
-            onTap: importInProgress ? null : runObtainiumImport,
+            onTap: importInProgress ? null : () => _runObtainiumImport(context),
           ),
         ),
         Column(
@@ -409,7 +267,7 @@ class _ImportSectionState extends State<ImportSection> {
                   label: tr('importX', args: [source.name]),
                   onTap: importInProgress
                       ? null
-                      : () => runMassSourceImport(source),
+                      : () => _runMassSourceImport(context, source),
                 ),
               ),
             ];
@@ -425,6 +283,148 @@ class _ImportSectionState extends State<ImportSection> {
         ),
       ],
     );
+  }
+
+  Future<void> _runObtainiumImport(BuildContext context) async {
+    final appsProvider = context.read<AppsProvider>();
+    final settingsProvider = context.read<SettingsProvider>();
+    settingsProvider.selectionClick();
+    final PlatformFile? file;
+    try {
+      file = await FilePicker.pickFile();
+    } catch (e) {
+      if (context.mounted) _showImportError(e, context);
+      return;
+    }
+    if (file == null) {
+      if (context.mounted) showMessage(tr('cancelled'), context);
+      return;
+    }
+    if (mounted) {
+      setState(() {
+        importInProgress = true;
+      });
+    }
+    try {
+      final String data;
+      if (file.path != null) {
+        data = await File(file.path!).readAsString();
+      } else {
+        final bytesData = await file.readAsBytes();
+        if (bytesData.isEmpty) {
+          throw ObtainiumError(tr('noFilePickerAvailable'));
+        }
+        data = utf8.decode(bytesData);
+      }
+      try {
+        jsonDecode(data);
+      } catch (e) {
+        throw ObtainiumError(tr('invalidInput'));
+      }
+      // Importing overwrites matching apps and applies the file's settings;
+      // make that explicit before touching existing data.
+      final conflictCount = appsProvider
+          .appIdsInImportJSON(data)
+          .where((id) => appsProvider.apps.containsKey(id))
+          .length;
+      if (conflictCount > 0) {
+        if (!context.mounted) return;
+        final proceed = await showConfirmDialog(
+          context,
+          title: tr('importX', args: [tr('appsString').toLowerCase()]),
+          content: Text(
+            tr('importOverwriteWarning', args: [conflictCount.toString()]),
+          ),
+          confirmText: tr('continue'),
+        );
+        if (!proceed) return;
+      }
+      final value = await appsProvider.import(data);
+      appsProvider.addMissingCategories(settingsProvider);
+      if (!context.mounted) return;
+      showMessage(
+        '${tr('importedX', args: [plural('apps', value.key.length).toLowerCase()])}${value.value ? ' + ${tr('settings').toLowerCase()}' : ''}',
+        context,
+      );
+    } catch (e) {
+      if (context.mounted) _showImportError(e, context);
+    } finally {
+      if (mounted) {
+        setState(() {
+          importInProgress = false;
+        });
+      }
+    }
+  }
+
+  Future<void> _runMassSourceImport(
+    BuildContext context,
+    MassAppUrlSource source,
+  ) async {
+    final appsProvider = context.read<AppsProvider>();
+    try {
+      final values = await showDialog<Map<String, dynamic>?>(
+        context: context,
+        builder: (BuildContext ctx) {
+          return GeneratedFormModal(
+            title: tr('importX', args: [source.name]),
+            items: source.requiredArgs
+                .map((e) => [GeneratedFormTextField(e, label: e)])
+                .toList(),
+          );
+        },
+      );
+      if (values != null) {
+        if (mounted) {
+          setState(() {
+            importInProgress = true;
+          });
+        }
+        final urlsWithDescriptions = await source.getUrlsWithDescriptions(
+          values.values.map((e) => e.toString()).toList(),
+        );
+        if (!context.mounted) return;
+        final selectedUrls = await showDialog<List<String>?>(
+          context: context,
+          builder: (BuildContext ctx) {
+            return SelectionModal(entries: urlsWithDescriptions);
+          },
+        );
+        if (selectedUrls != null) {
+          final errors = await appsProvider.addAppsByURL(selectedUrls);
+          if (!context.mounted) return;
+          if (errors.isEmpty) {
+            showMessage(
+              tr(
+                'importedX',
+                args: [plural('apps', selectedUrls.length).toLowerCase()],
+              ),
+              context,
+            );
+          } else {
+            unawaited(
+              showDialog(
+                context: context,
+                builder: (BuildContext ctx) {
+                  return ImportErrorDialog(
+                    urlsLength: selectedUrls.length,
+                    errors: errors,
+                  );
+                },
+              ),
+            );
+          }
+        }
+      }
+    } catch (e) {
+      if (context.mounted) showError(e, context);
+    } finally {
+      if (mounted) {
+        setState(() {
+          importInProgress = false;
+        });
+      }
+    }
   }
 }
 
@@ -597,7 +597,7 @@ class _ExportSectionState extends State<ExportSection> {
   }
 }
 
-class ImportErrorDialog extends StatefulWidget {
+class ImportErrorDialog extends StatelessWidget {
   const ImportErrorDialog({
     super.key,
     required this.urlsLength,
@@ -607,11 +607,6 @@ class ImportErrorDialog extends StatefulWidget {
   final int urlsLength;
   final List<List<String>> errors;
 
-  @override
-  State<ImportErrorDialog> createState() => _ImportErrorDialogState();
-}
-
-class _ImportErrorDialogState extends State<ImportErrorDialog> {
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
@@ -624,8 +619,8 @@ class _ImportErrorDialogState extends State<ImportErrorDialog> {
             tr(
               'importedXOfYApps',
               args: [
-                (widget.urlsLength - widget.errors.length).toString(),
-                widget.urlsLength.toString(),
+                (urlsLength - errors.length).toString(),
+                urlsLength.toString(),
               ],
             ),
             style: Theme.of(context).textTheme.bodyLarge,
@@ -635,7 +630,7 @@ class _ImportErrorDialogState extends State<ImportErrorDialog> {
             tr('followingURLsHadErrors'),
             style: Theme.of(context).textTheme.bodyLarge,
           ),
-          ...widget.errors.map((e) {
+          ...errors.map((e) {
             return Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
@@ -683,7 +678,8 @@ class SelectionModal extends StatefulWidget {
 }
 
 class _SelectionModalState extends State<SelectionModal> {
-  Map<MapEntry<String, List<String>>, bool> entrySelections = {};
+  /// Selection state keyed by entry URL.
+  Map<String, bool> entrySelections = {};
   String filterRegex = '';
   @override
   void didUpdateWidget(SelectionModal oldWidget) {
@@ -702,25 +698,22 @@ class _SelectionModalState extends State<SelectionModal> {
   }
 
   void selectOnlyOne(String url) {
-    for (var e in entrySelections.keys) {
-      entrySelections[e] = e.key == url;
+    for (var key in entrySelections.keys) {
+      entrySelections[key] = key == url;
     }
   }
 
-  void selectAll({
-    bool deselect = false,
-    Iterable<MapEntry<String, List<String>>>? visible,
-  }) {
+  void selectAll({bool deselect = false, Iterable<String>? visible}) {
     context.read<SettingsProvider>().selectionClick();
-    for (var e in visible ?? entrySelections.keys) {
-      entrySelections[e] = !deselect;
+    for (var key in visible ?? entrySelections.keys) {
+      entrySelections[key] = !deselect;
     }
   }
 
   void _resetEntrySelections() {
     entrySelections.clear();
     for (var entry in widget.entries.entries) {
-      entrySelections[entry] =
+      entrySelections[entry.key] =
           widget.selectedByDefault &&
           !widget.onlyOneSelectionAllowed &&
           !widget.deselectThese.contains(entry.key);
@@ -740,15 +733,16 @@ class _SelectionModalState extends State<SelectionModal> {
     }
     // Operate on what the user can actually see, so tapping Select all while
     // a filter is active doesn't silently select hidden entries.
-    final visibleSelected = visibleEntries
-        .where((e) => entrySelections[e] == true)
+    final visibleUrls = visibleEntries.map((e) => e.key).toList();
+    final visibleSelected = visibleUrls
+        .where((url) => entrySelections[url] == true)
         .length;
     return visibleSelected == 0
         ? TextButton(
             style: const ButtonStyle(visualDensity: VisualDensity.compact),
             onPressed: () {
               setState(() {
-                selectAll(visible: visibleEntries);
+                selectAll(visible: visibleUrls);
               });
             },
             child: Text(tr('selectAll')),
@@ -757,21 +751,21 @@ class _SelectionModalState extends State<SelectionModal> {
             style: const ButtonStyle(visualDensity: VisualDensity.compact),
             onPressed: () {
               setState(() {
-                selectAll(deselect: true, visible: visibleEntries);
+                selectAll(deselect: true, visible: visibleUrls);
               });
             },
             child: Text(tr('deselectX', args: [visibleSelected.toString()])),
           );
   }
 
-  void _selectThis(MapEntry<String, List<String>> entry, bool? value) {
+  void _selectThis(String url, bool? value) {
     context.read<SettingsProvider>().selectionClick();
     setState(() {
       value ??= false;
       if (value! && widget.onlyOneSelectionAllowed) {
-        selectOnlyOne(entry.key);
+        selectOnlyOne(url);
       } else {
-        entrySelections[entry] = value!;
+        entrySelections[url] = value!;
       }
     });
   }
@@ -822,7 +816,7 @@ class _SelectionModalState extends State<SelectionModal> {
         onTap: widget.titlesAreLinks
             ? null
             : () {
-                _selectThis(entry, !(entrySelections[entry] ?? false));
+                _selectThis(entry.key, !(entrySelections[entry.key] ?? false));
               },
         child: _buildUrlLink(entry),
       ),
@@ -844,9 +838,9 @@ class _SelectionModalState extends State<SelectionModal> {
     return Row(
       children: [
         Checkbox(
-          value: entrySelections[entry],
+          value: entrySelections[entry.key],
           onChanged: (value) {
-            _selectThis(entry, value);
+            _selectThis(entry.key, value);
           },
         ),
         const SizedBox(width: 8),
@@ -860,7 +854,10 @@ class _SelectionModalState extends State<SelectionModal> {
                 onTap: widget.titlesAreLinks
                     ? null
                     : () {
-                        _selectThis(entry, !(entrySelections[entry] ?? false));
+                        _selectThis(
+                          entry.key,
+                          !(entrySelections[entry.key] ?? false),
+                        );
                       },
                 child: _buildUrlLink(entry),
               ),
@@ -868,7 +865,10 @@ class _SelectionModalState extends State<SelectionModal> {
                   ? const SizedBox.shrink()
                   : InkWell(
                       onTap: () {
-                        _selectThis(entry, !(entrySelections[entry] ?? false));
+                        _selectThis(
+                          entry.key,
+                          !(entrySelections[entry.key] ?? false),
+                        );
                       },
                       child: _buildDescriptionText(entry),
                     ),
@@ -884,7 +884,7 @@ class _SelectionModalState extends State<SelectionModal> {
   /// painted but never focused. D-pad users toggle by pressing the center
   /// button on the row instead of having to land on a small control.
   Widget _buildTVSelectTile(MapEntry<String, List<String>> entry) {
-    final selected = entrySelections[entry] ?? false;
+    final selected = entrySelections[entry.key] ?? false;
     return TvFocusRing(
       borderRadius: 16,
       child: ListTile(
@@ -916,7 +916,7 @@ class _SelectionModalState extends State<SelectionModal> {
           if (widget.onlyOneSelectionAllowed) {
             Navigator.of(context).pop([entry.key]);
           } else {
-            _selectThis(entry, !selected);
+            _selectThis(entry.key, !selected);
           }
         },
       ),
@@ -943,7 +943,7 @@ class _SelectionModalState extends State<SelectionModal> {
                 : () => Navigator.of(context).pop(
                     entrySelections.entries
                         .where((entry) => entry.value)
-                        .map((e) => e.key.key)
+                        .map((e) => e.key)
                         .toList(),
                   ),
             child: Text(
@@ -963,33 +963,30 @@ class _SelectionModalState extends State<SelectionModal> {
   @override
   Widget build(BuildContext context) {
     final isTV = context.read<SettingsProvider>().isTV;
-    final Map<MapEntry<String, List<String>>, bool> filteredEntrySelections =
-        {};
     final filterRegexCompiled = filterRegex.isEmpty
         ? null
         : RegExp(filterRegex);
-    final filterRegexCompiledCI = filterRegex.isEmpty
-        ? null
-        : RegExp(filterRegex, caseSensitive: false);
-    entrySelections.forEach((key, value) {
-      final searchableText = key.value.isEmpty ? key.key : key.value[0];
+    final List<MapEntry<String, List<String>>> filteredEntries = [];
+    String searchableText(MapEntry<String, List<String>> entry) =>
+        entry.value.isEmpty ? entry.key : entry.value[0];
+    for (final entry in widget.entries.entries) {
       if (filterRegexCompiled == null ||
-          filterRegexCompiled.hasMatch(searchableText)) {
-        filteredEntrySelections.putIfAbsent(key, () => value);
+          filterRegexCompiled.hasMatch(searchableText(entry))) {
+        filteredEntries.add(entry);
       }
-    });
-    if (filterRegex.isNotEmpty && filteredEntrySelections.isEmpty) {
-      entrySelections.forEach((key, value) {
-        final searchableText = key.value.isEmpty ? key.key : key.value[0];
-        if (filterRegexCompiledCI!.hasMatch(searchableText)) {
-          filteredEntrySelections.putIfAbsent(key, () => value);
+    }
+    if (filterRegex.isNotEmpty && filteredEntries.isEmpty) {
+      final filterRegexCompiledCI = RegExp(filterRegex, caseSensitive: false);
+      for (final entry in widget.entries.entries) {
+        if (filterRegexCompiledCI.hasMatch(searchableText(entry))) {
+          filteredEntries.add(entry);
         }
-      });
+      }
     }
 
     final selectedRadioKey = entrySelections.entries
         .where((e) => e.value)
-        .map((e) => e.key.key)
+        .map((e) => e.key)
         .firstOrNull;
     void onRadioChanged(String? value) {
       if (value == null) return;
@@ -1038,7 +1035,7 @@ class _SelectionModalState extends State<SelectionModal> {
                 }
               },
             ),
-            ...filteredEntrySelections.keys.map((entry) {
+            ...filteredEntries.map((entry) {
               if (isTV) return _buildTVSelectTile(entry);
               return widget.onlyOneSelectionAllowed
                   ? _buildSingleSelectTile(entry)
@@ -1049,7 +1046,7 @@ class _SelectionModalState extends State<SelectionModal> {
         ),
       ),
       actions: [
-        _buildSelectAllButton(filteredEntrySelections.keys.toList()),
+        _buildSelectAllButton(filteredEntries),
         TextButton(
           autofocus: isTV,
           onPressed: () {
@@ -1064,7 +1061,7 @@ class _SelectionModalState extends State<SelectionModal> {
                   Navigator.of(context).pop(
                     entrySelections.entries
                         .where((entry) => entry.value)
-                        .map((e) => e.key.key)
+                        .map((e) => e.key)
                         .toList(),
                   );
                 },
@@ -1101,9 +1098,6 @@ class ImportFromURLListController extends ChangeNotifier {
   ImportFromURLListController({SourceProvider? sourceProvider})
     : sourceProvider = sourceProvider ?? SourceProvider();
 
-  void showImportError(dynamic e, BuildContext context) =>
-      _showImportError(e, context);
-
   Future<void> importFromFile(BuildContext context) async {
     try {
       final file = await FilePicker.pickFile();
@@ -1139,7 +1133,7 @@ class ImportFromURLListController extends ChangeNotifier {
       notifyListeners();
     } catch (e) {
       if (context.mounted) {
-        showImportError(e, context);
+        _showImportError(e, context);
       }
     }
   }

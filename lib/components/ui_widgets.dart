@@ -90,10 +90,7 @@ void showMessage(dynamic e, BuildContext context, {bool isError = false}) {
           ),
           content: GestureDetector(
             onLongPress: () {
-              Clipboard.setData(ClipboardData(text: e.toString()));
-              ScaffoldMessenger.of(
-                context,
-              ).showSnackBar(SnackBar(content: Text(tr('copiedToClipboard'))));
+              unawaited(copyToClipboard(context, e.toString()));
             },
             child: Text(e.toString()),
           ),
@@ -694,45 +691,6 @@ class ToggleTile extends StatelessWidget {
           ],
         ),
       ),
-    );
-  }
-}
-
-class SectionHeader extends StatelessWidget {
-  final String title;
-
-  const SectionHeader({super.key, required this.title});
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(4, 8, 4, 8),
-      child: Text(
-        title,
-        style: Theme.of(context).textTheme.titleSmall?.copyWith(
-          fontWeight: FontWeight.bold,
-          color: Theme.of(context).colorScheme.primary,
-        ),
-      ),
-    );
-  }
-}
-
-class Section extends StatelessWidget {
-  final String title;
-  final List<Widget> children;
-
-  const Section({super.key, required this.title, required this.children});
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      spacing: 3,
-      children: [
-        SectionHeader(title: title),
-        ...shapeCardTiles(children),
-      ],
     );
   }
 }

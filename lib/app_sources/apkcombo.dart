@@ -48,9 +48,7 @@ class APKCombo extends AppSource {
       '$standardUrl/download/apk',
       additionalSettings,
     );
-    if (res.statusCode != 200) {
-      throw getObtainiumHttpError(res);
-    }
+    ensureHttpSuccess(res);
     final html = parse(res.body);
     return html
         .querySelectorAll('#variants-tab > div > ul > li')
@@ -131,9 +129,7 @@ class APKCombo extends AppSource {
         throw NoReleasesError();
       }
       final preres = await sourceRequest(standardUrl, additionalSettings);
-      if (preres.statusCode != 200) {
-        throw getObtainiumHttpError(preres);
-      }
+      ensureHttpSuccess(preres);
       final res = parse(preres.body);
       final String? version = res.querySelector('div.version')?.text.trim();
       if (version == null || version.isEmpty) {

@@ -64,7 +64,6 @@ class SettingsProvider with ChangeNotifier {
   String? defaultAppDir;
   bool justStarted = true;
   bool isTV = false;
-  bool _silent = false;
 
   T? _get<T>(String key) {
     final value = prefs?.get(key);
@@ -86,7 +85,6 @@ class SettingsProvider with ChangeNotifier {
 
   Future<void> initializeSettings() async {
     prefs = await SharedPreferences.getInstance();
-    prefsInstance ??= prefs;
     _cachedDefaultAppDir ??= (await getAppStorageDir()).path;
     if (_cachedIsTV == null) {
       final info = await DeviceInfoPlugin().androidInfo;
@@ -133,8 +131,6 @@ class SettingsProvider with ChangeNotifier {
       unawaited(prefs?.remove('useShizuku') ?? Future.value());
     }
   }
-
-  static SharedPreferences? prefsInstance;
 
   bool get useSystemFont {
     return _getBool('useSystemFont') ?? false;
@@ -887,27 +883,5 @@ class SettingsProvider with ChangeNotifier {
   set shizukuPretendToBeGooglePlay(bool val) {
     prefs?.setBool('shizukuPretendToBeGooglePlay', val);
     notifyListeners();
-  }
-
-  /// Runs [updates] with listener notifications suppressed, then calls
-  /// [notifyListeners] once at the end. Use this when multiple settings
-  /// are being changed together to avoid unnecessary rebuilds.
-  /// TODO: modify individual setter methods to skip their own
-  /// notifyListeners() calls when batched.
-  void batchUpdate(void Function() updates) {
-    _silent = true;
-    try {
-      updates();
-    } finally {
-      _silent = false;
-      notifyListeners();
-    }
-  }
-
-  @override
-  void notifyListeners() {
-    if (!_silent) {
-      super.notifyListeners();
-    }
   }
 }

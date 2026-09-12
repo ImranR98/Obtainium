@@ -53,9 +53,7 @@ class CoolApk extends AppSource {
       final detailUrl = '$_apiBaseUrl/v6/apk/detail?id=$appId';
       final res = await sourceRequest(detailUrl, additionalSettings);
 
-      if (res.statusCode != 200) {
-        throw getObtainiumHttpError(res);
-      }
+      ensureHttpSuccess(res);
 
       Map<String, dynamic> json;
       try {

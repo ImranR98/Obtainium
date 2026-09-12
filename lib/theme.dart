@@ -52,6 +52,18 @@ ThemeData buildObtainiumTheme(
     overlayColor: focusOverlay(colorScheme.onPrimary.withValues(alpha: 0.4)),
   );
 
+  const inputDecoration = InputDecorationThemeData(
+    filled: true,
+    fillColor: null,
+    contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+    border: InputBorder.none,
+    enabledBorder: InputBorder.none,
+    focusedBorder: InputBorder.none,
+    errorBorder: InputBorder.none,
+    focusedErrorBorder: InputBorder.none,
+    disabledBorder: InputBorder.none,
+  );
+
   return ThemeData(
     useMaterial3: true,
     colorScheme: colorScheme,
@@ -152,29 +164,9 @@ ThemeData buildObtainiumTheme(
       hoverElevation: 8,
       highlightElevation: 6,
     ),
-    inputDecorationTheme: const InputDecorationThemeData(
-      filled: true,
-      fillColor: null,
-      contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-      border: InputBorder.none,
-      enabledBorder: InputBorder.none,
-      focusedBorder: InputBorder.none,
-      errorBorder: InputBorder.none,
-      focusedErrorBorder: InputBorder.none,
-      disabledBorder: InputBorder.none,
-    ),
+    inputDecorationTheme: inputDecoration,
     dropdownMenuTheme: DropdownMenuThemeData(
-      inputDecorationTheme: const InputDecorationThemeData(
-        filled: true,
-        fillColor: null,
-        contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-        border: InputBorder.none,
-        enabledBorder: InputBorder.none,
-        focusedBorder: InputBorder.none,
-        errorBorder: InputBorder.none,
-        focusedErrorBorder: InputBorder.none,
-        disabledBorder: InputBorder.none,
-      ),
+      inputDecorationTheme: inputDecoration,
       menuStyle: MenuStyle(
         shape: WidgetStatePropertyAll(
           RoundedSuperellipseBorder(borderRadius: BorderRadius.circular(16)),
@@ -225,13 +217,6 @@ BorderRadius positionalTileRadius({
   );
 }
 
-RoundedSuperellipseBorder positionalTileShape({
-  required bool isFirst,
-  required bool isLast,
-}) => RoundedSuperellipseBorder(
-  borderRadius: positionalTileRadius(isFirst: isFirst, isLast: isLast),
-);
-
 abstract final class ExpressiveMotion {
   static const Curve emphasized = Curves.easeInOutCubicEmphasized;
 
@@ -248,5 +233,4 @@ abstract final class AppPaddings {
 abstract final class AppSpacings {
   static const double sectionGap = 20;
   static const double elementGap = 8;
-  static const double tightGap = 4;
 }

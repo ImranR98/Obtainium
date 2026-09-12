@@ -119,7 +119,7 @@ class AppInMemory {
   );
 
   String get name => app.finalName;
-  String get author => app.overrideAuthor ?? app.finalAuthor;
+  String get author => app.finalAuthor;
 
   bool get needsRefreshBeforeDownload =>
       app.settings.getBool('refreshBeforeDownload') ||
@@ -148,10 +148,6 @@ class DownloadedDir {
   DownloadedDirType type;
   DownloadedDir(this.appId, this.file, this.extracted, this.type);
 }
-
-/// Delegates to [VersionService.findStandardFormatsForVersion].
-Set<String> findStandardFormatsForVersion(String version, bool strict) =>
-    VersionService().findStandardFormatsForVersion(version, strict);
 
 /// Removes all matching elements and appends the last match to the end.
 /// This is intentionally deduplicating — only one instance is re-added.
@@ -225,7 +221,7 @@ Future<File> downloadFileWithRetry(
   }
 }
 
-String hashListOfLists(List<List<int>> data) {
+String _hashListOfLists(List<List<int>> data) {
   final bytes = utf8.encode(jsonEncode(data));
   return sha256.convert(bytes).toString().substring(0, 8);
 }
@@ -275,7 +271,7 @@ Future<String> checkPartialDownloadHash(
       )..url = url;
     }
     final List<List<int>> bytes = await response.take(bytesToGrab).toList();
-    return hashListOfLists(bytes);
+    return _hashListOfLists(bytes);
   } finally {
     client.close();
   }
@@ -715,6 +711,16 @@ Future<PackageInfo?> getInstalledInfo(String? packageName) async {
     } catch (_) {}
   }
   return null;
+}
+
+/// The on-device version of [app], as either its version code or version name
+/// depending on the app's `useVersionCodeAsOSVersion` setting. Null when the
+/// app is not installed.
+String? realInstalledVersionOf(App app, PackageInfo? installedInfo) {
+  if (installedInfo == null) return null;
+  return app.settings.getBool('useVersionCodeAsOSVersion')
+      ? installedInfo.versionCode?.toString()
+      : installedInfo.versionName;
 }
 
 Future<Directory> getAppStorageDir() async {

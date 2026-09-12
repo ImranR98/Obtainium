@@ -12,6 +12,7 @@ import 'package:obtainium/core/logging/app_logger.dart';
 import 'package:obtainium/app_sources/html.dart';
 import 'package:obtainium/components/generated_form_renderer.dart';
 import 'package:obtainium/utils/color_utils.dart';
+import 'package:obtainium/providers/app_json_migration.dart';
 import 'package:obtainium/providers/apps_provider.dart';
 import 'package:obtainium/providers/notifications_provider.dart';
 import 'package:obtainium/providers/settings_provider.dart';
@@ -40,13 +41,6 @@ extension AppsProviderLifecycle on AppsProvider {
     );
     return app.settings.getBool('naiveStandardVersionDetection') ||
         source.naiveStandardVersionDetection;
-  }
-
-  String? _getRealInstalledVersion(App app, PackageInfo? installedInfo) {
-    if (installedInfo == null) return null;
-    return app.settings.getBool('useVersionCodeAsOSVersion')
-        ? installedInfo.versionCode?.toString()
-        : installedInfo.versionName;
   }
 
   Future<Directory> getAppsDir() async {
@@ -109,7 +103,7 @@ extension AppsProviderLifecycle on AppsProvider {
     final naiveStandardVersionDetection = _getNaiveStandardVersionDetection(
       app.app,
     );
-    final String? realInstalledVersion = _getRealInstalledVersion(
+    final String? realInstalledVersion = realInstalledVersionOf(
       app.app,
       app.installedInfo,
     );
@@ -160,7 +154,7 @@ extension AppsProviderLifecycle on AppsProvider {
     final naiveStandardVersionDetection = _getNaiveStandardVersionDetection(
       app,
     );
-    final String? realInstalledVersion = _getRealInstalledVersion(
+    final String? realInstalledVersion = realInstalledVersionOf(
       app,
       installedInfo,
     );
@@ -278,10 +272,6 @@ extension AppsProviderLifecycle on AppsProvider {
     return VersionComparison(areEqual: false, version: templateVersion);
   }
 
-  /// Delegates to [VersionService.doStringsMatchUnderRegEx].
-  bool doStringsMatchUnderRegEx(String pattern, String value1, String value2) =>
-      VersionService().doStringsMatchUnderRegEx(pattern, value1, value2);
-
   Future<void> loadApps({String? singleId}) async {
     await waitForAppsToLoad();
     appsLoadingCompleter = Completer<void>();
@@ -308,7 +298,7 @@ extension AppsProviderLifecycle on AppsProvider {
                       item.path.split('/').last.toLowerCase() ==
                           '${singleId.toLowerCase()}.json')) {
                 try {
-                  app = App.fromJson(
+                  app = appFromStoredJson(
                     jsonDecode(await File(item.path).readAsString()),
                   );
                 } catch (err) {

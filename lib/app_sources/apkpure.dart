@@ -8,15 +8,6 @@ import 'package:obtainium/custom_errors.dart';
 import 'package:obtainium/core/logging/app_logger.dart';
 import 'package:obtainium/providers/source_provider.dart';
 
-extension Unique<E, Id> on List<E> {
-  List<E> unique([Id Function(E element)? id, bool inplace = true]) {
-    final ids = <dynamic>{};
-    final list = inplace ? this : List<E>.from(this);
-    list.retainWhere((x) => ids.add(id != null ? id(x) : x as Id));
-    return list;
-  }
-}
-
 class APKPure extends AppSource {
   APKPure() {
     name = 'APKPure';
@@ -118,8 +109,9 @@ class APKPure extends AppSource {
           );
         })
         .nonNulls
-        .toList()
-        .unique((e) => e.key);
+        .toList();
+    final seenApkKeys = <String>{};
+    apkUrls = apkUrls.where((e) => seenApkKeys.add(e.key)).toList();
 
     if (apkUrls.isEmpty) {
       throw NoAPKError();
@@ -199,9 +191,7 @@ class APKPure extends AppSource {
         '$_apiBaseUrl=$appId&hl=en',
         additionalSettings,
       );
-      if (res.statusCode != 200) {
-        throw getObtainiumHttpError(res);
-      }
+      ensureHttpSuccess(res);
       List<Map<String, dynamic>> apks;
       try {
         apks = (jsonDecode(res.body)['version_list'] as List<dynamic>)

@@ -67,9 +67,7 @@ class LiteAPKs extends AppSource {
         '${standardUri.origin}/wp-json/wp/v2/posts?slug=$slug',
         additionalSettings,
       );
-      if (res1.statusCode != 200) {
-        throw getObtainiumHttpError(res1);
-      }
+      ensureHttpSuccess(res1);
 
       final posts = jsonDecode(res1.body);
       if (posts is! List || posts.isEmpty) {
@@ -84,9 +82,7 @@ class LiteAPKs extends AppSource {
         '${standardUri.origin}/wp-json/v2/posts/$liteAppId',
         additionalSettings,
       );
-      if (res2.statusCode != 200) {
-        throw getObtainiumHttpError(res2);
-      }
+      ensureHttpSuccess(res2);
       final json = jsonDecode(res2.body);
 
       final appName = json['data']?['title'] as String?;

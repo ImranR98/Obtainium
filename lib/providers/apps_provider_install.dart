@@ -187,7 +187,7 @@ extension AppsProviderInstall on AppsProvider {
         _downloadCompleteProgress,
         idKey: app.id,
       );
-      unawaited(notificationsProvider?.cancel(notif.id));
+      unawaited(notificationsProvider?.cancel(notifId));
       int? prevProg;
       var fileNameNoExt = '${app.id}-${downloadUrl.hashCode}';
       if (source.urlsAlwaysHaveExtension) {
@@ -887,9 +887,7 @@ extension AppsProviderInstall on AppsProvider {
       if (url == 'placeholder') {
         return null;
       }
-      final temp = Uri.parse(url).host.split('.');
-      if (temp.length < 2) return temp.first;
-      return temp.sublist(temp.length - 2).join('.');
+      return HttpService.extractRootHost(Uri.parse(url).host);
     }
 
     // If the picked APK comes from an origin different from the source, get user confirmation (if context provided)
@@ -972,6 +970,37 @@ extension AppsProviderInstall on AppsProvider {
     return (appsToInstall, trackOnlyAppsToUpdate);
   }
 
+  /// Installs a previously downloaded app, recording any failure in [errors]
+  /// instead of aborting the remaining installs.
+  Future<void> _installQueuedApp(
+    _InstallResult res,
+    List<String> installedIds,
+    MultiAppMultiError errors,
+    BuildContext? context,
+    NotificationsProvider? notificationsProvider,
+  ) async {
+    try {
+      await _installDownloadedApp(
+        res.id,
+        res.willBeSilent,
+        res.downloadedFile,
+        res.downloadedDir,
+        installedIds,
+        errors,
+        context,
+        notificationsProvider,
+      );
+    } catch (e) {
+      errors.add(res.id, e, appName: apps[res.id]?.name);
+    }
+  }
+
+  bool _isObtainiumId(String id) =>
+      id == obtainiumId ||
+      id == obtainiumTempId ||
+      id == '$obtainiumId.fdroid' ||
+      id == '$obtainiumId.debug';
+
   /// Downloads APKs for [appIds] and installs them, silently when possible.
   /// Without a BuildContext, apps requiring user interaction are skipped
   /// and a notification is sent instead. Returns IDs of successfully downloaded apps.
@@ -1025,32 +1054,19 @@ extension AppsProviderInstall on AppsProvider {
         errors,
       );
       if (!errors.appIdNames.containsKey(res.id)) {
-        final isObtainium =
-            res.id == obtainiumId ||
-            res.id == obtainiumTempId ||
-            res.id == '$obtainiumId.fdroid' ||
-            res.id == '$obtainiumId.debug';
-        if (isObtainium) {
+        if (_isObtainiumId(res.id)) {
           obtainiumResults.add(res);
         } else {
-          installChain = installChain.then((_) async {
-            try {
-              await _installDownloadedApp(
-                res.id,
-                res.willBeSilent,
-                res.downloadedFile,
-                res.downloadedDir,
-                installedIds,
-                errors,
-                // ignore: use_build_context_synchronously
-                context,
-                notificationsProvider,
-              );
-            } catch (e) {
-              final appId = res.id;
-              errors.add(appId, e, appName: apps[appId]?.name);
-            }
-          });
+          installChain = installChain.then(
+            (_) => _installQueuedApp(
+              res,
+              installedIds,
+              errors,
+              // ignore: use_build_context_synchronously
+              context,
+              notificationsProvider,
+            ),
+          );
         }
       }
     }
@@ -1071,22 +1087,14 @@ extension AppsProviderInstall on AppsProvider {
 
       for (var res in obtainiumResults) {
         if (!errors.appIdNames.containsKey(res.id)) {
-          try {
-            await _installDownloadedApp(
-              res.id,
-              res.willBeSilent,
-              res.downloadedFile,
-              res.downloadedDir,
-              installedIds,
-              errors,
-              // ignore: use_build_context_synchronously
-              context,
-              notificationsProvider,
-            );
-          } catch (e) {
-            final id = res.id;
-            errors.add(id, e, appName: apps[id]?.name);
-          }
+          await _installQueuedApp(
+            res,
+            installedIds,
+            errors,
+            // ignore: use_build_context_synchronously
+            context,
+            notificationsProvider,
+          );
         }
       }
     } finally {
@@ -1302,6 +1310,48 @@ extension AppsProviderInstall on AppsProvider {
     }
   }
 
+  /// Fires a background install and confirms it by polling the installed
+  /// package. The stock installer's install await never returns while the app
+  /// is in the background, so the call is intentionally not awaited and
+  /// completion is detected via [waitForPackageInstall].
+  Future<bool> _awaitBackgroundInstall(
+    String id,
+    AppInMemory appEntry,
+    Future<bool> Function() install, {
+    required String failureLogPrefix,
+  }) async {
+    final baseline = await captureInstallBaseline(id);
+    unawaited(
+      install().catchError((Object e) {
+        // The await is intentionally not observed (the stock installer never
+        // returns in the background), but a thrown error must not escape as an
+        // unhandled async error.
+        AppLogger.warn('$failureLogPrefix: $e');
+        return false;
+      }),
+    );
+    final sayInstalled = await waitForPackageInstall(
+      id,
+      baseline,
+      attempts: _bgInstallConfirmAttempts,
+    );
+    if (sayInstalled) {
+      AppLogger.info('BG install confirmed for $id via polling');
+    } else {
+      AppLogger.warn(
+        'BG install poll timed out for $id after $_bgInstallConfirmAttempts attempts',
+      );
+      final latestInfo = await getInstalledInfo(id);
+      AppLogger.warn(
+        'BG install final state for $id: wasInstalled=${baseline.wasInstalled}, '
+        'baselineUpdateTime=${baseline.updateTime}, '
+        'currentUpdateTime=${latestInfo?.lastUpdateTime}, '
+        'latestVersion=${appEntry.app.latestVersion}',
+      );
+    }
+    return sayInstalled;
+  }
+
   Future<void> _installDownloadedApp(
     String id,
     bool willBeSilent,
@@ -1370,44 +1420,19 @@ extension AppsProviderInstall on AppsProvider {
           appEntry.app.settings.getBool('shizukuPretendToBeGooglePlay');
       if (downloadedFile != null) {
         if (needBGWorkaround) {
-          final baseline = await captureInstallBaseline(id);
-          unawaited(
-            installApk(
+          sayInstalled = await _awaitBackgroundInstall(
+            id,
+            appEntry,
+            () => installApk(
               downloadedFile,
               null,
               needsBGWorkaround: true,
               installOptions: {
                 'shizukuPretendToBeGooglePlay': shizukuPretendToBeGooglePlay,
               },
-            ).catchError((Object e) {
-              // The await is intentionally not observed (the stock installer
-              // never returns in the background), but a thrown error must not
-              // escape as an unhandled async error.
-              AppLogger.warn('Background install threw for $id: $e');
-              return false;
-            }),
+            ),
+            failureLogPrefix: 'Background install threw for $id',
           );
-          sayInstalled = await waitForPackageInstall(
-            id,
-            baseline,
-            attempts: _bgInstallConfirmAttempts,
-          );
-          if (sayInstalled) {
-            AppLogger.info('BG install confirmed for $id via polling');
-          } else {
-            AppLogger.warn(
-              'BG install poll timed out for $id after $_bgInstallConfirmAttempts attempts',
-            );
-          }
-          if (!sayInstalled) {
-            final latestInfo = await getInstalledInfo(id);
-            AppLogger.warn(
-              'BG install final state for $id: wasInstalled=${baseline.wasInstalled}, '
-              'baselineUpdateTime=${baseline.updateTime}, '
-              'currentUpdateTime=${latestInfo?.lastUpdateTime}, '
-              'latestVersion=${appEntry.app.latestVersion}',
-            );
-          }
         } else {
           final installContext =
               contextIfNewInstall != null && contextIfNewInstall.mounted
@@ -1424,38 +1449,12 @@ extension AppsProviderInstall on AppsProvider {
         }
       } else {
         if (needBGWorkaround) {
-          final baseline = await captureInstallBaseline(id);
-          unawaited(
-            installApkDir(
-              downloadedDir!,
-              null,
-              needsBGWorkaround: true,
-            ).catchError((Object e) {
-              AppLogger.warn('Background install directory threw for $id: $e');
-              return false;
-            }),
-          );
-          sayInstalled = await waitForPackageInstall(
+          sayInstalled = await _awaitBackgroundInstall(
             id,
-            baseline,
-            attempts: _bgInstallConfirmAttempts,
+            appEntry,
+            () => installApkDir(downloadedDir!, null, needsBGWorkaround: true),
+            failureLogPrefix: 'Background install directory threw for $id',
           );
-          if (sayInstalled) {
-            AppLogger.info('BG install confirmed for $id via polling');
-          } else {
-            AppLogger.warn(
-              'BG install poll timed out for $id after $_bgInstallConfirmAttempts attempts',
-            );
-          }
-          if (!sayInstalled) {
-            final latestInfo = await getInstalledInfo(id);
-            AppLogger.warn(
-              'BG install final state for $id: wasInstalled=${baseline.wasInstalled}, '
-              'baselineUpdateTime=${baseline.updateTime}, '
-              'currentUpdateTime=${latestInfo?.lastUpdateTime}, '
-              'latestVersion=${appEntry.app.latestVersion}',
-            );
-          }
         } else {
           final installContext =
               contextIfNewInstall != null && contextIfNewInstall.mounted
@@ -1576,6 +1575,11 @@ extension AppsProviderInstall on AppsProvider {
     app.additionalSettings['url'] = fileUrl.value;
     app.additionalSettings['enableCertificatePinning'] =
         enableCertificatePinning;
+    final notifId = DownloadNotification(
+      fileUrl.key,
+      0,
+      idKey: '${app.id}|${fileUrl.value}',
+    ).id;
     try {
       final String downloadPath = '${await getStorageRootPath()}/Download';
       await downloadFileWithRetry(
@@ -1616,15 +1620,7 @@ extension AppsProviderInstall on AppsProvider {
         errors.add(fileUrl.key, e);
       }
     } finally {
-      unawaited(
-        notificationsProvider.cancel(
-          DownloadNotification(
-            fileUrl.key,
-            0,
-            idKey: '${app.id}|${fileUrl.value}',
-          ).id,
-        ),
-      );
+      unawaited(notificationsProvider.cancel(notifId));
     }
   }
 }

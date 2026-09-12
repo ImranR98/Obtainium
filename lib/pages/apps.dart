@@ -619,34 +619,34 @@ class AppsPageState extends State<AppsPage> {
     );
   }
 
+  /// Splits [apps] into existing updates, new installs, and track-only
+  /// updates. Track-only apps never appear in the other two groups.
+  (List<String>, List<String>, List<String>) _classifyForUpdate(
+    Iterable<App> apps,
+  ) {
+    final existingUpdateIds = <String>[];
+    final newInstallIds = <String>[];
+    final trackOnlyUpdateIds = <String>[];
+    for (final app in apps) {
+      final trackOnly = app.settings.getBool('trackOnly');
+      if (trackOnly) {
+        if (isAppUpdateable(app, settingsProvider)) {
+          trackOnlyUpdateIds.add(app.id);
+        }
+      } else if (app.installedVersion == null) {
+        newInstallIds.add(app.id);
+      } else if (isAppUpdateable(app, settingsProvider)) {
+        existingUpdateIds.add(app.id);
+      }
+    }
+    return (existingUpdateIds, newInstallIds, trackOnlyUpdateIds);
+  }
+
   void showMoreOptionsBottomSheet(BuildContext context, Set<App> selectedApps) {
     final isPinned = selectedApps.where((e) => e.pinned).isNotEmpty;
-    final hasSelection = selectedAppIds.isNotEmpty;
 
-    final existingUpdateIds = selectedApps
-        .where(
-          (a) =>
-              isAppUpdateable(a, settingsProvider) &&
-              a.settings.getBool('trackOnly') != true,
-        )
-        .map((a) => a.id)
-        .toList();
-    final newInstallIds = selectedApps
-        .where(
-          (a) =>
-              a.installedVersion == null &&
-              a.settings.getBool('trackOnly') != true,
-        )
-        .map((a) => a.id)
-        .toList();
-    final trackOnlyUpdateIds = selectedApps
-        .where(
-          (a) =>
-              isAppUpdateable(a, settingsProvider) &&
-              a.settings.getBool('trackOnly') == true,
-        )
-        .map((a) => a.id)
-        .toList();
+    final (existingUpdateIds, newInstallIds, trackOnlyUpdateIds) =
+        _classifyForUpdate(selectedApps);
     final hasObtainActions =
         existingUpdateIds.isNotEmpty ||
         newInstallIds.isNotEmpty ||
@@ -675,21 +675,17 @@ class AppsPageState extends State<AppsPage> {
                 optionTile(
                   icon: Icons.delete_outline,
                   label: tr('remove'),
-                  onTap: hasSelection
-                      ? () {
-                          appsProvider.removeAppsWithModal(
-                            context,
-                            selectedApps.toList(),
-                          );
-                        }
-                      : null,
+                  onTap: () {
+                    appsProvider.removeAppsWithModal(
+                      context,
+                      selectedApps.toList(),
+                    );
+                  },
                 ),
                 optionTile(
                   icon: Icons.category_outlined,
                   label: tr('categorize'),
-                  onTap: hasSelection
-                      ? launchCategorizeDialogCallback(context, selectedApps)
-                      : null,
+                  onTap: launchCategorizeDialogCallback(context, selectedApps),
                 ),
                 optionTile(
                   icon: isPinned ? Icons.push_pin : Icons.push_pin_outlined,
@@ -721,14 +717,12 @@ class AppsPageState extends State<AppsPage> {
                 optionTile(
                   icon: Icons.link_outlined,
                   label: tr('shareAppConfigLinks'),
-                  onTap: !hasSelection
-                      ? null
-                      : () => shareConfigLinks(selectedApps),
+                  onTap: () => shareConfigLinks(selectedApps),
                 ),
                 optionTile(
                   icon: Icons.file_download_outlined,
                   label: '${tr('share')} - ${tr('obtainiumExport')}',
-                  onTap: !hasSelection ? null : () => shareExport(selectedApps),
+                  onTap: () => shareExport(selectedApps),
                 ),
                 optionTile(
                   icon: Icons.download_outlined,

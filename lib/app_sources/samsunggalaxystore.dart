@@ -150,9 +150,7 @@ class SamsungGalaxyStore extends AppSource {
             .toString();
 
     final Response response = await sourceRequest(vasUrl, additionalSettings);
-    if (response.statusCode != 200) {
-      throw getObtainiumHttpError(response);
-    }
+    ensureHttpSuccess(response);
     final String body = response.body;
 
     final resultCode = RegExp(

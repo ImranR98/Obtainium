@@ -2,7 +2,17 @@
 // App JSON migration — legacy schema transformations applied on load.
 // ========================================================================
 
-part of 'source_provider.dart';
+import 'dart:convert';
+
+import 'package:obtainium/app_sources/fdroid.dart';
+import 'package:obtainium/app_sources/fdroidrepo.dart';
+import 'package:obtainium/app_sources/html.dart';
+import 'package:obtainium/app_sources/huaweiappgallery.dart';
+import 'package:obtainium/components/generated_form_model.dart';
+import 'package:obtainium/core/logging/app_logger.dart';
+import 'package:obtainium/models/app.dart';
+import 'package:obtainium/providers/source_provider.dart' show SourceProvider;
+import 'package:obtainium/services/apk_filter_service.dart';
 
 Map<String, dynamic> _migrateAppToHTML(
   Map<String, dynamic> json,
@@ -318,4 +328,22 @@ Map<String, dynamic> appJSONCompatibilityModifiers(Map<String, dynamic> json) {
   json['additionalSettings'] = jsonEncode(additionalSettings);
   _migrateFdroidOverrides(json);
   return json;
+}
+
+/// Parses an [App] from a JSON map as stored on disk, applying the legacy
+/// schema migrations in [appJSONCompatibilityModifiers] first. If the
+/// migrations fail (e.g. the saved URL no longer matches any source), the
+/// unmigrated JSON is parsed instead so the app is not lost.
+App appFromStoredJson(Map<String, dynamic> json) {
+  final Map<String, dynamic> originalJson = Map.from(json);
+  Map<String, dynamic> migratedJson;
+  try {
+    migratedJson = appJSONCompatibilityModifiers(Map.from(json));
+  } catch (e) {
+    migratedJson = originalJson;
+    AppLogger.warn(
+      'Error running JSON compat modifiers (using original JSON): ${e.toString()}',
+    );
+  }
+  return App.fromJson(migratedJson);
 }

@@ -113,9 +113,7 @@ class RuStore extends AppSource {
         '$_appInfoUrl/$appId',
         additionalSettings,
       );
-      if (overallInfoResponse.statusCode != 200) {
-        throw getObtainiumHttpError(overallInfoResponse);
-      }
+      ensureHttpSuccess(overallInfoResponse);
       final decoded = await decodeJsonBody(overallInfoResponse.bodyBytes);
       final appDetails = decoded is Map ? decoded['body'] : null;
       if (appDetails is! Map || appDetails['appId'] == null) {
@@ -142,9 +140,7 @@ class RuStore extends AppSource {
             followRedirects: false,
             postBody: {'appId': appDetails['appId'], 'firstInstall': true},
           );
-      if (downloadLinksResponse.statusCode != 200) {
-        throw getObtainiumHttpError(downloadLinksResponse);
-      }
+      ensureHttpSuccess(downloadLinksResponse);
       final downloadDetails = await decodeJsonBody(
         downloadLinksResponse.bodyBytes,
       );
@@ -186,9 +182,7 @@ class RuStore extends AppSource {
       queryParameters: {'query': query, 'pageNumber': '0', 'pageSize': '20'},
     );
     final response = await sourceRequest(uri.toString(), querySettings);
-    if (response.statusCode != 200) {
-      throw getObtainiumHttpError(response);
-    }
+    ensureHttpSuccess(response);
     final decoded = await decodeJsonBody(response.bodyBytes);
     final content = decoded is Map && decoded['body'] is Map
         ? decoded['body']['content']
