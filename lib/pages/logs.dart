@@ -241,41 +241,44 @@ class _LogsPageState extends State<LogsPage> {
 
   @override
   Widget build(BuildContext context) {
+    final isTV = context.select<SettingsProvider, bool>((p) => p.isTV);
+    final logList = CustomScrollView(
+      controller: _scrollController,
+      slivers: [
+        SliverAppBar(
+          pinned: true,
+          automaticallyImplyLeading: true,
+          title: Text(tr('appLogs')),
+        ),
+        if (_loading)
+          const SliverFillRemaining(
+            hasScrollBody: false,
+            child: Center(child: CircularProgressIndicator()),
+          )
+        else if (_logs.isEmpty)
+          SliverFillRemaining(
+            hasScrollBody: false,
+            child: EmptyState(
+              icon: Icons.bug_report_outlined,
+              message: tr('noLogs'),
+            ),
+          )
+        else
+          SliverList.builder(
+            itemCount: _logs.length,
+            itemBuilder: (context, index) => _logTile(_logs[index]),
+          ),
+        const SliverToBoxAdapter(child: SizedBox(height: 96)),
+      ],
+    );
     return Scaffold(
       backgroundColor: Theme.of(context).colorScheme.surface,
       body: Stack(
         children: [
-          SelectionArea(
-            child: CustomScrollView(
-              controller: _scrollController,
-              slivers: [
-                SliverAppBar(
-                  pinned: true,
-                  automaticallyImplyLeading: true,
-                  title: Text(tr('appLogs')),
-                ),
-                if (_loading)
-                  const SliverFillRemaining(
-                    hasScrollBody: false,
-                    child: Center(child: CircularProgressIndicator()),
-                  )
-                else if (_logs.isEmpty)
-                  SliverFillRemaining(
-                    hasScrollBody: false,
-                    child: EmptyState(
-                      icon: Icons.bug_report_outlined,
-                      message: tr('noLogs'),
-                    ),
-                  )
-                else
-                  SliverList.builder(
-                    itemCount: _logs.length,
-                    itemBuilder: (context, index) => _logTile(_logs[index]),
-                  ),
-                const SliverToBoxAdapter(child: SizedBox(height: 96)),
-              ],
-            ),
-          ),
+          // SelectionArea is pointless on a remote-controlled TV and its
+          // focusable region swallows D-pad input before it can reach the
+          // floating toolbar.
+          if (isTV) logList else SelectionArea(child: logList),
           // Docked in a Stack rather than the Scaffold's floatingActionButton
           // slot so it doesn't play the FAB scale/rotate entrance animation.
           if (!_loading)

@@ -3,6 +3,7 @@ import 'package:flex_color_picker/flex_color_picker.dart';
 import 'package:flutter/foundation.dart' show setEquals;
 import 'package:flutter/material.dart';
 import 'package:obtainium/utils/color_utils.dart' show generateRandomLightColor;
+import 'package:obtainium/components/generated_form_renderer.dart';
 import 'package:obtainium/components/ui_widgets.dart';
 import 'package:obtainium/providers/apps_provider.dart';
 import 'package:obtainium/providers/settings_provider.dart';
@@ -82,6 +83,7 @@ class _CategoryEditorSheetState extends State<_CategoryEditorSheet> {
   late final ValueNotifier<String> _nameNotifier = ValueNotifier(
     widget.existingName ?? '',
   );
+  final FocusNode _nameFocus = FocusNode();
   late Color _color = widget.initialColor;
 
   bool get _isEditing => widget.existingName != null;
@@ -90,6 +92,7 @@ class _CategoryEditorSheetState extends State<_CategoryEditorSheet> {
   void dispose() {
     _nameCtrl.dispose();
     _nameNotifier.dispose();
+    _nameFocus.dispose();
     super.dispose();
   }
 
@@ -197,33 +200,36 @@ class _CategoryEditorSheetState extends State<_CategoryEditorSheet> {
     return Semantics(
       button: true,
       selected: selected,
-      child: InkWell(
-        onTap: onTap,
-        customBorder: const CircleBorder(),
-        child: Container(
-          width: 40,
-          height: 40,
-          decoration: BoxDecoration(
-            color: color,
-            shape: BoxShape.circle,
-            border: Border.all(
-              color: selected ? cs.onSurface : cs.outlineVariant,
-              width: selected ? 3 : 1,
+      child: TvFocusRing(
+        borderRadius: 24,
+        child: InkWell(
+          onTap: onTap,
+          customBorder: const CircleBorder(),
+          child: Container(
+            width: 40,
+            height: 40,
+            decoration: BoxDecoration(
+              color: color,
+              shape: BoxShape.circle,
+              border: Border.all(
+                color: selected ? cs.onSurface : cs.outlineVariant,
+                width: selected ? 3 : 1,
+              ),
             ),
+            child: icon == null
+                ? (selected
+                      ? Icon(
+                          Icons.check,
+                          size: 20,
+                          color:
+                              ThemeData.estimateBrightnessForColor(color) ==
+                                  Brightness.dark
+                              ? Colors.white
+                              : Colors.black,
+                        )
+                      : null)
+                : Center(child: icon),
           ),
-          child: icon == null
-              ? (selected
-                    ? Icon(
-                        Icons.check,
-                        size: 20,
-                        color:
-                            ThemeData.estimateBrightnessForColor(color) ==
-                                Brightness.dark
-                            ? Colors.white
-                            : Colors.black,
-                      )
-                    : null)
-              : Center(child: icon),
         ),
       ),
     );
@@ -252,16 +258,27 @@ class _CategoryEditorSheetState extends State<_CategoryEditorSheet> {
             ),
             const SizedBox(height: 16),
             ConnectedCard(
-              child: TextField(
-                controller: _nameCtrl,
-                autofocus: !_isEditing,
-                textCapitalization: TextCapitalization.sentences,
-                decoration: InputDecoration(labelText: tr('categoryName')),
-                onChanged: (value) => _nameNotifier.value = value,
-                onSubmitted: (_) {
-                  if (_nameCtrl.text.trim().isNotEmpty) _save();
-                },
-              ),
+              child: () {
+                final isTV = context.read<SettingsProvider>().isTV;
+                final field = TextField(
+                  focusNode: _nameFocus,
+                  controller: _nameCtrl,
+                  autofocus: !_isEditing && !isTV,
+                  textCapitalization: TextCapitalization.sentences,
+                  decoration: InputDecoration(labelText: tr('categoryName')),
+                  onChanged: (value) => _nameNotifier.value = value,
+                  onSubmitted: (_) {
+                    if (_nameCtrl.text.trim().isNotEmpty) _save();
+                  },
+                );
+                return isTV
+                    ? TvTextFieldFocus(
+                        textFocusNode: _nameFocus,
+                        borderRadius: 16,
+                        child: field,
+                      )
+                    : field;
+              }(),
             ),
             const SizedBox(height: 20),
             Text(tr('colour'), style: textTheme.titleSmall),

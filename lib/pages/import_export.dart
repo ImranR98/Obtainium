@@ -12,6 +12,7 @@ import 'package:obtainium/providers/apps_provider.dart';
 import 'package:obtainium/core/logging/app_logger.dart';
 import 'package:obtainium/providers/settings_provider.dart';
 import 'package:obtainium/providers/source_provider.dart';
+import 'package:obtainium/utils/nav_helper.dart';
 import 'package:provider/provider.dart';
 import 'package:file_picker/file_picker.dart';
 
@@ -51,6 +52,7 @@ class ImportFromURLListPage extends StatefulWidget {
 
 class _ImportFromURLListPageState extends State<ImportFromURLListPage> {
   late ImportFromURLListController _controller;
+  final FocusNode _urlListFocus = FocusNode();
 
   @override
   void initState() {
@@ -61,6 +63,7 @@ class _ImportFromURLListPageState extends State<ImportFromURLListPage> {
 
   @override
   void dispose() {
+    _urlListFocus.dispose();
     _controller.dispose();
     super.dispose();
   }
@@ -136,17 +139,27 @@ class _ImportFromURLListPageState extends State<ImportFromURLListPage> {
                           color: Theme.of(
                             context,
                           ).colorScheme.surfaceContainerHighest,
-                          child: TextFormField(
-                            controller: controller.urlController,
-                            maxLines: null,
-                            minLines: 8,
-                            decoration: InputDecoration(
-                              labelText: tr('appURLList'),
-                            ),
-                            validator: controller.validate,
-                            autovalidateMode:
-                                AutovalidateMode.onUserInteraction,
-                          ),
+                          child: () {
+                            final field = TextFormField(
+                              focusNode: _urlListFocus,
+                              controller: controller.urlController,
+                              maxLines: null,
+                              minLines: 8,
+                              decoration: InputDecoration(
+                                labelText: tr('appURLList'),
+                              ),
+                              validator: controller.validate,
+                              autovalidateMode:
+                                  AutovalidateMode.onUserInteraction,
+                            );
+                            return context.read<SettingsProvider>().isTV
+                                ? TvTextFieldFocus(
+                                    textFocusNode: _urlListFocus,
+                                    borderRadius: 24,
+                                    child: field,
+                                  )
+                                : field;
+                          }(),
                         ),
                         OutlinedButton.icon(
                           onPressed: controller.isImporting
@@ -383,6 +396,9 @@ class _ImportSectionState extends State<ImportSection> {
                     : () => Navigator.push(
                         context,
                         MaterialPageRoute(
+                          traversalEdgeBehavior: traversalEdgeBehaviorFor(
+                            context,
+                          ),
                           builder: (_) => const ImportFromURLListPage(),
                         ),
                       ),
@@ -425,6 +441,13 @@ class _ExportSectionState extends State<ExportSection> {
   Future<Uri?>? _exportDirFuture;
   String? _lastExportDirKey;
   bool exportInProgress = false;
+  final FocusNode _fileNameFocus = FocusNode();
+
+  @override
+  void dispose() {
+    _fileNameFocus.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -512,16 +535,26 @@ class _ExportSectionState extends State<ExportSection> {
               isFirst: false,
               isLast: false,
               padding: const EdgeInsets.fromLTRB(16, 4, 16, 4),
-              child: TextFormField(
-                initialValue: settingsProvider.autoExportFileName ?? '',
-                decoration: InputDecoration(
-                  labelText: tr('autoExportFileName'),
-                  hintText: tr('obtainiumExportHyphenatedLowercase'),
-                  border: InputBorder.none,
-                ),
-                onChanged: (value) =>
-                    settingsProvider.autoExportFileName = value,
-              ),
+              child: () {
+                final field = TextFormField(
+                  focusNode: _fileNameFocus,
+                  initialValue: settingsProvider.autoExportFileName ?? '',
+                  decoration: InputDecoration(
+                    labelText: tr('autoExportFileName'),
+                    hintText: tr('obtainiumExportHyphenatedLowercase'),
+                    border: InputBorder.none,
+                  ),
+                  onChanged: (value) =>
+                      settingsProvider.autoExportFileName = value,
+                );
+                return settingsProvider.isTV
+                    ? TvTextFieldFocus(
+                        textFocusNode: _fileNameFocus,
+                        borderRadius: 16,
+                        child: field,
+                      )
+                    : field;
+              }(),
             ),
             ConnectedCard(
               isFirst: false,
@@ -536,7 +569,7 @@ class _ExportSectionState extends State<ExportSection> {
             ConnectedCard(
               isFirst: false,
               isLast: true,
-              child: DropdownMenu<String>(
+              child: TvDropdownMenu<String>(
                 expandedInsets: EdgeInsets.zero,
                 label: Text(tr('includeSettings')),
                 initialSelection: settingsProvider.exportSettings.toString(),
@@ -847,6 +880,49 @@ class _SelectionModalState extends State<SelectionModal> {
     );
   }
 
+  /// TV variant: the whole row is a single focus stop; the checkbox/radio is
+  /// painted but never focused. D-pad users toggle by pressing the center
+  /// button on the row instead of having to land on a small control.
+  Widget _buildTVSelectTile(MapEntry<String, List<String>> entry) {
+    final selected = entrySelections[entry] ?? false;
+    return TvFocusRing(
+      borderRadius: 16,
+      child: ListTile(
+        leading: ExcludeFocus(
+          child: widget.onlyOneSelectionAllowed
+              ? Radio<String>(value: entry.key)
+              : Checkbox(value: selected, onChanged: null),
+        ),
+        title: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              entry.value.isEmpty ? entry.key : entry.value[0],
+              style: const TextStyle(fontWeight: FontWeight.bold),
+            ),
+            if (widget.titlesAreLinks)
+              Text(
+                Uri.parse(entry.key).host,
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  decoration: TextDecoration.underline,
+                ),
+              ),
+          ],
+        ),
+        subtitle: entry.value.length <= 1 ? null : _buildDescriptionText(entry),
+        selected: selected,
+        onTap: () {
+          context.read<SettingsProvider>().selectionClick();
+          if (widget.onlyOneSelectionAllowed) {
+            Navigator.of(context).pop([entry.key]);
+          } else {
+            _selectThis(entry, !selected);
+          }
+        },
+      ),
+    );
+  }
+
   List<Widget> _buildTVFooter() {
     if (!context.read<SettingsProvider>().isTV ||
         widget.onlyOneSelectionAllowed) {
@@ -963,6 +1039,7 @@ class _SelectionModalState extends State<SelectionModal> {
               },
             ),
             ...filteredEntrySelections.keys.map((entry) {
+              if (isTV) return _buildTVSelectTile(entry);
               return widget.onlyOneSelectionAllowed
                   ? _buildSingleSelectTile(entry)
                   : _buildMultiSelectTile(entry);

@@ -6,7 +6,14 @@ import 'package:flutter/material.dart';
 /// [colorScheme]. Expressive character lives here (large rounded shapes,
 /// emphasized motion, updated M3 component looks) so it propagates to every
 /// screen without per-widget styling.
-ThemeData buildObtainiumTheme(ColorScheme colorScheme, String fontFamily) {
+///
+/// When [isTV] is true, focus overlays are strengthened across components so
+/// the D-pad focus position is always clearly visible from across the room.
+ThemeData buildObtainiumTheme(
+  ColorScheme colorScheme,
+  String fontFamily, {
+  bool isTV = false,
+}) {
   final cardShape = RoundedSuperellipseBorder(
     borderRadius: BorderRadius.circular(24),
   );
@@ -18,9 +25,31 @@ ThemeData buildObtainiumTheme(ColorScheme colorScheme, String fontFamily) {
     borderRadius: BorderRadius.circular(16),
   );
 
-  const pillButtonStyle = ButtonStyle(
-    shape: WidgetStatePropertyAll(buttonShape),
-    minimumSize: WidgetStatePropertyAll(Size(0, 48)),
+  // Strong, always-visible focus emphasis for TV. On a television the focus
+  // position is the only cursor the user has, so the default M3 focus overlays
+  // (12% opacity and only painted when the framework decides the last input
+  // was "traditional") are far too subtle.
+  WidgetStateProperty<Color?>? focusOverlay(Color focused, {Color? hovered}) {
+    if (!isTV) return null;
+    return WidgetStateProperty.resolveWith<Color?>((states) {
+      if (states.contains(WidgetState.focused)) return focused;
+      if (states.contains(WidgetState.hovered)) {
+        return hovered ?? focused.withValues(alpha: focused.a * 0.4);
+      }
+      return null;
+    });
+  }
+
+  final pillButtonStyle = ButtonStyle(
+    shape: const WidgetStatePropertyAll(buttonShape),
+    minimumSize: const WidgetStatePropertyAll(Size(0, 48)),
+    overlayColor: focusOverlay(colorScheme.primary.withValues(alpha: 0.4)),
+  );
+
+  final tvTonalButtonStyle = ButtonStyle(
+    shape: const WidgetStatePropertyAll(buttonShape),
+    minimumSize: const WidgetStatePropertyAll(Size(0, 48)),
+    overlayColor: focusOverlay(colorScheme.onPrimary.withValues(alpha: 0.4)),
   );
 
   return ThemeData(
@@ -58,13 +87,62 @@ ThemeData buildObtainiumTheme(ColorScheme colorScheme, String fontFamily) {
     ),
     listTileTheme: ListTileThemeData(shape: fieldShape),
     chipTheme: const ChipThemeData(shape: StadiumBorder()),
+    focusColor: isTV ? colorScheme.primary.withValues(alpha: 0.4) : null,
+    iconButtonTheme: isTV
+        ? IconButtonThemeData(
+            style: ButtonStyle(
+              overlayColor: focusOverlay(
+                colorScheme.primary.withValues(alpha: 0.5),
+              ),
+            ),
+          )
+        : null,
+    checkboxTheme: isTV
+        ? CheckboxThemeData(
+            overlayColor: focusOverlay(
+              colorScheme.primary.withValues(alpha: 0.5),
+            ),
+          )
+        : null,
+    switchTheme: isTV
+        ? SwitchThemeData(
+            overlayColor: focusOverlay(
+              colorScheme.primary.withValues(alpha: 0.5),
+            ),
+          )
+        : null,
+    radioTheme: isTV
+        ? RadioThemeData(
+            overlayColor: focusOverlay(
+              colorScheme.primary.withValues(alpha: 0.5),
+            ),
+          )
+        : null,
+    segmentedButtonTheme: isTV
+        ? SegmentedButtonThemeData(
+            style: ButtonStyle(
+              overlayColor: focusOverlay(
+                colorScheme.primary.withValues(alpha: 0.45),
+              ),
+            ),
+          )
+        : null,
+    menuButtonTheme: isTV
+        ? MenuButtonThemeData(
+            style: ButtonStyle(
+              overlayColor: focusOverlay(
+                colorScheme.primary.withValues(alpha: 0.35),
+              ),
+            ),
+          )
+        : null,
     searchBarTheme: const SearchBarThemeData(
       elevation: WidgetStatePropertyAll(0),
     ),
-    filledButtonTheme: const FilledButtonThemeData(style: pillButtonStyle),
-    elevatedButtonTheme: const ElevatedButtonThemeData(style: pillButtonStyle),
-    outlinedButtonTheme: const OutlinedButtonThemeData(style: pillButtonStyle),
-    textButtonTheme: const TextButtonThemeData(style: pillButtonStyle),
+    filledButtonTheme: FilledButtonThemeData(style: tvTonalButtonStyle),
+    elevatedButtonTheme: ElevatedButtonThemeData(style: pillButtonStyle),
+    outlinedButtonTheme: OutlinedButtonThemeData(style: pillButtonStyle),
+    textButtonTheme: TextButtonThemeData(style: pillButtonStyle),
     floatingActionButtonTheme: FloatingActionButtonThemeData(
       shape: RoundedSuperellipseBorder(borderRadius: BorderRadius.circular(20)),
       // FAB shadow depth. Tweak these to try different values (M3 default is 6).

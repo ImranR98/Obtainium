@@ -360,11 +360,14 @@ class _HomePageState extends State<HomePage> {
 
     // Use the same extended (icon + label) FABs on every layout, so the
     // tablet/two-pane UI matches mobile.
-    final actionsFab = FloatingActionButton.extended(
-      onPressed: onActionsPressed,
-      tooltip: plural('action', 2),
-      icon: const Icon(Icons.more_vert),
-      label: Text(plural('action', 2)),
+    final actionsFab = TvFocusRing(
+      borderRadius: 16,
+      child: FloatingActionButton.extended(
+        onPressed: onActionsPressed,
+        tooltip: plural('action', 2),
+        icon: const Icon(Icons.more_vert),
+        label: Text(plural('action', 2)),
+      ),
     );
     final createFabExtended = FloatingActionButton.extended(
       onPressed: onAddPressed,
@@ -377,6 +380,8 @@ class _HomePageState extends State<HomePage> {
       (p) => p.loadingApps,
     );
 
+    // On TV the add-app and actions affordances live in the list itself (a
+    // FAB would overlap the tiles and is awkward to reach with a remote).
     final Widget? fab = isTV
         ? null
         : appsSelecting
@@ -387,10 +392,12 @@ class _HomePageState extends State<HomePage> {
     if (useTwoPane) {
       // Host the FAB in a nested Scaffold around the first pane so it aligns
       // with the app list instead of floating over the detail pane.
+      // TVs give the list the larger share: it is the primary navigation
+      // surface and the detail pane only ever shows one app.
       content = Row(
         children: [
           Expanded(
-            flex: 2,
+            flex: isTV ? 3 : 2,
             child: Scaffold(
               backgroundColor: Colors.transparent,
               body: appsPage,
@@ -398,7 +405,7 @@ class _HomePageState extends State<HomePage> {
             ),
           ),
           const VerticalDivider(width: 1),
-          Expanded(flex: 3, child: detailPane),
+          Expanded(flex: isTV ? 2 : 3, child: detailPane),
         ],
       );
     } else {
@@ -408,7 +415,8 @@ class _HomePageState extends State<HomePage> {
     return PopScope(
       canPop: true,
       onPopInvokedWithResult: (didPop, result) {
-        if (!didPop && selectedAppId != null) {
+        // The first BACK while editing dismisses the keyboard only.
+        if (!didPop && selectedAppId != null && !isEditingTextField()) {
           clearSelectedApp();
         }
       },

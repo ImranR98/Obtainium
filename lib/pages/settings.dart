@@ -22,6 +22,7 @@ import 'package:obtainium/providers/source_provider.dart';
 import 'package:obtainium/theme.dart';
 import 'package:obtainium/utils/locale_utils.dart';
 import 'package:obtainium/utils/native_features.dart';
+import 'package:obtainium/utils/nav_helper.dart';
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher_string.dart';
 
@@ -244,7 +245,7 @@ class _SettingsPageState extends State<SettingsPage> {
     final sourceProvider = context.read<SourceProvider>();
     final sdk = androidSdkInt ?? 0;
 
-    final sortDropdown = DropdownMenu<SortColumnSettings>(
+    final sortDropdown = TvDropdownMenu<SortColumnSettings>(
       expandedInsets: EdgeInsets.zero,
       label: Text(tr('appSortBy')),
       initialSelection: settingsProvider.sortColumn,
@@ -410,83 +411,95 @@ class _SettingsPageState extends State<SettingsPage> {
                             ),
                           ),
                           CardTile(
-                            child: ListTile(
-                              leading: Icon(
-                                Icons.code,
-                                color: Theme.of(context).colorScheme.primary,
-                              ),
-                              title: Text(tr('appSource')),
-                              trailing: Icon(
-                                Icons.open_in_new,
-                                color: Theme.of(
+                            child: TvFocusRing(
+                              borderRadius: 12,
+                              child: ListTile(
+                                leading: Icon(
+                                  Icons.code,
+                                  color: Theme.of(context).colorScheme.primary,
+                                ),
+                                title: Text(tr('appSource')),
+                                trailing: Icon(
+                                  Icons.open_in_new,
+                                  color: Theme.of(
+                                    context,
+                                  ).colorScheme.onSurfaceVariant,
+                                  size: 20,
+                                ),
+                                onTap: () => _openExternalUrl(
                                   context,
-                                ).colorScheme.onSurfaceVariant,
-                                size: 20,
-                              ),
-                              onTap: () => _openExternalUrl(
-                                context,
-                                context.read<SettingsProvider>().sourceUrl,
-                              ),
-                              shape: RoundedSuperellipseBorder(
-                                borderRadius: BorderRadius.circular(12),
+                                  context.read<SettingsProvider>().sourceUrl,
+                                ),
+                                shape: RoundedSuperellipseBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
                               ),
                             ),
                           ),
                           CardTile(
-                            child: ListTile(
-                              leading: Icon(
-                                Icons.help_outline_rounded,
-                                color: Theme.of(context).colorScheme.primary,
-                              ),
-                              title: Text(tr('wiki')),
-                              trailing: Icon(
-                                Icons.open_in_new,
-                                color: Theme.of(
+                            child: TvFocusRing(
+                              borderRadius: 12,
+                              child: ListTile(
+                                leading: Icon(
+                                  Icons.help_outline_rounded,
+                                  color: Theme.of(context).colorScheme.primary,
+                                ),
+                                title: Text(tr('wiki')),
+                                trailing: Icon(
+                                  Icons.open_in_new,
+                                  color: Theme.of(
+                                    context,
+                                  ).colorScheme.onSurfaceVariant,
+                                  size: 20,
+                                ),
+                                onTap: () => _openExternalUrl(
                                   context,
-                                ).colorScheme.onSurfaceVariant,
-                                size: 20,
-                              ),
-                              onTap: () => _openExternalUrl(
-                                context,
-                                'https://wiki.obtainium.imranr.dev/',
-                              ),
-                              shape: RoundedSuperellipseBorder(
-                                borderRadius: BorderRadius.circular(12),
+                                  'https://wiki.obtainium.imranr.dev/',
+                                ),
+                                shape: RoundedSuperellipseBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
                               ),
                             ),
                           ),
                           CardTile(
-                            child: ListTile(
-                              leading: Icon(
-                                Icons.bug_report_outlined,
-                                color: Theme.of(context).colorScheme.primary,
-                              ),
-                              title: Text(tr('appLogs')),
-                              trailing: Icon(
-                                Icons.chevron_right,
-                                color: Theme.of(
-                                  context,
-                                ).colorScheme.onSurfaceVariant,
-                              ),
-                              onTap: () {
-                                AppLogger.getLogs().then((logs) {
-                                  if (!context.mounted) return;
-                                  if (logs.isEmpty) {
-                                    showMessage(
-                                      ObtainiumError(tr('noLogs')),
-                                      context,
-                                    );
-                                  } else {
-                                    Navigator.of(context).push(
-                                      MaterialPageRoute(
-                                        builder: (context) => const LogsPage(),
-                                      ),
-                                    );
-                                  }
-                                });
-                              },
-                              shape: RoundedSuperellipseBorder(
-                                borderRadius: BorderRadius.circular(12),
+                            child: TvFocusRing(
+                              borderRadius: 12,
+                              child: ListTile(
+                                leading: Icon(
+                                  Icons.bug_report_outlined,
+                                  color: Theme.of(context).colorScheme.primary,
+                                ),
+                                title: Text(tr('appLogs')),
+                                trailing: Icon(
+                                  Icons.chevron_right,
+                                  color: Theme.of(
+                                    context,
+                                  ).colorScheme.onSurfaceVariant,
+                                ),
+                                onTap: () {
+                                  AppLogger.getLogs().then((logs) {
+                                    if (!context.mounted) return;
+                                    if (logs.isEmpty) {
+                                      showMessage(
+                                        ObtainiumError(tr('noLogs')),
+                                        context,
+                                      );
+                                    } else {
+                                      Navigator.of(context).push(
+                                        MaterialPageRoute(
+                                          traversalEdgeBehavior:
+                                              traversalEdgeBehaviorFor(context),
+                                          builder: (context) =>
+                                              const LogsPage(),
+                                        ),
+                                      );
+                                    }
+                                  });
+                                },
+                                shape: RoundedSuperellipseBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
                               ),
                             ),
                           ),
@@ -529,16 +542,19 @@ class _SettingsPageState extends State<SettingsPage> {
   }) {
     final cs = Theme.of(context).colorScheme;
     return CardTile(
-      child: ListTile(
-        leading: Icon(icon, color: cs.primary),
-        title: Text(title),
-        trailing: Icon(Icons.chevron_right, color: cs.onSurfaceVariant),
-        onTap: () {
-          context.read<SettingsProvider>().selectionClick();
-          onTap();
-        },
-        shape: RoundedSuperellipseBorder(
-          borderRadius: BorderRadius.circular(12),
+      child: TvFocusRing(
+        borderRadius: 12,
+        child: ListTile(
+          leading: Icon(icon, color: cs.primary),
+          title: Text(title),
+          trailing: Icon(Icons.chevron_right, color: cs.onSurfaceVariant),
+          onTap: () {
+            context.read<SettingsProvider>().selectionClick();
+            onTap();
+          },
+          shape: RoundedSuperellipseBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
         ),
       ),
     );
@@ -551,6 +567,7 @@ class _SettingsPageState extends State<SettingsPage> {
   }) {
     Navigator.of(context).push(
       MaterialPageRoute(
+        traversalEdgeBehavior: traversalEdgeBehaviorFor(context),
         builder: (_) => Consumer<SettingsProvider>(
           builder: (ctx, sp, _) => Scaffold(
             backgroundColor: Theme.of(context).colorScheme.surface,
@@ -718,7 +735,7 @@ class _SettingsPageState extends State<SettingsPage> {
       ),
       _fieldTile(
         context,
-        DropdownMenu<String>(
+        TvDropdownMenu<String>(
           expandedInsets: EdgeInsets.zero,
           label: Text(tr('installMethod')),
           initialSelection: settingsProvider.installerMode,
@@ -898,7 +915,7 @@ class _SettingsPageState extends State<SettingsPage> {
       ),
       _fieldTile(
         context,
-        DropdownMenu<String>(
+        TvDropdownMenu<String>(
           expandedInsets: EdgeInsets.zero,
           label: Text(tr('groupBy')),
           initialSelection: settingsProvider.groupBy,
@@ -952,7 +969,7 @@ class _SettingsPageState extends State<SettingsPage> {
       ),
       _fieldTile(
         context,
-        DropdownMenu<ActionBannerMode>(
+        TvDropdownMenu<ActionBannerMode>(
           expandedInsets: EdgeInsets.zero,
           label: Text(tr('actionBanner')),
           initialSelection: settingsProvider.actionBannerMode,
@@ -1373,6 +1390,8 @@ class _ExternalInstallerTileState extends State<_ExternalInstallerTile> {
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
                       ListTile(
+                        autofocus:
+                            i == 0 && context.read<SettingsProvider>().isTV,
                         onTap: () {
                           final entry = entries[i];
                           if (entry.value.length == 1) {
@@ -1509,7 +1528,7 @@ class _LocaleDropdown extends StatelessWidget {
     final forcedLocale = context.select<SettingsProvider, Locale?>(
       (p) => p.forcedLocale,
     );
-    return DropdownMenu<Locale?>(
+    return TvDropdownMenu<Locale?>(
       expandedInsets: EdgeInsets.zero,
       label: Text(tr('language')),
       initialSelection: forcedLocale,
@@ -1540,7 +1559,7 @@ class _ColourSchemeDropdown extends StatelessWidget {
       (p) => p.colourSchemeMode,
     );
     final settingsProvider = context.read<SettingsProvider>();
-    return DropdownMenu<ColourSchemeMode>(
+    return TvDropdownMenu<ColourSchemeMode>(
       expandedInsets: EdgeInsets.zero,
       label: Text(tr('colourScheme')),
       initialSelection: colourSchemeMode,

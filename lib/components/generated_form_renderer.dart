@@ -35,6 +35,20 @@ class GeneratedForm extends StatefulWidget {
   State<GeneratedForm> createState() => _GeneratedFormState();
 }
 
+/// Whether a text field currently owns focus with the keyboard open.
+///
+/// Page-level [PopScope]s that react to BACK by navigating away should check
+/// this first: while editing, the first BACK press is consumed by
+/// [TvTextFieldFocus] to dismiss the on-screen keyboard, but the framework
+/// notifies every registered `PopScope` on the route, so without this guard a
+/// "save on leave" page would exit at the same time.
+bool isEditingTextField() {
+  final context = FocusManager.instance.primaryFocus?.context;
+  if (context == null) return false;
+  return context.widget is EditableText ||
+      context.findAncestorWidgetOfExactType<EditableText>() != null;
+}
+
 class TvTextFieldFocus extends StatefulWidget {
   final Widget child;
   final FocusNode textFocusNode;
@@ -275,30 +289,36 @@ class _GeneratedFormState extends State<GeneratedForm> {
     if (formItem.opts == null || formItem.opts!.isEmpty) {
       return Text(tr('dropdownNoOptsError'));
     }
-    return DropdownButtonFormField(
-      decoration: _fieldDecoration(
-        labelText: tr(formItem.label) + (formItem.required ? ' *' : ''),
-        suffixIcon: _buildHelpSuffixIcon(
-          tr(formItem.label),
-          formItem.helpUrl,
-          formItem.belowWidgets,
+    return TvFocusRing(
+      borderRadius: 16,
+      child: DropdownButtonFormField(
+        decoration: _fieldDecoration(
+          labelText: tr(formItem.label) + (formItem.required ? ' *' : ''),
+          suffixIcon: _buildHelpSuffixIcon(
+            tr(formItem.label),
+            formItem.helpUrl,
+            formItem.belowWidgets,
+          ),
         ),
+        initialValue: values[formItem.key],
+        items: formItem.opts!.map((e2) {
+          final enabled = formItem.disabledOptKeys?.contains(e2.key) != true;
+          return DropdownMenuItem(
+            value: e2.key,
+            enabled: enabled,
+            child: Opacity(
+              opacity: enabled ? 1 : 0.5,
+              child: Text(tr(e2.value)),
+            ),
+          );
+        }).toList(),
+        onChanged: (value) {
+          setState(() {
+            values[formItem.key] = value ?? values[formItem.key];
+            notifyFormChange();
+          });
+        },
       ),
-      initialValue: values[formItem.key],
-      items: formItem.opts!.map((e2) {
-        final enabled = formItem.disabledOptKeys?.contains(e2.key) != true;
-        return DropdownMenuItem(
-          value: e2.key,
-          enabled: enabled,
-          child: Opacity(opacity: enabled ? 1 : 0.5, child: Text(tr(e2.value))),
-        );
-      }).toList(),
-      onChanged: (value) {
-        setState(() {
-          values[formItem.key] = value ?? values[formItem.key];
-          notifyFormChange();
-        });
-      },
     );
   }
 

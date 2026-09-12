@@ -59,6 +59,7 @@ class AppsPageState extends State<AppsPage> {
   final AppsFilter neutralFilter = AppsFilter();
   Set<String> selectedAppIds = {};
   Set<String?> collapsedGroups = {};
+  bool _selectionMode = false;
   bool _collapseStateInitDone = false;
   bool _selectionPruneScheduled = false;
 
@@ -121,6 +122,18 @@ class AppsPageState extends State<AppsPage> {
       selectedAppIds.add(app.id);
     }
     setState(() {});
+    widget.onSelectionChanged?.call(selectedAppIds.isNotEmpty);
+  }
+
+  /// Enters or leaves TV multi-select mode. While active, selecting a tile
+  /// toggles it instead of opening its details, and the checkboxes become
+  /// visible. Leaving the mode clears the selection.
+  void toggleSelectionMode() {
+    settingsProvider.selectionClick();
+    setState(() {
+      _selectionMode = !_selectionMode;
+      if (!_selectionMode) selectedAppIds.clear();
+    });
     widget.onSelectionChanged?.call(selectedAppIds.isNotEmpty);
   }
 
@@ -830,9 +843,10 @@ class AppsPageState extends State<AppsPage> {
       multiSelected: selectedAppIds.contains(app.id),
       detailSelected: widget.selectedAppId == app.id,
       autofocus: autofocus && settingsProvider.isTV,
+      selectionMode: _selectionMode,
       onToggleSelected: () => toggleAppSelected(app),
       onTap: () {
-        if (selectedAppIds.isNotEmpty) {
+        if (_selectionMode || selectedAppIds.isNotEmpty) {
           toggleAppSelected(app);
         } else if (widget.onAppSelected != null) {
           widget.onAppSelected!(app.id);
@@ -1223,9 +1237,14 @@ class AppsPageState extends State<AppsPage> {
     }
 
     return PopScope(
-      canPop: selectedAppIds.isEmpty,
+      canPop: selectedAppIds.isEmpty && !_selectionMode,
       onPopInvokedWithResult: (didPop, result) {
-        if (!didPop) {
+        if (didPop) return;
+        // The first BACK while editing dismisses the keyboard only.
+        if (isEditingTextField()) return;
+        if (_selectionMode) {
+          toggleSelectionMode();
+        } else {
           clearSelected();
         }
       },
@@ -1247,6 +1266,18 @@ class AppsPageState extends State<AppsPage> {
                   CustomAppBar(
                     title: tr('appsString'),
                     actions: [
+                      if (settingsProvider.isTV)
+                        IconButton(
+                          onPressed: toggleSelectionMode,
+                          icon: Icon(
+                            _selectionMode
+                                ? Icons.close_rounded
+                                : Icons.checklist_rounded,
+                          ),
+                          tooltip: _selectionMode
+                              ? tr('close')
+                              : plural('action', 2),
+                        ),
                       if (settingsProvider.isTV)
                         IconButton(
                           onPressed: () =>
@@ -1296,13 +1327,28 @@ class AppsPageState extends State<AppsPage> {
                     SliverToBoxAdapter(
                       child: Padding(
                         padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-                        child: SizedBox(
-                          width: double.infinity,
-                          child: FilledButton.tonalIcon(
-                            onPressed: () => NavHelper.pushAddAppPage(context),
-                            icon: const Icon(Icons.add),
-                            label: Text(tr('addApp')),
-                          ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          spacing: 8,
+                          children: [
+                            if (_selectionMode)
+                              FilledButton.icon(
+                                onPressed: selectedAppIds.isEmpty
+                                    ? null
+                                    : () => showSelectedAppActions(),
+                                icon: const Icon(Icons.more_vert),
+                                label: Text(
+                                  '${plural('action', 2)}'
+                                  ' (${selectedAppIds.length})',
+                                ),
+                              ),
+                            FilledButton.tonalIcon(
+                              onPressed: () =>
+                                  NavHelper.pushAddAppPage(context),
+                              icon: const Icon(Icons.add),
+                              label: Text(tr('addApp')),
+                            ),
+                          ],
                         ),
                       ),
                     ),

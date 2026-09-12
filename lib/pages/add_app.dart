@@ -12,6 +12,7 @@ import 'package:obtainium/providers/apps_provider.dart';
 import 'package:obtainium/providers/notifications_provider.dart';
 import 'package:obtainium/providers/settings_provider.dart';
 import 'package:obtainium/providers/source_provider.dart';
+import 'package:obtainium/utils/nav_helper.dart';
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher_string.dart';
 
@@ -139,7 +140,8 @@ class AddAppPageState extends State<AddAppPage> {
           );
         }
         additionalSettingsValid =
-            source == null || _requiredFormFieldsFilled(source, additionalSettings);
+            source == null ||
+            _requiredFormFieldsFilled(source, additionalSettings);
         inferAppIdIfOptional = true;
       } else if (valid && !updateUrlInput && _prevValid) {
         return;
@@ -310,6 +312,7 @@ class AddAppPageState extends State<AddAppPage> {
       }
       if (app != null && context.mounted) {
         final route = MaterialPageRoute<void>(
+          traversalEdgeBehavior: traversalEdgeBehaviorFor(context),
           builder: (context) => AppPage(appId: app!.id),
         );
         unawaited(Navigator.of(context).pushReplacement(route));

@@ -116,6 +116,108 @@ void showError(dynamic e, BuildContext context) {
   showMessage(e, context, isError: true);
 }
 
+/// Dropdown menu that is operable with a TV remote.
+///
+/// Material's [DropdownMenu] makes its field non-focusable on Android
+/// (`requestFocusOnTap` defaults to false), which leaves remote users unable to
+/// reach or open it. On TV this wrapper owns focus, opens the menu with the
+/// select button, and draws a focus ring; the menu items are then navigable
+/// with the D-pad as usual. On touch devices it renders the plain
+/// [DropdownMenu].
+class TvDropdownMenu<T> extends StatefulWidget {
+  const TvDropdownMenu({
+    super.key,
+    required this.initialSelection,
+    required this.dropdownMenuEntries,
+    this.onSelected,
+    this.label,
+    this.expandedInsets,
+    this.width,
+    this.leadingIcon,
+    this.menuHeight,
+    this.enabled = true,
+  });
+
+  final T? initialSelection;
+  final List<DropdownMenuEntry<T>> dropdownMenuEntries;
+  final ValueChanged<T?>? onSelected;
+  final Widget? label;
+  final EdgeInsetsGeometry? expandedInsets;
+  final double? width;
+  final Widget? leadingIcon;
+  final double? menuHeight;
+  final bool enabled;
+
+  @override
+  State<TvDropdownMenu<T>> createState() => _TvDropdownMenuState<T>();
+}
+
+class _TvDropdownMenuState<T> extends State<TvDropdownMenu<T>> {
+  final MenuController _menuController = MenuController();
+  final FocusNode _focusNode = FocusNode();
+
+  @override
+  void dispose() {
+    _focusNode.dispose();
+    super.dispose();
+  }
+
+  void _openMenu() {
+    context.read<SettingsProvider>().selectionClick();
+    _menuController.open();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final isTV = context.select<SettingsProvider, bool>((p) => p.isTV);
+    final dropdown = DropdownMenu<T>(
+      menuController: _menuController,
+      initialSelection: widget.initialSelection,
+      dropdownMenuEntries: widget.dropdownMenuEntries,
+      onSelected: widget.onSelected,
+      label: widget.label,
+      expandedInsets: widget.expandedInsets,
+      width: widget.width,
+      leadingIcon: widget.leadingIcon,
+      menuHeight: widget.menuHeight,
+      enabled: widget.enabled,
+      // Focus is owned by this wrapper on TV. On other platforms keep the
+      // widget's own default (keyboard-focusable on desktop).
+      requestFocusOnTap: isTV ? false : null,
+    );
+    if (!isTV || !widget.enabled) return dropdown;
+    return Focus(
+      focusNode: _focusNode,
+      onKeyEvent: (node, event) {
+        if (event is KeyDownEvent &&
+            (event.logicalKey == LogicalKeyboardKey.select ||
+                event.logicalKey == LogicalKeyboardKey.enter)) {
+          _openMenu();
+          return KeyEventResult.handled;
+        }
+        return KeyEventResult.ignored;
+      },
+      child: ListenableBuilder(
+        listenable: _focusNode,
+        builder: (context, child) => DecoratedBox(
+          position: DecorationPosition.foreground,
+          decoration: BoxDecoration(
+            border: _focusNode.hasFocus
+                ? Border.all(
+                    color: Theme.of(context).colorScheme.primary,
+                    width: 3,
+                  )
+                : null,
+            borderRadius: BorderRadius.circular(16),
+          ),
+          child: child,
+        ),
+        child: dropdown,
+      ),
+    );
+  }
+}
+
 class AppIcon extends StatelessWidget {
   final Uint8List? bytes;
   final double size;
@@ -237,6 +339,59 @@ class DownloadCancelButton extends StatelessWidget {
   }
 }
 
+/// Draws a high-contrast ring around whatever is focused inside [child].
+///
+/// Material's default focus treatment is a barely-visible overlay intended for
+/// mouse/keyboard desktop use. On a TV the focus position is the only cursor,
+/// so tiles/rows wrapped in this widget get a bright border whenever focus is
+/// anywhere in their subtree. Does nothing on non-TV devices.
+class TvFocusRing extends StatefulWidget {
+  final Widget child;
+  final double borderRadius;
+  final double width;
+  final Color? color;
+
+  const TvFocusRing({
+    super.key,
+    required this.child,
+    this.borderRadius = connectedTileBigRadius,
+    this.width = 3,
+    this.color,
+  });
+
+  @override
+  State<TvFocusRing> createState() => _TvFocusRingState();
+}
+
+class _TvFocusRingState extends State<TvFocusRing> {
+  bool _focused = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final isTV = context.select<SettingsProvider, bool>((p) => p.isTV);
+    if (!isTV) return widget.child;
+    final color = widget.color ?? Theme.of(context).colorScheme.primary;
+    return Focus(
+      canRequestFocus: false,
+      skipTraversal: true,
+      includeSemantics: false,
+      onFocusChange: (focused) {
+        if (focused != _focused) setState(() => _focused = focused);
+      },
+      child: DecoratedBox(
+        position: DecorationPosition.foreground,
+        decoration: BoxDecoration(
+          border: _focused
+              ? Border.all(color: color, width: widget.width)
+              : null,
+          borderRadius: BorderRadius.circular(widget.borderRadius),
+        ),
+        child: widget.child,
+      ),
+    );
+  }
+}
+
 class ConnectedCard extends StatelessWidget {
   final Widget child;
   final bool isFirst;
@@ -280,15 +435,18 @@ class LinkText extends StatelessWidget {
   Widget build(BuildContext context) {
     return Semantics(
       link: true,
-      child: InkWell(
-        borderRadius: BorderRadius.circular(4),
-        onTap: () => unawaited(
-          launchUrlString(url, mode: LaunchMode.externalApplication),
-        ),
-        child: Text(
-          text,
-          style: (style ?? const TextStyle()).copyWith(
-            decoration: TextDecoration.underline,
+      child: TvFocusRing(
+        borderRadius: 4,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(4),
+          onTap: () => unawaited(
+            launchUrlString(url, mode: LaunchMode.externalApplication),
+          ),
+          child: Text(
+            text,
+            style: (style ?? const TextStyle()).copyWith(
+              decoration: TextDecoration.underline,
+            ),
           ),
         ),
       ),
@@ -316,20 +474,23 @@ class ActionListTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ListTile(
-      leading: Icon(icon),
-      title: Text(label),
-      trailing: trailing,
-      enabled: onTap != null,
-      shape: borderRadius != null
-          ? RoundedRectangleBorder(borderRadius: borderRadius!)
-          : null,
-      onTap: onTap == null
-          ? null
-          : () {
-              if (autoPop) Navigator.of(context).pop();
-              onTap?.call();
-            },
+    return TvFocusRing(
+      borderRadius: borderRadius?.topLeft.x ?? connectedTileBigRadius,
+      child: ListTile(
+        leading: Icon(icon),
+        title: Text(label),
+        trailing: trailing,
+        enabled: onTap != null,
+        shape: borderRadius != null
+            ? RoundedRectangleBorder(borderRadius: borderRadius!)
+            : null,
+        onTap: onTap == null
+            ? null
+            : () {
+                if (autoPop) Navigator.of(context).pop();
+                onTap?.call();
+              },
+      ),
     );
   }
 }
@@ -507,29 +668,31 @@ class ToggleTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ListTile(
-      contentPadding: noPadding
-          ? EdgeInsets.zero
-          : const EdgeInsets.symmetric(horizontal: 20),
-      title: Text(label),
-      subtitle: subtitle,
-      trailing: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          if (helpWidgets.isNotEmpty)
-            IconButton(
-              icon: const Icon(Icons.help_outline),
-              tooltip: tr('about'),
-              onPressed: () =>
-                  showHelpDialog(context, title: label, content: helpWidgets),
+    return TvFocusRing(
+      child: ListTile(
+        contentPadding: noPadding
+            ? EdgeInsets.zero
+            : const EdgeInsets.symmetric(horizontal: 20),
+        title: Text(label),
+        subtitle: subtitle,
+        trailing: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            if (helpWidgets.isNotEmpty)
+              IconButton(
+                icon: const Icon(Icons.help_outline),
+                tooltip: tr('about'),
+                onPressed: () =>
+                    showHelpDialog(context, title: label, content: helpWidgets),
+              ),
+            Switch(
+              value: value,
+              onChanged: onChanged == null
+                  ? null
+                  : hapticSwitchOnChanged(context, onChanged!),
             ),
-          Switch(
-            value: value,
-            onChanged: onChanged == null
-                ? null
-                : hapticSwitchOnChanged(context, onChanged!),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

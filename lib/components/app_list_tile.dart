@@ -203,6 +203,10 @@ class AppListTile extends StatelessWidget {
   final VoidCallback onTap;
   final VoidCallback onToggleSelected;
 
+  /// On TV, the row checkbox is only shown while the list is in selection
+  /// mode. Outside of it, tapping the tile opens the app instead.
+  final bool selectionMode;
+
   /// Shape for the tile's selection/pinned highlight, so it matches the
   /// enclosing card's (or group segment's) corners. Falls back to the theme.
   final BorderRadius? borderRadius;
@@ -217,6 +221,7 @@ class AppListTile extends StatelessWidget {
     required this.autofocus,
     required this.onTap,
     required this.onToggleSelected,
+    this.selectionMode = false,
     this.borderRadius,
   });
 
@@ -309,18 +314,37 @@ class AppListTile extends StatelessWidget {
   Widget build(BuildContext context) {
     final showChangesFn = getChangeLogFn(context, _app);
     final hasUpdate = isAppUpdateable(_app, settingsProvider);
+    final isTV = settingsProvider.isTV;
     final Widget trailingRow = LayoutBuilder(
       builder: (context, constraints) => Row(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          if (hasUpdate) ...[_updateButton(context), const SizedBox(width: 8)],
-          _VersionLabel(
-            appInMemory: appInMemory,
-            settingsProvider: settingsProvider,
-            maxWidth: math.min(constraints.maxWidth / 3, 200),
-            showChangesFn: showChangesFn,
-          ),
+          if (hasUpdate) ...[
+            // On TV, keep the tile a single focus stop: updating is available
+            // from the detail pane and the list's update banner.
+            if (isTV)
+              ExcludeFocus(child: _updateButton(context))
+            else
+              _updateButton(context),
+            const SizedBox(width: 8),
+          ],
+          if (isTV)
+            ExcludeFocus(
+              child: _VersionLabel(
+                appInMemory: appInMemory,
+                settingsProvider: settingsProvider,
+                maxWidth: math.min(constraints.maxWidth / 3, 200),
+                showChangesFn: showChangesFn,
+              ),
+            )
+          else
+            _VersionLabel(
+              appInMemory: appInMemory,
+              settingsProvider: settingsProvider,
+              maxWidth: math.min(constraints.maxWidth / 3, 200),
+              showChangesFn: showChangesFn,
+            ),
         ],
       ),
     );
@@ -475,17 +499,24 @@ class AppListTile extends StatelessWidget {
                 onTap: onTap,
               );
               if (settingsProvider.isTV) {
-                return Row(
-                  children: [
-                    Checkbox(
-                      value: multiSelected,
-                      onChanged: (_) {
-                        settingsProvider.selectionClick();
-                        onToggleSelected();
-                      },
-                    ),
-                    Expanded(child: tile),
-                  ],
+                return TvFocusRing(
+                  borderRadius:
+                      borderRadius?.topLeft.x ?? connectedTileBigRadius,
+                  child: Row(
+                    children: [
+                      if (selectionMode)
+                        ExcludeFocus(
+                          child: Checkbox(
+                            value: multiSelected,
+                            onChanged: (_) {
+                              settingsProvider.selectionClick();
+                              onToggleSelected();
+                            },
+                          ),
+                        ),
+                      Expanded(child: tile),
+                    ],
+                  ),
                 );
               }
               return tile;
@@ -648,29 +679,31 @@ class AppListGroupSection extends StatelessWidget {
               button: true,
               expanded: expanded,
               label: title,
-              child: InkWell(
-                onTap: onToggle,
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 16,
-                    vertical: 12,
-                  ),
-                  child: Row(
-                    children: [
-                      AnimatedRotation(
-                        turns: expanded ? 0.25 : 0,
-                        duration: ExpressiveMotion.short,
-                        child: const Icon(Icons.chevron_right_rounded),
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: Text(
-                          title,
-                          style: const TextStyle(fontWeight: FontWeight.bold),
+              child: TvFocusRing(
+                child: InkWell(
+                  onTap: onToggle,
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 12,
+                    ),
+                    child: Row(
+                      children: [
+                        AnimatedRotation(
+                          turns: expanded ? 0.25 : 0,
+                          duration: ExpressiveMotion.short,
+                          child: const Icon(Icons.chevron_right_rounded),
                         ),
-                      ),
-                      Text(appCount.toString()),
-                    ],
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Text(
+                            title,
+                            style: const TextStyle(fontWeight: FontWeight.bold),
+                          ),
+                        ),
+                        Text(appCount.toString()),
+                      ],
+                    ),
                   ),
                 ),
               ),

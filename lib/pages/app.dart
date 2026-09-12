@@ -19,6 +19,7 @@ import 'package:obtainium/providers/source_provider.dart';
 import 'package:obtainium/custom_errors.dart';
 import 'package:obtainium/utils/locale_utils.dart';
 import 'package:obtainium/main.dart';
+import 'package:obtainium/utils/nav_helper.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher_string.dart';
@@ -320,11 +321,18 @@ class _AppPageState extends State<AppPage> {
     Map<String, dynamic> values = {};
     return Navigator.of(context).push<Map<String, dynamic>>(
       MaterialPageRoute(
+        traversalEdgeBehavior: traversalEdgeBehaviorFor(context),
         builder: (ctx) => PopScope<Map<String, dynamic>>(
           // Leaving the page saves the settings, so there is no Continue button.
           canPop: false,
           onPopInvokedWithResult: (didPop, result) {
             if (didPop) return;
+            // While a text field is being edited, the first BACK only
+            // dismisses the keyboard; it must not also save and leave.
+            if (isEditingTextField()) {
+              FocusManager.instance.primaryFocus?.unfocus();
+              return;
+            }
             Navigator.of(ctx).pop(values);
           },
           child: Scaffold(
@@ -816,13 +824,16 @@ class _AppPageState extends State<AppPage> {
     return Semantics(
       button: true,
       label: app.name,
-      child: InkWell(
-        borderRadius: BorderRadius.circular(14),
-        onTap: () {
-          settingsProvider.lightImpact();
-          packageManager.openApp(app.app.id);
-        },
-        child: icon,
+      child: TvFocusRing(
+        borderRadius: 14,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(14),
+          onTap: () {
+            settingsProvider.lightImpact();
+            packageManager.openApp(app.app.id);
+          },
+          child: icon,
+        ),
       ),
     );
   }
@@ -1263,6 +1274,7 @@ class _AppPageState extends State<AppPage> {
                 Navigator.push(
                   context,
                   MaterialPageRoute(
+                    traversalEdgeBehavior: traversalEdgeBehaviorFor(context),
                     builder: (_) => AppPage(
                       appId: widget.appId,
                       showOppositeOfPreferredView: true,
