@@ -68,26 +68,42 @@ class Uptodown extends AppSource {
     }
     final html = parse(res.body);
     final String? version = html.querySelector('div.version')?.innerHtml;
-    final String? name = html
-        .querySelector('#detail-app-name')
-        ?.innerHtml
-        .trim();
+    final appNameElement = html.querySelector('#detail-app-name');
+    final String? name = appNameElement?.innerHtml.trim();
     final String? author = html.querySelector('#author-link')?.innerHtml.trim();
-    final detailElements = html
+    // Pair each technical-information row's <th> label with its value <td>, so
+    // values are found by label instead of by position (which breaks whenever
+    // Uptodown inserts or removes a row).
+    final Map<String, String> info = {};
+    for (final row in html.querySelectorAll('#technical-information tr')) {
+      final label = row.querySelector('th')?.text.trim().toLowerCase();
+      if (label == null || label.isEmpty) continue;
+      final cells = row.querySelectorAll('td');
+      final value = cells.isEmpty ? null : cells.last.text.trim();
+      if (value != null && value.isNotEmpty) {
+        info[label] = value;
+      }
+    }
+    // Fallback for older layouts. Indexing is guarded because the old
+    // elementAtOrNull calls threw on negative indices.
+    final List<String> detailElements = html
         .querySelectorAll('#technical-information td')
         .map((e) => e.text.trim())
         .where((e) => e.isNotEmpty)
         .toList();
-    final String? appId = detailElements.lastOrNull;
-    final String? dateStr = detailElements.elementAtOrNull(
-      detailElements.length - 5,
-    );
-    final String? fileId = html
-        .querySelector('#detail-app-name')
-        ?.attributes['data-file-id'];
-    final String? extension = detailElements
-        .elementAtOrNull(detailElements.length - 4)
+    final String? appId =
+        info['package name'] ?? detailElements.lastOrNull;
+    final String? dateStr =
+        info['date'] ??
+        (detailElements.length >= 5
+            ? detailElements[detailElements.length - 5]
+            : null);
+    final String? extension = (info['file type'] ??
+            (detailElements.length >= 4
+                ? detailElements[detailElements.length - 4]
+                : null))
         ?.toLowerCase();
+    final String? fileId = appNameElement?.attributes['data-file-id'];
     return Map.fromEntries([
       MapEntry('version', version),
       MapEntry('appId', appId),
