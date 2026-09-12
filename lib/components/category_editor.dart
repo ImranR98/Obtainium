@@ -100,9 +100,9 @@ class _CategoryEditorSheetState extends State<_CategoryEditorSheet> {
     final appsProvider = context.read<AppsProvider>();
     final cats = Map<String, int>.from(settingsProvider.categories);
     final prev = widget.existingName;
-    // Creating a category whose name already exists must not overwrite the
-    // existing one's color (matches main, which no-ops on duplicates).
-    if (prev == null && cats.containsKey(name)) {
+    // Renaming onto an existing category (or creating a duplicate) must not
+    // overwrite the existing one's color or silently merge the two.
+    if (name != prev && cats.containsKey(name)) {
       if (context.mounted) {
         showMessage(tr('categoryAlreadyExists'), context);
       }
@@ -114,11 +114,16 @@ class _CategoryEditorSheetState extends State<_CategoryEditorSheet> {
       final changed = <App>[];
       for (final aim in appsProvider.apps.values) {
         if (aim.app.categories.contains(prev)) {
-          aim.app = aim.app.copyWith(
-            categories: aim.app.categories
-                .map((c) => c == prev ? name : c)
-                .toList(),
-          );
+          final migrated = aim.app.categories
+              .map((c) => c == prev ? name : c)
+              .toList();
+          // An app may already have referenced the target name; never store
+          // the same category twice.
+          final deduped = <String>[];
+          for (final c in migrated) {
+            if (!deduped.contains(c)) deduped.add(c);
+          }
+          aim.app = aim.app.copyWith(categories: deduped);
           changed.add(aim.app);
         }
       }
