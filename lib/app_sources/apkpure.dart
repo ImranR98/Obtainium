@@ -7,6 +7,7 @@ import 'package:obtainium/components/generated_form_model.dart';
 import 'package:obtainium/custom_errors.dart';
 import 'package:obtainium/core/logging/app_logger.dart';
 import 'package:obtainium/providers/source_provider.dart';
+import 'package:obtainium/utils/min_update_age.dart';
 
 class APKPure extends AppSource {
   APKPure() {
@@ -221,6 +222,15 @@ class APKPure extends AppSource {
         throw NoReleasesError();
       }
 
+      final int minAgeDays = await effectiveMinUpdateAgeDays(
+        additionalSettings,
+      );
+      DateTime? versionUpdateDate(List<Map<String, dynamic>> variants) {
+        final raw = variants.first['update_date'];
+        return raw != null ? DateTime.tryParse(raw.toString()) : null;
+      }
+
+      List<Map<String, dynamic>>? tooYoungVersion;
       for (var i = 0; i < versions.length; i++) {
         final v = versions[i];
         try {
@@ -229,6 +239,10 @@ class APKPure extends AppSource {
                 versions.length < 2) {
               throw NoReleasesError();
             }
+            continue;
+          }
+          if (isReleaseTooYoung(versionUpdateDate(v), minAgeDays)) {
+            tooYoungVersion ??= v;
             continue;
           }
           return await getDetailsForVersion(
@@ -242,6 +256,14 @@ class APKPure extends AppSource {
             rethrow;
           }
         }
+      }
+      // No version old enough: use the newest so the provider can suppress it.
+      if (tooYoungVersion != null) {
+        return await getDetailsForVersion(
+          tooYoungVersion,
+          supportedArchs,
+          additionalSettings,
+        );
       }
       throw NoAPKError();
     } catch (e) {

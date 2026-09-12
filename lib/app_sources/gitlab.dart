@@ -6,6 +6,7 @@ import 'package:obtainium/app_sources/github.dart';
 import 'package:obtainium/custom_errors.dart';
 import 'package:obtainium/providers/settings_provider.dart';
 import 'package:obtainium/providers/source_provider.dart';
+import 'package:obtainium/utils/min_update_age.dart';
 import 'package:obtainium/components/generated_form_model.dart';
 import 'package:easy_localization/easy_localization.dart';
 
@@ -251,6 +252,19 @@ class GitLab extends AppSource {
       }).whereType<APKDetails>();
       if (apkDetailsList.isEmpty) {
         throw NoReleasesError();
+      }
+      // Prefer the newest release old enough for the minimum update age; if
+      // none is, keep the newest so the provider can suppress it until it ages.
+      final int minAgeDays = await effectiveMinUpdateAgeDays(
+        additionalSettings,
+      );
+      if (minAgeDays > 0) {
+        final eligible = apkDetailsList
+            .where((e) => !isReleaseTooYoung(e.releaseDate, minAgeDays))
+            .toList();
+        if (eligible.isNotEmpty) {
+          apkDetailsList = eligible;
+        }
       }
       var finalResult = apkDetailsList.first;
 
