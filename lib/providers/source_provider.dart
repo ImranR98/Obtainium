@@ -1365,7 +1365,7 @@ class HttpService {
       'assets/ca-certs/harica-tls-root-2021-rsa.crt',
       'assets/ca-certs/harica-tls-root-2021-ecc.crt',
       'assets/ca-certs/russian-mintsifry-root.crt',
-    ])
+    ]),
   };
 
   static Future<List<Uint8List>> _loadCertificateFromAsset(
@@ -1381,9 +1381,7 @@ class HttpService {
 
   static String _extractRootHost(String host) {
     final parts = host.split('.');
-    return parts.length > 2
-        ? parts.sublist(parts.length - 2).join('.')
-        : host;
+    return parts.length > 2 ? parts.sublist(parts.length - 2).join('.') : host;
   }
 
   Future<SecurityContext?> _createCertPinning(String url) async {
@@ -1397,16 +1395,14 @@ class HttpService {
         securityContext.setTrustedCertificatesBytes(certBytes);
       }
       return securityContext;
-    }
-    else if (_certificatePins.containsKey(rootHost)) {
+    } else if (_certificatePins.containsKey(rootHost)) {
       final certsBytes = await _certificatePins[rootHost]!;
       final securityContext = SecurityContext();
       for (final certBytes in certsBytes) {
         securityContext.setTrustedCertificatesBytes(certBytes);
       }
       return securityContext;
-    }
-    else {
+    } else {
       return null;
     }
   }
@@ -1418,7 +1414,9 @@ class HttpService {
    */
   Future<SecurityContext> _ruStoreWorkaroundSecurityContext() async {
     final securityContext = SecurityContext(withTrustedRoots: true);
-    final cert = await rootBundle.load('assets/ca-certs/russian-mintsifry-root.crt');
+    final cert = await rootBundle.load(
+      'assets/ca-certs/russian-mintsifry-root.crt',
+    );
     securityContext.setTrustedCertificatesBytes(cert.buffer.asUint8List());
     return securityContext;
   }
@@ -1433,17 +1431,21 @@ class HttpService {
     final host = Uri.parse(url).host;
     if (pinning) {
       securityContext = await _createCertPinning(url);
-    }
-    else if (_extractRootHost(host) == 'rustore.ru') {
+    } else if (_extractRootHost(host) == 'rustore.ru') {
       securityContext = await _ruStoreWorkaroundSecurityContext();
     }
     final client = securityContext != null
         ? HttpClient(context: securityContext)
         : HttpClient();
+    client.connectionTimeout = const Duration(seconds: 30);
     if (insecure) {
       client.badCertificateCallback =
           (X509Certificate cert, String host, int port) {
-            if (_certificatePins.containsKey(host) && pinning) {
+            if (pinning &&
+                (_certificatePins.containsKey(host) ||
+                    _certificatePins.containsKey(_extractRootHost(host)))) {
+              // Pinned sites (and subdomains of a pinned root) must still
+              // reject bad certificates even when insecure mode is enabled.
               return false;
             }
             return true;
@@ -1485,64 +1487,71 @@ class HttpService {
     var currentUrl = Uri.parse(url);
     var redirectCount = 0;
     List<Cookie> cookies = [];
-    HttpClient? httpClient;
     while (redirectCount < maxRedirects) {
-      httpClient = await createHttpClient(additionalSettings);
-      final request = await httpClient.openUrl(method, currentUrl);
-      if (requestHeaders != null) {
-        requestHeaders.forEach((key, value) {
-          request.headers.set(key, value);
-        });
-      }
-      request.cookies.addAll(cookies);
-      request.followRedirects = false;
-      if (postBody != null) {
-        if (postBody is String) {
-          request.write(postBody);
-        } else {
-          request.headers.contentType = ContentType.json;
-          request.write(jsonEncode(postBody));
+      // Build the client from the hop's URL so certificate pinning and other
+      // host-specific contexts follow redirects instead of sticking to the
+      // original URL.
+      final hopSettings = Map<String, dynamic>.from(additionalSettings)
+        ..['url'] = currentUrl.toString();
+      final httpClient = await createHttpClient(hopSettings);
+      try {
+        final request = await httpClient.openUrl(method, currentUrl);
+        if (requestHeaders != null) {
+          requestHeaders.forEach((key, value) {
+            request.headers.set(key, value);
+          });
         }
-      }
-      final response = await request.close();
-
-      if (followRedirects &&
-          (response.statusCode >= 300 && response.statusCode <= 399)) {
-        final location = response.headers.value(HttpHeaders.locationHeader);
-        if (location != null) {
-          final nextUrl = Uri.parse(ensureAbsoluteUrl(location, currentUrl));
-          if (currentUrl.scheme == 'https' &&
-              nextUrl.scheme == 'http' &&
-              additionalSettings['allowInsecure'] != true &&
-              additionalSettings['allowInsecureRedirects'] != true) {
-            // Never follow a redirect that downgrades to cleartext HTTP.
-            httpClient.close();
-            throw ObtainiumError(tr('insecureRedirect'));
-          }
-          if (!isSameOrigin(currentUrl, nextUrl)) {
-            // Do not forward credentials or session cookies to a
-            // different origin.
-            requestHeaders = requestHeaders == null
-                ? null
-                : (Map<String, String>.from(requestHeaders)..removeWhere(
-                    (key, _) =>
-                        sensitiveRedirectHeaders.contains(key.toLowerCase()),
-                  ));
-            cookies = [];
+        request.cookies.addAll(cookies);
+        request.followRedirects = false;
+        if (postBody != null) {
+          if (postBody is String) {
+            request.write(postBody);
           } else {
-            cookies = response.cookies;
+            request.headers.contentType = ContentType.json;
+            request.write(jsonEncode(postBody));
           }
-          currentUrl = nextUrl;
-          redirectCount++;
-          httpClient.close();
-          httpClient = null;
-          continue;
         }
-      }
+        final response = await request.close();
 
-      return MapEntry(currentUrl, MapEntry(httpClient, response));
+        if (followRedirects &&
+            (response.statusCode >= 300 && response.statusCode <= 399)) {
+          final location = response.headers.value(HttpHeaders.locationHeader);
+          if (location != null) {
+            final nextUrl = Uri.parse(ensureAbsoluteUrl(location, currentUrl));
+            if (currentUrl.scheme == 'https' &&
+                nextUrl.scheme == 'http' &&
+                additionalSettings['allowInsecure'] != true &&
+                additionalSettings['allowInsecureRedirects'] != true) {
+              // Never follow a redirect that downgrades to cleartext HTTP.
+              throw ObtainiumError(tr('insecureRedirect'));
+            }
+            if (!isSameOrigin(currentUrl, nextUrl)) {
+              // Do not forward credentials or session cookies to a
+              // different origin.
+              requestHeaders = requestHeaders == null
+                  ? null
+                  : (Map<String, String>.from(requestHeaders)..removeWhere(
+                      (key, _) =>
+                          sensitiveRedirectHeaders.contains(key.toLowerCase()),
+                    ));
+              cookies = [];
+            } else {
+              cookies = response.cookies;
+            }
+            currentUrl = nextUrl;
+            redirectCount++;
+            httpClient.close();
+            continue;
+          }
+        }
+
+        return MapEntry(currentUrl, MapEntry(httpClient, response));
+      } catch (e) {
+        // Never leak the client when a request or redirect handling throws.
+        httpClient.close();
+        rethrow;
+      }
     }
-    httpClient?.close();
     throw ObtainiumError(tr('tooManyRedirects'));
   }
 
