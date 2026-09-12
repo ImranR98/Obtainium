@@ -479,10 +479,7 @@ class GitHub extends AppSource {
       for (final r in releases) {
         if (r == null) continue;
         final name = (r['tag_name'] ?? r['name'])?.toString() ?? '';
-        formats[r] = VersionService().findStandardFormatsForVersion(
-          name,
-          false,
-        );
+        formats[r] = findStandardFormatsForVersion(name, strict: false);
       }
     }
 

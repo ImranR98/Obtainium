@@ -289,17 +289,14 @@ extension AppsProviderUpdates on AppsProvider {
       final app = apps[appId]!.app;
       final installed = app.installedVersion;
       if (installedOnly) {
-        if (installed != null &&
-            _installedVersionDiffers(app, installed) &&
-            isAppUpdateable(app, settingsProvider)) {
-          updateAppIds.add(app.id);
-        }
+        if (installed == null) continue;
       } else if (nonInstalledOnly) {
         if (installed == null) updateAppIds.add(app.id);
-      } else if (installed == null) {
-        updateAppIds.add(app.id);
-      } else if (_installedVersionDiffers(app, installed) &&
-          isAppUpdateable(app, settingsProvider)) {
+        continue;
+      }
+      if (installed == null ||
+          (_installedVersionDiffers(app, installed) &&
+              isAppUpdateable(app, settingsProvider))) {
         updateAppIds.add(app.id);
       }
     }
@@ -313,10 +310,6 @@ extension AppsProviderUpdates on AppsProvider {
         (app.additionalSettings['versionExtractionRegEx'] as String?) ?? '';
     return regex.isEmpty
         ? installed != app.latestVersion
-        : !VersionService().doStringsMatchUnderRegEx(
-            regex,
-            installed,
-            app.latestVersion,
-          );
+        : !doStringsMatchUnderRegEx(regex, installed, app.latestVersion);
   }
 }
