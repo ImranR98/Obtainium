@@ -263,13 +263,13 @@ class AppsPageState extends State<AppsPage> {
         : () {
             settingsProvider.heavyImpact();
             if (settingsProvider.skipBulkUpdateConfirmation) {
+              // The setting is "skip update/install confirmation dialog", so
+              // new installs must be included too, not only updates.
               final ids = <String>{
                 ...existingUpdateIdsAllOrSelected,
+                ...newInstallIdsAllOrSelected,
                 ...trackOnlyUpdateIdsAllOrSelected,
               };
-              if (existingUpdateIdsAllOrSelected.isEmpty) {
-                ids.addAll(newInstallIdsAllOrSelected);
-              }
               _obtainApps(ids.toList(), context);
             } else {
               _showObtainDialog(
@@ -818,6 +818,7 @@ class AppsPageState extends State<AppsPage> {
     SettingsProvider settingsProvider,
     AppsProvider appsProvider, {
     BorderRadius? borderRadius,
+    bool autofocus = false,
   }) {
     final aim = listedApps[index];
     final app = aim.app;
@@ -828,7 +829,7 @@ class AppsPageState extends State<AppsPage> {
       borderRadius: borderRadius,
       multiSelected: selectedAppIds.contains(app.id),
       detailSelected: widget.selectedAppId == app.id,
-      autofocus: index == 0 && settingsProvider.isTV,
+      autofocus: autofocus && settingsProvider.isTV,
       onToggleSelected: () => toggleAppSelected(app),
       onTap: () {
         if (selectedAppIds.isNotEmpty) {
@@ -859,6 +860,7 @@ class AppsPageState extends State<AppsPage> {
           listedApps,
           settingsProvider,
           appsProvider,
+          autofocus: index == 0,
           borderRadius: BorderRadius.circular(connectedTileBigRadius),
         ),
       ),
@@ -894,6 +896,10 @@ class AppsPageState extends State<AppsPage> {
             listedApps,
             settingsProvider,
             appsProvider,
+            // Only the very first tile of the first group autofocuses, so an
+            // app that appears in several categories doesn't create multiple
+            // autofocus requests.
+            autofocus: index == 0 && j == 0,
             // Header occupies the top slot, so tiles are never first; the last
             // tile gets the group's rounded bottom.
             borderRadius: positionalTileRadius(
@@ -1177,6 +1183,15 @@ class AppsPageState extends State<AppsPage> {
     final existingUpdates = appsProvider
         .findAppIdsWithPendingUpdates(installedOnly: true)
         .toSet();
+    // If a category that is currently filtered on was deleted, drop it from
+    // the filter so the list doesn't stay stuck on "no apps for filter".
+    final validCategories = settingsProvider.categories.keys.toSet();
+    if (filter.categoryFilter.isNotEmpty &&
+        !validCategories.containsAll(filter.categoryFilter)) {
+      filter.categoryFilter = filter.categoryFilter.intersection(
+        validCategories,
+      );
+    }
     final listedApps = getFilteredAndSortedApps(
       List<AppInMemory>.from(apps),
       existingUpdates,
@@ -1232,6 +1247,13 @@ class AppsPageState extends State<AppsPage> {
                   CustomAppBar(
                     title: tr('appsString'),
                     actions: [
+                      if (settingsProvider.isTV)
+                        IconButton(
+                          onPressed: () =>
+                              refreshIndicatorKey.currentState?.show(),
+                          icon: const Icon(Icons.refresh_rounded),
+                          tooltip: tr('refresh'),
+                        ),
                       IconButton(
                         onPressed: () {
                           NavHelper.pushSettingsPage(context);
