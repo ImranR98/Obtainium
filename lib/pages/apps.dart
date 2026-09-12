@@ -529,14 +529,16 @@ class AppsPageState extends State<AppsPage> {
             },
           );
           if (categoriesChanged) {
-            unawaited(
-              appsProvider.saveApps(
-                selectedApps.map((e) {
-                  e = e.copyWith(categories: pendingCategories.toList());
-                  return e;
-                }).toList(),
-              ),
-            );
+            final categories = pendingCategories.toList();
+            // Persist only the category change against the latest app data, so
+            // a concurrent update check isn't clobbered by the stale snapshot
+            // captured when the sheet opened.
+            final changed = selectedApps
+                .map((e) => appsProvider.apps[e.id]?.app)
+                .whereType<App>()
+                .map((a) => a.copyWith(categories: categories))
+                .toList();
+            unawaited(appsProvider.saveApps(changed));
           }
         }
       } catch (err) {
@@ -567,32 +569,39 @@ class AppsPageState extends State<AppsPage> {
       );
       if (!confirmed) return;
       settingsProvider.selectionClick();
-      unawaited(
-        appsProvider.saveApps(
-          selectedApps.map((a) {
-            if (a.installedVersion != null &&
-                !appsProvider.isVersionDetectionPossible(
-                  appsProvider.apps[a.id],
-                )) {
-              a = a.copyWith(installedVersion: a.latestVersion);
-            }
-            return a;
-          }).toList(),
-        ),
-      );
+      // Re-read the current app data so marking updated doesn't overwrite
+      // fields a concurrent update check may have refreshed.
+      final changed = <App>[];
+      for (final selected in selectedApps) {
+        final current = appsProvider.apps[selected.id]?.app;
+        if (current == null) continue;
+        changed.add(
+          current.installedVersion != null &&
+                  !appsProvider.isVersionDetectionPossible(
+                    appsProvider.apps[current.id],
+                  )
+              ? current.copyWith(installedVersion: current.latestVersion)
+              : current,
+        );
+      }
+      unawaited(appsProvider.saveApps(changed));
     } catch (e) {
       if (context.mounted) showError(e, context);
     }
   }
 
   void pinSelectedApps(Set<App> selectedApps) {
-    final pinStatus = selectedApps.where((element) => element.pinned).isEmpty;
+    // Base the target pin state on the latest data, and copy it onto the latest
+    // app objects so a concurrent update check isn't clobbered.
+    final current = selectedApps
+        .map((e) => appsProvider.apps[e.id]?.app)
+        .whereType<App>()
+        .toList();
+    if (current.isEmpty) return;
+    final pinStatus = current.every((a) => !a.pinned);
     unawaited(
       appsProvider.saveApps(
-        selectedApps.map((e) {
-          e = e.copyWith(pinned: pinStatus);
-          return e;
-        }).toList(),
+        current.map((a) => a.copyWith(pinned: pinStatus)).toList(),
       ),
     );
   }
