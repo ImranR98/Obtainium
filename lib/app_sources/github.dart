@@ -953,15 +953,17 @@ class GitHub extends AppSource {
   void githubErrorCheck(Response res) {
     rateLimitErrorCheck(res);
     if (res.statusCode == 401 || res.statusCode == 403) {
+      String? message;
       try {
-        final message = (jsonDecode(res.body)['message'] as String?)?.trim();
-        if (message != null &&
-            message.isNotEmpty &&
-            !message.toLowerCase().contains('rate limit')) {
-          throw ObtainiumError(message);
-        }
+        message = (jsonDecode(res.body)['message'] as String?)?.trim();
       } catch (_) {
         // Not a JSON error body; fall through to the generic handler.
+        message = null;
+      }
+      if (message != null &&
+          message.isNotEmpty &&
+          !message.toLowerCase().contains('rate limit')) {
+        throw ObtainiumError(message);
       }
     }
   }
