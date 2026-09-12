@@ -34,20 +34,46 @@ List<String> collectAllStringsFromJSONObject(dynamic obj) {
 }
 
 List<MapEntry<String, String>> getLinksInLines(String lines) =>
-    RegExp(r'(?:(?:http|https|ftp)://)\S+')
+    RegExp(r'''(?:(?:http|https|ftp)://)[^\s"'<>()\[\]{}]+''')
         .allMatches(lines)
         .map(
-          (match) =>
-              MapEntry(match.group(0)!, match.group(0)?.split('/').last ?? ''),
+          (match) => match
+              .group(0)!
+              // Punctuation usually belongs to the surrounding text/code
+              // rather than to the URL itself.
+              .replaceFirst(RegExp(r'[.,;:!?]+$'), ''),
         )
+        .where((url) => url.isNotEmpty)
+        .map((url) => MapEntry(url, url.split('/').last))
         .toList();
 
-List<MapEntry<String, String>> getLinksInHtmlAttributes(Document html) => html
-    .querySelectorAll('*')
-    .expand((element) => element.attributes.values)
-    .where((value) => RegExp(r'^https?://').hasMatch(value))
-    .map((value) => MapEntry<String, String>(value, value.split('/').last))
-    .toList();
+/// Collects absolute and root-relative URLs found in element attributes
+/// (e.g. `<script src="/js/app.js">`), resolved against [reqUrl].
+List<MapEntry<String, String>> getLinksInHtmlAttributes(
+  Document html,
+  Uri reqUrl,
+) {
+  final links = <MapEntry<String, String>>[];
+  for (final element in html.querySelectorAll('*')) {
+    for (final value in element.attributes.values) {
+      final trimmed = value.trim();
+      if (trimmed.isEmpty) continue;
+      final isAbsolute = RegExp(
+        r'^(https?|ftp)://',
+        caseSensitive: false,
+      ).hasMatch(trimmed);
+      if (!isAbsolute && !trimmed.startsWith('/')) continue;
+      final resolved = ensureAbsoluteUrl(trimmed, reqUrl);
+      final uri = Uri.tryParse(resolved);
+      if (uri == null ||
+          !['http', 'https', 'ftp'].contains(uri.scheme.toLowerCase())) {
+        continue;
+      }
+      links.add(MapEntry(resolved, resolved.split('/').last));
+    }
+  }
+  return links;
+}
 
 /// Given an HTTP response, grab some links according to the common additional settings
 /// (those that apply to intermediate and final steps)
@@ -85,16 +111,26 @@ Future<List<MapEntry<String, String>>> grabLinksCommon(
       .map((e) => MapEntry(ensureAbsoluteUrl(e.key, reqUrl), e.value))
       .toList();
   if (allLinks.isEmpty || matchLinksOutsideATags) {
-    if (allLinks.isNotEmpty && matchLinksOutsideATags) {
-      allLinks = getLinksInLines(rawBody);
-    } else {
+    // Merge every link source instead of replacing one set with another:
+    // <a> links, URLs in the raw text and URLs in element attributes are all
+    // valid candidates when [matchLinksOutsideATags] is enabled.
+    final merged = <String, MapEntry<String, String>>{
+      for (final link in allLinks) link.key: link,
+    };
+    void addAll(Iterable<MapEntry<String, String>> links) {
+      for (final link in links) {
+        merged.putIfAbsent(link.key, () => link);
+      }
+    }
+
+    if (allLinks.isEmpty) {
       try {
         final jsonStrings = collectAllStringsFromJSONObject(
           jsonDecode(rawBody),
         );
-        allLinks = getLinksInLines(jsonStrings.join('\n'));
-        if (allLinks.isEmpty) {
-          allLinks = getLinksInLines(
+        var jsonLinks = getLinksInLines(jsonStrings.join('\n'));
+        if (jsonLinks.isEmpty) {
+          jsonLinks = getLinksInLines(
             jsonStrings
                 .map((l) {
                   return ensureAbsoluteUrl(l, reqUrl);
@@ -102,17 +138,17 @@ Future<List<MapEntry<String, String>>> grabLinksCommon(
                 .join('\n'),
           );
         }
+        addAll(jsonLinks);
       } catch (e) {
         AppLogger.warn('Failed to parse HTML links: ${e.toString()}');
-        allLinks = getLinksInLines(rawBody);
+        addAll(getLinksInLines(rawBody));
       }
     }
-  }
-  if (matchLinksOutsideATags) {
-    allLinks = {
-      for (final link in [...allLinks, ...getLinksInHtmlAttributes(html)])
-        link.key: link,
-    }.values.toList();
+    if (matchLinksOutsideATags) {
+      addAll(getLinksInLines(rawBody));
+      addAll(getLinksInHtmlAttributes(html, reqUrl));
+    }
+    allLinks = merged.values.toList();
   }
   List<MapEntry<String, String>> links = [];
   final bool skipSort = additionalSettings['skipSort'] == true;

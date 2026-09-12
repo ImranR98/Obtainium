@@ -86,6 +86,7 @@ fi
 PHONE_SUITES=(
   smoke_test.dart
   add_remove_app_test.dart
+  html_links_test.dart
   screens_navigation_test.dart
 )
 TV_SUITES=(
@@ -106,7 +107,7 @@ echo "Install/update tests: $WITH_INSTALL (disable with --no-install)"
 echo
 
 # Generate the tiny APKs the add/remove and install suites download.
-"$SCRIPT_DIR/e2e_assets.sh" >/dev/null
+E2E_PUBLIC_BASE_URL="http://10.0.2.2:$PORT" "$SCRIPT_DIR/e2e_assets.sh" >/dev/null
 
 # Serve them over HTTP for the emulator (10.0.2.2 maps to the host loopback).
 python3 -m http.server "$PORT" --bind 0.0.0.0 \

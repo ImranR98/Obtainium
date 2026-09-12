@@ -59,5 +59,24 @@ EOF
     --out "$OUT_DIR/testapp-v$v.apk" "$work/aligned-$v.apk"
 done
 
+# Fixtures for the HTML source's link extraction (issue #2816): the APK URL is
+# only reachable via a relative <script src>, and inside the JS it is quoted
+# and followed by code, which used to be swallowed into the URL.
+PUBLIC_BASE_URL="${E2E_PUBLIC_BASE_URL:-http://10.0.2.2:8000}"
+mkdir -p "$OUT_DIR/html" "$OUT_DIR/js"
+cat > "$OUT_DIR/html/index.html" <<EOF
+<!DOCTYPE html>
+<html>
+<head><title>Obtainium e2e HTML source</title></head>
+<body>
+<script src="/js/app.0334504e.js"></script>
+</body>
+</html>
+EOF
+cat > "$OUT_DIR/js/app.0334504e.js" <<EOF
+window.__assets={apkUrl:"$PUBLIC_BASE_URL/srr230-b6.apk"}}),e("download-button-unstable",{attrs:{title1:"iOS v
+EOF
+cp "$OUT_DIR/testapp-v2.apk" "$OUT_DIR/srr230-b6.apk"
+
 "$AAPT2" dump badging "$OUT_DIR/testapp-v2.apk" | head -1
 ls -la "$OUT_DIR"

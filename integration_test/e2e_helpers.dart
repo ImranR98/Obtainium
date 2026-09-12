@@ -132,6 +132,24 @@ Map<String, dynamic> appJson({
   'pendingRepoRenameUrl': null,
 };
 
+/// Whether the runner's local HTTP server answers. Runs on the device, so
+/// `10.0.2.2` maps to the host's loopback.
+Future<bool> serverReachable([String path = 'testapp-v2.apk']) async {
+  final client = HttpClient();
+  try {
+    final request = await client
+        .getUrl(Uri.parse('$e2eBaseUrl/$path'))
+        .timeout(const Duration(seconds: 5));
+    final response = await request.close().timeout(const Duration(seconds: 5));
+    await response.drain<void>();
+    return response.statusCode == 200;
+  } catch (_) {
+    return false;
+  } finally {
+    client.close(force: true);
+  }
+}
+
 /// Pumps frames until [finder] matches, failing with a clear message on
 /// timeout. Prefer this over [WidgetTester.pumpAndSettle], which can hang when
 /// the app shows an indefinite progress indicator.
