@@ -97,6 +97,14 @@ Never rethrowOrWrapError(
   );
 }
 
+/// A non-2xx HTTP response during a file download, carrying the status code so
+/// callers can decide whether the failure is retryable (e.g. 429/5xx).
+class HTTPStatusError extends ObtainiumError {
+  final int statusCode;
+  HTTPStatusError(this.statusCode, String message)
+    : super(message, code: 'HTTP_ERROR');
+}
+
 class RateLimitError extends ObtainiumError {
   final int remainingMinutes;
   RateLimitError(this.remainingMinutes)

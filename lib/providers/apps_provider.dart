@@ -209,11 +209,15 @@ Future<File> downloadFileWithRetry(
     );
   } catch (e) {
     // A cancellation is not one of the retryable error types, so it naturally
-    // falls through to rethrow below.
+    // falls through to rethrow below. 429/5xx responses are transient and
+    // should be retried like transport failures.
+    final bool retryableHTTPError =
+        e is HTTPStatusError && (e.statusCode == 429 || e.statusCode >= 500);
     if (retries > 0 &&
         (e is ClientException ||
             e is SocketException ||
-            e is TimeoutException)) {
+            e is TimeoutException ||
+            retryableHTTPError)) {
       await Future.delayed(const Duration(seconds: _retryDelaySeconds));
       return await downloadFileWithRetry(
         fileName,
@@ -533,7 +537,8 @@ Future<File> downloadFile(
       if (tempDownloadedFile.existsSync()) {
         deleteFile(tempDownloadedFile);
       }
-      throw ObtainiumError(
+      throw HTTPStatusError(
+        response.statusCode,
         response.reasonPhrase.isNotEmpty
             ? response.reasonPhrase
             : tr(
