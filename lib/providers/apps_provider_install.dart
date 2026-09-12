@@ -1442,7 +1442,7 @@ extension AppsProviderInstall on AppsProvider {
         enableCertificatePinning;
     try {
       final String downloadPath = '${await getStorageRootPath()}/Download';
-      await downloadFile(
+      await downloadFileWithRetry(
         fileUrl.key,
         true,
         (double? progress, [int? received, int? total]) {
