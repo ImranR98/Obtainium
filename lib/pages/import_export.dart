@@ -424,6 +424,7 @@ class ExportSection extends StatefulWidget {
 class _ExportSectionState extends State<ExportSection> {
   Future<Uri?>? _exportDirFuture;
   String? _lastExportDirKey;
+  bool exportInProgress = false;
 
   @override
   Widget build(BuildContext context) {
@@ -437,35 +438,35 @@ class _ExportSectionState extends State<ExportSection> {
     }
 
     Future<void> runObtainiumExport({bool pickOnly = false}) async {
+      if (exportInProgress) return;
       settingsProvider.selectionClick();
       if (!pickOnly && settingsProvider.exportSettings >= 2) {
         final proceed = await confirmExportIncludesSecrets(context);
         if (!proceed) return;
       }
-      unawaited(
-        appsProvider
-            .export(
-              pickOnly:
-                  pickOnly || (await settingsProvider.getExportDir()) == null,
-              sp: settingsProvider,
-            )
-            .then((String? result) {
-              if (result != null) {
-                if (!context.mounted) return;
-                showMessage(tr('exportedTo', args: [result]), context);
-              }
-            })
-            .catchError((e) {
-              if (!context.mounted) return;
-              showError(e, context);
-            }),
-      );
+      setState(() => exportInProgress = true);
+      try {
+        final result = await appsProvider.export(
+          pickOnly: pickOnly || (await settingsProvider.getExportDir()) == null,
+          sp: settingsProvider,
+        );
+        if (result != null && context.mounted) {
+          showMessage(tr('exportedTo', args: [result]), context);
+        }
+      } catch (e) {
+        if (context.mounted) showError(e, context);
+      } finally {
+        if (mounted) {
+          setState(() => exportInProgress = false);
+        }
+      }
     }
 
     return FutureBuilder(
       future: _exportDirFuture,
       builder: (context, snapshot) {
         final items = <Widget>[
+          if (exportInProgress) const LinearProgressIndicator(),
           ConnectedCard(
             isFirst: true,
             isLast: false,
@@ -478,7 +479,9 @@ class _ExportSectionState extends State<ExportSection> {
                       color: Theme.of(context).colorScheme.primary,
                     )
                   : null,
-              onTap: () => runObtainiumExport(pickOnly: true),
+              onTap: exportInProgress
+                  ? null
+                  : () => runObtainiumExport(pickOnly: true),
             ),
           ),
           ConnectedCard(
@@ -487,7 +490,9 @@ class _ExportSectionState extends State<ExportSection> {
             child: ActionListTile(
               icon: Icons.upload_outlined,
               label: tr('obtainiumExport'),
-              onTap: snapshot.data == null ? null : runObtainiumExport,
+              onTap: snapshot.data == null || exportInProgress
+                  ? null
+                  : runObtainiumExport,
             ),
           ),
         ];
@@ -669,9 +674,12 @@ class _SelectionModalState extends State<SelectionModal> {
     }
   }
 
-  void selectAll({bool deselect = false}) {
+  void selectAll({
+    bool deselect = false,
+    Iterable<MapEntry<String, List<String>>>? visible,
+  }) {
     context.read<SettingsProvider>().selectionClick();
-    for (var e in entrySelections.keys) {
+    for (var e in visible ?? entrySelections.keys) {
       entrySelections[e] = !deselect;
     }
   }
@@ -691,17 +699,23 @@ class _SelectionModalState extends State<SelectionModal> {
     }
   }
 
-  Widget _buildSelectAllButton() {
+  Widget _buildSelectAllButton(
+    List<MapEntry<String, List<String>>> visibleEntries,
+  ) {
     if (widget.onlyOneSelectionAllowed) {
       return const SizedBox.shrink();
     }
-    final noneSelected = entrySelections.values.where((v) => v == true).isEmpty;
-    return noneSelected
+    // Operate on what the user can actually see, so tapping Select all while
+    // a filter is active doesn't silently select hidden entries.
+    final visibleSelected = visibleEntries
+        .where((e) => entrySelections[e] == true)
+        .length;
+    return visibleSelected == 0
         ? TextButton(
             style: const ButtonStyle(visualDensity: VisualDensity.compact),
             onPressed: () {
               setState(() {
-                selectAll();
+                selectAll(visible: visibleEntries);
               });
             },
             child: Text(tr('selectAll')),
@@ -710,10 +724,10 @@ class _SelectionModalState extends State<SelectionModal> {
             style: const ButtonStyle(visualDensity: VisualDensity.compact),
             onPressed: () {
               setState(() {
-                selectAll(deselect: true);
+                selectAll(deselect: true, visible: visibleEntries);
               });
             },
-            child: Text(tr('deselectX', args: [''])),
+            child: Text(tr('deselectX', args: [visibleSelected.toString()])),
           );
   }
 
@@ -958,7 +972,7 @@ class _SelectionModalState extends State<SelectionModal> {
         ),
       ),
       actions: [
-        _buildSelectAllButton(),
+        _buildSelectAllButton(filteredEntrySelections.keys.toList()),
         TextButton(
           autofocus: isTV,
           onPressed: () {
