@@ -803,28 +803,52 @@ class AppListBuilder {
 
     final isDesc = sortOrder == SortOrderSettings.descending;
     if (sortColumn == SortColumnSettings.releaseDate) {
-      final entries = apps.map((a) => MapEntry(a.app.releaseDate, a)).toList()
-        ..sort((a, b) {
-          final aDate = a.key;
-          final bDate = b.key;
-          if (aDate == null && bDate == null) return 0;
-          if (aDate == null) return 1;
-          if (bDate == null) return -1;
-          return isDesc ? bDate.compareTo(aDate) : aDate.compareTo(bDate);
-        });
-      apps = entries.map((e) => e.value).toList();
+      // Carry the original index so equal keys keep a stable order (Dart's
+      // List.sort is not stable), instead of swapping places between rebuilds.
+      final entries =
+          apps
+              .asMap()
+              .entries
+              .map(
+                (e) =>
+                    MapEntry(e.key, MapEntry(e.value.app.releaseDate, e.value)),
+              )
+              .toList()
+            ..sort((a, b) {
+              final aDate = a.value.key;
+              final bDate = b.value.key;
+              int cmp;
+              if (aDate == null && bDate == null) {
+                cmp = 0;
+              } else if (aDate == null) {
+                cmp = 1;
+              } else if (bDate == null) {
+                cmp = -1;
+              } else {
+                cmp = isDesc ? bDate.compareTo(aDate) : aDate.compareTo(bDate);
+              }
+              return cmp != 0 ? cmp : a.key.compareTo(b.key);
+            });
+      apps = entries.map((e) => e.value.value).toList();
     } else {
       String keyFn(AppInMemory a) => switch (sortColumn) {
         SortColumnSettings.authorName => (a.author + a.name).toLowerCase(),
         SortColumnSettings.nameAuthor => (a.name + a.author).toLowerCase(),
         _ => '',
       };
-      final entries = apps.map((a) => MapEntry(keyFn(a), a)).toList()
-        ..sort((a, b) => a.key.compareTo(b.key));
-      apps = entries.map((e) => e.value).toList();
-      if (isDesc) {
-        apps = apps.reversed.toList();
-      }
+      final entries =
+          apps
+              .asMap()
+              .entries
+              .map((e) => MapEntry(e.key, MapEntry(keyFn(e.value), e.value)))
+              .toList()
+            ..sort((a, b) {
+              final cmp = isDesc
+                  ? b.value.key.compareTo(a.value.key)
+                  : a.value.key.compareTo(b.value.key);
+              return cmp != 0 ? cmp : a.key.compareTo(b.key);
+            });
+      apps = entries.map((e) => e.value.value).toList();
     }
     return apps;
   }
@@ -923,8 +947,7 @@ class _VersionLabel extends StatelessWidget {
                   overflow: TextOverflow.ellipsis,
                   textAlign: TextAlign.end,
                   style: TextStyle(
-                    fontStyle:
-                        isVersionPseudo(app) ? FontStyle.italic : null,
+                    fontStyle: isVersionPseudo(app) ? FontStyle.italic : null,
                     color: updateColor,
                   ),
                 ),
