@@ -191,7 +191,13 @@ class SettingsProvider with ChangeNotifier {
   }
 
   ThemeSettings get theme {
-    return ThemeSettings.values[_getInt('theme') ?? ThemeSettings.system.index];
+    final stored = _getInt('theme');
+    if (stored != null &&
+        stored >= 0 &&
+        stored < ThemeSettings.values.length) {
+      return ThemeSettings.values[stored];
+    }
+    return ThemeSettings.system;
   }
 
   set theme(ThemeSettings t) {
@@ -264,8 +270,13 @@ class SettingsProvider with ChangeNotifier {
   }
 
   SortColumnSettings get sortColumn {
-    return SortColumnSettings.values[_getInt('sortColumn') ??
-        SortColumnSettings.nameAuthor.index];
+    final stored = _getInt('sortColumn');
+    if (stored != null &&
+        stored >= 0 &&
+        stored < SortColumnSettings.values.length) {
+      return SortColumnSettings.values[stored];
+    }
+    return SortColumnSettings.nameAuthor;
   }
 
   set sortColumn(SortColumnSettings s) {
@@ -274,8 +285,13 @@ class SettingsProvider with ChangeNotifier {
   }
 
   SortOrderSettings get sortOrder {
-    return SortOrderSettings.values[_getInt('sortOrder') ??
-        SortOrderSettings.ascending.index];
+    final stored = _getInt('sortOrder');
+    if (stored != null &&
+        stored >= 0 &&
+        stored < SortOrderSettings.values.length) {
+      return SortOrderSettings.values[stored];
+    }
+    return SortOrderSettings.ascending;
   }
 
   set sortOrder(SortOrderSettings s) {
