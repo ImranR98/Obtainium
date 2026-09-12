@@ -156,6 +156,11 @@ class RuStore extends AppSource {
           ? (downloadUrls[0] is Map ? downloadUrls[0]['url'] as String? : null)
           : null;
       if (url == null) {
+        // Aggregated cards are generated from an external source; RuStore
+        // does not host an APK for them (#3298).
+        if (appDetails['aggregatorInfo'] is Map) {
+          throw RuStoreAggregatedAppError();
+        }
         throw NoAPKError();
       }
 

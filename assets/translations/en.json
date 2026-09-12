@@ -346,6 +346,7 @@
     "reversePageTransitions": "Reverse page transition animations",
     "reverseSort": "Reverse sorting",
     "runBgCheckNow": "Run background update check now",
+    "rustoreAggregatedAppNoApk": "RuStore lists this app from an external source and does not host its APK",
     "samsungGalaxyStoreApiError": "Samsung Galaxy Store API error",
     "search": "Search",
     "searchFailed": "{}: search failed ({})",
