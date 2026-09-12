@@ -184,13 +184,15 @@ class _GeneratedFormState extends State<GeneratedForm> {
   void notifyFormChange({bool forceInvalid = false, bool isBuilding = false}) {
     final Map<String, dynamic> returnValues = values;
     var valid = true;
-    if (!isBuilding) {
-      for (final key in _fieldKeys) {
-        valid = valid && key.currentState?.isValid == true;
-      }
-      if (forceInvalid) {
-        valid = false;
-      }
+    // Validity is computed even for the initial post-frame (isBuilding) pass:
+    // FormFieldState.isValid is synchronous, so the fields are already mounted.
+    // Callers use isBuilding to skip side effects, but the reported validity
+    // must be real (e.g. GeneratedFormModal enables its primary action).
+    for (final key in _fieldKeys) {
+      valid = valid && key.currentState?.isValid == true;
+    }
+    if (forceInvalid) {
+      valid = false;
     }
     widget.onValueChanges(returnValues, valid, isBuilding);
     setState(() {});
