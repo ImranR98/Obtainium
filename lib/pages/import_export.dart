@@ -1030,27 +1030,36 @@ class ImportFromURLListController extends ChangeNotifier {
   Future<void> importFromFile(BuildContext context) async {
     try {
       final file = await FilePicker.pickFile();
-      if (file != null && file.path != null) {
-        final path = file.path;
-        if (path == null) return;
-        final urls = RegExp(r'https?://[^\s"]+')
-            .allMatches(await File(path).readAsString())
-            .map((e) => e.input.substring(e.start, e.end))
-            .toSet()
-            .toList()
-            .where((url) {
-              try {
-                sourceProvider.getSource(url);
-                return true;
-              } catch (e) {
-                AppLogger.error(e, message: 'URL parse error in filter');
-                return false;
-              }
-            })
-            .join('\n');
-        urlController.text = urls;
-        notifyListeners();
+      if (file == null) return;
+      final String contents;
+      if (file.path != null) {
+        contents = await File(file.path!).readAsString();
+      } else {
+        // Some pickers only expose bytes; an empty result is a bad file, not
+        // a missing picker.
+        final bytes = await file.readAsBytes();
+        if (bytes.isEmpty) {
+          throw ObtainiumError(tr('invalidInput'));
+        }
+        contents = utf8.decode(bytes);
       }
+      final urls = RegExp(r'https?://[^\s"]+')
+          .allMatches(contents)
+          .map((e) => e.input.substring(e.start, e.end))
+          .toSet()
+          .toList()
+          .where((url) {
+            try {
+              sourceProvider.getSource(url);
+              return true;
+            } catch (e) {
+              AppLogger.error(e, message: 'URL parse error in filter');
+              return false;
+            }
+          })
+          .join('\n');
+      urlController.text = urls;
+      notifyListeners();
     } catch (e) {
       if (context.mounted) {
         showImportError(e, context);
@@ -1060,10 +1069,12 @@ class ImportFromURLListController extends ChangeNotifier {
 
   String? validate(String? value) {
     if (value != null && value.isNotEmpty) {
-      final lines = value.trim().split('\n');
+      final lines = value.split('\n');
       for (int i = 0; i < lines.length; i++) {
+        final line = lines[i].trim();
+        if (line.isEmpty) continue;
         try {
-          sourceProvider.getSource(lines[i]);
+          sourceProvider.getSource(line);
         } catch (e) {
           return '${tr('line')} ${i + 1}: $e';
         }
@@ -1074,8 +1085,8 @@ class ImportFromURLListController extends ChangeNotifier {
 
   List<String> getURLs() {
     return urlController.text
-        .trim()
         .split('\n')
+        .map((l) => l.trim())
         .where((l) => l.isNotEmpty)
         .toList();
   }

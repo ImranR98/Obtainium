@@ -156,7 +156,7 @@ extension AppsProviderImportExport on AppsProvider {
       }
       returnPath = exportDir.pathSegments
           .join('/')
-          .replaceFirst('tree/primary:', '/');
+          .replaceFirst(RegExp(r'^tree/[^:]+:'), '/');
     }
     return returnPath;
   }
