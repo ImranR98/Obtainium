@@ -147,8 +147,13 @@ extension AppsProviderUpdates on AppsProvider {
     SettingsProvider? sp,
   }) async {
     final SettingsProvider settingsProvider = sp ?? this.settingsProvider;
-    if (updateCheckCompleter != null) {
-      return updateCheckCompleter!.future;
+    // A check is already running. Its result may not cover the apps this
+    // caller asked for (e.g. a deep-link refresh for one app arriving during a
+    // full background check), so wait for it to finish and then run our own
+    // instead of silently returning the other check's result.
+    while (updateCheckCompleter != null) {
+      final runningCheck = updateCheckCompleter!;
+      await runningCheck.future.catchError((_) => <App>[]);
     }
     final completer = updateCheckCompleter = Completer<List<App>>();
     var completed = 0;
