@@ -48,6 +48,31 @@ extension AppsProviderUpdates on AppsProvider {
     return newApp;
   }
 
+  /// Fetches [appId] with a short retry for transient TLS handshake failures.
+  ///
+  /// Concurrent TLS handshakes to the same host can fail on certain
+  /// devices/networks. Retry up to 2 times with staggered random delays to
+  /// avoid all retries colliding. Any error that is not a handshake failure
+  /// (including one raised by a retry) propagates to the caller so it can take
+  /// the normal per-app error path instead of aborting the whole batch.
+  Future<App?> fetchUpdateWithHandshakeRetry(String appId) async {
+    try {
+      return await fetchUpdate(appId);
+    } on HandshakeException {
+      const maxRetries = 2;
+      final rng = Random();
+      for (var attempt = 0; attempt < maxRetries; attempt++) {
+        await Future.delayed(Duration(milliseconds: 250 + rng.nextInt(501)));
+        try {
+          return await fetchUpdate(appId);
+        } on HandshakeException {
+          if (attempt == maxRetries - 1) rethrow;
+        }
+      }
+      return null;
+    }
+  }
+
   /// Returns true when [newApp]'s release is newer than the configured
   /// minimum update age and should therefore be suppressed.
   bool _isReleaseYoungerThanMinAge(App currentApp, App newApp) {
@@ -183,37 +208,13 @@ extension AppsProviderUpdates on AppsProvider {
       Future<MapEntry<App, bool>?> fetchOne(String appId) async {
         final currentApp = apps[appId]?.app;
         try {
-          final newApp = await fetchUpdate(appId);
+          final newApp = await fetchUpdateWithHandshakeRetry(appId);
           if (newApp != null) {
             final isUpdate =
                 currentApp != null &&
                 newApp.latestVersion != currentApp.latestVersion &&
                 isAppUpdateable(newApp, settingsProvider);
             return MapEntry(newApp, isUpdate);
-          }
-        } on HandshakeException {
-          // Concurrent TLS handshakes to the same host can fail on
-          // certain devices/networks. Retry up to 2 times with
-          // staggered random delays to avoid all retries colliding.
-          const maxRetries = 2;
-          final rng = Random();
-          for (var attempt = 0; attempt < maxRetries; attempt++) {
-            await Future.delayed(
-              Duration(milliseconds: 250 + rng.nextInt(501)),
-            );
-            try {
-              final newApp = await fetchUpdate(appId);
-              if (newApp != null) {
-                final isUpdate =
-                    currentApp != null &&
-                    newApp.latestVersion != currentApp.latestVersion &&
-                    isAppUpdateable(newApp, settingsProvider);
-                return MapEntry(newApp, isUpdate);
-              }
-              break;
-            } on HandshakeException {
-              if (attempt == maxRetries - 1) rethrow;
-            }
           }
         } catch (e) {
           if ((e is RateLimitError || e is SocketException) &&
