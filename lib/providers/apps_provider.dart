@@ -377,12 +377,22 @@ Future<File> downloadFile(
   Map<String, String>? headers,
   CancellationToken? cancellationToken,
 }) async {
-  final reqHeaders = headers ?? {};
+  // Copy the caller's map: a resume adds a Range header below, and the same
+  // map instance is reused by downloadFileWithRetry on every attempt, so
+  // mutating it would send a stale Range on later probes.
+  final reqHeaders = headers == null
+      ? <String, String>{}
+      : Map<String, String>.of(headers);
   final headersClient = IOClient(await createHttpClient(additionalSettings));
   final url = additionalSettings['url'] as String;
-  final getReq = Request('GET', Uri.parse(url));
-  getReq.headers.addAll(reqHeaders);
-  final headersResponse = await headersClient.send(getReq);
+  late final StreamedResponse headersResponse;
+  try {
+    final getReq = Request('GET', Uri.parse(url));
+    getReq.headers.addAll(reqHeaders);
+    headersResponse = await headersClient.send(getReq);
+  } finally {
+    headersClient.close();
+  }
 
   final resHeaders = headersResponse.headers;
 
@@ -423,7 +433,6 @@ Future<File> downloadFile(
     rangeFeatureEnabled =
         resHeaders['accept-ranges']?.trim().toLowerCase() == 'bytes';
   }
-  headersClient.close();
 
   // If you have an existing file that is usable,
   // decide whether you can use it (either return full or resume partial)
