@@ -12,7 +12,11 @@ class HuaweiAppGallery extends AppSource {
   String get name => tr('huaweiAppGallery');
 
   HuaweiAppGallery() {
-    hosts = ['appgallery.huawei.com', 'appgallery.cloud.huawei.com', 'appgallery.huawei.ru'];
+    hosts = [
+      'appgallery.huawei.com',
+      'appgallery.cloud.huawei.com',
+      'appgallery.huawei.ru',
+    ];
     trustedApkHosts = ['dbankcloud.com', 'dbankcloud.ru'];
     canSearch = true;
   }

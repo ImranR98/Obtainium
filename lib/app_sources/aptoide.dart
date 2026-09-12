@@ -13,7 +13,8 @@ class Aptoide extends AppSource {
     showReleaseDateAsVersionToggle = true;
   }
 
-  static const String _apiBaseUrl = 'https://ws2.aptoide.com/api/7/getApp/app_id';
+  static const String _apiBaseUrl =
+      'https://ws2.aptoide.com/api/7/getApp/app_id';
 
   @override
   String sourceSpecificStandardizeURL(String url, {bool forSelection = false}) {
@@ -52,10 +53,7 @@ class Aptoide extends AppSource {
     } else {
       throw NoReleasesError();
     }
-    final res2 = await sourceRequest(
-      '$_apiBaseUrl/$id',
-      additionalSettings,
-    );
+    final res2 = await sourceRequest('$_apiBaseUrl/$id', additionalSettings);
     if (res2.statusCode != 200) {
       throw getObtainiumHttpError(res2);
     }

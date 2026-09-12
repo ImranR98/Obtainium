@@ -180,10 +180,9 @@ class _AppFilePickerState extends State<AppFilePicker> {
                                 list2FriendlyString(
                                   widget.archs!.map((e) => '\'$e\'').toList(),
                                 ),
-                      style: Theme.of(context)
-                          .textTheme
-                          .bodySmall
-                          ?.copyWith(fontStyle: FontStyle.italic),
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        fontStyle: FontStyle.italic,
+                      ),
                     ),
                 ],
               ),

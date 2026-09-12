@@ -284,14 +284,14 @@ class GitLab extends AppSource {
       finalResult = finalResult.copyWith(
         apkUrls: finalResult.apkUrls.map((apkUrl) {
           if (jobArtifactRegex.hasMatch(apkUrl.value)) {
-          return MapEntry(
-            apkUrl.key,
-            apkUrl.value.replaceFirst('/file/', '/raw/'),
-          );
-        } else {
-          return apkUrl;
-        }
-      }).toList(),
+            return MapEntry(
+              apkUrl.key,
+              apkUrl.value.replaceFirst('/file/', '/raw/'),
+            );
+          } else {
+            return apkUrl;
+          }
+        }).toList(),
       );
 
       return finalResult;
