@@ -21,6 +21,10 @@ import 'package:path_provider/path_provider.dart';
 /// App persistence (load/save/remove), icons, and version-detection helpers.
 const _corruptFileSuffix = '.corrupt';
 
+/// Makes temporary save files unique even when concurrent [saveApps] calls
+/// target the same app.
+int _saveTempCounter = 0;
+
 class VersionComparison {
   final bool areEqual;
   final String version;
@@ -421,10 +425,12 @@ extension AppsProviderLifecycle on AppsProvider {
         }
         if (!onlyIfExists || this.apps.containsKey(app.id)) {
           final String filePath = '${(await getAppsDir()).path}/${app.id}.json';
-          await File(
-            '$filePath.tmp',
-          ).writeAsString(jsonEncode(app.toJson())); // #2089
-          await File('$filePath.tmp').rename(filePath);
+          // Unique temp path: two concurrent saves of the same app must not
+          // interleave writes or race each other's rename. #2089
+          final String tmpPath =
+              '$filePath.${DateTime.now().microsecondsSinceEpoch}-${_saveTempCounter++}.tmp';
+          await File(tmpPath).writeAsString(jsonEncode(app.toJson()));
+          await File(tmpPath).rename(filePath);
         }
         if (this.apps.containsKey(app.id)) {
           this.apps[app.id] = this.apps[app.id]!.copyWith(
