@@ -13,6 +13,14 @@ import 'package:obtainium/providers/source_provider.dart';
 
 const String _apkMime = 'application/vnd.android.package-archive';
 const String _bundleMime = 'application/zip';
+const String _tarMime = 'application/x-tar';
+const String _gzipMime = 'application/gzip';
+
+bool _isTarballPath(String lowerPath) =>
+    lowerPath.endsWith('.tar.gz') ||
+    lowerPath.endsWith('.tgz') ||
+    lowerPath.endsWith('.tar.bz2') ||
+    lowerPath.endsWith('.tar.xz');
 
 /// Ceiling for how long we wait for the user to return after the external
 /// installer took them away from Obtainium.
@@ -159,8 +167,14 @@ class ExternalInstaller extends Installer {
     final lower = path.toLowerCase();
     if (lower.endsWith('.xapk') ||
         lower.endsWith('.apkm') ||
+        lower.endsWith('.apks') ||
         lower.endsWith('.zip')) {
       return _bundleMime;
+    }
+    if (_isTarballPath(lower)) {
+      return lower.endsWith('.tgz') || lower.endsWith('.tar.gz')
+          ? _gzipMime
+          : _tarMime;
     }
     return _apkMime;
   }
