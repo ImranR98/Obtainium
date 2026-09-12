@@ -416,6 +416,7 @@
     "unpinFromTop": "Unpin from top",
     "uptodownDownloadError": "Uptodown could not resolve the download",
     "uptodownInvalidAuthResponse": "Invalid Uptodown authentication response",
+    "uptodownSearchError": "Uptodown search failed",
     "upToDateApps": "Up to date apps",
     "update": "Update",
     "updateAvailable": "Update available",

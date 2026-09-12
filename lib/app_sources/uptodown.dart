@@ -11,11 +11,10 @@ import 'package:obtainium/providers/source_provider.dart';
 
 typedef _Session = ({String token, int expiresAt});
 
-// TODO: add search
-
 class Uptodown extends AppSource {
   static const _apiHost = 'www.uptodown.app';
   static const _authPath = '/eapi/auth/token';
+  static const _searchUrl = 'https://en.uptodown.com/android/en/s';
   static const _clientVersion = '739';
   static const _userAgent =
       'Dalvik/2.1.0 (Linux; U; Android 16; Pixel 8 Pro Build/BP4A.260205.001)';
@@ -32,6 +31,7 @@ class Uptodown extends AppSource {
     naiveStandardVersionDetection = true;
     showReleaseDateAsVersionToggle = true;
     urlsAlwaysHaveExtension = true;
+    canSearch = true;
   }
 
   @override
@@ -51,6 +51,12 @@ class Uptodown extends AppSource {
           'Content-Type': 'application/x-www-form-urlencoded'
         else if (token != null)
           'Authorization': 'Bearer $token',
+      };
+    }
+    if (url == _searchUrl) {
+      return {
+        'User-Agent': _userAgent,
+        'Content-Type': 'application/x-www-form-urlencoded',
       };
     }
     return forAPKDownload ? {'User-Agent': _userAgent} : null;
@@ -74,6 +80,54 @@ class Uptodown extends AppSource {
       standardUrl,
       additionalSettings,
     ))['appId'];
+  }
+
+  @override
+  Future<Map<String, List<String>>> search(
+    String query, {
+    Map<String, dynamic> querySettings = const {},
+  }) async {
+    try {
+      final res = await sourceRequest(
+        _searchUrl,
+        querySettings,
+        postBody: Uri(queryParameters: {'queryString': query}).query,
+      );
+      if (res.statusCode != 200) {
+        throw getObtainiumHttpError(res);
+      }
+      final decoded = jsonDecode(res.body);
+      final body = decoded is Map ? decoded : null;
+      if (body == null || body['success'] != 1) {
+        throw ObtainiumError(tr('uptodownSearchError'));
+      }
+      final data = body['data'];
+      final apps = data is Map ? data['apps'] : null;
+      final Map<String, List<String>> results = {};
+      if (apps is List) {
+        for (final app in apps) {
+          if (app is! Map || app['platformURL'] != '/android') continue;
+          final url = app['url']?.toString();
+          final name = app['name']
+              ?.toString()
+              .replaceAll(RegExp(r'<[^>]+>'), '')
+              .trim();
+          if (url == null || url.isEmpty || name == null || name.isEmpty) {
+            continue;
+          }
+          final author = app['author']?.toString().trim();
+          results[url] = [
+            name,
+            (author != null && author.isNotEmpty)
+                ? author
+                : tr('noDescription'),
+          ];
+        }
+      }
+      return results;
+    } catch (e) {
+      rethrowOrWrapError(e);
+    }
   }
 
   @override
