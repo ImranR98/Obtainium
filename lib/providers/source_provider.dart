@@ -1337,8 +1337,8 @@ class HttpService {
     'cookie',
   };
 
-  static final Map<String, Future<List<Uint8List>>> _certificatePins = {
-    'github.com': _loadCertificateFromAsset([
+  static const Map<String, List<String>> _certificatePinAssetNames = {
+    'github.com': [
       'assets/ca-certs/sectigo-pub-serv-auth-r46.crt',
       'assets/ca-certs/sectigo-pub-serv-auth-e46.crt',
 
@@ -1350,23 +1350,28 @@ class HttpService {
       'assets/ca-certs/isrg-root-x2.crt',
       'assets/ca-certs/isrg-root-ye.crt',
       'assets/ca-certs/isrg-root-yr.crt',
-    ]),
-    'codeberg.org': _loadCertificateFromAsset([
+    ],
+    'codeberg.org': [
       'assets/ca-certs/isrg-root-x1.crt',
       'assets/ca-certs/isrg-root-x2.crt',
       'assets/ca-certs/isrg-root-ye.crt',
       'assets/ca-certs/isrg-root-yr.crt',
-    ]),
-    'gitlab.com': _loadCertificateFromAsset([
+    ],
+    'gitlab.com': [
       'assets/ca-certs/sectigo-pub-serv-auth-r46.crt',
       'assets/ca-certs/sectigo-pub-serv-auth-e46.crt',
-    ]),
-    'rustore.ru': _loadCertificateFromAsset([
+    ],
+    'rustore.ru': [
       'assets/ca-certs/harica-tls-root-2021-rsa.crt',
       'assets/ca-certs/harica-tls-root-2021-ecc.crt',
       'assets/ca-certs/russian-mintsifry-root.crt',
-    ])
+    ],
   };
+
+  static final Map<String, Future<List<Uint8List>>> _certificatePins =
+      _certificatePinAssetNames.map(
+        (host, assets) => MapEntry(host, _loadCertificateFromAsset(assets)),
+      );
 
   static Future<List<Uint8List>> _loadCertificateFromAsset(
     List<String> assetsPath,
@@ -1384,6 +1389,40 @@ class HttpService {
     return parts.length > 2
         ? parts.sublist(parts.length - 2).join('.')
         : host;
+  }
+
+  /// Resolves TLS policy using the same exact-host-then-root-host lookup used
+  /// by [_createCertPinning]. A null result means system trust only.
+  static Map<String, dynamic>? tlsPolicyForUrl(
+    String url, {
+    required bool certificatePinning,
+  }) {
+    final host = Uri.parse(url).host;
+    final rootHost = _extractRootHost(host);
+    final policyHost = certificatePinning
+        ? (_certificatePinAssetNames.containsKey(host)
+              ? host
+              : _certificatePinAssetNames.containsKey(rootHost)
+              ? rootHost
+              : null)
+        : null;
+
+    if (policyHost != null) {
+      return {
+        'certificates': _certificatePinAssetNames[policyHost],
+        'useSystemRoots': false,
+      };
+    }
+
+    // RuStore needs its additional CA even when certificate pinning is off.
+    if (!certificatePinning &&
+        (host == 'rustore.ru' || rootHost == 'rustore.ru')) {
+      return {
+        'certificates': ['assets/ca-certs/russian-mintsifry-root.crt'],
+        'useSystemRoots': true,
+      };
+    }
+    return null;
   }
 
   Future<SecurityContext?> _createCertPinning(String url) async {
