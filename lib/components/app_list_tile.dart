@@ -467,6 +467,9 @@ class AppListTile extends StatelessWidget {
                         progress: downloadProgress,
                         receivedBytes: appInMemory.downloadReceivedBytes,
                         totalBytes: appInMemory.downloadTotalBytes,
+                        onCancel: downloadProgress >= 0
+                            ? () => appsProvider.cancelDownload(appId)
+                            : null,
                       )
                     : trailingRow,
                 onTap: onTap,
@@ -641,29 +644,34 @@ class AppListGroupSection extends StatelessWidget {
           segment(
             0,
             colorScheme.surfaceContainerHigh,
-            InkWell(
-              onTap: onToggle,
-              child: Padding(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 16,
-                  vertical: 12,
-                ),
-                child: Row(
-                  children: [
-                    AnimatedRotation(
-                      turns: expanded ? 0.25 : 0,
-                      duration: ExpressiveMotion.short,
-                      child: const Icon(Icons.chevron_right_rounded),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Text(
-                        title,
-                        style: const TextStyle(fontWeight: FontWeight.bold),
+            Semantics(
+              button: true,
+              expanded: expanded,
+              label: title,
+              child: InkWell(
+                onTap: onToggle,
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 12,
+                  ),
+                  child: Row(
+                    children: [
+                      AnimatedRotation(
+                        turns: expanded ? 0.25 : 0,
+                        duration: ExpressiveMotion.short,
+                        child: const Icon(Icons.chevron_right_rounded),
                       ),
-                    ),
-                    Text(appCount.toString()),
-                  ],
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Text(
+                          title,
+                          style: const TextStyle(fontWeight: FontWeight.bold),
+                        ),
+                      ),
+                      Text(appCount.toString()),
+                    ],
+                  ),
                 ),
               ),
             ),
