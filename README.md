@@ -77,6 +77,10 @@ Verification info:
   - Note: The above signature is also valid for the F-Droid flavour of Obtainium, thanks to [reproducible builds](https://f-droid.org/docs/Reproducible_Builds/).
 - [PGP Public Key](https://keyserver.ubuntu.com/pks/lookup?search=contact%40imranr.dev&fingerprint=on&op=index) (to verify APK hashes)
 
+## Contributing / Developing
+
+Please see the pertinent documentation, [on contributing](docs/CONTRIBUTING.md) and [the developer guide](docs/DEVELOPER_GUIDE.md) (architecture description).
+
 ## Limitations
 - For some sources, data is gathered using Web scraping and can easily break due to changes in website design. In such cases, more reliable methods may be unavailable.
 
