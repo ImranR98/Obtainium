@@ -91,18 +91,18 @@ class Uptodown extends AppSource {
         .map((e) => e.text.trim())
         .where((e) => e.isNotEmpty)
         .toList();
-    final String? appId =
-        info['package name'] ?? detailElements.lastOrNull;
+    final String? appId = info['package name'] ?? detailElements.lastOrNull;
     final String? dateStr =
         info['date'] ??
         (detailElements.length >= 5
             ? detailElements[detailElements.length - 5]
             : null);
-    final String? extension = (info['file type'] ??
-            (detailElements.length >= 4
-                ? detailElements[detailElements.length - 4]
-                : null))
-        ?.toLowerCase();
+    final String? extension =
+        (info['file type'] ??
+                (detailElements.length >= 4
+                    ? detailElements[detailElements.length - 4]
+                    : null))
+            ?.toLowerCase();
     final String? fileId = appNameElement?.attributes['data-file-id'];
     return Map.fromEntries([
       MapEntry('version', version),

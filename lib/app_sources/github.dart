@@ -314,8 +314,8 @@ class GitHub extends AppSource {
   static bool _isAuthRejection(Response res) {
     if (res.statusCode != 401 && res.statusCode != 403) return false;
     try {
-      final message =
-          (jsonDecode(res.body)['message'] as String? ?? '').toLowerCase();
+      final message = (jsonDecode(res.body)['message'] as String? ?? '')
+          .toLowerCase();
       return message.contains('access token') ||
           message.contains('bad credentials');
     } catch (_) {

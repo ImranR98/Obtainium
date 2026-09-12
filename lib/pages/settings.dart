@@ -1149,10 +1149,10 @@ class _UpdateIntervalSliderTileState extends State<_UpdateIntervalSliderTile> {
     initUpdateIntervalInterpolator();
     // Clamp: imported/corrupt values outside the slider range would otherwise
     // trip the Slider's value-in-range assertion.
-    sliderVal = context
-        .read<SettingsProvider>()
-        .updateIntervalSliderVal
-        .clamp(0.0, updateIntervalNodes.length.toDouble());
+    sliderVal = context.read<SettingsProvider>().updateIntervalSliderVal.clamp(
+      0.0,
+      updateIntervalNodes.length.toDouble(),
+    );
     processIntervalSliderValue(sliderVal);
   }
 

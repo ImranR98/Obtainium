@@ -83,10 +83,7 @@ class AppLogger {
   }) {
     _logToConsole(level, message, error: error, stackTrace: stackTrace);
     _persist(
-      LogEntry(
-        message: _formatPersistedMessage(message, error),
-        level: level,
-      ),
+      LogEntry(message: _formatPersistedMessage(message, error), level: level),
     );
   }
 

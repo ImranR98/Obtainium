@@ -1265,7 +1265,8 @@ class AppsPageState extends State<AppsPage> {
                   ),
                   SliverToBoxAdapter(
                     child: SizedBox(
-                      height: MediaQuery.of(context).padding.bottom +
+                      height:
+                          MediaQuery.of(context).padding.bottom +
                           (settingsProvider.isTV ? 160 : 96),
                     ),
                   ),

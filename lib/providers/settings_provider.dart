@@ -192,9 +192,7 @@ class SettingsProvider with ChangeNotifier {
 
   ThemeSettings get theme {
     final stored = _getInt('theme');
-    if (stored != null &&
-        stored >= 0 &&
-        stored < ThemeSettings.values.length) {
+    if (stored != null && stored >= 0 && stored < ThemeSettings.values.length) {
       return ThemeSettings.values[stored];
     }
     return ThemeSettings.system;
