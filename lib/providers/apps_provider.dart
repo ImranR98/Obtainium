@@ -990,7 +990,12 @@ Future<void> _runBGInstallMode(
       e.idsByErrorString.forEach((key, value) {
         unawaited(
           notificationsProvider.notify(
-            ErrorCheckingUpdatesNotification(e.errorsAppsString(key, value)),
+            ErrorCheckingUpdatesNotification(
+              e.errorsAppsString(key, value),
+              // Distinct IDs per error group, offset from the update-check
+              // error range so one install failure doesn't replace another.
+              id: errorCheckingUpdatesNotificationId + 200 + key.hashCode.abs(),
+            ),
           ),
         );
       });
