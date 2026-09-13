@@ -502,6 +502,15 @@ abstract class AppSource {
   bool canSearch = false;
   bool includeAdditionalOptsInMainSearch = false;
   List<GeneratedFormItem> get searchQuerySettingFormItems => [];
+
+  /// Search query settings for a specific instance URL. Sources can use [url]
+  /// to adjust defaults (e.g. only prefill credentials for their default host).
+  /// [settingsProvider] is the caller's initialized provider when available.
+  List<GeneratedFormItem> searchQuerySettingItemsForUrl(
+    String url, {
+    SettingsProvider? settingsProvider,
+  }) => searchQuerySettingFormItems;
+
   Future<Map<String, List<String>>> search(
     String query, {
     Map<String, dynamic> querySettings = const {},

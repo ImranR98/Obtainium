@@ -114,6 +114,7 @@
         "one": "Đã xóa {n} nhật ký (trước = {trước}, sau = {sau})",
         "other": "Đã xóa {n} nhật ký (trước = {trước}, sau = {sau})"
     },
+    "codebergTokenLabel": "Codeberg access token",
     "close": "Đóng",
     "colour": "Màu sắc",
     "colourScheme": "Colour scheme",

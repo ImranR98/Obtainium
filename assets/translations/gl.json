@@ -114,6 +114,7 @@
         "one": "Limpado {n} rexistro (anterior = {before}, posterior = {after})",
         "other": "Limpados {n} rexistros (anterior = {before}, posterior = {after})"
     },
+    "codebergTokenLabel": "Codeberg access token",
     "close": "Fechar",
     "colour": "Cor",
     "colourScheme": "Colour scheme",

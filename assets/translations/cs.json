@@ -118,6 +118,7 @@
         "few": "Vymazány {n} záznamy (před = {before}, po = {after})",
         "other": "Vymazáno {n} záznamů (před = {before}, po = {after})"
     },
+    "codebergTokenLabel": "Codeberg access token",
     "close": "Zavřít",
     "colour": "Barvu",
     "colourScheme": "Colour scheme",

@@ -114,6 +114,7 @@
         "one": "Limpou {n} registro (antes = {before}, depois = {after})",
         "other": "Limpou {n} registros (antes = {before}, depois = {after})"
     },
+    "codebergTokenLabel": "Codeberg access token",
     "close": "Fechar",
     "colour": "Cor",
     "colourScheme": "Esquema de cores",

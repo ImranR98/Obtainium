@@ -419,9 +419,12 @@ class _AppPageState extends State<AppPage> {
       final s = source;
       final Map<String, dynamic> originalSettings = app.app.additionalSettings;
       final savedValues = Map<String, dynamic>.from(values);
-      // The add-time package ID field is not part of the additional-options
-      // form, so carry it over instead of dropping it on every save.
-      savedValues['appId'] ??= originalSettings['appId'];
+      // The additional-options form does not include every stored setting
+      // (e.g. the add-time package ID field and source-config overrides such
+      // as credentials), so carry those over instead of dropping them.
+      originalSettings.forEach((key, value) {
+        savedValues.putIfAbsent(key, () => value);
+      });
       app.app = app.app.copyWith(additionalSettings: savedValues);
       if (s?.enforceTrackOnly == true) {
         app.app = app.app.copyWith(

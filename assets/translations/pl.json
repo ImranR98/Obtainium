@@ -126,6 +126,7 @@
         "many": "Wyczyszczono {n} logów (przed = {before}, po = {after})",
         "other": "Wyczyszczono {n} logów (przed = {before}, po = {after})"
     },
+    "codebergTokenLabel": "Codeberg access token",
     "close": "Zamknij",
     "colour": "Kolor",
     "colourScheme": "Schemat kolorów",

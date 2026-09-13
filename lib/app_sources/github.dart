@@ -887,8 +887,9 @@ class GitHub extends AppSource {
     String rootProp, {
     Function(Response)? onHttpErrorCode,
     Map<String, dynamic> querySettings = const {},
+    Map<String, dynamic> additionalSettings = const {},
   }) async {
-    final Response res = await sourceRequest(requestUrl, {});
+    final Response res = await sourceRequest(requestUrl, additionalSettings);
     if (res.statusCode == 200) {
       final int minStarCount =
           int.tryParse(querySettings['minStarCount']?.toString() ?? '') ?? 0;

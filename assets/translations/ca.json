@@ -114,6 +114,7 @@
         "one": "Suprimit {n} registre (anterior a = {before}, posterior a = {after})",
         "other": "Suprimits {n} registres (anteriors a = {before}, posteriors a = {after})"
     },
+    "codebergTokenLabel": "Codeberg access token",
     "close": "Tanca",
     "colour": "Color",
     "colourScheme": "Colour scheme",

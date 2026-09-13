@@ -114,6 +114,7 @@
         "one": "{n} logboekitem gewist (voor = {before}, na = {after})",
         "other": "{n} logboekitems gewist (voor = {before}, na = {after})"
     },
+    "codebergTokenLabel": "Codeberg access token",
     "close": "Sluiten",
     "colour": "Kleur",
     "colourScheme": "Kleurenschema",

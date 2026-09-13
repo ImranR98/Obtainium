@@ -114,6 +114,7 @@
         "one": "Cleared {n} log (before = {before}, after = {after})",
         "other": "Cleared {n} logs (before = {before}, after = {after})"
     },
+    "codebergTokenLabel": "Codeberg access token",
     "close": "Close",
     "colour": "Colour",
     "colourScheme": "Colour scheme",

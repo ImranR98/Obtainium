@@ -114,6 +114,7 @@
         "one": "گزارش {n} پاک شد (قبل از = {پیش از}، بعد = {بعد})",
         "other": "{n} گزارش پاک شد (قبل از = {پیش از}، بعد = {بعد})"
     },
+    "codebergTokenLabel": "Codeberg access token",
     "close": "بستن",
     "colour": "رنگ",
     "colourScheme": "Colour scheme",

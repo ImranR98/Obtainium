@@ -114,6 +114,7 @@
         "one": "Ryddet {n} log (før = {before}, efter = {after})",
         "other": "Ryddede {n} logs (før = {before}, efter = {after})"
     },
+    "codebergTokenLabel": "Codeberg access token",
     "close": "Luk",
     "colour": "Farve",
     "colourScheme": "Colour scheme",

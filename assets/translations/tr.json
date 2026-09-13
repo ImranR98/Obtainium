@@ -114,6 +114,7 @@
         "one": "{n} günlük temizlendi (şundan önce = {before}, şundan sonra = {after})",
         "other": "{n} günlük temizlendi (şundan önce = {before}, şundan sonra = {after})"
     },
+    "codebergTokenLabel": "Codeberg access token",
     "close": "Kapat",
     "colour": "Renk",
     "colourScheme": "Renk şeması",

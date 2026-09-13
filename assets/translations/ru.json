@@ -118,6 +118,7 @@
         "few": "Очищены {n} журнала (до = {before}, после = {after})",
         "other": "Очищено {n} журналов (до = {before}, после = {after})"
     },
+    "codebergTokenLabel": "Codeberg access token",
     "close": "Закрыть",
     "colour": "Цвет",
     "colourScheme": "Цветовая схема",

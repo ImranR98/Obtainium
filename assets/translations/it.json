@@ -114,6 +114,7 @@
         "one": "Rimosso {n} log (prima = {before}, dopo = {after})",
         "other": "Rimossi {n} log (prima = {before}, dopo = {after})"
     },
+    "codebergTokenLabel": "Codeberg access token",
     "close": "Chiudi",
     "colour": "Colore",
     "colourScheme": "Colour scheme",

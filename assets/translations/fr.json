@@ -114,6 +114,7 @@
         "one": "Journal effacé {n} (avant = {before}, après = {after})",
         "other": "Journaux effacés {n} (avant = {before}, après = {after})"
     },
+    "codebergTokenLabel": "Codeberg access token",
     "close": "Fermer",
     "colour": "Couleur",
     "colourScheme": "Palette de couleurs",
