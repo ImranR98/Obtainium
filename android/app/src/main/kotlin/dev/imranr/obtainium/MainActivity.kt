@@ -1,3 +1,5 @@
+// External-installer completion tracking includes code and research adapted from ObtainX by Bikram Agarwal (@bikram-agarwal).
+
 package dev.imranr.obtainium
 
 import android.app.Activity
