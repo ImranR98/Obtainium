@@ -1,3 +1,5 @@
+// APKMirror tracking improvements include code and research adapted from ObtainX by Bikram Agarwal (@bikram-agarwal).
+
 import 'dart:io';
 
 import 'package:easy_localization/easy_localization.dart';
