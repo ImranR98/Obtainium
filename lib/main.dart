@@ -13,6 +13,7 @@ import 'package:obtainium/providers/source_provider.dart';
 import 'package:obtainium/utils/native_features.dart';
 import 'package:obtainium/pages/home.dart';
 import 'package:obtainium/theme.dart';
+import 'package:obtainium/utils/dynamic_color_utils.dart';
 import 'package:provider/provider.dart';
 import 'package:dynamic_color/dynamic_color.dart';
 import 'package:device_info_plus/device_info_plus.dart';
@@ -344,7 +345,7 @@ class _ObtainiumState extends State<Obtainium> {
     );
     final isTV = context.select<SettingsProvider, bool>((p) => p.isTV);
 
-    return DynamicColorBuilder(
+    return ObtainiumDynamicColorBuilder(
       builder: (ColorScheme? lightDynamic, ColorScheme? darkDynamic) {
         ColorScheme lightColorScheme;
         ColorScheme darkColorScheme;
