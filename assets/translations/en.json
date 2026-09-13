@@ -310,6 +310,7 @@
     "ok": "Okay",
     "onlyCheckInstalledOrTrackOnlyApps": "Only check installed and track-only apps for updates",
     "onlyWorksWithNonVersionDetectApps": "Only works for apps with version detection disabled.",
+    "openReleasePage": "Open release page",
     "overrideSource": "Override source",
     "parallelDownloads": "Allow parallel downloads",
     "partialAPKHash": "Partial APK hash",

@@ -310,6 +310,7 @@
     "ok": "OK",
     "onlyCheckInstalledOrTrackOnlyApps": "Chỉ kiểm tra cập nhật các ứng dụng đã cài đặt và Chỉ theo dõi",
     "onlyWorksWithNonVersionDetectApps": "Chỉ hoạt động với Ứng dụng đã tắt tính năng phát hiện phiên bản.",
+    "openReleasePage": "Open release page",
     "overrideSource": "Ghi đè nguồn",
     "parallelDownloads": "Cho phép tải đa luồng",
     "partialAPKHash": "Băm APK một phần",

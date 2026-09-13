@@ -310,6 +310,7 @@
     "ok": "Добре",
     "onlyCheckInstalledOrTrackOnlyApps": "Перевіряти лише встановлені та застосунки, які відстежуються для оновлень",
     "onlyWorksWithNonVersionDetectApps": "Працює лише з застосунками з вимкненим визначенням версії.",
+    "openReleasePage": "Open release page",
     "overrideSource": "Перевизначити джерело",
     "parallelDownloads": "Дозволити паралельні завантаження",
     "partialAPKHash": "Хеш часткового APK",

@@ -328,6 +328,7 @@
     "ok": "OK",
     "onlyCheckInstalledOrTrackOnlyApps": "Sprawdzaj aktualizacje tylko dla aplikacji zainstalowanych i obserwowanych",
     "onlyWorksWithNonVersionDetectApps": "Działa tylko dla aplikacji z wyłączonym wykrywaniem wersji.",
+    "openReleasePage": "Open release page",
     "overrideSource": "Zastąp źródło",
     "parallelDownloads": "Zezwalaj na pobieranie równoległe",
     "partialAPKHash": "Częściowy hash pliku APK",

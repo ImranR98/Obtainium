@@ -90,6 +90,7 @@ PHONE_SUITES=(
   app_list_density_test.dart
   codeberg_auth_test.dart
   screens_navigation_test.dart
+  track_only_actions_test.dart
 )
 TV_SUITES=(
   tv_navigation_test.dart

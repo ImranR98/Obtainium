@@ -310,6 +310,7 @@
     "ok": "Oke",
     "onlyCheckInstalledOrTrackOnlyApps": "Hanya periksa aplikasi yang dipasang dan ditandai 'Pelacakan Saja' untuk pembaruan",
     "onlyWorksWithNonVersionDetectApps": "Hanya bekerja untuk aplikasi dengan pendeteksi versi yang nonaktif.",
+    "openReleasePage": "Open release page",
     "overrideSource": "Ganti sumber",
     "parallelDownloads": "Izinkan mengunduh paralel",
     "partialAPKHash": "Hash APK parsial",

@@ -114,6 +114,7 @@ Map<String, dynamic> appJson({
   Map<String, dynamic> additionalSettings = const {'versionDetection': true},
   bool pinned = false,
   List<String> categories = const [],
+  String? releaseUrl,
 }) => {
   'id': id,
   'url': url,
@@ -130,6 +131,7 @@ Map<String, dynamic> appJson({
   'categories': categories,
   'releaseDate': null,
   'changeLog': null,
+  'releaseUrl': releaseUrl,
   'overrideSource': null,
   'allowIdChange': false,
   'pendingRepoRenameUrl': null,

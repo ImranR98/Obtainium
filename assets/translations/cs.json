@@ -317,6 +317,7 @@
     "ok": "OK",
     "onlyCheckInstalledOrTrackOnlyApps": "Aktualizace kontrolovat pouze u nainstalovaných a sledovaných aplikací",
     "onlyWorksWithNonVersionDetectApps": "Funguje pouze pro aplikace s vypnutou detekcí verze.",
+    "openReleasePage": "Open release page",
     "overrideSource": "Přepsat zdroj",
     "parallelDownloads": "Povolit souběžné stahování",
     "partialAPKHash": "Částečný hash APK",

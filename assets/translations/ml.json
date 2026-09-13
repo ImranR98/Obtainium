@@ -310,6 +310,7 @@
     "ok": "ശരി",
     "onlyCheckInstalledOrTrackOnlyApps": "ഇൻസ്റ്റാൾ ചെയ്തതും ട്രാക്ക്-മാത്രം ആപ്പുകളും മാത്രം അപ്‌ഡേറ്റുകൾക്കായി പരിശോധിക്കുക",
     "onlyWorksWithNonVersionDetectApps": "പതിപ്പ് കണ്ടെത്തൽ പ്രവർത്തനരഹിതമാക്കിയ ആപ്പുകൾക്ക് മാത്രമേ ഇത് പ്രവർത്തിക്കൂ.",
+    "openReleasePage": "Open release page",
     "overrideSource": "ഉറവിടം അസാധുവാക്കുക",
     "parallelDownloads": "പാരലൽ ഡൗൺലോഡുകൾ അനുവദിക്കുക",
     "partialAPKHash": "ഭാഗിക APK ഹാഷ്",

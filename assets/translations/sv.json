@@ -310,6 +310,7 @@
     "ok": "Okej",
     "onlyCheckInstalledOrTrackOnlyApps": "Kontrollera bara installerade appar och endast spårbara appar för uppdateringar",
     "onlyWorksWithNonVersionDetectApps": "Fungerar bara för Appar med versionsdetektering inaktiverat..",
+    "openReleasePage": "Open release page",
     "overrideSource": "Överskrid Källa",
     "parallelDownloads": "Tillåt parallella nedladdningar",
     "partialAPKHash": "Delvis APK-hash",
