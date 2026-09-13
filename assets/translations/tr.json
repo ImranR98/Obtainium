@@ -310,6 +310,7 @@
     "ok": "Tamam",
     "onlyCheckInstalledOrTrackOnlyApps": "Yalnızca yüklü ve 'sadece takip edilen' uygulamaların güncellemesini denetle",
     "onlyWorksWithNonVersionDetectApps": "Yalnızca sürüm algılamasının devre dışı olduğu uygulamalarda çalışır.",
+    "openReleasePage": "Open release page",
     "overrideSource": "Kaynağı geçersiz kıl",
     "parallelDownloads": "Paralel indirmelere izin ver",
     "partialAPKHash": "Kısmi APK hash'i",

@@ -310,6 +310,7 @@
     "ok": "باشه",
     "onlyCheckInstalledOrTrackOnlyApps": "فقط برنامه های نصب شده و فقط ردیابی را برای به روز رسانی بررسی کنید",
     "onlyWorksWithNonVersionDetectApps": "فقط برای برنامه‌هایی کار می‌کند که تشخیص نسخه غیرفعال است.",
+    "openReleasePage": "Open release page",
     "overrideSource": "نادیده گرفتن منبع",
     "parallelDownloads": "اجازه دانلود موازی",
     "partialAPKHash": "هش جزئی APK",

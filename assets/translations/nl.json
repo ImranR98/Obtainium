@@ -310,6 +310,7 @@
     "ok": "Oké",
     "onlyCheckInstalledOrTrackOnlyApps": "Alleen geïnstalleerde apps en 'Alleen volgen' controleren op updates",
     "onlyWorksWithNonVersionDetectApps": "Werkt alleen voor apps waarbij versieherkenning is uitgeschakeld.",
+    "openReleasePage": "Open release page",
     "overrideSource": "Bron overschrijven",
     "parallelDownloads": "Parallelle downloads toestaan",
     "partialAPKHash": "Gedeeltelijke APK-hash",

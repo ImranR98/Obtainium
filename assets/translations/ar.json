@@ -310,6 +310,7 @@
     "ok": "حسنًا",
     "onlyCheckInstalledOrTrackOnlyApps": "التحقق فقط من التطبيقات المثبتة أو للتعقب فقط",
     "onlyWorksWithNonVersionDetectApps": "يعمل فقط مع التطبيقات التي عُطّل اكتشاف الإصدار لها.",
+    "openReleasePage": "Open release page",
     "overrideSource": "تجاوز المصدر",
     "parallelDownloads": "اسمح بالتنزيل المتوازي",
     "partialAPKHash": "جزء من بصمة APK",

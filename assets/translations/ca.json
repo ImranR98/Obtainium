@@ -310,6 +310,7 @@
     "ok": "Accepta",
     "onlyCheckInstalledOrTrackOnlyApps": "Comprova les actualitzacions només per a aplicacions instal·lades o en seguiment",
     "onlyWorksWithNonVersionDetectApps": "Només funciona per a aplicacions amb la detecció de versions desactivada.",
+    "openReleasePage": "Open release page",
     "overrideSource": "Força la font",
     "parallelDownloads": "Permet les descàrregues paralel·les",
     "partialAPKHash": "Hash de l'APK parcial",

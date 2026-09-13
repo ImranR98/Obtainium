@@ -310,6 +310,7 @@
     "ok": "Dobro",
     "onlyCheckInstalledOrTrackOnlyApps": "Isključivo provjerite ažuriranje za instalirane i aplikacije 'samo za praćenje'",
     "onlyWorksWithNonVersionDetectApps": "Radi samo za aplikacije s onemogućenom detekcijom verzije.",
+    "openReleasePage": "Open release page",
     "overrideSource": "Premosti izvor",
     "parallelDownloads": "Dozvoli paralelna preuzimanja",
     "partialAPKHash": "Djelomični APK Hash",

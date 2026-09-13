@@ -615,23 +615,8 @@ class _AppPageState extends State<AppPage> {
         (installed == null || installed != latest) &&
         !areDownloadsRunning;
     final trackOnly = app?.app.settings.getBool('trackOnly') == true;
-    final String? releasePageUrl = app?.app.releaseUrl;
-    final bool openReleasePage =
-        trackOnly &&
-        hasAction &&
-        releasePageUrl != null &&
-        releasePageUrl.isNotEmpty;
     return FilledButton.icon(
-      onPressed: hasAction
-          ? (openReleasePage
-                ? () => unawaited(
-                    launchUrlString(
-                      releasePageUrl,
-                      mode: LaunchMode.externalApplication,
-                    ),
-                  )
-                : () => _handleInstallOrUpdate(context, app))
-          : null,
+      onPressed: hasAction ? () => _handleInstallOrUpdate(context, app) : null,
       icon: Icon(
         installed == null
             ? Icons.download_outlined
@@ -641,9 +626,7 @@ class _AppPageState extends State<AppPage> {
         mainAxisSize: MainAxisSize.min,
         children: [
           Text(
-            openReleasePage
-                ? (installed == null ? tr('install') : tr('update'))
-                : installed == null
+            installed == null
                 ? (!trackOnly ? tr('install') : tr('markInstalled'))
                 : !trackOnly
                 ? tr('update')
@@ -714,10 +697,21 @@ class _AppPageState extends State<AppPage> {
           icon: const Icon(Icons.more_horiz),
           tooltip: tr('more'),
         ),
+      if (app?.app.releaseUrl?.isNotEmpty == true)
+        IconButton(
+          onPressed: () => unawaited(
+            launchUrlString(
+              app!.app.releaseUrl!,
+              mode: LaunchMode.externalApplication,
+            ),
+          ),
+          tooltip: tr('openReleasePage'),
+          icon: const Icon(Icons.open_in_new),
+        ),
       if (app?.app.installedVersion != null &&
           app?.app.installedVersion != app?.app.latestVersion &&
           !isVersionDetectionStandard &&
-          (!trackOnly || app?.app.releaseUrl?.isNotEmpty == true))
+          !trackOnly)
         IconButton(
           onPressed: app?.downloadProgress != null || updating
               ? null

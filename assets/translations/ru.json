@@ -317,6 +317,7 @@
     "ok": "OK",
     "onlyCheckInstalledOrTrackOnlyApps": "Проверять обновления только у установленных или отслеживаемых приложений",
     "onlyWorksWithNonVersionDetectApps": "Работает только для приложений с отключённым определением версии",
+    "openReleasePage": "Open release page",
     "overrideSource": "Переопределить источник",
     "parallelDownloads": "Загружать параллельно",
     "partialAPKHash": "Частичный хеш APK",

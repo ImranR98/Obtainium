@@ -310,6 +310,7 @@
     "ok": "Okay",
     "onlyCheckInstalledOrTrackOnlyApps": "Tjek kun installerede og 'Følg Kun'-apps for opdateringer",
     "onlyWorksWithNonVersionDetectApps": "Virker kun for apps med versionsregistrering deaktiveret.",
+    "openReleasePage": "Open release page",
     "overrideSource": "Tilsidesæt kilde",
     "parallelDownloads": "Tillad samtidige overførsler",
     "partialAPKHash": "Delvis APK-hash",

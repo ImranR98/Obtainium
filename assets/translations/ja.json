@@ -310,6 +310,7 @@
     "ok": "OK",
     "onlyCheckInstalledOrTrackOnlyApps": "インストール済みのアプリと「追跡のみ」のアプリのアップデートのみを確認する",
     "onlyWorksWithNonVersionDetectApps": "バージョン検出を無効にしているアプリにのみ適用されます。",
+    "openReleasePage": "Open release page",
     "overrideSource": "ソースの上書き",
     "parallelDownloads": "並行ダウンロードを許可する",
     "partialAPKHash": "APKの部分ハッシュ",

@@ -310,6 +310,7 @@
     "ok": "OK",
     "onlyCheckInstalledOrTrackOnlyApps": "Nur mit „Nur nachverfolgen“ markierte und installierte Apps auf Aktualisierungen prüfen",
     "onlyWorksWithNonVersionDetectApps": "Funktioniert nur bei Apps mit deaktivierter Versionserkennung.",
+    "openReleasePage": "Open release page",
     "overrideSource": "Quelle überschreiben",
     "parallelDownloads": "Parallele Downloads erlauben",
     "partialAPKHash": "Partieller APK-Hash",

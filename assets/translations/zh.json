@@ -310,6 +310,7 @@
     "ok": "好的",
     "onlyCheckInstalledOrTrackOnlyApps": "只检查已安装和“仅追踪”的应用",
     "onlyWorksWithNonVersionDetectApps": "仅适用于禁用版本检测的应用。",
+    "openReleasePage": "Open release page",
     "overrideSource": "覆盖来源",
     "parallelDownloads": "启用并行下载",
     "partialAPKHash": "APK 文件散列值片段",

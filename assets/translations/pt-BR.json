@@ -310,6 +310,7 @@
     "ok": "Ok",
     "onlyCheckInstalledOrTrackOnlyApps": "Buscar atualizações somente para apps instalados e de somente rastreamento",
     "onlyWorksWithNonVersionDetectApps": "Funciona somente em apps com a detecção de versão desativada.",
+    "openReleasePage": "Open release page",
     "overrideSource": "Sobrescrever fonte",
     "parallelDownloads": "Permitir downloads em paralelo",
     "partialAPKHash": "Hash do APK parcial",
