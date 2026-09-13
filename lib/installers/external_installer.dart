@@ -1,14 +1,9 @@
-import 'dart:async';
-
-import 'package:android_intent_plus/android_intent.dart';
-import 'package:android_intent_plus/flag.dart';
 import 'package:easy_localization/easy_localization.dart';
-import 'package:flutter_fgbg/flutter_fgbg.dart';
+import 'package:obtainium/core/logging/app_logger.dart';
 import 'package:obtainium/custom_errors.dart';
 import 'package:obtainium/installers/installer.dart';
 import 'package:obtainium/installers/install_utils.dart';
 import 'package:obtainium/providers/external_install_bridge.dart';
-import 'package:obtainium/core/logging/app_logger.dart';
 import 'package:obtainium/providers/source_provider.dart';
 
 const String _apkMime = 'application/vnd.android.package-archive';
@@ -22,25 +17,21 @@ bool _isTarballPath(String lowerPath) =>
     lowerPath.endsWith('.tar.bz2') ||
     lowerPath.endsWith('.tar.xz');
 
-/// Ceiling for how long we wait for the user to return after the external
-/// installer took them away from Obtainium.
-const Duration _foregroundReturnFallback = Duration(hours: 2);
-
-/// If the external installer doesn't take the user away from Obtainium
-/// (modal overlay), we won't see a background event. This timeout caps how
-/// long we wait before falling through to the install-confirmation poll.
-const Duration _backgroundDetectionWindow = Duration(seconds: 30);
-
-/// When the installer was a modal, wait this long before polling.
-const Duration _modalPollDelay = Duration(seconds: 30);
-
-/// After the user returns, re-check the package a few times to absorb any brief
-/// finalization lag before deciding the outcome.
+/// Confirmation window (at 500ms intervals) after the native side reports an
+/// install, before treating the package state as not updated.
 const int _confirmAttempts = 60;
 
-/// Installs by handing the downloaded file to a user-chosen installer app. All
-/// orchestration lives here in Dart; the native side only resolves a content
-/// URI and enumerates candidate apps.
+/// Single confirmation check for inconclusive outcomes (cancel/timeout), to
+/// catch a background install that committed at the last moment.
+const int _singleCheckAttempts = 2;
+
+/// Installs by handing the downloaded file to a user-chosen installer app.
+///
+/// The native bridge launches the installer with
+/// `Intent.EXTRA_RETURN_RESULT` and watches for the installer's own result, a
+/// package-change broadcast, or a timeout, so the outcome is authoritative
+/// instead of being inferred from app-lifecycle events. The package state is
+/// still verified before reporting success.
 class ExternalInstaller extends Installer {
   ExternalInstaller(super.settingsProvider);
 
@@ -82,85 +73,65 @@ class ExternalInstaller extends Installer {
 
     final baseline = await captureInstallBaseline(appId);
 
+    ExternalInstallResult? lastResult;
+    var reportedInstalled = false;
     for (final filePath in apkFilePaths) {
       final contentUri = await ExternalInstallerBridge.instance
           .contentUriForFile(filePath);
       if (contentUri == null) {
         throw ObtainiumError(tr('badDownload'));
       }
-
-      final intent = AndroidIntent(
-        action: 'action_view',
-        data: contentUri,
+      AppLogger.info(
+        'External installer $targetPackage is handling $appId; awaiting its result.',
+      );
+      lastResult = await ExternalInstallerBridge.instance.launchInstallIntent(
+        uri: contentUri,
         type: _mimeForPath(filePath),
         package: targetPackage,
-        componentName: settingsProvider.externalInstallerComponent,
-        flags: [
-          Flag.FLAG_GRANT_READ_URI_PERMISSION,
-          Flag.FLAG_ACTIVITY_NEW_TASK,
-        ],
+        activity: settingsProvider.externalInstallerComponent,
+        expectedPackageName: appId,
       );
-
-      // Set up foreground return listener BEFORE launching intent.
-      final fgCompleter = Completer<FGBGType>();
-      final fgSub = FGBGEvents.instance.stream.asBroadcastStream().listen((
-        event,
-      ) {
-        if (event == FGBGType.foreground && !fgCompleter.isCompleted) {
-          fgCompleter.complete(event);
-        }
-      });
-      final fgTimer = Timer(_foregroundReturnFallback, () {
-        if (!fgCompleter.isCompleted) fgCompleter.complete(FGBGType.background);
-      });
-
-      // Set up background detection.
-      final bgCompleter = Completer<FGBGType>();
-      final bgSub = FGBGEvents.instance.stream.asBroadcastStream().listen((
-        event,
-      ) {
-        if (event == FGBGType.background && !bgCompleter.isCompleted) {
-          bgCompleter.complete(event);
-        }
-      });
-      final bgTimer = Timer(_backgroundDetectionWindow, () {
-        if (!bgCompleter.isCompleted) bgCompleter.complete(FGBGType.foreground);
-      });
-
-      await intent.launch();
-
-      // Wait for background detection or timeout.
-      final bgResult = await bgCompleter.future;
-      bgTimer.cancel();
-      await bgSub.cancel();
-
-      if (bgResult == FGBGType.background) {
-        await fgCompleter.future;
-        fgTimer.cancel();
-        await fgSub.cancel();
-      } else {
-        fgTimer.cancel();
-        await fgSub.cancel();
-        // The installer is a modal — wait before polling.
-        await Future.delayed(_modalPollDelay);
+      if (lastResult == null) {
+        // Result tracking unavailable: fall back to bounded polling.
+        AppLogger.info(
+          'External install result tracking unavailable; polling package state for $appId.',
+        );
+        final installed = await waitForPackageInstall(
+          appId,
+          baseline,
+          attempts: _confirmAttempts,
+        );
+        return installed ? InstallResult.success() : InstallResult.cancelled();
+      }
+      if (lastResult.installed) {
+        reportedInstalled = true;
+        break;
       }
     }
 
-    // The external installer app never reports a status code back to us, so
-    // install completion can only be detected by polling the package state
-    // rather than reading a return code from the installer.
-    AppLogger.info(
-      'Detecting install completion for $appId via fallback polling (external installer returns no status code).',
-    );
-    final installed = await waitForPackageInstall(
+    if (lastResult?.errorCode != null) {
+      AppLogger.warn(
+        'External installer reported failure for $appId (code ${lastResult!.errorCode}).',
+      );
+    }
+
+    // Trust but verify: the installer's report (or the hard timeout) is only
+    // conclusive once the package manager reflects the change.
+    final verified = await waitForPackageInstall(
       appId,
       baseline,
-      attempts: _confirmAttempts,
+      attempts: reportedInstalled ? _confirmAttempts : _singleCheckAttempts,
     );
-    AppLogger.info(
-      'Fallback polling ${installed ? 'confirmed' : 'could not confirm'} install completion for $appId.',
-    );
-    return installed ? InstallResult.success() : InstallResult.cancelled();
+    if (reportedInstalled && !verified) {
+      AppLogger.warn(
+        'External installer reported success for $appId but the package state did not change.',
+      );
+    } else if (!reportedInstalled && verified) {
+      AppLogger.info(
+        'External install for $appId was confirmed by the package state after an inconclusive result.',
+      );
+    }
+    return verified ? InstallResult.success() : InstallResult.cancelled();
   }
 
   String _mimeForPath(String path) {
