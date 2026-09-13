@@ -26,6 +26,29 @@ const _corruptFileSuffix = '.corrupt';
 /// target the same app.
 int _saveTempCounter = 0;
 
+/// Whether a cached app icon can be reused instead of re-reading it from the
+/// platform.
+///
+/// An app's icon is packaged in its APK, so it can only change when the app is
+/// updated. The cache is therefore only stale when the installed package's
+/// [PackageInfo.lastUpdateTime] is newer than the cache file (or when
+/// [ignoreCache] forces a refresh), keeping the relatively expensive
+/// `getAppIcon` platform call off the hot path.
+bool isIconCacheUsable({
+  required bool cacheExists,
+  required DateTime? cacheModified,
+  int? packageLastUpdateTime,
+  bool ignoreCache = false,
+}) {
+  if (ignoreCache || !cacheExists) {
+    return false;
+  }
+  if (packageLastUpdateTime == null || cacheModified == null) {
+    return true;
+  }
+  return cacheModified.millisecondsSinceEpoch >= packageLastUpdateTime;
+}
+
 extension AppsProviderLifecycle on AppsProvider {
   bool _getNaiveStandardVersionDetection(App app, {AppSource? source}) {
     final resolved =
@@ -310,12 +333,19 @@ extension AppsProviderLifecycle on AppsProvider {
   }
 
   Future<void> updateAppIcon(String? appId, {bool ignoreCache = false}) async {
-    if (apps[appId]?.icon == null) {
-      final cachedIcon = File('${iconsCacheDir.path}/$appId.png');
-      final alreadyCached = cachedIcon.existsSync() && !ignoreCache;
+    final app = apps[appId];
+    final cachedIcon = File('${iconsCacheDir.path}/$appId.png');
+    final cacheExists = cachedIcon.existsSync();
+    final alreadyCached = isIconCacheUsable(
+      ignoreCache: ignoreCache,
+      cacheExists: cacheExists,
+      cacheModified: cacheExists ? cachedIcon.lastModifiedSync() : null,
+      packageLastUpdateTime: app?.installedInfo?.lastUpdateTime,
+    );
+    if (app?.icon == null || !alreadyCached) {
       final icon = alreadyCached
           ? (await cachedIcon.readAsBytes())
-          : (await apps[appId]?.installedInfo?.applicationInfo?.getAppIcon());
+          : (await app?.installedInfo?.applicationInfo?.getAppIcon());
       if (icon != null && !alreadyCached) {
         unawaited(cachedIcon.writeAsBytes(icon));
       }
@@ -381,6 +411,10 @@ extension AppsProviderLifecycle on AppsProvider {
         if (info == null) {
           final cachedIcon = File('${iconsCacheDir.path}/${app.id}.png');
           if (cachedIcon.existsSync()) cachedIcon.deleteSync();
+        } else if (!canReuse && icon != null) {
+          // Persist the freshly fetched icon so future cold starts can reuse
+          // it (and so a changed icon replaces the stale cached one).
+          await File('${iconsCacheDir.path}/${app.id}.png').writeAsBytes(icon);
         }
       }),
     );
