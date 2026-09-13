@@ -114,6 +114,7 @@
         "one": "Purigis {n} protokolon (antaŭe = {before}, malantaŭe = {after})",
         "other": "Purigis {n} protokolojn (antaŭe = {before}, malantaŭe = {after})"
     },
+    "codebergTokenLabel": "Codeberg access token",
     "close": "Fermi",
     "colour": "Koloro",
     "colourScheme": "Colour scheme",

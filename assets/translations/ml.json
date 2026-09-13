@@ -114,6 +114,7 @@
         "one": "{n} ലോഗ് മായ്ച്ചു (മുമ്പ് = {before}, ശേഷം = {after})",
         "other": "{n} ലോഗുകൾ മായ്ച്ചു (മുമ്പ് = {before}, ശേഷം = {after})"
     },
+    "codebergTokenLabel": "Codeberg access token",
     "close": "അടയ്ക്കുക",
     "colour": "നിറം",
     "colourScheme": "Colour scheme",

@@ -114,6 +114,7 @@
         "one": "Eliminado {n} registro (previo a = {before}, posterior a = {after})",
         "other": "Eliminados {n} registros (previos a = {before}, posteriores a = {after})"
     },
+    "codebergTokenLabel": "Codeberg access token",
     "close": "Cerrar",
     "colour": "color",
     "colourScheme": "Colour scheme",

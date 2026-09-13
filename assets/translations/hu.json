@@ -114,6 +114,7 @@
         "one": "{n} napló törölve lett ({after} után, és {before} előtt)",
         "other": "{n} napló törölve lett ({after} után, és {before} előtt)"
     },
+    "codebergTokenLabel": "Codeberg access token",
     "close": "Bezárás",
     "colour": "Szín",
     "colourScheme": "Színséma",

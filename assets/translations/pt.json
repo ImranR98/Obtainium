@@ -114,6 +114,7 @@
         "one": "Foi limpo {n} log (antes = {antes}, depois = {depois})",
         "other": "Foram limpos {n} logs (antes = {antes}, depois = {depois})"
     },
+    "codebergTokenLabel": "Codeberg access token",
     "close": "Fechar",
     "colour": "Cor",
     "colourScheme": "Colour scheme",

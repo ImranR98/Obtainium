@@ -114,6 +114,7 @@
         "one": "{n}개의 로그가 지워졌습니다 (이전 = {before}, 이후 = {after})",
         "other": "{n}개의 로그가 지워졌습니다 (이전 = {before}, 이후 = {after})"
     },
+    "codebergTokenLabel": "Codeberg access token",
     "close": "닫기",
     "colour": "색상",
     "colourScheme": "색상 조합",

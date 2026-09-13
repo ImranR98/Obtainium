@@ -114,6 +114,7 @@
         "one": "Menghapus {n} catatan (sebelum = {before}, setelah = {after})",
         "other": "Menghapus {n} catatan (sebelum = {before}, setelah = {after})"
     },
+    "codebergTokenLabel": "Codeberg access token",
     "close": "Tutup",
     "colour": "Warna",
     "colourScheme": "Colour scheme",

@@ -114,6 +114,7 @@
         "one": "Очищено {n} журнал (до = {before}, після = {after})",
         "other": "Очищено {n} журналів (до = {before}, після = {after})"
     },
+    "codebergTokenLabel": "Codeberg access token",
     "close": "Закрити",
     "colour": "Колір",
     "colourScheme": "Colour scheme",

@@ -114,6 +114,7 @@
         "one": "{n} Log gelöscht (vorher = {before}, nachher = {after})",
         "other": "{n} Logs gelöscht (vorher = {before}, nachher = {after})"
     },
+    "codebergTokenLabel": "Codeberg access token",
     "close": "Schließen",
     "colour": "Farbe",
     "colourScheme": "Farbschema",

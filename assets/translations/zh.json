@@ -114,6 +114,7 @@
         "one": "清除了 {n} 条日志（早于 {before}，晚于 {after}）",
         "other": "清除了 {n} 条日志（早于 {before}，晚于 {after}）"
     },
+    "codebergTokenLabel": "Codeberg access token",
     "close": "关闭",
     "colour": "配色",
     "colourScheme": "配色方案",

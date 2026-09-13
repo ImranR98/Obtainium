@@ -114,6 +114,7 @@
         "one": "{n} 個のログをクリアしました (前 = {before}, 後 = {after})",
         "other": "{n} 個のログをクリアしました (前 = {before}, 後 = {after})"
     },
+    "codebergTokenLabel": "Codeberg access token",
     "close": "閉じる",
     "colour": "カラー",
     "colourScheme": "配色",

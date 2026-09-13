@@ -114,6 +114,7 @@
         "one": "Izbrisan {n} log (prije = {before}, nakon = {after})",
         "other": "Izbrisano {n} log-ova (prije = {before}, nakon = {after})"
     },
+    "codebergTokenLabel": "Codeberg access token",
     "close": "Zatvori",
     "colour": "Boja",
     "colourScheme": "Šema boja",

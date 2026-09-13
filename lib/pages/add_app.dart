@@ -171,6 +171,18 @@ class AddAppPageState extends State<AddAppPage> {
     return true;
   }
 
+  /// Host portion of the search dialog's instance URL field, tolerating
+  /// scheme-less input. Returns '' when the input is not parseable.
+  static String _searchUrlHost(String url) {
+    var raw = url.trim();
+    if (raw.isEmpty) return '';
+    if (!raw.toLowerCase().startsWith('http://') &&
+        !raw.toLowerCase().startsWith('https://')) {
+      raw = 'https://$raw';
+    }
+    return Uri.tryParse(raw)?.host ?? '';
+  }
+
   void setSourceOverride(String? override) {
     pickedSourceOverride = override;
     changeUserInput(userInput, true, false);
@@ -355,74 +367,105 @@ class AddAppPageState extends State<AddAppPage> {
             .toList();
         final List<MapEntry<String, Map<String, List<String>>>?>
         results = (await Future.wait(
-          sourceProvider.sources
-              .where((e) => searchSources.contains(e.name))
-              .map((e) async {
-                try {
-                  Map<String, dynamic>? querySettings = {};
-                  if (e.includeAdditionalOptsInMainSearch) {
-                    querySettings = await showDialog<Map<String, dynamic>?>(
-                      context: context,
-                      builder: (BuildContext ctx) {
-                        return GeneratedFormModal(
-                          title: tr('searchX', args: [e.name]),
-                          items: [
-                            ...e.searchQuerySettingFormItems.map((e) => [e]),
-                            [
-                              GeneratedFormTextField(
-                                'url',
-                                label: e.hosts.isNotEmpty
-                                    ? tr('overrideSource')
-                                    : plural('url', 1).substring(2),
-                                autoCompleteOptions: [
-                                  ...(e.hosts.isNotEmpty ? [e.hosts[0]] : []),
-                                  ...appsProvider.apps.values
-                                      .where(
-                                        (a) =>
-                                            sourceProvider
-                                                .getSource(
-                                                  a.app.url,
-                                                  overrideSource:
-                                                      a.app.overrideSource,
-                                                )
-                                                .sourceIdentifier ==
-                                            e.sourceIdentifier,
-                                      )
-                                      .map((a) {
-                                        final uri = Uri.parse(a.app.url);
-                                        return '${uri.origin}${uri.path}';
-                                      }),
+          sourceProvider.sources.where((e) => searchSources.contains(e.name)).map(
+            (e) async {
+              try {
+                Map<String, dynamic>? querySettings = {};
+                if (e.includeAdditionalOptsInMainSearch) {
+                  querySettings = await showDialog<Map<String, dynamic>?>(
+                    context: context,
+                    builder: (BuildContext ctx) {
+                      String currentUrl = e.hosts.isNotEmpty ? e.hosts[0] : '';
+                      String currentHost = _searchUrlHost(currentUrl);
+                      List<GeneratedFormItem> sourceItems = e
+                          .searchQuerySettingItemsForUrl(
+                            currentUrl,
+                            settingsProvider: settingsProvider,
+                          );
+                      return StatefulBuilder(
+                        builder:
+                            (BuildContext ctx, StateSetter setDialogState) {
+                              return GeneratedFormModal(
+                                title: tr('searchX', args: [e.name]),
+                                items: [
+                                  ...sourceItems.map((item) => [item]),
+                                  [
+                                    GeneratedFormTextField(
+                                      'url',
+                                      label: e.hosts.isNotEmpty
+                                          ? tr('overrideSource')
+                                          : plural('url', 1).substring(2),
+                                      autoCompleteOptions: [
+                                        ...(e.hosts.isNotEmpty
+                                            ? [e.hosts[0]]
+                                            : []),
+                                        ...appsProvider.apps.values
+                                            .where(
+                                              (a) =>
+                                                  sourceProvider
+                                                      .getSource(
+                                                        a.app.url,
+                                                        overrideSource: a
+                                                            .app
+                                                            .overrideSource,
+                                                      )
+                                                      .sourceIdentifier ==
+                                                  e.sourceIdentifier,
+                                            )
+                                            .map((a) {
+                                              final uri = Uri.parse(a.app.url);
+                                              return '${uri.origin}${uri.path}';
+                                            }),
+                                      ],
+                                      value: currentUrl,
+                                      required: true,
+                                    ),
+                                  ],
                                 ],
-                                value: e.hosts.isNotEmpty ? e.hosts[0] : '',
-                                required: true,
-                              ),
-                            ],
-                          ],
-                        );
-                      },
-                    );
-                    if (querySettings == null) {
-                      return null;
-                    }
-                  }
-                  return MapEntry(
-                    e.sourceIdentifier,
-                    await e.search(searchQuery, querySettings: querySettings),
+                                onValueChanges: (values, valid, isBuilding) {
+                                  if (isBuilding) return;
+                                  final newUrl = values['url'] as String? ?? '';
+                                  currentUrl = newUrl;
+                                  final newHost = _searchUrlHost(newUrl);
+                                  if (newHost != currentHost) {
+                                    currentHost = newHost;
+                                    setDialogState(() {
+                                      sourceItems = e
+                                          .searchQuerySettingItemsForUrl(
+                                            newUrl,
+                                            settingsProvider: settingsProvider,
+                                          );
+                                    });
+                                  }
+                                },
+                              );
+                            },
+                      );
+                    },
                   );
-                } catch (err) {
-                  final errorToShow = err is ObtainiumError
-                      ? ObtainiumError(
-                          err.message,
-                          code: err.code,
-                          unexpected: true,
-                          stack: err.stack,
-                          data: err.data,
-                        )
-                      : err;
-                  if (context.mounted) showError(errorToShow, context);
-                  return null;
+                  if (querySettings == null) {
+                    return null;
+                  }
                 }
-              }),
+                return MapEntry(
+                  e.sourceIdentifier,
+                  await e.search(searchQuery, querySettings: querySettings),
+                );
+              } catch (err) {
+                final errorToShow = err is ObtainiumError
+                    ? ObtainiumError(
+                        err.message,
+                        code: err.code,
+                        unexpected: true,
+                        stack: err.stack,
+                        data: err.data,
+                      )
+                    : err;
+                if (context.mounted) showError(errorToShow, context);
+                return null;
+              }
+            },
+          ),
         )).where((a) => a != null).toList();
 
         if (!context.mounted) return;

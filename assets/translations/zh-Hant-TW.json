@@ -114,6 +114,7 @@
         "one": "已清除 {n} 筆記錄（之前 = {before}，之後 = {after}）",
         "other": "已清除 {n} 筆記錄（之前 = {before}，之後 = {after}）"
     },
+    "codebergTokenLabel": "Codeberg access token",
     "close": "關閉",
     "colour": "色彩",
     "colourScheme": "Colour scheme",

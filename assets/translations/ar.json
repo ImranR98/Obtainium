@@ -114,6 +114,7 @@
         "one": "مُسح {n} سجل (قبل = {before}, بعد = {after})",
         "other": "مُسح {n} سجلات (قبل = {before}, بعد = {after})"
     },
+    "codebergTokenLabel": "Codeberg access token",
     "close": "أغلق",
     "colour": "اللون",
     "colourScheme": "مخطّط لوني",

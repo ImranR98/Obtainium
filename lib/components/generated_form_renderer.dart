@@ -374,6 +374,40 @@ class _GeneratedFormState extends State<GeneratedForm> {
         if (!mounted) return;
         notifyFormChange(isBuilding: true);
       });
+      return;
+    }
+    // Sync item-level default changes (e.g. a search field whose prefill
+    // depends on another field's host) without resetting the whole form.
+    final oldValues = <String, dynamic>{
+      for (final row in oldWidget.items)
+        for (final item in row) item.key: item.value,
+    };
+    var changed = false;
+    for (final row in widget.items) {
+      for (final item in row) {
+        if (!oldValues.containsKey(item.key) ||
+            oldValues[item.key] == item.value) {
+          continue;
+        }
+        if (item is GeneratedFormTextField) {
+          values[item.key] = item.value;
+          final controller = _textControllers[item.key];
+          final text = item.value?.toString() ?? '';
+          if (controller != null && controller.text != text) {
+            controller.text = text;
+          }
+          changed = true;
+        } else if (item is GeneratedFormSwitch) {
+          values[item.key] = item.value;
+          changed = true;
+        }
+      }
+    }
+    if (changed) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        notifyFormChange(isBuilding: true);
+      });
     }
   }
 
@@ -760,6 +794,7 @@ class GeneratedFormModal extends StatefulWidget {
     this.singleNullReturnButton,
     this.primaryActionColour,
     this.tileMode = false,
+    this.onValueChanges,
   });
 
   final String title;
@@ -770,6 +805,10 @@ class GeneratedFormModal extends StatefulWidget {
   final String? singleNullReturnButton;
   final Color? primaryActionColour;
   final bool tileMode;
+
+  /// Called in addition to the modal's own state tracking, e.g. so callers
+  /// can rebuild [items] when a field changes.
+  final OnValueChanges? onValueChanges;
 
   @override
   State<GeneratedFormModal> createState() => _GeneratedFormModalState();
@@ -805,6 +844,7 @@ class _GeneratedFormModalState extends State<GeneratedFormModal> {
               // initial isBuilding pass, which keeps the OK button's validity
               // correct on first render.
               if (!mounted) return;
+              widget.onValueChanges?.call(values, valid, isBuilding);
               setState(() {
                 this.values = values;
                 this.valid = valid;
