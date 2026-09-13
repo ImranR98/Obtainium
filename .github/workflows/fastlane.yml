@@ -4,8 +4,12 @@ on:
   workflow_dispatch:
   push:
       branches: [ "main" ]
+      paths:
+        - 'fastlane/metadata/android/*'
   pull_request:
       branches: [ "main" ]
+      paths:
+        - 'fastlane/metadata/android/*'
 
 jobs:
   go:
