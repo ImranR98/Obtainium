@@ -71,17 +71,30 @@ class _AppPageState extends State<AppPage> {
   int? _probedDownloadSize;
 
   void _maybeProbeDownloadSize(AppInMemory app) {
-    if (app.app.apkUrls.isEmpty) return;
-    final idx =
+    final String? releaseUrl = app.app.releaseUrl;
+    final bool hasReleaseUrl = releaseUrl != null && releaseUrl.isNotEmpty;
+    final int apkIndex =
         (app.app.preferredApkIndex >= 0 &&
             app.app.preferredApkIndex < app.app.apkUrls.length)
         ? app.app.preferredApkIndex
         : 0;
-    final urls = splitMultiApkUrl(
-      app.app.apkUrls[idx].value,
-    ).where((u) => u.isNotEmpty && u != 'placeholder').toList();
-    if (urls.isEmpty) return;
-    final key = '${app.app.id}|${app.app.apkUrls[idx].value}';
+    final List<String> urls = app.app.apkUrls.isNotEmpty
+        ? splitMultiApkUrl(
+            app.app.apkUrls[apkIndex].value,
+          ).where((u) => u.isNotEmpty && u != 'placeholder').toList()
+        : const [];
+    final String? key = urls.isNotEmpty
+        ? '${app.app.id}|${app.app.apkUrls[apkIndex].value}'
+        : hasReleaseUrl
+        ? '${app.app.id}|$releaseUrl'
+        : null;
+    if (key == null) {
+      if (_sizeProbeKey != null || _probedDownloadSize != null) {
+        _sizeProbeKey = null;
+        setState(() => _probedDownloadSize = null);
+      }
+      return;
+    }
     if (key == _sizeProbeKey) return;
     _sizeProbeKey = key;
     _probedDownloadSize = null;
@@ -91,37 +104,50 @@ class _AppPageState extends State<AppPage> {
           app.app.url,
           overrideSource: app.app.overrideSource,
         );
-        // A split set is downloaded in full, so report the combined size.
-        final sizes = await Future.wait(
-          urls.map((url) async {
-            final resolvedUrl = await source.assetUrlPrefetchModifier(
-              url,
-              app.app.url,
-              app.app.additionalSettings,
-            );
-            final headers = await source.getRequestHeaders(
-              app.app.additionalSettings,
-              resolvedUrl,
-              forAPKDownload: true,
-            );
-            return getDownloadSize(
-              resolvedUrl,
-              headers: headers,
-              allowInsecure: app.app.settings.getBool('allowInsecure'),
-              enableCertificatePinning:
-                  settingsProvider.enableCertificatePinning,
-            );
-          }),
-        );
-        final knownSizes = sizes.whereType<int>();
-        if (mounted && _sizeProbeKey == key && knownSizes.isNotEmpty) {
-          setState(
-            () => _probedDownloadSize = knownSizes.reduce((a, b) => a + b),
+        if (urls.isNotEmpty) {
+          // A split set is downloaded in full, so report the combined size.
+          final sizes = await Future.wait(
+            urls.map((url) async {
+              final resolvedUrl = await source.assetUrlPrefetchModifier(
+                url,
+                app.app.url,
+                app.app.additionalSettings,
+              );
+              final headers = await source.getRequestHeaders(
+                app.app.additionalSettings,
+                resolvedUrl,
+                forAPKDownload: true,
+              );
+              return getDownloadSize(
+                resolvedUrl,
+                headers: headers,
+                allowInsecure: app.app.settings.getBool('allowInsecure'),
+                enableCertificatePinning:
+                    settingsProvider.enableCertificatePinning,
+              );
+            }),
           );
+          final knownSizes = sizes.whereType<int>();
+          if (mounted && _sizeProbeKey == key && knownSizes.isNotEmpty) {
+            setState(
+              () => _probedDownloadSize = knownSizes.reduce((a, b) => a + b),
+            );
+          }
+        } else {
+          // Track-only sources (e.g. APKMirror) have no direct APK URL; let the
+          // source resolve the size from its release page instead.
+          final size = await source.resolveDownloadSize(
+            app.app.url,
+            app.app.additionalSettings,
+            releaseUrl: releaseUrl,
+          );
+          if (mounted && _sizeProbeKey == key && size != null) {
+            setState(() => _probedDownloadSize = size);
+          }
         }
       } catch (e) {
         // Best-effort only: leave the size unknown when it can't be resolved.
-        AppLogger.info('Size probe failed for $urls: $e');
+        AppLogger.info('Size probe failed: $e');
       }
     }();
   }
@@ -149,6 +175,8 @@ class _AppPageState extends State<AppPage> {
       // and list reuse); keep actions pointed at the currently shown app.
       appId = widget.appId;
       prevApp = null;
+      _sizeProbeKey = null;
+      _probedDownloadSize = null;
       webViewLoaded = false;
       _webViewError = null;
       _pendingAppIdChange = true;
@@ -391,6 +419,9 @@ class _AppPageState extends State<AppPage> {
       final s = source;
       final Map<String, dynamic> originalSettings = app.app.additionalSettings;
       final savedValues = Map<String, dynamic>.from(values);
+      // The add-time package ID field is not part of the additional-options
+      // form, so carry it over instead of dropping it on every save.
+      savedValues['appId'] ??= originalSettings['appId'];
       app.app = app.app.copyWith(additionalSettings: savedValues);
       if (s?.enforceTrackOnly == true) {
         app.app = app.app.copyWith(
@@ -581,8 +612,23 @@ class _AppPageState extends State<AppPage> {
         (installed == null || installed != latest) &&
         !areDownloadsRunning;
     final trackOnly = app?.app.settings.getBool('trackOnly') == true;
+    final String? releasePageUrl = app?.app.releaseUrl;
+    final bool openReleasePage =
+        trackOnly &&
+        hasAction &&
+        releasePageUrl != null &&
+        releasePageUrl.isNotEmpty;
     return FilledButton.icon(
-      onPressed: hasAction ? () => _handleInstallOrUpdate(context, app) : null,
+      onPressed: hasAction
+          ? (openReleasePage
+                ? () => unawaited(
+                    launchUrlString(
+                      releasePageUrl,
+                      mode: LaunchMode.externalApplication,
+                    ),
+                  )
+                : () => _handleInstallOrUpdate(context, app))
+          : null,
       icon: Icon(
         installed == null
             ? Icons.download_outlined
@@ -592,7 +638,9 @@ class _AppPageState extends State<AppPage> {
         mainAxisSize: MainAxisSize.min,
         children: [
           Text(
-            installed == null
+            openReleasePage
+                ? (installed == null ? tr('install') : tr('update'))
+                : installed == null
                 ? (!trackOnly ? tr('install') : tr('markInstalled'))
                 : !trackOnly
                 ? tr('update')
@@ -666,7 +714,7 @@ class _AppPageState extends State<AppPage> {
       if (app?.app.installedVersion != null &&
           app?.app.installedVersion != app?.app.latestVersion &&
           !isVersionDetectionStandard &&
-          !trackOnly)
+          (!trackOnly || app?.app.releaseUrl?.isNotEmpty == true))
         IconButton(
           onPressed: app?.downloadProgress != null || updating
               ? null

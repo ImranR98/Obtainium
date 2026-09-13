@@ -41,6 +41,7 @@ App applyMinAgeSuppression(App currentApp, App fetchedApp) {
     latestVersion: currentApp.latestVersion,
     releaseDate: currentApp.releaseDate,
     changeLog: currentApp.changeLog,
+    releaseUrl: currentApp.releaseUrl,
     apkUrls: currentApp.apkUrls,
     otherAssetUrls: currentApp.otherAssetUrls,
   );
