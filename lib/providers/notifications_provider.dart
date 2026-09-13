@@ -35,6 +35,17 @@ const int downloadNotificationBaseId = 100;
 /// between concurrently downloading apps as unlikely as a raw hashCode.
 const int downloadNotificationIdRange = 2000000000;
 
+/// Base ID for "file downloaded" completion notifications, kept clear of the
+/// in-progress download range above.
+const int downloadedNotificationBaseId = 2000000100;
+
+/// Size of the ID space for completion notifications.
+const int downloadedNotificationIdRange = 140000000;
+
+/// Stable notification ID for a string key within [base]'s range.
+int notificationIdForKey(String key, int base, int range) =>
+    base + (key.hashCode.abs() % range);
+
 /// Name under which the main isolate registers a port to receive download-cancel
 /// requests forwarded from the notification-action background isolate.
 const String _downloadCancelPortName = 'obtainium_download_cancel';
@@ -150,7 +161,7 @@ class TrackOnlyUpdateNotification extends ObtainiumNotification {
 class SilentUpdateNotification extends ObtainiumNotification {
   SilentUpdateNotification(List<App> updates, bool succeeded, {int? id})
     : super(
-        id ?? 3,
+        id ?? silentUpdateNotificationId,
         succeeded ? tr('appsUpdated') : tr('appsNotUpdated'),
         _buildUpdateMessage(
           updates,
@@ -171,7 +182,7 @@ class SilentUpdateNotification extends ObtainiumNotification {
 class SilentUpdateAttemptNotification extends ObtainiumNotification {
   SilentUpdateAttemptNotification(List<App> updates, {int? id})
     : super(
-        id ?? 8,
+        id ?? silentUpdateAttemptNotificationId,
         tr('appsPossiblyUpdated'),
         _buildUpdateMessage(
           updates,
@@ -190,7 +201,7 @@ class SilentUpdateAttemptNotification extends ObtainiumNotification {
 class ErrorCheckingUpdatesNotification extends ObtainiumNotification {
   ErrorCheckingUpdatesNotification(String error, {int? id})
     : super(
-        id ?? 5,
+        id ?? errorCheckingUpdatesNotificationId,
         tr('errorCheckingUpdates'),
         error,
         'BG_UPDATE_CHECK_ERROR',
@@ -222,14 +233,22 @@ class AppsRemovedNotification extends ObtainiumNotification {
 
 class DownloadNotification extends ObtainiumNotification {
   static const int _baseId = downloadNotificationBaseId;
+
+  /// [idKey] must be stable for the download (e.g. an app ID, or an app
+  /// ID + asset URL) so two different apps with the same display name don't
+  /// share a progress notification.
+  static int idForKey(String idKey) =>
+      notificationIdForKey(idKey, _baseId, downloadNotificationIdRange);
+
   DownloadNotification(
     String appName,
     int progPercent, {
     String? appId,
+    String? idKey,
     int? receivedBytes,
     int? totalBytes,
   }) : super(
-         _baseId + (appName.hashCode.abs() % downloadNotificationIdRange),
+         idForKey(idKey ?? appId ?? appName),
          tr('downloadingX', args: [appName]),
          formatDownloadSize(receivedBytes, totalBytes) ?? '',
          'APP_DOWNLOADING',
@@ -252,9 +271,13 @@ class DownloadNotification extends ObtainiumNotification {
 }
 
 class DownloadedNotification extends ObtainiumNotification {
-  DownloadedNotification(String fileName, String downloadUrl)
+  DownloadedNotification(String fileName, String downloadUrl, {super.appId})
     : super(
-        downloadUrl.hashCode.abs(),
+        notificationIdForKey(
+          downloadUrl,
+          downloadedNotificationBaseId,
+          downloadedNotificationIdRange,
+        ),
         tr('downloadedX', args: [fileName]),
         '',
         'FILE_DOWNLOADED',

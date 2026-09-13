@@ -14,7 +14,6 @@ import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:crypto/crypto.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
-import 'package:http/io_client.dart';
 import 'package:obtainium/custom_errors.dart';
 import 'package:obtainium/core/logging/app_logger.dart';
 import 'package:obtainium/providers/notifications_provider.dart';
@@ -30,6 +29,7 @@ import 'package:obtainium/providers/apps_provider_install.dart';
 import 'package:obtainium/providers/apps_provider_lifecycle.dart';
 import 'package:obtainium/providers/apps_provider_updates.dart';
 
+import 'package:obtainium/utils/signing_cert_utils.dart';
 import 'package:obtainium/utils/translation_loader.dart';
 
 export 'apps_provider_import_export.dart';
@@ -119,7 +119,7 @@ class AppInMemory {
   );
 
   String get name => app.finalName;
-  String get author => app.overrideAuthor ?? app.finalAuthor;
+  String get author => app.finalAuthor;
 
   bool get needsRefreshBeforeDownload =>
       app.settings.getBool('refreshBeforeDownload') ||
@@ -129,20 +129,8 @@ class AppInMemory {
     return installedInfo?.signingInfo?.hasMultipleSigners ?? false;
   }
 
-  List<String> get certificateHashes {
-    // https://developer.android.com/reference/android/content/pm/SigningInfo#getApkContentsSigners()
-    final signatures = hasMultipleSigners
-        ? installedInfo?.signingInfo?.apkContentSigners
-        : installedInfo?.signingInfo?.signingCertificateHistory;
-
-    return signatures?.map((signature) {
-          final digest = sha256.convert(signature);
-          return digest.bytes
-              .map((b) => b.toRadixString(16).padLeft(2, '0').toUpperCase())
-              .join(':');
-        }).toList() ??
-        [];
-  }
+  List<String> get certificateHashes =>
+      certHashesFromSigningInfo(installedInfo?.signingInfo).toList();
 }
 
 class DownloadedApk {
@@ -151,7 +139,7 @@ class DownloadedApk {
   DownloadedApk(this.appId, this.file);
 }
 
-enum DownloadedDirType { xapk, zip, tarball }
+enum DownloadedDirType { xapk, zip, tarball, splitApks }
 
 class DownloadedDir {
   String appId;
@@ -160,10 +148,6 @@ class DownloadedDir {
   DownloadedDirType type;
   DownloadedDir(this.appId, this.file, this.extracted, this.type);
 }
-
-/// Delegates to [VersionService.findStandardFormatsForVersion].
-Set<String> findStandardFormatsForVersion(String version, bool strict) =>
-    VersionService().findStandardFormatsForVersion(version, strict);
 
 /// Removes all matching elements and appends the last match to the end.
 /// This is intentionally deduplicating — only one instance is re-added.
@@ -209,11 +193,16 @@ Future<File> downloadFileWithRetry(
     );
   } catch (e) {
     // A cancellation is not one of the retryable error types, so it naturally
-    // falls through to rethrow below.
+    // falls through to rethrow below. 429/5xx responses are transient and
+    // should be retried like transport failures.
+    final bool retryableHTTPError =
+        e is HTTPStatusError && (e.statusCode == 429 || e.statusCode >= 500);
     if (retries > 0 &&
         (e is ClientException ||
             e is SocketException ||
-            e is TimeoutException)) {
+            e is TimeoutException ||
+            e is HttpException ||
+            retryableHTTPError)) {
       await Future.delayed(const Duration(seconds: _retryDelaySeconds));
       return await downloadFileWithRetry(
         fileName,
@@ -232,7 +221,7 @@ Future<File> downloadFileWithRetry(
   }
 }
 
-String hashListOfLists(List<List<int>> data) {
+String _hashListOfLists(List<List<int>> data) {
   final bytes = utf8.encode(jsonEncode(data));
   return sha256.convert(bytes).toString().substring(0, 8);
 }
@@ -264,22 +253,25 @@ Future<String> checkPartialDownloadHash(
   Map<String, String>? headers,
 }) async {
   final url = additionalSettings['url'] as String;
-  final req = Request('GET', Uri.parse(url));
-  if (headers != null) {
-    req.headers.addAll(headers);
-  }
-  req.headers[HttpHeaders.rangeHeader] = 'bytes=0-$bytesToGrab';
-  final client = IOClient(await createHttpClient(additionalSettings));
+  final reqHeaders = <String, String>{...?headers};
+  reqHeaders[HttpHeaders.rangeHeader] = 'bytes=0-$bytesToGrab';
+  final responseWithClient = await sourceRequestStreamResponse(
+    'GET',
+    reqHeaders,
+    additionalSettings,
+  );
+  final client = responseWithClient.value.key;
+  final response = responseWithClient.value.value;
   try {
-    final response = await client.send(req);
     if (response.statusCode < 200 || response.statusCode > 299) {
-      throw ObtainiumError(response.reasonPhrase ?? tr('unexpectedError'))
-        ..url = url;
+      throw ObtainiumError(
+        response.reasonPhrase.isNotEmpty
+            ? response.reasonPhrase
+            : tr('unexpectedError'),
+      )..url = url;
     }
-    final List<List<int>> bytes = await response.stream
-        .take(bytesToGrab)
-        .toList();
-    return hashListOfLists(bytes);
+    final List<List<int>> bytes = await response.take(bytesToGrab).toList();
+    return _hashListOfLists(bytes);
   } finally {
     client.close();
   }
@@ -289,17 +281,20 @@ Future<String?> checkETagHeader(
   Map<String, dynamic> additionalSettings, {
   Map<String, String>? headers,
 }) async {
-  final url = additionalSettings['url'] as String;
-  final reqHeaders = headers ?? {};
-  final req = Request('GET', Uri.parse(url));
-  req.headers.addAll(reqHeaders);
-  final client = IOClient(await createHttpClient(additionalSettings));
+  final responseWithClient = await sourceRequestStreamResponse(
+    'GET',
+    headers ?? {},
+    additionalSettings,
+  );
+  final client = responseWithClient.value.key;
+  final response = responseWithClient.value.value;
   try {
-    final StreamedResponse response = await client.send(req);
     if (response.statusCode < 200 || response.statusCode >= 300) {
       return null;
     }
-    final etag = response.headers[HttpHeaders.etagHeader]?.replaceAll('"', '');
+    final etag = response.headers
+        .value(HttpHeaders.etagHeader)
+        ?.replaceAll('"', '');
     return etag != null
         ? sha256.convert(utf8.encode(etag)).toString().substring(0, 12)
         : null;
@@ -377,19 +372,30 @@ Future<File> downloadFile(
   Map<String, String>? headers,
   CancellationToken? cancellationToken,
 }) async {
-  final reqHeaders = headers ?? {};
-  final headersClient = IOClient(await createHttpClient(additionalSettings));
+  // Copy the caller's map: a resume adds a Range header below, and the same
+  // map instance is reused by downloadFileWithRetry on every attempt, so
+  // mutating it would send a stale Range on later probes.
+  final reqHeaders = headers == null
+      ? <String, String>{}
+      : Map<String, String>.of(headers);
   final url = additionalSettings['url'] as String;
-  final getReq = Request('GET', Uri.parse(url));
-  getReq.headers.addAll(reqHeaders);
-  final headersResponse = await headersClient.send(getReq);
-
+  // Probe through the shared redirect handler so caller-supplied headers are
+  // not forwarded to a different origin by the underlying HTTP client.
+  final probeResponse = await sourceRequestStreamResponse(
+    'GET',
+    reqHeaders,
+    additionalSettings,
+  );
+  final headersClient = probeResponse.value.key;
+  final HttpClientResponse headersResponse = probeResponse.value.value;
   final resHeaders = headersResponse.headers;
+  headersClient.close();
 
   // Use the headers to decide what the file extension is, and
   // whether it supports partial downloads (range request), and
   // what the total size of the file is (if provided)
-  String ext = resHeaders['content-disposition']?.split('.').last ?? 'apk';
+  String ext =
+      resHeaders.value('content-disposition')?.split('.').last ?? 'apk';
   if (ext.endsWith('"')) {
     ext = ext.substring(0, ext.length - 1);
   }
@@ -419,15 +425,17 @@ Future<File> downloadFile(
   }
 
   bool rangeFeatureEnabled = false;
-  if (resHeaders['accept-ranges']?.isNotEmpty == true) {
-    rangeFeatureEnabled =
-        resHeaders['accept-ranges']?.trim().toLowerCase() == 'bytes';
+  final acceptRanges = resHeaders.value('accept-ranges');
+  if (acceptRanges?.isNotEmpty == true) {
+    rangeFeatureEnabled = acceptRanges?.trim().toLowerCase() == 'bytes';
   }
-  headersClient.close();
 
   // If you have an existing file that is usable,
   // decide whether you can use it (either return full or resume partial)
-  final fullContentLength = headersResponse.contentLength;
+  // HttpClientResponse reports -1 for an unknown length; normalize to null.
+  final int? fullContentLength = headersResponse.contentLength > 0
+      ? headersResponse.contentLength
+      : null;
   if (useExisting && downloadedFile.existsSync()) {
     final length = downloadedFile.lengthSync();
     if (fullContentLength == null || !rangeFeatureEnabled) {
@@ -524,7 +532,8 @@ Future<File> downloadFile(
       if (tempDownloadedFile.existsSync()) {
         deleteFile(tempDownloadedFile);
       }
-      throw ObtainiumError(
+      throw HTTPStatusError(
+        response.statusCode,
         response.reasonPhrase.isNotEmpty
             ? response.reasonPhrase
             : tr(
@@ -593,6 +602,16 @@ Future<File> downloadFile(
     if (onProgress != null) {
       onProgress(progress, null, null);
     }
+    // A stream can end without an error yet still be short (e.g. a server that
+    // reports Content-Length but closes early). Keep the .part file so the
+    // retry can resume via Range instead of accepting a truncated download.
+    if (fullContentLength != null &&
+        received < fullContentLength &&
+        !(cancellationToken?.isCancelled ?? false)) {
+      throw ClientException(
+        'Incomplete download: received $received of $fullContentLength bytes',
+      );
+    }
     try {
       if (tempDownloadedFile.existsSync()) {
         if (downloadedFile.existsSync()) {
@@ -647,16 +666,20 @@ Future<int?> getDownloadSize(
     'url': url,
     'enableCertificatePinning': enableCertificatePinning,
   };
-  final client = IOClient(await createHttpClient(additionalSettings));
+  final responseWithClient = await sourceRequestStreamResponse(
+    'GET',
+    reqHeaders,
+    additionalSettings,
+  );
+  final client = responseWithClient.value.key;
+  final response = responseWithClient.value.value;
   try {
-    final getReq = Request('GET', Uri.parse(url));
-    getReq.headers.addAll(reqHeaders);
-    final response = await client.send(getReq);
     if (response.statusCode < 200 || response.statusCode >= 300) {
       return null;
     }
+    // HttpClientResponse reports -1 for an unknown length.
     final length = response.contentLength;
-    return (length != null && length > 0) ? length : null;
+    return length > 0 ? length : null;
   } on SocketException {
     return null;
   } on TimeoutException {
@@ -688,6 +711,16 @@ Future<PackageInfo?> getInstalledInfo(String? packageName) async {
     } catch (_) {}
   }
   return null;
+}
+
+/// The on-device version of [app], as either its version code or version name
+/// depending on the app's `useVersionCodeAsOSVersion` setting. Null when the
+/// app is not installed.
+String? realInstalledVersionOf(App app, PackageInfo? installedInfo) {
+  if (installedInfo == null) return null;
+  return app.settings.getBool('useVersionCodeAsOSVersion')
+      ? installedInfo.versionCode?.toString()
+      : installedInfo.versionName;
 }
 
 Future<Directory> getAppStorageDir() async {
@@ -981,7 +1014,12 @@ Future<void> _runBGInstallMode(
       e.idsByErrorString.forEach((key, value) {
         unawaited(
           notificationsProvider.notify(
-            ErrorCheckingUpdatesNotification(e.errorsAppsString(key, value)),
+            ErrorCheckingUpdatesNotification(
+              e.errorsAppsString(key, value),
+              // Distinct IDs per error group, offset from the update-check
+              // error range so one install failure doesn't replace another.
+              id: errorCheckingUpdatesNotificationId + 200 + key.hashCode.abs(),
+            ),
           ),
         );
       });

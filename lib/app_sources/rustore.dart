@@ -1,8 +1,10 @@
 import 'dart:convert';
 import 'dart:math';
 import 'dart:typed_data';
+import 'dart:ui' show PlatformDispatcher;
 
 import 'package:crypto/crypto.dart';
+import 'package:device_info_plus/device_info_plus.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter_charset_detector/flutter_charset_detector.dart';
 import 'package:http/http.dart';
@@ -10,6 +12,21 @@ import 'package:obtainium/core/logging/app_logger.dart';
 import 'package:obtainium/custom_errors.dart';
 import 'package:obtainium/providers/settings_provider.dart';
 import 'package:obtainium/providers/source_provider.dart';
+
+/// Maps RuStore download URLs to a single `apkUrls` entry. A lone URL is served
+/// as an `.apk` beside its `.zip` container; several URLs are a base APK plus
+/// config splits, joined so the download pipeline installs them as one split
+/// set (#3298).
+List<MapEntry<String, String>> apkUrlsFromDownloadUrls(List<String> urls) {
+  if (urls.length == 1) {
+    // RuStore has an .apk beside the .zip container
+    return getApkUrlsFromUrls([
+      urls.first.replaceAll(RegExp(r'\.zip$'), '.apk'),
+    ]);
+  }
+  final String key = getApkUrlsFromUrls([urls.first]).first.key;
+  return [MapEntry(key, joinMultiApkUrl(urls))];
+}
 
 typedef _SecureSession = ({String deviceId, String signature});
 
@@ -63,6 +80,36 @@ class RuStore extends AppSource {
     return _deviceType!;
   }
 
+  /// Device fields RuStore requires before it will return split APK URLs.
+  Future<Map<String, dynamic>> _deviceDownloadProfile() async {
+    List<String> abis = const ['arm64-v8a'];
+    int sdkVersion = int.tryParse(_androidSdkVer) ?? 36;
+    try {
+      final info = await DeviceInfoPlugin().androidInfo;
+      if (info.supportedAbis.isNotEmpty) {
+        abis = info.supportedAbis;
+      }
+      sdkVersion = info.version.sdkInt;
+    } catch (e) {
+      AppLogger.warn('RuStore: failed to read device info: $e', error: e);
+    }
+    return {
+      'supportedAbis': abis,
+      'sdkVersion': sdkVersion,
+      'screenDensity': _screenDensity(),
+    };
+  }
+
+  int _screenDensity() {
+    try {
+      return (PlatformDispatcher.instance.views.first.devicePixelRatio * 160)
+          .round();
+    } catch (_) {
+      // No views (e.g. background isolate): use a plausible phone density.
+      return 420;
+    }
+  }
+
   @override
   Future<Map<String, String>?> getRequestHeaders(
     Map<String, dynamic> additionalSettings,
@@ -113,9 +160,7 @@ class RuStore extends AppSource {
         '$_appInfoUrl/$appId',
         additionalSettings,
       );
-      if (overallInfoResponse.statusCode != 200) {
-        throw getObtainiumHttpError(overallInfoResponse);
-      }
+      ensureHttpSuccess(overallInfoResponse);
       final decoded = await decodeJsonBody(overallInfoResponse.bodyBytes);
       final appDetails = decoded is Map ? decoded['body'] : null;
       if (appDetails is! Map || appDetails['appId'] == null) {
@@ -140,26 +185,43 @@ class RuStore extends AppSource {
             _downloadLinkUrl,
             additionalSettings,
             followRedirects: false,
-            postBody: {'appId': appDetails['appId'], 'firstInstall': true},
+            postBody: {
+              'appId': appDetails['appId'],
+              'firstInstall': true,
+              // Include the device profile so RuStore returns split APKs for
+              // apps that have no universal APK (all three fields required).
+              'withoutSplits': false,
+              ...await _deviceDownloadProfile(),
+            },
           );
+      ensureHttpSuccess(downloadLinksResponse);
       final downloadDetails = await decodeJsonBody(
         downloadLinksResponse.bodyBytes,
       );
-      if (downloadLinksResponse.statusCode != 200 || downloadDetails == null) {
+      if (downloadDetails == null) {
         throw getObtainiumHttpError(downloadLinksResponse);
       }
       final downloadUrls = downloadDetails['downloadUrls'];
-      final url = (downloadUrls is List && downloadUrls.isNotEmpty)
-          ? (downloadUrls[0] is Map ? downloadUrls[0]['url'] as String? : null)
-          : null;
-      if (url == null) {
+      final List<String> urls = downloadUrls is List
+          ? downloadUrls
+                .whereType<Map>()
+                .map((e) => e['url']?.toString())
+                .whereType<String>()
+                .where((e) => e.isNotEmpty)
+                .toList()
+          : const [];
+      if (urls.isEmpty) {
+        // Aggregated cards are generated from an external source; RuStore
+        // does not host an APK for them (#3298).
+        if (appDetails['aggregatorInfo'] is Map) {
+          throw RuStoreAggregatedAppError();
+        }
         throw NoAPKError();
       }
 
       return APKDetails(
         version,
-        // RuStore has an .apk beside the .zip container
-        getApkUrlsFromUrls([url.replaceAll(RegExp(r'\.zip$'), '.apk')]),
+        apkUrlsFromDownloadUrls(urls),
         AppNames(author, appName),
         releaseDate: relDate,
         changeLog: changeLog,
@@ -178,9 +240,7 @@ class RuStore extends AppSource {
       queryParameters: {'query': query, 'pageNumber': '0', 'pageSize': '20'},
     );
     final response = await sourceRequest(uri.toString(), querySettings);
-    if (response.statusCode != 200) {
-      throw getObtainiumHttpError(response);
-    }
+    ensureHttpSuccess(response);
     final decoded = await decodeJsonBody(response.bodyBytes);
     final content = decoded is Map && decoded['body'] is Map
         ? decoded['body']['content']

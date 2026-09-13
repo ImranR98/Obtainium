@@ -56,12 +56,14 @@ enum ColourSchemeMode { standard, vibrant, expressive, materialYou }
 
 enum ActionBannerMode { all, updatesOnly, none }
 
+/// How much vertical space each app row uses in the app list.
+enum AppListDensity { standard, compact, dense }
+
 class SettingsProvider with ChangeNotifier {
   SharedPreferences? prefs;
   String? defaultAppDir;
   bool justStarted = true;
   bool isTV = false;
-  bool _silent = false;
 
   T? _get<T>(String key) {
     final value = prefs?.get(key);
@@ -83,7 +85,6 @@ class SettingsProvider with ChangeNotifier {
 
   Future<void> initializeSettings() async {
     prefs = await SharedPreferences.getInstance();
-    prefsInstance ??= prefs;
     _cachedDefaultAppDir ??= (await getAppStorageDir()).path;
     if (_cachedIsTV == null) {
       final info = await DeviceInfoPlugin().androidInfo;
@@ -130,8 +131,6 @@ class SettingsProvider with ChangeNotifier {
       unawaited(prefs?.remove('useShizuku') ?? Future.value());
     }
   }
-
-  static SharedPreferences? prefsInstance;
 
   bool get useSystemFont {
     return _getBool('useSystemFont') ?? false;
@@ -191,7 +190,11 @@ class SettingsProvider with ChangeNotifier {
   }
 
   ThemeSettings get theme {
-    return ThemeSettings.values[_getInt('theme') ?? ThemeSettings.system.index];
+    final stored = _getInt('theme');
+    if (stored != null && stored >= 0 && stored < ThemeSettings.values.length) {
+      return ThemeSettings.values[stored];
+    }
+    return ThemeSettings.system;
   }
 
   set theme(ThemeSettings t) {
@@ -237,7 +240,8 @@ class SettingsProvider with ChangeNotifier {
   }
 
   int get updateInterval {
-    return _getInt('updateInterval') ?? 360;
+    final stored = _getInt('updateInterval') ?? 360;
+    return stored < 0 ? 0 : stored;
   }
 
   set updateInterval(int min) {
@@ -246,7 +250,8 @@ class SettingsProvider with ChangeNotifier {
   }
 
   double get updateIntervalSliderVal {
-    return _getDouble('updateIntervalSliderVal') ?? 6.0;
+    final stored = _getDouble('updateIntervalSliderVal') ?? 6.0;
+    return stored < 0 ? 0.0 : stored;
   }
 
   set updateIntervalSliderVal(double val) {
@@ -264,8 +269,13 @@ class SettingsProvider with ChangeNotifier {
   }
 
   SortColumnSettings get sortColumn {
-    return SortColumnSettings.values[_getInt('sortColumn') ??
-        SortColumnSettings.nameAuthor.index];
+    final stored = _getInt('sortColumn');
+    if (stored != null &&
+        stored >= 0 &&
+        stored < SortColumnSettings.values.length) {
+      return SortColumnSettings.values[stored];
+    }
+    return SortColumnSettings.nameAuthor;
   }
 
   set sortColumn(SortColumnSettings s) {
@@ -274,8 +284,13 @@ class SettingsProvider with ChangeNotifier {
   }
 
   SortOrderSettings get sortOrder {
-    return SortOrderSettings.values[_getInt('sortOrder') ??
-        SortOrderSettings.ascending.index];
+    final stored = _getInt('sortOrder');
+    if (stored != null &&
+        stored >= 0 &&
+        stored < SortOrderSettings.values.length) {
+      return SortOrderSettings.values[stored];
+    }
+    return SortOrderSettings.ascending;
   }
 
   set sortOrder(SortOrderSettings s) {
@@ -645,8 +660,15 @@ class SettingsProvider with ChangeNotifier {
     // The directory may be temporarily unreadable (e.g. a WebDAV mount not
     // yet available right after a reboot). Keep the stored URI so it can be
     // retried later, and only clear it via pickExportDir.
-    if (!(await saf.canRead(uri) ?? false) ||
-        !(await saf.canWrite(uri) ?? false)) {
+    try {
+      if (!(await saf.canRead(uri) ?? false) ||
+          !(await saf.canWrite(uri) ?? false)) {
+        return null;
+      }
+    } catch (e) {
+      // A revoked grant or unavailable provider can throw from the platform
+      // channel; treat it as "not currently available" rather than crashing.
+      AppLogger.error(e, message: 'Failed to check export directory access');
       return null;
     }
     return uri;
@@ -792,6 +814,19 @@ class SettingsProvider with ChangeNotifier {
     notifyListeners();
   }
 
+  AppListDensity get appListDensity {
+    final stored = _getString('appListDensity');
+    if (stored != null && AppListDensity.values.any((d) => d.name == stored)) {
+      return AppListDensity.values.byName(stored);
+    }
+    return AppListDensity.standard;
+  }
+
+  set appListDensity(AppListDensity val) {
+    prefs?.setString('appListDensity', val.name);
+    notifyListeners();
+  }
+
   List<String> get searchDeselected {
     return prefs?.getStringList('searchDeselected') ??
         SourceProvider().sources.map((s) => s.name).toList();
@@ -829,6 +864,18 @@ class SettingsProvider with ChangeNotifier {
     notifyListeners();
   }
 
+  /// Warn (and require confirmation) when a downloaded APK's signing
+  /// certificate differs from the installed app's certificate. User-provided
+  /// expected hashes are enforced regardless of this setting.
+  bool get verifySigningCertHashes {
+    return _getBool('verifySigningCertHashes') ?? true;
+  }
+
+  set verifySigningCertHashes(bool val) {
+    prefs?.setBool('verifySigningCertHashes', val);
+    notifyListeners();
+  }
+
   bool get shizukuPretendToBeGooglePlay {
     return _getBool('shizukuPretendToBeGooglePlay') ?? false;
   }
@@ -836,27 +883,5 @@ class SettingsProvider with ChangeNotifier {
   set shizukuPretendToBeGooglePlay(bool val) {
     prefs?.setBool('shizukuPretendToBeGooglePlay', val);
     notifyListeners();
-  }
-
-  /// Runs [updates] with listener notifications suppressed, then calls
-  /// [notifyListeners] once at the end. Use this when multiple settings
-  /// are being changed together to avoid unnecessary rebuilds.
-  /// TODO: modify individual setter methods to skip their own
-  /// notifyListeners() calls when batched.
-  void batchUpdate(void Function() updates) {
-    _silent = true;
-    try {
-      updates();
-    } finally {
-      _silent = false;
-      notifyListeners();
-    }
-  }
-
-  @override
-  void notifyListeners() {
-    if (!_silent) {
-      super.notifyListeners();
-    }
   }
 }

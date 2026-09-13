@@ -10,6 +10,7 @@ import 'package:obtainium/providers/apps_provider.dart';
 import 'package:obtainium/core/logging/app_logger.dart';
 import 'package:obtainium/providers/settings_provider.dart';
 import 'package:obtainium/providers/source_provider.dart';
+import 'package:obtainium/utils/min_update_age.dart';
 
 /// The APKMirror maintainers do not allow for directly downloading APKs (PR #44)
 class APKMirror extends AppSource {
@@ -85,9 +86,28 @@ class APKMirror extends AppSource {
       );
       if (res.statusCode == 200) {
         final items = parse(res.body).querySelectorAll('item');
+        final int minAgeDays = await effectiveMinUpdateAgeDays(
+          additionalSettings,
+        );
+        DateTime? releaseDateFor(dynamic item) {
+          final pubDateRaw = item?.querySelector('pubDate')?.innerHtml;
+          final dateString = pubDateRaw?.split(' ').take(5).join(' ');
+          if (dateString == null) return null;
+          try {
+            return HttpDate.parse('$dateString GMT');
+          } catch (e) {
+            AppLogger.warn(
+              'Failed to parse APKMirror release date: ${e.toString()}',
+            );
+            return null;
+          }
+        }
+
         dynamic targetRelease;
+        dynamic tooYoungRelease;
+        int releaseSkipped = 0;
         for (int i = 0; i < items.length; i++) {
-          if (!fallbackToOlderReleases && i > 0) break;
+          if (!fallbackToOlderReleases && i > releaseSkipped) break;
           final String? nameToFilter = items[i]
               .querySelector('title')
               ?.innerHtml;
@@ -96,9 +116,17 @@ class APKMirror extends AppSource {
               !RegExp(regexFilter).hasMatch(nameToFilter.trim())) {
             continue;
           }
+          if (isReleaseTooYoung(releaseDateFor(items[i]), minAgeDays)) {
+            tooYoungRelease ??= items[i];
+            releaseSkipped++;
+            continue;
+          }
           targetRelease = items[i];
           break;
         }
+        // No release old enough: use the newest so the provider can suppress
+        // it until it ages.
+        targetRelease ??= tooYoungRelease;
         final String? titleString = targetRelease
             ?.querySelector('title')
             ?.innerHtml;
@@ -107,18 +135,7 @@ class APKMirror extends AppSource {
             note: regexFilter != null ? tr('noMatchingReleaseFound') : null,
           );
         }
-        final pubDateRaw = targetRelease?.querySelector('pubDate')?.innerHtml;
-        final String? dateString = pubDateRaw?.split(' ').take(5).join(' ');
-        DateTime? releaseDate;
-        if (dateString != null) {
-          try {
-            releaseDate = HttpDate.parse('$dateString GMT');
-          } catch (e) {
-            AppLogger.warn(
-              'Failed to parse APKMirror release date: ${e.toString()}',
-            );
-          }
-        }
+        final DateTime? releaseDate = releaseDateFor(targetRelease);
         String? version;
         if (titleString != null) {
           final match = RegExp(

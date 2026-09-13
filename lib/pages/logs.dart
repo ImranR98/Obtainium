@@ -39,9 +39,15 @@ class _LogsPageState extends State<LogsPage> {
 
   Future<void> _loadLogs(int days) async {
     setState(() => _loading = true);
-    final value = await AppLogger.getLogs(
-      after: DateTime.now().subtract(Duration(days: days)),
-    );
+    List<LogEntry> value;
+    try {
+      value = await AppLogger.getLogs(
+        after: DateTime.now().subtract(Duration(days: days)),
+      );
+    } catch (e, s) {
+      AppLogger.error(e, stackTrace: s, message: 'Failed to load logs');
+      value = [];
+    }
     if (!mounted) return;
     setState(() {
       _days = days;
@@ -71,12 +77,13 @@ class _LogsPageState extends State<LogsPage> {
   Future<void> _clearLogs() async {
     final cont = await showContinueCancelDialog(
       context,
-      title: tr('appLogs'),
-      message: tr('removeFromObtainium'),
+      title: tr('clearLogs'),
+      message: tr('clearLogsWarning'),
     );
     if (!cont) return;
     await AppLogger.clearLogs();
     if (!mounted) return;
+    showMessage(tr('logsCleared'), context);
     await _loadLogs(_days);
   }
 
@@ -109,6 +116,13 @@ class _LogsPageState extends State<LogsPage> {
     };
   }
 
+  String _levelLabel(AppLogLevel level) => switch (level) {
+    AppLogLevel.error => tr('error'),
+    AppLogLevel.warning => tr('warning'),
+    AppLogLevel.debug => tr('debug'),
+    AppLogLevel.info => tr('info'),
+  };
+
   Widget _logTile(LogEntry log) {
     final color = _levelColor(context, log.level);
     return Padding(
@@ -117,7 +131,8 @@ class _LogsPageState extends State<LogsPage> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            '${log.timestamp.toString()} · ${log.level.name}',
+            '${DateFormat.yMd().add_Hms().format(log.timestamp.toLocal())} · '
+            '${_levelLabel(log.level)}',
             style: Theme.of(context).textTheme.labelSmall?.copyWith(
               color: color.withValues(alpha: 0.8),
               fontWeight: FontWeight.bold,
@@ -226,41 +241,44 @@ class _LogsPageState extends State<LogsPage> {
 
   @override
   Widget build(BuildContext context) {
+    final isTV = context.select<SettingsProvider, bool>((p) => p.isTV);
+    final logList = CustomScrollView(
+      controller: _scrollController,
+      slivers: [
+        SliverAppBar(
+          pinned: true,
+          automaticallyImplyLeading: true,
+          title: Text(tr('appLogs')),
+        ),
+        if (_loading)
+          const SliverFillRemaining(
+            hasScrollBody: false,
+            child: Center(child: CircularProgressIndicator()),
+          )
+        else if (_logs.isEmpty)
+          SliverFillRemaining(
+            hasScrollBody: false,
+            child: EmptyState(
+              icon: Icons.bug_report_outlined,
+              message: tr('noLogs'),
+            ),
+          )
+        else
+          SliverList.builder(
+            itemCount: _logs.length,
+            itemBuilder: (context, index) => _logTile(_logs[index]),
+          ),
+        const SliverToBoxAdapter(child: SizedBox(height: 96)),
+      ],
+    );
     return Scaffold(
       backgroundColor: Theme.of(context).colorScheme.surface,
       body: Stack(
         children: [
-          SelectionArea(
-            child: CustomScrollView(
-              controller: _scrollController,
-              slivers: [
-                SliverAppBar(
-                  pinned: true,
-                  automaticallyImplyLeading: false,
-                  title: Text(tr('appLogs')),
-                ),
-                if (_loading)
-                  const SliverFillRemaining(
-                    hasScrollBody: false,
-                    child: Center(child: CircularProgressIndicator()),
-                  )
-                else if (_logs.isEmpty)
-                  SliverFillRemaining(
-                    hasScrollBody: false,
-                    child: EmptyState(
-                      icon: Icons.bug_report_outlined,
-                      message: tr('noLogs'),
-                    ),
-                  )
-                else
-                  SliverList.builder(
-                    itemCount: _logs.length,
-                    itemBuilder: (context, index) => _logTile(_logs[index]),
-                  ),
-                const SliverToBoxAdapter(child: SizedBox(height: 96)),
-              ],
-            ),
-          ),
+          // SelectionArea is pointless on a remote-controlled TV and its
+          // focusable region swallows D-pad input before it can reach the
+          // floating toolbar.
+          if (isTV) logList else SelectionArea(child: logList),
           // Docked in a Stack rather than the Scaffold's floatingActionButton
           // slot so it doesn't play the FAB scale/rotate entrance animation.
           if (!_loading)

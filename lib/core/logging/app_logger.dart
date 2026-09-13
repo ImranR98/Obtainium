@@ -23,8 +23,15 @@ class AppLogger {
 
   static Future<void> init() async {
     if (_db != null) return;
-    _db = AppLogDb();
-    await _db!.purgeOlderThan(const Duration(days: 7));
+    final db = AppLogDb();
+    try {
+      await db.purgeOlderThan(const Duration(days: 7));
+    } catch (e) {
+      // Logging must never prevent the app from starting. Keep the handle so
+      // later writes still attempt (they are individually guarded below).
+      debugPrint('Failed to initialize log database: $e');
+    }
+    _db = db;
   }
 
   static Future<List<LogEntry>> getLogs({
@@ -53,18 +60,11 @@ class AppLogger {
   }
 
   static void error(Object error, {StackTrace? stackTrace, String? message}) {
-    final text = message ?? 'Unexpected error';
-    _logToConsole(
+    _log(
       AppLogLevel.error,
-      text,
+      message ?? 'Unexpected error',
       error: error,
       stackTrace: stackTrace,
-    );
-    _persist(
-      LogEntry(
-        message: _formatPersistedError(text, error),
-        level: AppLogLevel.error,
-      ),
     );
   }
 
@@ -76,10 +76,7 @@ class AppLogger {
   }) {
     _logToConsole(level, message, error: error, stackTrace: stackTrace);
     _persist(
-      LogEntry(
-        message: _formatPersistedMessage(message, error),
-        level: level,
-      ),
+      LogEntry(message: _formatPersistedMessage(message, error), level: level),
     );
   }
 
@@ -122,15 +119,17 @@ class AppLogger {
   static void _persist(LogEntry entry) {
     final db = _db;
     if (db == null) return;
-    unawaited(db.insert(entry));
+    unawaited(
+      db.insert(entry).catchError((Object e) {
+        // A failed logging write must not reach the global error handler:
+        // that handler logs, which would attempt the same failing write again.
+        debugPrint('Failed to persist log entry: $e');
+      }),
+    );
   }
 
   static String _formatPersistedMessage(String message, Object? error) {
     if (error == null) return message;
-    return error.toString() == message ? message : '$message: $error';
-  }
-
-  static String _formatPersistedError(String message, Object error) {
     return error.toString() == message ? message : '$message: $error';
   }
 }

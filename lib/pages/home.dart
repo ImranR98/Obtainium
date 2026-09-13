@@ -98,74 +98,78 @@ class _HomePageState extends State<HomePage> {
   Future<void> showWelcomeDialogs() async {
     final sp = settingsProvider;
     if (!sp.welcomeShown) {
-      await showDialog(
-        context: context,
-        builder: (BuildContext ctx) {
-          return AlertDialog(
-            title: Text(tr('welcome')),
-            content: Column(
-              mainAxisSize: MainAxisSize.min,
-              spacing: 20,
-              children: [
-                Text(tr('documentationLinksNote')),
-                const LinkText(
-                  text:
-                      'https://github.com/ImranR98/Obtainium/blob/main/README.md',
-                  url:
-                      'https://github.com/ImranR98/Obtainium/blob/main/README.md',
-                  style: TextStyle(fontWeight: FontWeight.bold),
-                ),
-              ],
+      await _showAcknowledgedDialog(
+        isAcknowledged: () => sp.welcomeShown,
+        markAcknowledged: () => sp.welcomeShown = true,
+        title: Text(tr('welcome')),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          spacing: 20,
+          children: [
+            Text(tr('documentationLinksNote')),
+            const LinkText(
+              text: 'https://github.com/ImranR98/Obtainium/blob/main/README.md',
+              url: 'https://github.com/ImranR98/Obtainium/blob/main/README.md',
+              style: TextStyle(fontWeight: FontWeight.bold),
             ),
-            actions: [
-              FilledButton.tonal(
-                autofocus: sp.isTV,
-                onPressed: () {
-                  sp.welcomeShown = true;
-                  Navigator.of(context).pop(null);
-                },
-                child: Text(tr('ok')),
-              ),
-            ],
-          );
-        },
+          ],
+        ),
       );
     }
     if (!mounted) return;
     if (!sp.googleVerificationWarningShown) {
-      await showDialog(
-        context: context,
-        builder: (BuildContext ctx) {
-          return AlertDialog(
-            title: Text(tr('note')),
-            scrollable: true,
-            content: Column(
-              mainAxisSize: MainAxisSize.min,
-              spacing: 20,
-              children: [
-                Text(tr('googleVerificationWarningP1')),
-                LinkText(
-                  text: tr('googleVerificationWarningP2'),
-                  url: 'https://keepandroidopen.org/',
-                  style: const TextStyle(fontWeight: FontWeight.bold),
-                ),
-                Text(tr('googleVerificationWarningP3')),
-              ],
+      await _showAcknowledgedDialog(
+        isAcknowledged: () => sp.googleVerificationWarningShown,
+        markAcknowledged: () => sp.googleVerificationWarningShown = true,
+        title: Text(tr('note')),
+        scrollable: true,
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          spacing: 20,
+          children: [
+            Text(tr('googleVerificationWarningP1')),
+            LinkText(
+              text: tr('googleVerificationWarningP2'),
+              url: 'https://keepandroidopen.org/',
+              style: const TextStyle(fontWeight: FontWeight.bold),
             ),
-            actions: [
-              FilledButton.tonal(
-                autofocus: sp.isTV,
-                onPressed: () {
-                  sp.googleVerificationWarningShown = true;
-                  Navigator.of(context).pop(null);
-                },
-                child: Text(tr('ok')),
-              ),
-            ],
-          );
-        },
+            Text(tr('googleVerificationWarningP3')),
+          ],
+        ),
       );
     }
+  }
+
+  /// Shows a single-OK dialog and marks it as acknowledged even when it is
+  /// dismissed via the barrier or back button, so it doesn't reappear on every
+  /// launch.
+  Future<void> _showAcknowledgedDialog({
+    required bool Function() isAcknowledged,
+    required VoidCallback markAcknowledged,
+    required Widget title,
+    required Widget content,
+    bool scrollable = false,
+  }) async {
+    await showDialog(
+      context: context,
+      builder: (BuildContext ctx) {
+        return AlertDialog(
+          title: title,
+          scrollable: scrollable,
+          content: content,
+          actions: [
+            FilledButton.tonal(
+              autofocus: settingsProvider.isTV,
+              onPressed: () {
+                Navigator.of(context).pop(null);
+              },
+              child: Text(tr('ok')),
+            ),
+          ],
+        );
+      },
+    );
+    if (!isAcknowledged()) markAcknowledged();
   }
 
   Future<void> initDeepLinks() async {
@@ -356,11 +360,14 @@ class _HomePageState extends State<HomePage> {
 
     // Use the same extended (icon + label) FABs on every layout, so the
     // tablet/two-pane UI matches mobile.
-    final actionsFab = FloatingActionButton.extended(
-      onPressed: onActionsPressed,
-      tooltip: plural('action', 2),
-      icon: const Icon(Icons.more_vert),
-      label: Text(plural('action', 2)),
+    final actionsFab = TvFocusRing(
+      borderRadius: 16,
+      child: FloatingActionButton.extended(
+        onPressed: onActionsPressed,
+        tooltip: plural('action', 2),
+        icon: const Icon(Icons.more_vert),
+        label: Text(plural('action', 2)),
+      ),
     );
     final createFabExtended = FloatingActionButton.extended(
       onPressed: onAddPressed,
@@ -373,6 +380,8 @@ class _HomePageState extends State<HomePage> {
       (p) => p.loadingApps,
     );
 
+    // On TV the add-app and actions affordances live in the list itself (a
+    // FAB would overlap the tiles and is awkward to reach with a remote).
     final Widget? fab = isTV
         ? null
         : appsSelecting
@@ -383,10 +392,12 @@ class _HomePageState extends State<HomePage> {
     if (useTwoPane) {
       // Host the FAB in a nested Scaffold around the first pane so it aligns
       // with the app list instead of floating over the detail pane.
+      // TVs give the list the larger share: it is the primary navigation
+      // surface and the detail pane only ever shows one app.
       content = Row(
         children: [
           Expanded(
-            flex: 2,
+            flex: isTV ? 3 : 2,
             child: Scaffold(
               backgroundColor: Colors.transparent,
               body: appsPage,
@@ -394,7 +405,7 @@ class _HomePageState extends State<HomePage> {
             ),
           ),
           const VerticalDivider(width: 1),
-          Expanded(flex: 3, child: detailPane),
+          Expanded(flex: isTV ? 2 : 3, child: detailPane),
         ],
       );
     } else {
@@ -402,11 +413,12 @@ class _HomePageState extends State<HomePage> {
     }
 
     return PopScope(
-      canPop: true,
+      canPop: selectedAppId == null,
       onPopInvokedWithResult: (didPop, result) {
-        if (!didPop && selectedAppId != null) {
-          clearSelectedApp();
-        }
+        if (didPop) return;
+        // The first BACK while editing dismisses the keyboard only.
+        if (isEditingTextField()) return;
+        clearSelectedApp();
       },
       child: Scaffold(
         backgroundColor: Theme.of(context).colorScheme.surface,

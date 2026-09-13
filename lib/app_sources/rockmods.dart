@@ -31,9 +31,7 @@ class RockMods extends AppSource {
   ) async {
     try {
       final res = await sourceRequest(standardUrl, additionalSettings);
-      if (res.statusCode != 200) {
-        throw getObtainiumHttpError(res);
-      }
+      ensureHttpSuccess(res);
 
       String? appName;
       String? appVersion;

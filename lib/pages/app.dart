@@ -19,6 +19,7 @@ import 'package:obtainium/providers/source_provider.dart';
 import 'package:obtainium/custom_errors.dart';
 import 'package:obtainium/utils/locale_utils.dart';
 import 'package:obtainium/main.dart';
+import 'package:obtainium/utils/nav_helper.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher_string.dart';
@@ -46,7 +47,7 @@ class AppPage extends StatefulWidget {
 class _AppPageState extends State<AppPage> {
   late final AppsProvider appsProvider;
   late final SettingsProvider settingsProvider;
-  late final String appId;
+  late String appId;
   bool _initialized = false;
 
   late final SourceProvider _sourceProvider;
@@ -62,6 +63,9 @@ class _AppPageState extends State<AppPage> {
   int? _appCacheSig;
   AppInMemory? _appCache;
 
+  String? _aboutCacheKey;
+  Widget? _aboutCache;
+
   // Best-effort download-size probe for the currently-selected APK URL.
   String? _sizeProbeKey;
   int? _probedDownloadSize;
@@ -73,9 +77,11 @@ class _AppPageState extends State<AppPage> {
             app.app.preferredApkIndex < app.app.apkUrls.length)
         ? app.app.preferredApkIndex
         : 0;
-    final url = app.app.apkUrls[idx].value;
-    if (url.isEmpty || url == 'placeholder') return;
-    final key = '${app.app.id}|$url';
+    final urls = splitMultiApkUrl(
+      app.app.apkUrls[idx].value,
+    ).where((u) => u.isNotEmpty && u != 'placeholder').toList();
+    if (urls.isEmpty) return;
+    final key = '${app.app.id}|${app.app.apkUrls[idx].value}';
     if (key == _sizeProbeKey) return;
     _sizeProbeKey = key;
     _probedDownloadSize = null;
@@ -85,28 +91,37 @@ class _AppPageState extends State<AppPage> {
           app.app.url,
           overrideSource: app.app.overrideSource,
         );
-        final resolvedUrl = await source.assetUrlPrefetchModifier(
-          url,
-          app.app.url,
-          app.app.additionalSettings,
+        // A split set is downloaded in full, so report the combined size.
+        final sizes = await Future.wait(
+          urls.map((url) async {
+            final resolvedUrl = await source.assetUrlPrefetchModifier(
+              url,
+              app.app.url,
+              app.app.additionalSettings,
+            );
+            final headers = await source.getRequestHeaders(
+              app.app.additionalSettings,
+              resolvedUrl,
+              forAPKDownload: true,
+            );
+            return getDownloadSize(
+              resolvedUrl,
+              headers: headers,
+              allowInsecure: app.app.settings.getBool('allowInsecure'),
+              enableCertificatePinning:
+                  settingsProvider.enableCertificatePinning,
+            );
+          }),
         );
-        final headers = await source.getRequestHeaders(
-          app.app.additionalSettings,
-          resolvedUrl,
-          forAPKDownload: true,
-        );
-        final size = await getDownloadSize(
-          resolvedUrl,
-          headers: headers,
-          allowInsecure: app.app.settings.getBool('allowInsecure'),
-          enableCertificatePinning: settingsProvider.enableCertificatePinning
-        );
-        if (mounted && _sizeProbeKey == key && size != null) {
-          setState(() => _probedDownloadSize = size);
+        final knownSizes = sizes.whereType<int>();
+        if (mounted && _sizeProbeKey == key && knownSizes.isNotEmpty) {
+          setState(
+            () => _probedDownloadSize = knownSizes.reduce((a, b) => a + b),
+          );
         }
       } catch (e) {
         // Best-effort only: leave the size unknown when it can't be resolved.
-        AppLogger.info('Size probe failed for $url: $e');
+        AppLogger.info('Size probe failed for $urls: $e');
       }
     }();
   }
@@ -130,8 +145,12 @@ class _AppPageState extends State<AppPage> {
     // UI updates until the WebView has finished loading to avoid
     // predictive-back crashes.
     if (_initialized && oldWidget.appId != widget.appId) {
+      // This state object can be reused for a different app (two-pane layout
+      // and list reuse); keep actions pointed at the currently shown app.
+      appId = widget.appId;
       prevApp = null;
       webViewLoaded = false;
+      _webViewError = null;
       _pendingAppIdChange = true;
       if (webViewReady) {
         _pendingAppIdChange = false;
@@ -202,7 +221,6 @@ class _AppPageState extends State<AppPage> {
   int appSignature(AppInMemory a) {
     final app = a.app;
     return Object.hashAll([
-      a.downloadProgress,
       identityHashCode(a.icon),
       identityHashCode(a.installedInfo),
       app.id,
@@ -314,11 +332,18 @@ class _AppPageState extends State<AppPage> {
     Map<String, dynamic> values = {};
     return Navigator.of(context).push<Map<String, dynamic>>(
       MaterialPageRoute(
+        traversalEdgeBehavior: traversalEdgeBehaviorFor(context),
         builder: (ctx) => PopScope<Map<String, dynamic>>(
           // Leaving the page saves the settings, so there is no Continue button.
           canPop: false,
           onPopInvokedWithResult: (didPop, result) {
             if (didPop) return;
+            // While a text field is being edited, the first BACK only
+            // dismisses the keyboard; it must not also save and leave.
+            if (isEditingTextField()) {
+              FocusManager.instance.primaryFocus?.unfocus();
+              return;
+            }
             Navigator.of(ctx).pop(values);
           },
           child: Scaffold(
@@ -327,7 +352,7 @@ class _AppPageState extends State<AppPage> {
               slivers: [
                 SliverAppBar(
                   pinned: true,
-                  automaticallyImplyLeading: false,
+                  automaticallyImplyLeading: true,
                   title: Text(
                     tr('additionalOptsFor', args: [app?.name ?? tr('app')]),
                   ),
@@ -534,7 +559,7 @@ class _AppPageState extends State<AppPage> {
   }
 
   AppBar _appScreenAppBar() => AppBar(
-    automaticallyImplyLeading: false,
+    automaticallyImplyLeading: widget.onClose == null,
     leading: widget.onClose != null
         ? IconButton(
             icon: const Icon(Icons.close_rounded),
@@ -546,7 +571,6 @@ class _AppPageState extends State<AppPage> {
   Widget _getPrimaryButton(
     BuildContext context,
     AppInMemory? app,
-    AppsProvider appsProvider,
     bool areDownloadsRunning,
   ) {
     final installed = app?.app.installedVersion;
@@ -810,13 +834,16 @@ class _AppPageState extends State<AppPage> {
     return Semantics(
       button: true,
       label: app.name,
-      child: InkWell(
-        borderRadius: BorderRadius.circular(14),
-        onTap: () {
-          settingsProvider.lightImpact();
-          packageManager.openApp(app.app.id);
-        },
-        child: icon,
+      child: TvFocusRing(
+        borderRadius: 14,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(14),
+          onTap: () {
+            settingsProvider.lightImpact();
+            packageManager.openApp(app.app.id);
+          },
+          child: icon,
+        ),
       ),
     );
   }
@@ -856,6 +883,14 @@ class _AppPageState extends State<AppPage> {
     );
   }
 
+  String _installedVersionLabel(App? app) {
+    var label = appInstalledVersionText(app);
+    if (app?.installedVersion != app?.latestVersion) {
+      label += '\n${app?.latestVersion} ${tr('latest')}';
+    }
+    return label;
+  }
+
   List<Widget> _buildVersionInfoSections(AppInMemory? app) {
     final cs = Theme.of(context).colorScheme;
     final tt = Theme.of(context).textTheme;
@@ -870,18 +905,10 @@ class _AppPageState extends State<AppPage> {
         children: [
           if (trackOnly) _detailNote(tr('xIsTrackOnly', args: [tr('app')])),
           if (pseudo) _detailNote(tr('pseudoVersionInUse')),
-          () {
-            String l = appInstalledVersionText(app?.app);
-            final upToDate =
-                app?.app.installedVersion == app?.app.latestVersion;
-            if (!upToDate) {
-              l += '\n${app?.app.latestVersion} ${tr('latest')}';
-            }
-            return Text(
-              l,
-              style: tt.bodyMedium?.copyWith(fontWeight: FontWeight.bold),
-            );
-          }(),
+          Text(
+            _installedVersionLabel(app?.app),
+            style: tt.bodyMedium?.copyWith(fontWeight: FontWeight.bold),
+          ),
           if (apkCount > 0)
             _detailNote(
               apkCount == 1 ? app!.app.apkUrls[0].key : plural('apk', apkCount),
@@ -956,43 +983,40 @@ class _AppPageState extends State<AppPage> {
   List<Widget> _buildAboutSection(AppInMemory? app) {
     final about = app?.app.additionalSettings['about'];
     if (about is! String || about.isEmpty) return const [];
+    // Reuse the built MarkdownBody while the content is unchanged: returning
+    // the identical widget instance lets Flutter skip re-parsing it on every
+    // rebuild (download ticks, probes, etc.).
+    if (_aboutCacheKey != about || _aboutCache == null) {
+      _aboutCacheKey = about;
+      _aboutCache = MarkdownBody(
+        data: about,
+        styleSheet: MarkdownStyleSheet(
+          blockquoteDecoration: BoxDecoration(
+            color: Theme.of(context).cardColor,
+          ),
+        ),
+        onTapLink: (text, href, title) {
+          if (href != null) {
+            unawaited(
+              launchUrlString(href, mode: LaunchMode.externalApplication),
+            );
+          }
+        },
+        extensionSet: md.ExtensionSet(
+          md.ExtensionSet.gitHubFlavored.blockSyntaxes,
+          [md.EmojiSyntax(), ...md.ExtensionSet.gitHubFlavored.inlineSyntaxes],
+        ),
+      );
+    }
     return [
       const SliverToBoxAdapter(child: SizedBox(height: AppSpacings.sectionGap)),
-      _buildSection(
-        true,
-        true,
-        children: [
-          MarkdownBody(
-            data: about,
-            styleSheet: MarkdownStyleSheet(
-              blockquoteDecoration: BoxDecoration(
-                color: Theme.of(context).cardColor,
-              ),
-            ),
-            onTapLink: (text, href, title) {
-              if (href != null) {
-                unawaited(
-                  launchUrlString(href, mode: LaunchMode.externalApplication),
-                );
-              }
-            },
-            extensionSet: md.ExtensionSet(
-              md.ExtensionSet.gitHubFlavored.blockSyntaxes,
-              [
-                md.EmojiSyntax(),
-                ...md.ExtensionSet.gitHubFlavored.inlineSyntaxes,
-              ],
-            ),
-          ),
-        ],
-      ),
+      _buildSection(true, true, children: [_aboutCache!]),
     ];
   }
 
   List<Widget> _buildSourceInfoSections(
     AppInMemory? app,
     AppsProvider appsProvider,
-    SettingsProvider settingsProvider,
     bool certs,
     bool hasAssets,
   ) {
@@ -1187,12 +1211,7 @@ class _AppPageState extends State<AppPage> {
                 trackOnly,
               ),
               const Spacer(),
-              _getPrimaryButton(
-                context,
-                app,
-                appsProvider,
-                areDownloadsRunning,
-              ),
+              _getPrimaryButton(context, app, areDownloadsRunning),
             ],
           ),
         ),
@@ -1212,7 +1231,10 @@ class _AppPageState extends State<AppPage> {
     final bool areDownloadsRunning = context.select<AppsProvider, bool>(
       (p) => p.areDownloadsRunning(),
     );
-    final _ = context.select<AppsProvider, double?>(
+    // Subscribe to this app's download progress so the page rebuilds as it
+    // changes: DownloadState.progress is a ValueNotifier and does not notify
+    // the provider's listeners.
+    context.select<AppsProvider, double?>(
       (p) => p.apps[widget.appId]?.downloadProgress,
     );
 
@@ -1223,7 +1245,11 @@ class _AppPageState extends State<AppPage> {
         app.downloadProgress == null &&
         !updating &&
         !areDownloadsRunning) {
-      _maybeProbeDownloadSize(app);
+      // Probe from a post-frame callback: build must stay side-effect free, and
+      // the key guard inside makes repeat scheduling a cheap no-op.
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) _maybeProbeDownloadSize(app);
+      });
     }
     final source = this.source;
 
@@ -1252,15 +1278,10 @@ class _AppPageState extends State<AppPage> {
           ? FloatingActionButton(
               onPressed: () {
                 settingsProvider.selectionClick();
-                Navigator.push(
+                NavHelper.pushAppPage(
                   context,
-                  MaterialPageRoute(
-                    builder: (_) => AppPage(
-                      appId: widget.appId,
-                      showOppositeOfPreferredView: true,
-                      onClose: widget.onClose,
-                    ),
-                  ),
+                  widget.appId,
+                  showOppositeOfPreferredView: true,
                 );
               },
               tooltip: tr('more'),
@@ -1298,7 +1319,6 @@ class _AppPageState extends State<AppPage> {
                         ..._buildSourceInfoSections(
                           app,
                           appsProvider,
-                          settingsProvider,
                           certs,
                           hasAssets,
                         ),

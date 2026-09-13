@@ -20,6 +20,31 @@ class InstallerTarget {
   });
 }
 
+/// Outcome of a tracked external-installer handoff.
+class ExternalInstallResult {
+  /// Whether the installer (or a package-change broadcast) reported the
+  /// install as completed. Callers should still verify against the package
+  /// manager before trusting it.
+  final bool installed;
+
+  /// Installer-reported failure code (a PackageManager INSTALL_FAILED_* value)
+  /// when the installer supports reporting one.
+  final int? errorCode;
+
+  const ExternalInstallResult({required this.installed, this.errorCode});
+}
+
+/// Parses a native `launchInstallIntent` payload into an
+/// [ExternalInstallResult]. Returns null when no result was reported.
+ExternalInstallResult? externalInstallResultFromNative(Object? raw) {
+  if (raw is! Map) return null;
+  final errorCode = raw['errorCode'];
+  return ExternalInstallResult(
+    installed: raw['installed'] == true,
+    errorCode: errorCode is int ? errorCode : null,
+  );
+}
+
 /// Bridge to the two native helpers that have no Flutter-plugin equivalent:
 /// enumerating APK-install-capable activities and turning a downloaded file
 /// into a shareable content:// URI. All handoff orchestration stays in Dart.
@@ -90,5 +115,28 @@ class ExternalInstallerBridge {
   Future<String?> contentUriForFile(String path) async {
     if (!Platform.isAndroid) return null;
     return _channel.invokeMethod<String>('contentUriForFile', {'path': path});
+  }
+
+  /// Hands [uri] to the chosen external installer and waits for the tracked
+  /// result. Returns null when result tracking is unavailable (non-Android or
+  /// an older native side), in which case the caller should fall back to
+  /// polling the package state.
+  Future<ExternalInstallResult?> launchInstallIntent({
+    required String uri,
+    required String type,
+    required String expectedPackageName,
+    String? package,
+    String? activity,
+  }) async {
+    if (!Platform.isAndroid) return null;
+    final raw = await _channel
+        .invokeMethod<Map<dynamic, dynamic>>('launchInstallIntent', {
+          'uri': uri,
+          'type': type,
+          'package': package,
+          'activity': activity,
+          'expectedPackageName': expectedPackageName,
+        });
+    return externalInstallResultFromNative(raw);
   }
 }

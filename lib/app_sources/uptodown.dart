@@ -184,9 +184,7 @@ class Uptodown extends AppSource {
     Map<String, dynamic> additionalSettings,
   ) async {
     final res = await sourceRequest(assetUrl, additionalSettings);
-    if (res.statusCode != 200) {
-      throw getObtainiumHttpError(res);
-    }
+    ensureHttpSuccess(res);
     final html = parse(res.body);
     final button = html.querySelector('#detail-download-button');
     final heading = html.querySelector('#detail-app-name');
@@ -206,29 +204,49 @@ class Uptodown extends AppSource {
     Map<String, dynamic> additionalSettings,
   ) async {
     final res = await sourceRequest(standardUrl, additionalSettings);
-    if (res.statusCode != 200) {
-      throw getObtainiumHttpError(res);
-    }
+    ensureHttpSuccess(res);
     final html = parse(res.body);
     final String? version = html.querySelector('div.version')?.text.trim();
-    final String? name = html.querySelector('#detail-app-name')?.text.trim();
+    final appNameElement = html.querySelector('#detail-app-name');
+    final String? name = appNameElement?.text.trim();
     final String? author = html.querySelector('#author-link')?.text.trim();
-    final details = <String, String>{};
+    // Pair each technical-information row's <th> label with its value <td>, so
+    // values are found by label instead of by position (which breaks whenever
+    // Uptodown inserts or removes a row).
+    final Map<String, String> info = {};
     for (final row in html.querySelectorAll('#technical-information tr')) {
       final label = row.querySelector('th')?.text.trim().toLowerCase();
-      final value = row.querySelectorAll('td').lastOrNull?.text.trim();
-      if (label != null && value != null && value.isNotEmpty) {
-        details[label] = value;
+      if (label == null || label.isEmpty) continue;
+      final cells = row.querySelectorAll('td');
+      final value = cells.isEmpty ? null : cells.last.text.trim();
+      if (value != null && value.isNotEmpty) {
+        info[label] = value;
       }
     }
-    final appId = details['package name'];
-    final dateStr = details['date'];
-    final fileId =
+    // Fallback for older layouts. Indexing is guarded because the old
+    // elementAtOrNull calls threw on negative indices.
+    final List<String> detailElements = html
+        .querySelectorAll('#technical-information td')
+        .map((e) => e.text.trim())
+        .where((e) => e.isNotEmpty)
+        .toList();
+    final String? appId = info['package name'] ?? detailElements.lastOrNull;
+    final String? dateStr =
+        info['date'] ??
+        (detailElements.length >= 5
+            ? detailElements[detailElements.length - 5]
+            : null);
+    final String? extension =
+        (info['file type'] ??
+                (detailElements.length >= 4
+                    ? detailElements[detailElements.length - 4]
+                    : null))
+            ?.toLowerCase();
+    final String? fileId =
         html
             .querySelector('#detail-download-button')
             ?.attributes['data-file-id'] ??
-        html.querySelector('#detail-app-name')?.attributes['data-file-id'];
-    final extension = details['file type']?.toLowerCase();
+        appNameElement?.attributes['data-file-id'];
     return Map.fromEntries([
       MapEntry('version', version),
       MapEntry('appId', appId),

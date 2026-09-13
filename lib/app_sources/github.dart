@@ -6,10 +6,10 @@ import 'package:http/http.dart';
 import 'package:obtainium/utils/string_compare.dart';
 import 'package:obtainium/components/generated_form_model.dart';
 import 'package:obtainium/custom_errors.dart';
-import 'package:obtainium/providers/apps_provider.dart';
 import 'package:obtainium/core/logging/app_logger.dart';
 import 'package:obtainium/providers/settings_provider.dart';
 import 'package:obtainium/providers/source_provider.dart';
+import 'package:obtainium/utils/min_update_age.dart';
 
 class GitHub extends AppSource {
   static const int _fallbackCacheSeconds = 3600;
@@ -314,8 +314,8 @@ class GitHub extends AppSource {
   static bool _isAuthRejection(Response res) {
     if (res.statusCode != 401 && res.statusCode != 403) return false;
     try {
-      final message =
-          (jsonDecode(res.body)['message'] as String? ?? '').toLowerCase();
+      final message = (jsonDecode(res.body)['message'] as String? ?? '')
+          .toLowerCase();
       return message.contains('access token') ||
           message.contains('bad credentials');
     } catch (_) {
@@ -480,7 +480,7 @@ class GitHub extends AppSource {
       for (final r in releases) {
         if (r == null) continue;
         final name = (r['tag_name'] ?? r['name'])?.toString() ?? '';
-        formats[r] = findStandardFormatsForVersion(name, false);
+        formats[r] = findStandardFormatsForVersion(name, strict: false);
       }
     }
 
@@ -566,6 +566,8 @@ class GitHub extends AppSource {
     required String? regexNotesFilter,
     required bool includeZips,
     required bool includeTarballs,
+    required bool useLatestAssetDateAsReleaseDate,
+    required int minAgeDays,
     required Map<String, dynamic> additionalSettings,
     required Map<String, String> sourceConfigSettingValues,
   }) {
@@ -595,6 +597,16 @@ class GitHub extends AppSource {
           !notesRegex.hasMatch(
             ((releases[i]['body'] as String?) ?? '').trim(),
           )) {
+        continue;
+      }
+      if (isReleaseTooYoung(
+        _getReleaseDateFromRelease(
+          releases[i],
+          useLatestAssetDateAsReleaseDate,
+        ),
+        minAgeDays,
+      )) {
+        releaseSkipped++;
         continue;
       }
       final allAssetsWithUrls = _findReleaseAssetUrls(
@@ -714,6 +726,7 @@ class GitHub extends AppSource {
         additionalSettings['sortMethodChoice'] ?? 'smartname-datefallback';
     final bool includeZips = additionalSettings['includeZips'] == true;
     final bool includeTarballs = additionalSettings['includeTarballs'] == true;
+    final int minAgeDays = await effectiveMinUpdateAgeDays(additionalSettings);
     dynamic latestRelease;
     if (verifyLatestTag) {
       final uri = Uri.parse(requestUrl);
@@ -763,17 +776,25 @@ class GitHub extends AppSource {
       }
       _positionLatestRelease(releases, latestRelease);
       releases = releases.reversed.toList();
-      final targetRelease = _selectGitHubTargetRelease(
-        releases: releases,
-        fallbackToOlderReleases: fallbackToOlderReleases,
-        includePrereleases: includePrereleases,
-        regexFilter: regexFilter,
-        regexNotesFilter: regexNotesFilter,
-        includeZips: includeZips,
-        includeTarballs: includeTarballs,
-        additionalSettings: additionalSettings,
-        sourceConfigSettingValues: sourceConfigSettingValues,
-      );
+      dynamic targetRelease;
+      // Prefer an eligible release; if none is old enough, fall back to the
+      // newest so the caller can suppress it until it ages.
+      for (final int age in minAgeDays > 0 ? [minAgeDays, 0] : [0]) {
+        targetRelease = _selectGitHubTargetRelease(
+          releases: releases,
+          fallbackToOlderReleases: fallbackToOlderReleases,
+          includePrereleases: includePrereleases,
+          regexFilter: regexFilter,
+          regexNotesFilter: regexNotesFilter,
+          includeZips: includeZips,
+          includeTarballs: includeTarballs,
+          useLatestAssetDateAsReleaseDate: useLatestAssetDateAsReleaseDate,
+          minAgeDays: age,
+          additionalSettings: additionalSettings,
+          sourceConfigSettingValues: sourceConfigSettingValues,
+        );
+        if (targetRelease != null) break;
+      }
       if (targetRelease == null) {
         throw NoReleasesError();
       }
@@ -953,15 +974,17 @@ class GitHub extends AppSource {
   void githubErrorCheck(Response res) {
     rateLimitErrorCheck(res);
     if (res.statusCode == 401 || res.statusCode == 403) {
+      String? message;
       try {
-        final message = (jsonDecode(res.body)['message'] as String?)?.trim();
-        if (message != null &&
-            message.isNotEmpty &&
-            !message.toLowerCase().contains('rate limit')) {
-          throw ObtainiumError(message);
-        }
+        message = (jsonDecode(res.body)['message'] as String?)?.trim();
       } catch (_) {
         // Not a JSON error body; fall through to the generic handler.
+        message = null;
+      }
+      if (message != null &&
+          message.isNotEmpty &&
+          !message.toLowerCase().contains('rate limit')) {
+        throw ObtainiumError(message);
       }
     }
   }

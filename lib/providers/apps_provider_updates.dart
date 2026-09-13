@@ -6,6 +6,7 @@ import 'package:obtainium/custom_errors.dart';
 import 'package:obtainium/providers/apps_provider.dart';
 import 'package:obtainium/providers/settings_provider.dart';
 import 'package:obtainium/providers/source_provider.dart';
+import 'package:obtainium/utils/min_update_age.dart';
 
 /// Update checking and pending-update bookkeeping for [AppsProvider].
 extension AppsProviderUpdates on AppsProvider {
@@ -31,14 +32,10 @@ extension AppsProviderUpdates on AppsProvider {
       currentApp.additionalSettings,
       currentApp: currentApp,
     );
-    if (_isReleaseYoungerThanMinAge(currentApp, newApp)) {
+    if (await _isReleaseYoungerThanMinAge(currentApp, newApp)) {
       // Suppress the update until the release has reached the configured
       // minimum age (supply-chain delay).
-      newApp = newApp.copyWith(
-        latestVersion: currentApp.latestVersion,
-        releaseDate: currentApp.releaseDate,
-        changeLog: currentApp.changeLog,
-      );
+      newApp = applyMinAgeSuppression(currentApp, newApp);
     }
     if (currentApp.preferredApkIndex < newApp.apkUrls.length) {
       newApp = newApp.copyWith(preferredApkIndex: currentApp.preferredApkIndex);
@@ -48,20 +45,42 @@ extension AppsProviderUpdates on AppsProvider {
     return newApp;
   }
 
+  /// Fetches [appId] with a short retry for transient TLS handshake failures.
+  ///
+  /// Concurrent TLS handshakes to the same host can fail on certain
+  /// devices/networks. Retry up to 2 times with staggered random delays to
+  /// avoid all retries colliding. Any error that is not a handshake failure
+  /// (including one raised by a retry) propagates to the caller so it can take
+  /// the normal per-app error path instead of aborting the whole batch.
+  Future<App?> fetchUpdateWithHandshakeRetry(String appId) async {
+    try {
+      return await fetchUpdate(appId);
+    } on HandshakeException {
+      const maxRetries = 2;
+      final rng = Random();
+      for (var attempt = 0; attempt < maxRetries; attempt++) {
+        await Future.delayed(Duration(milliseconds: 250 + rng.nextInt(501)));
+        try {
+          return await fetchUpdate(appId);
+        } on HandshakeException {
+          if (attempt == maxRetries - 1) rethrow;
+        }
+      }
+      return null;
+    }
+  }
+
   /// Returns true when [newApp]'s release is newer than the configured
   /// minimum update age and should therefore be suppressed.
-  bool _isReleaseYoungerThanMinAge(App currentApp, App newApp) {
-    final releaseDate = newApp.releaseDate;
-    if (releaseDate == null ||
-        newApp.latestVersion == currentApp.latestVersion) {
+  Future<bool> _isReleaseYoungerThanMinAge(App currentApp, App newApp) async {
+    if (newApp.latestVersion == currentApp.latestVersion) {
       return false;
     }
-    final raw = currentApp.additionalSettings['minimumUpdateAgeDays'];
-    final minAgeDays = raw is String && raw.isNotEmpty
-        ? int.tryParse(raw) ?? settingsProvider.minimumUpdateAgeDays
-        : settingsProvider.minimumUpdateAgeDays;
-    if (minAgeDays <= 0) return false;
-    return DateTime.now().difference(releaseDate) < Duration(days: minAgeDays);
+    final minAgeDays = await effectiveMinUpdateAgeDays(
+      currentApp.additionalSettings,
+      settingsProvider: settingsProvider,
+    );
+    return isReleaseTooYoung(newApp.releaseDate, minAgeDays);
   }
 
   Future<App?> checkUpdate(String appId) async {
@@ -122,8 +141,13 @@ extension AppsProviderUpdates on AppsProvider {
     SettingsProvider? sp,
   }) async {
     final SettingsProvider settingsProvider = sp ?? this.settingsProvider;
-    if (updateCheckCompleter != null) {
-      return updateCheckCompleter!.future;
+    // A check is already running. Its result may not cover the apps this
+    // caller asked for (e.g. a deep-link refresh for one app arriving during a
+    // full background check), so wait for it to finish and then run our own
+    // instead of silently returning the other check's result.
+    while (updateCheckCompleter != null) {
+      final runningCheck = updateCheckCompleter!;
+      await runningCheck.future.catchError((_) => <App>[]);
     }
     final completer = updateCheckCompleter = Completer<List<App>>();
     var completed = 0;
@@ -140,28 +164,11 @@ extension AppsProviderUpdates on AppsProvider {
       List<String> appIds;
       if (specificIds != null) {
         appIds = List.from(specificIds);
-      } else if (forceAll) {
-        appIds = apps.values.map((e) => e.app.id).toList();
-        appIds.sort(
-          (a, b) =>
-              (apps[a]!.app.lastUpdateCheck ??
-                      DateTime.fromMicrosecondsSinceEpoch(0))
-                  .compareTo(
-                    apps[b]!.app.lastUpdateCheck ??
-                        DateTime.fromMicrosecondsSinceEpoch(0),
-                  ),
-        );
-        if (settingsProvider.onlyCheckInstalledOrTrackOnlyApps) {
-          appIds.removeWhere((id) {
-            final a = apps[id]?.app;
-            return a?.installedVersion == null &&
-                a?.settings.getBool('trackOnly') != true;
-          });
-        }
       } else {
         appIds = getAppsSortedByUpdateCheckTime(
           onlyCheckInstalledOrTrackOnlyApps:
               settingsProvider.onlyCheckInstalledOrTrackOnlyApps,
+          forceAll: forceAll,
         );
       }
       total = appIds.length;
@@ -183,37 +190,13 @@ extension AppsProviderUpdates on AppsProvider {
       Future<MapEntry<App, bool>?> fetchOne(String appId) async {
         final currentApp = apps[appId]?.app;
         try {
-          final newApp = await fetchUpdate(appId);
+          final newApp = await fetchUpdateWithHandshakeRetry(appId);
           if (newApp != null) {
             final isUpdate =
                 currentApp != null &&
                 newApp.latestVersion != currentApp.latestVersion &&
                 isAppUpdateable(newApp, settingsProvider);
             return MapEntry(newApp, isUpdate);
-          }
-        } on HandshakeException {
-          // Concurrent TLS handshakes to the same host can fail on
-          // certain devices/networks. Retry up to 2 times with
-          // staggered random delays to avoid all retries colliding.
-          const maxRetries = 2;
-          final rng = Random();
-          for (var attempt = 0; attempt < maxRetries; attempt++) {
-            await Future.delayed(
-              Duration(milliseconds: 250 + rng.nextInt(501)),
-            );
-            try {
-              final newApp = await fetchUpdate(appId);
-              if (newApp != null) {
-                final isUpdate =
-                    currentApp != null &&
-                    newApp.latestVersion != currentApp.latestVersion &&
-                    isAppUpdateable(newApp, settingsProvider);
-                return MapEntry(newApp, isUpdate);
-              }
-              break;
-            } on HandshakeException {
-              if (attempt == maxRetries - 1) rethrow;
-            }
           }
         } catch (e) {
           if ((e is RateLimitError || e is SocketException) &&
@@ -264,7 +247,11 @@ extension AppsProviderUpdates on AppsProvider {
         await saveApps(fetched, reuseInstalledInfo: true);
       }
       if (failedApps.isNotEmpty) {
-        await saveApps(failedApps, attemptToCorrectInstallStatus: false);
+        await saveApps(
+          failedApps,
+          attemptToCorrectInstallStatus: false,
+          reuseInstalledInfo: true,
+        );
       }
       if (errors.idsByErrorString.isNotEmpty) {
         final ex = CheckUpdatesException(updates, errors);
@@ -294,50 +281,29 @@ extension AppsProviderUpdates on AppsProvider {
     final List<String> updateAppIds = [];
     for (final appId in apps.keys) {
       final app = apps[appId]!.app;
+      final installed = app.installedVersion;
       if (installedOnly) {
-        if (app.installedVersion != null) {
-          final regex =
-              (app.additionalSettings['versionExtractionRegEx'] as String?) ??
-              '';
-          if (regex.isEmpty) {
-            if (app.installedVersion != app.latestVersion &&
-                isAppUpdateable(app, settingsProvider)) {
-              updateAppIds.add(app.id);
-            }
-          } else if (!doStringsMatchUnderRegEx(
-                regex,
-                app.installedVersion!,
-                app.latestVersion,
-              ) &&
-              isAppUpdateable(app, settingsProvider)) {
-            updateAppIds.add(app.id);
-          }
-        }
+        if (installed == null) continue;
       } else if (nonInstalledOnly) {
-        if (app.installedVersion == null) {
-          updateAppIds.add(app.id);
-        }
-      } else if (app.installedVersion != app.latestVersion) {
-        if (app.installedVersion == null) {
-          updateAppIds.add(app.id);
-        } else {
-          final regex =
-              (app.additionalSettings['versionExtractionRegEx'] as String?) ??
-              '';
-          if (regex.isNotEmpty &&
-              doStringsMatchUnderRegEx(
-                regex,
-                app.installedVersion!,
-                app.latestVersion,
-              )) {
-            continue;
-          }
-          if (isAppUpdateable(app, settingsProvider)) {
-            updateAppIds.add(app.id);
-          }
-        }
+        if (installed == null) updateAppIds.add(app.id);
+        continue;
+      }
+      if (installed == null ||
+          (_installedVersionDiffers(app, installed) &&
+              isAppUpdateable(app, settingsProvider))) {
+        updateAppIds.add(app.id);
       }
     }
     return updateAppIds;
+  }
+
+  /// Whether [installed] differs from the app's latest version, either
+  /// directly or after extracting the app's `versionExtractionRegEx` portion.
+  bool _installedVersionDiffers(App app, String installed) {
+    final regex =
+        (app.additionalSettings['versionExtractionRegEx'] as String?) ?? '';
+    return regex.isEmpty
+        ? installed != app.latestVersion
+        : !doStringsMatchUnderRegEx(regex, installed, app.latestVersion);
   }
 }

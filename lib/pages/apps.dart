@@ -59,6 +59,7 @@ class AppsPageState extends State<AppsPage> {
   final AppsFilter neutralFilter = AppsFilter();
   Set<String> selectedAppIds = {};
   Set<String?> collapsedGroups = {};
+  bool _selectionMode = false;
   bool _collapseStateInitDone = false;
   bool _selectionPruneScheduled = false;
 
@@ -121,6 +122,18 @@ class AppsPageState extends State<AppsPage> {
       selectedAppIds.add(app.id);
     }
     setState(() {});
+    widget.onSelectionChanged?.call(selectedAppIds.isNotEmpty);
+  }
+
+  /// Enters or leaves TV multi-select mode. While active, selecting a tile
+  /// toggles it instead of opening its details, and the checkboxes become
+  /// visible. Leaving the mode clears the selection.
+  void toggleSelectionMode() {
+    settingsProvider.selectionClick();
+    setState(() {
+      _selectionMode = !_selectionMode;
+      if (!_selectionMode) selectedAppIds.clear();
+    });
     widget.onSelectionChanged?.call(selectedAppIds.isNotEmpty);
   }
 
@@ -263,13 +276,13 @@ class AppsPageState extends State<AppsPage> {
         : () {
             settingsProvider.heavyImpact();
             if (settingsProvider.skipBulkUpdateConfirmation) {
+              // The setting is "skip update/install confirmation dialog", so
+              // new installs must be included too, not only updates.
               final ids = <String>{
                 ...existingUpdateIdsAllOrSelected,
+                ...newInstallIdsAllOrSelected,
                 ...trackOnlyUpdateIdsAllOrSelected,
               };
-              if (existingUpdateIdsAllOrSelected.isEmpty) {
-                ids.addAll(newInstallIdsAllOrSelected);
-              }
               _obtainApps(ids.toList(), context);
             } else {
               _showObtainDialog(
@@ -529,14 +542,16 @@ class AppsPageState extends State<AppsPage> {
             },
           );
           if (categoriesChanged) {
-            unawaited(
-              appsProvider.saveApps(
-                selectedApps.map((e) {
-                  e = e.copyWith(categories: pendingCategories.toList());
-                  return e;
-                }).toList(),
-              ),
-            );
+            final categories = pendingCategories.toList();
+            // Persist only the category change against the latest app data, so
+            // a concurrent update check isn't clobbered by the stale snapshot
+            // captured when the sheet opened.
+            final changed = selectedApps
+                .map((e) => appsProvider.apps[e.id]?.app)
+                .whereType<App>()
+                .map((a) => a.copyWith(categories: categories))
+                .toList();
+            unawaited(appsProvider.saveApps(changed));
           }
         }
       } catch (err) {
@@ -567,64 +582,71 @@ class AppsPageState extends State<AppsPage> {
       );
       if (!confirmed) return;
       settingsProvider.selectionClick();
-      unawaited(
-        appsProvider.saveApps(
-          selectedApps.map((a) {
-            if (a.installedVersion != null &&
-                !appsProvider.isVersionDetectionPossible(
-                  appsProvider.apps[a.id],
-                )) {
-              a = a.copyWith(installedVersion: a.latestVersion);
-            }
-            return a;
-          }).toList(),
-        ),
-      );
+      // Re-read the current app data so marking updated doesn't overwrite
+      // fields a concurrent update check may have refreshed.
+      final changed = <App>[];
+      for (final selected in selectedApps) {
+        final current = appsProvider.apps[selected.id]?.app;
+        if (current == null) continue;
+        changed.add(
+          current.installedVersion != null &&
+                  !appsProvider.isVersionDetectionPossible(
+                    appsProvider.apps[current.id],
+                  )
+              ? current.copyWith(installedVersion: current.latestVersion)
+              : current,
+        );
+      }
+      unawaited(appsProvider.saveApps(changed));
     } catch (e) {
       if (context.mounted) showError(e, context);
     }
   }
 
   void pinSelectedApps(Set<App> selectedApps) {
-    final pinStatus = selectedApps.where((element) => element.pinned).isEmpty;
+    // Base the target pin state on the latest data, and copy it onto the latest
+    // app objects so a concurrent update check isn't clobbered.
+    final current = selectedApps
+        .map((e) => appsProvider.apps[e.id]?.app)
+        .whereType<App>()
+        .toList();
+    if (current.isEmpty) return;
+    final pinStatus = current.every((a) => !a.pinned);
     unawaited(
       appsProvider.saveApps(
-        selectedApps.map((e) {
-          e = e.copyWith(pinned: pinStatus);
-          return e;
-        }).toList(),
+        current.map((a) => a.copyWith(pinned: pinStatus)).toList(),
       ),
     );
   }
 
+  /// Splits [apps] into existing updates, new installs, and track-only
+  /// updates. Track-only apps never appear in the other two groups.
+  (List<String>, List<String>, List<String>) _classifyForUpdate(
+    Iterable<App> apps,
+  ) {
+    final existingUpdateIds = <String>[];
+    final newInstallIds = <String>[];
+    final trackOnlyUpdateIds = <String>[];
+    for (final app in apps) {
+      final trackOnly = app.settings.getBool('trackOnly');
+      if (trackOnly) {
+        if (isAppUpdateable(app, settingsProvider)) {
+          trackOnlyUpdateIds.add(app.id);
+        }
+      } else if (app.installedVersion == null) {
+        newInstallIds.add(app.id);
+      } else if (isAppUpdateable(app, settingsProvider)) {
+        existingUpdateIds.add(app.id);
+      }
+    }
+    return (existingUpdateIds, newInstallIds, trackOnlyUpdateIds);
+  }
+
   void showMoreOptionsBottomSheet(BuildContext context, Set<App> selectedApps) {
     final isPinned = selectedApps.where((e) => e.pinned).isNotEmpty;
-    final hasSelection = selectedAppIds.isNotEmpty;
 
-    final existingUpdateIds = selectedApps
-        .where(
-          (a) =>
-              isAppUpdateable(a, settingsProvider) &&
-              a.settings.getBool('trackOnly') != true,
-        )
-        .map((a) => a.id)
-        .toList();
-    final newInstallIds = selectedApps
-        .where(
-          (a) =>
-              a.installedVersion == null &&
-              a.settings.getBool('trackOnly') != true,
-        )
-        .map((a) => a.id)
-        .toList();
-    final trackOnlyUpdateIds = selectedApps
-        .where(
-          (a) =>
-              isAppUpdateable(a, settingsProvider) &&
-              a.settings.getBool('trackOnly') == true,
-        )
-        .map((a) => a.id)
-        .toList();
+    final (existingUpdateIds, newInstallIds, trackOnlyUpdateIds) =
+        _classifyForUpdate(selectedApps);
     final hasObtainActions =
         existingUpdateIds.isNotEmpty ||
         newInstallIds.isNotEmpty ||
@@ -653,21 +675,17 @@ class AppsPageState extends State<AppsPage> {
                 optionTile(
                   icon: Icons.delete_outline,
                   label: tr('remove'),
-                  onTap: hasSelection
-                      ? () {
-                          appsProvider.removeAppsWithModal(
-                            context,
-                            selectedApps.toList(),
-                          );
-                        }
-                      : null,
+                  onTap: () {
+                    appsProvider.removeAppsWithModal(
+                      context,
+                      selectedApps.toList(),
+                    );
+                  },
                 ),
                 optionTile(
                   icon: Icons.category_outlined,
                   label: tr('categorize'),
-                  onTap: hasSelection
-                      ? launchCategorizeDialogCallback(context, selectedApps)
-                      : null,
+                  onTap: launchCategorizeDialogCallback(context, selectedApps),
                 ),
                 optionTile(
                   icon: isPinned ? Icons.push_pin : Icons.push_pin_outlined,
@@ -699,14 +717,12 @@ class AppsPageState extends State<AppsPage> {
                 optionTile(
                   icon: Icons.link_outlined,
                   label: tr('shareAppConfigLinks'),
-                  onTap: !hasSelection
-                      ? null
-                      : () => shareConfigLinks(selectedApps),
+                  onTap: () => shareConfigLinks(selectedApps),
                 ),
                 optionTile(
                   icon: Icons.file_download_outlined,
                   label: '${tr('share')} - ${tr('obtainiumExport')}',
-                  onTap: !hasSelection ? null : () => shareExport(selectedApps),
+                  onTap: () => shareExport(selectedApps),
                 ),
                 optionTile(
                   icon: Icons.download_outlined,
@@ -809,6 +825,7 @@ class AppsPageState extends State<AppsPage> {
     SettingsProvider settingsProvider,
     AppsProvider appsProvider, {
     BorderRadius? borderRadius,
+    bool autofocus = false,
   }) {
     final aim = listedApps[index];
     final app = aim.app;
@@ -819,10 +836,11 @@ class AppsPageState extends State<AppsPage> {
       borderRadius: borderRadius,
       multiSelected: selectedAppIds.contains(app.id),
       detailSelected: widget.selectedAppId == app.id,
-      autofocus: index == 0 && settingsProvider.isTV,
+      autofocus: autofocus && settingsProvider.isTV,
+      selectionMode: _selectionMode,
       onToggleSelected: () => toggleAppSelected(app),
       onTap: () {
-        if (selectedAppIds.isNotEmpty) {
+        if (_selectionMode || selectedAppIds.isNotEmpty) {
           toggleAppSelected(app);
         } else if (widget.onAppSelected != null) {
           widget.onAppSelected!(app.id);
@@ -850,6 +868,7 @@ class AppsPageState extends State<AppsPage> {
           listedApps,
           settingsProvider,
           appsProvider,
+          autofocus: index == 0,
           borderRadius: BorderRadius.circular(connectedTileBigRadius),
         ),
       ),
@@ -885,6 +904,10 @@ class AppsPageState extends State<AppsPage> {
             listedApps,
             settingsProvider,
             appsProvider,
+            // Only the very first tile of the first group autofocuses, so an
+            // app that appears in several categories doesn't create multiple
+            // autofocus requests.
+            autofocus: index == 0 && j == 0,
             // Header occupies the top slot, so tiles are never first; the last
             // tile gets the group's rounded bottom.
             borderRadius: positionalTileRadius(
@@ -1168,6 +1191,15 @@ class AppsPageState extends State<AppsPage> {
     final existingUpdates = appsProvider
         .findAppIdsWithPendingUpdates(installedOnly: true)
         .toSet();
+    // If a category that is currently filtered on was deleted, drop it from
+    // the filter so the list doesn't stay stuck on "no apps for filter".
+    final validCategories = settingsProvider.categories.keys.toSet();
+    if (filter.categoryFilter.isNotEmpty &&
+        !validCategories.containsAll(filter.categoryFilter)) {
+      filter.categoryFilter = filter.categoryFilter.intersection(
+        validCategories,
+      );
+    }
     final listedApps = getFilteredAndSortedApps(
       List<AppInMemory>.from(apps),
       existingUpdates,
@@ -1199,9 +1231,14 @@ class AppsPageState extends State<AppsPage> {
     }
 
     return PopScope(
-      canPop: selectedAppIds.isEmpty,
+      canPop: selectedAppIds.isEmpty && !_selectionMode,
       onPopInvokedWithResult: (didPop, result) {
-        if (!didPop) {
+        if (didPop) return;
+        // The first BACK while editing dismisses the keyboard only.
+        if (isEditingTextField()) return;
+        if (_selectionMode) {
+          toggleSelectionMode();
+        } else {
           clearSelected();
         }
       },
@@ -1223,6 +1260,25 @@ class AppsPageState extends State<AppsPage> {
                   CustomAppBar(
                     title: tr('appsString'),
                     actions: [
+                      if (settingsProvider.isTV)
+                        IconButton(
+                          onPressed: toggleSelectionMode,
+                          icon: Icon(
+                            _selectionMode
+                                ? Icons.close_rounded
+                                : Icons.checklist_rounded,
+                          ),
+                          tooltip: _selectionMode
+                              ? tr('close')
+                              : plural('action', 2),
+                        ),
+                      if (settingsProvider.isTV)
+                        IconButton(
+                          onPressed: () =>
+                              refreshIndicatorKey.currentState?.show(),
+                          icon: const Icon(Icons.refresh_rounded),
+                          tooltip: tr('refresh'),
+                        ),
                       IconButton(
                         onPressed: () {
                           NavHelper.pushSettingsPage(context);
@@ -1256,7 +1312,8 @@ class AppsPageState extends State<AppsPage> {
                   ),
                   SliverToBoxAdapter(
                     child: SizedBox(
-                      height: MediaQuery.of(context).padding.bottom +
+                      height:
+                          MediaQuery.of(context).padding.bottom +
                           (settingsProvider.isTV ? 160 : 96),
                     ),
                   ),
@@ -1264,13 +1321,28 @@ class AppsPageState extends State<AppsPage> {
                     SliverToBoxAdapter(
                       child: Padding(
                         padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-                        child: SizedBox(
-                          width: double.infinity,
-                          child: FilledButton.tonalIcon(
-                            onPressed: () => NavHelper.pushAddAppPage(context),
-                            icon: const Icon(Icons.add),
-                            label: Text(tr('addApp')),
-                          ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          spacing: 8,
+                          children: [
+                            if (_selectionMode)
+                              FilledButton.icon(
+                                onPressed: selectedAppIds.isEmpty
+                                    ? null
+                                    : () => showSelectedAppActions(),
+                                icon: const Icon(Icons.more_vert),
+                                label: Text(
+                                  '${plural('action', 2)}'
+                                  ' (${selectedAppIds.length})',
+                                ),
+                              ),
+                            FilledButton.tonalIcon(
+                              onPressed: () =>
+                                  NavHelper.pushAddAppPage(context),
+                              icon: const Icon(Icons.add),
+                              label: Text(tr('addApp')),
+                            ),
+                          ],
                         ),
                       ),
                     ),

@@ -12,7 +12,11 @@ class HuaweiAppGallery extends AppSource {
   String get name => tr('huaweiAppGallery');
 
   HuaweiAppGallery() {
-    hosts = ['appgallery.huawei.com', 'appgallery.cloud.huawei.com', 'appgallery.huawei.ru'];
+    hosts = [
+      'appgallery.huawei.com',
+      'appgallery.cloud.huawei.com',
+      'appgallery.huawei.ru',
+    ];
     trustedApkHosts = ['dbankcloud.com', 'dbankcloud.ru'];
     canSearch = true;
   }
@@ -201,9 +205,7 @@ class HuaweiAppGallery extends AppSource {
         .join('&');
     final apiUrl = 'https://$host$_apiPath';
     final res = await sourceRequest(apiUrl, mergedSettings, postBody: body);
-    if (res.statusCode != 200) {
-      throw getObtainiumHttpError(res);
-    }
+    ensureHttpSuccess(res);
     final decoded = jsonDecode(utf8.decode(res.bodyBytes));
     if (decoded is! Map<String, dynamic>) {
       throw ObtainiumError(tr('unexpectedStoreApiResponse'), unexpected: true);
