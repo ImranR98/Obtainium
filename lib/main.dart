@@ -1,7 +1,7 @@
 import 'dart:async';
 import 'dart:ui' show Locale, PlatformDispatcher;
 
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter/services.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:obtainium/custom_errors.dart';
@@ -14,7 +14,7 @@ import 'package:obtainium/utils/native_features.dart';
 import 'package:obtainium/pages/home.dart';
 import 'package:obtainium/theme.dart';
 import 'package:provider/provider.dart';
-import 'package:dynamic_system_colors/dynamic_system_colors.dart';
+import 'package:dynamic_color/dynamic_color.dart';
 import 'package:device_info_plus/device_info_plus.dart';
 import 'package:easy_localization/easy_localization.dart' hide TextDirection;
 import 'package:permission_handler/permission_handler.dart';
@@ -298,6 +298,13 @@ class _ObtainiumState extends State<Obtainium> {
       await settingsProvider.initializeSettings();
       if (!mounted) return;
       _settingsProvider = settingsProvider;
+      if (settingsProvider.isTV) {
+        // TV remotes are the primary input, so focus highlights must always be
+        // painted. The default automatic strategy can get stuck in "touch"
+        // mode and leave the user with no visible focus position at all.
+        FocusManager.instance.highlightStrategy =
+            FocusHighlightStrategy.alwaysTraditional;
+      }
       settingsProvider.addListener(_onSettingsChanged);
       final appsProvider = context.read<AppsProvider>();
       final notifs = context.read<NotificationsProvider>();
@@ -335,6 +342,7 @@ class _ObtainiumState extends State<Obtainium> {
     final useSystemFont = context.select<SettingsProvider, bool>(
       (p) => p.useSystemFont,
     );
+    final isTV = context.select<SettingsProvider, bool>((p) => p.isTV);
 
     return DynamicColorBuilder(
       builder: (ColorScheme? lightDynamic, ColorScheme? darkDynamic) {
@@ -376,7 +384,10 @@ class _ObtainiumState extends State<Obtainium> {
         return MaterialApp(
           title: 'Obtainium',
           navigatorKey: appNavigatorKey,
-          localizationsDelegates: context.localizationDelegates,
+          localizationsDelegates: [
+            ...context.localizationDelegates,
+            ...GlobalMaterialLocalizations.delegates,
+          ],
           supportedLocales: context.supportedLocales,
           locale: context.locale,
           debugShowCheckedModeBanner: false,
@@ -385,12 +396,14 @@ class _ObtainiumState extends State<Obtainium> {
                 ? darkColorScheme
                 : lightColorScheme,
             useSystemFont ? 'SystemFont' : 'Montserrat',
+            isTV: isTV,
           ),
           darkTheme: buildObtainiumTheme(
             themeSetting == ThemeSettings.light
                 ? lightColorScheme
                 : darkColorScheme,
             useSystemFont ? 'SystemFont' : 'Montserrat',
+            isTV: isTV,
           ),
           home: const HomePage(),
           builder: (context, child) {
@@ -398,13 +411,22 @@ class _ObtainiumState extends State<Obtainium> {
               _lastLocale = context.locale;
               setAppLocale(context.locale);
             }
-            return Shortcuts(
+            final content = Shortcuts(
               shortcuts: <LogicalKeySet, Intent>{
                 LogicalKeySet(LogicalKeyboardKey.select):
                     const ActivateIntent(),
               },
               child: child ?? const SizedBox.shrink(),
             );
+            // Geometric D-pad navigation, tuned for TV's two-pane layout and
+            // remote-control usage. Left on the default reading-order policy
+            // for touch devices.
+            return isTV
+                ? FocusTraversalGroup(
+                    policy: WidgetOrderTraversalPolicy(),
+                    child: content,
+                  )
+                : content;
           },
         );
       },

@@ -85,9 +85,7 @@ class VivoAppStore extends AppSource {
   }) async {
     final searchUrl = '$appSearchUrl${Uri.encodeQueryComponent(query)}';
     final response = await sourceRequest(searchUrl, {});
-    if (response.statusCode != 200) {
-      throw getObtainiumHttpError(response);
-    }
+    ensureHttpSuccess(response);
     final json = jsonDecode(response.body);
     if (json['code'] != 0 ||
         json['data']?['appSearchResponse']?['result'] != true) {
@@ -113,9 +111,7 @@ class VivoAppStore extends AppSource {
     final vivoAppId = parseVivoAppId(standardUrl);
     final detailUrl = '$appDetailJsonUrl${Uri.encodeComponent(vivoAppId)}';
     final response = await sourceRequest(detailUrl, additionalSettings);
-    if (response.statusCode != 200) {
-      throw getObtainiumHttpError(response);
-    }
+    ensureHttpSuccess(response);
     final json = jsonDecode(response.body);
     if (json['id'] == null) {
       throw NoReleasesError();

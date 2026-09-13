@@ -275,9 +275,7 @@ class ItchIO extends AppSource {
       final String baseUrl = standardUrl.replaceAll(RegExp(r'/$'), '');
 
       final res = await sourceRequest(standardUrl, additionalSettings);
-      if (res.statusCode != 200) {
-        throw getObtainiumHttpError(res);
-      }
+      ensureHttpSuccess(res);
       final body = res.body;
       final csrfToken = _findCsrf(body);
       final cookies = res.headers['set-cookie'];
@@ -402,10 +400,13 @@ class ItchIO extends AppSource {
     if (directUrl == null) return null;
 
     final String baseUrl = standardUrl.replaceAll(RegExp(r'/$'), '');
-    additionalSettings['url'] = directUrl;
+    // Local copy: the signed URL is short-lived and must not be persisted into
+    // the app's additionalSettings.
+    final requestSettings = Map<String, dynamic>.from(additionalSettings)
+      ..['url'] = directUrl;
     final streamRes = await sourceRequestStreamResponse('GET', {
       'Referer': '$baseUrl?download',
-    }, additionalSettings);
+    }, requestSettings);
 
     // Peek into the Content-Disposition header
     final response = streamRes.value.value;

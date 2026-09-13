@@ -6,10 +6,27 @@ import 'package:obtainium/app_sources/github.dart';
 import 'package:obtainium/custom_errors.dart';
 import 'package:obtainium/providers/settings_provider.dart';
 import 'package:obtainium/providers/source_provider.dart';
+import 'package:obtainium/utils/min_update_age.dart';
 import 'package:obtainium/components/generated_form_model.dart';
 import 'package:easy_localization/easy_localization.dart';
 
 class GitLab extends AppSource {
+  /// Whether a GitLab release-asset link is an installable Android package.
+  ///
+  /// GitLab package links do not always carry a file extension: for example
+  /// Forkyz publishes its APK at `.../-/releases/v86/downloads/apk` under the
+  /// name "Android APK Install File". Extension-only checks miss those, so
+  /// package links whose name or URL mentions APK as a token are accepted too.
+  static bool isApkAsset(String name, String url, String? linkType) {
+    if (AppSource.isApkOrContainerFile(name) ||
+        AppSource.isApkOrContainerFile(url)) {
+      return true;
+    }
+    if (linkType != 'package') return false;
+    final apkToken = RegExp(r'(^|[^a-z])apk([^a-z]|$)', caseSensitive: false);
+    return apkToken.hasMatch(name) || apkToken.hasMatch(url);
+  }
+
   // Reused for getAppNames, API URL building, search, and getRequestHeaders
   // so a single GitHub instance handles all delegated behaviour.
   final GitHub _gh = GitHub(hostChanged: true);
@@ -77,9 +94,7 @@ class GitLab extends AppSource {
     final url =
         'https://${hosts[0]}/api/v4/projects?search=${Uri.encodeQueryComponent(query)}';
     final res = await sourceRequest(url, {});
-    if (res.statusCode != 200) {
-      throw getObtainiumHttpError(res);
-    }
+    ensureHttpSuccess(res);
     final json = jsonDecode(res.body) as List<dynamic>;
     final Map<String, List<String>> results = {};
     for (var element in json) {
@@ -143,9 +158,7 @@ class GitLab extends AppSource {
         'https://${hosts[0]}/api/v4/projects/$projectUriComponent?$optionalAuth',
         additionalSettings,
       );
-      if (res0.statusCode != 200) {
-        throw getObtainiumHttpError(res0);
-      }
+      ensureHttpSuccess(res0);
       final int? projectId = jsonDecode(res0.body)['id'];
       if (projectId == null) {
         throw NoReleasesError();
@@ -161,9 +174,7 @@ class GitLab extends AppSource {
         'https://${hosts[0]}/api/v4/projects/$projectUriComponent/$releasesPath?$query',
         additionalSettings,
       );
-      if (res.statusCode != 200) {
-        throw getObtainiumHttpError(res);
-      }
+      ensureHttpSuccess(res);
 
       // Extract .apk details from received data
       Iterable<APKDetails> apkDetailsList = [];
@@ -175,6 +186,13 @@ class GitLab extends AppSource {
       apkDetailsList = json.map((e) {
         final apkUrlsFromAssets =
             (e['assets']?['links'] as List<dynamic>? ?? [])
+                .where(
+                  (e) => isApkAsset(
+                    e['name'] as String? ?? '',
+                    (e['direct_asset_url'] ?? e['url'] ?? '') as String,
+                    e['link_type'] as String?,
+                  ),
+                )
                 .map((e) {
                   final url =
                       (e['direct_asset_url'] ?? e['url'] ?? '') as String;
@@ -189,12 +207,7 @@ class GitLab extends AppSource {
                     (e['direct_asset_url'] ?? e['url'] ?? '') as String,
                   );
                 })
-                .where(
-                  (s) =>
-                      s.key.isNotEmpty &&
-                      (AppSource.isApkOrContainerFile(s.key) ||
-                          AppSource.isApkOrContainerFile(s.value)),
-                )
+                .where((s) => s.key.isNotEmpty)
                 .toList();
         final uploadedAPKsFromDescription = ((e['description'] ?? '') as String)
             .split('](')
@@ -240,6 +253,19 @@ class GitLab extends AppSource {
       if (apkDetailsList.isEmpty) {
         throw NoReleasesError();
       }
+      // Prefer the newest release old enough for the minimum update age; if
+      // none is, keep the newest so the provider can suppress it until it ages.
+      final int minAgeDays = await effectiveMinUpdateAgeDays(
+        additionalSettings,
+      );
+      if (minAgeDays > 0) {
+        final eligible = apkDetailsList
+            .where((e) => !isReleaseTooYoung(e.releaseDate, minAgeDays))
+            .toList();
+        if (eligible.isNotEmpty) {
+          apkDetailsList = eligible;
+        }
+      }
       var finalResult = apkDetailsList.first;
 
       final bool fallbackToOlderReleases =
@@ -266,14 +292,14 @@ class GitLab extends AppSource {
       finalResult = finalResult.copyWith(
         apkUrls: finalResult.apkUrls.map((apkUrl) {
           if (jobArtifactRegex.hasMatch(apkUrl.value)) {
-          return MapEntry(
-            apkUrl.key,
-            apkUrl.value.replaceFirst('/file/', '/raw/'),
-          );
-        } else {
-          return apkUrl;
-        }
-      }).toList(),
+            return MapEntry(
+              apkUrl.key,
+              apkUrl.value.replaceFirst('/file/', '/raw/'),
+            );
+          } else {
+            return apkUrl;
+          }
+        }).toList(),
       );
 
       return finalResult;

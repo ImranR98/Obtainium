@@ -97,6 +97,14 @@ Never rethrowOrWrapError(
   );
 }
 
+/// A non-2xx HTTP response during a file download, carrying the status code so
+/// callers can decide whether the failure is retryable (e.g. 429/5xx).
+class HTTPStatusError extends ObtainiumError {
+  final int statusCode;
+  HTTPStatusError(this.statusCode, String message)
+    : super(message, code: 'HTTP_ERROR');
+}
+
 class RateLimitError extends ObtainiumError {
   final int remainingMinutes;
   RateLimitError(this.remainingMinutes)
@@ -123,6 +131,25 @@ class NoReleasesError extends ObtainiumError {
 
 class NoAPKError extends ObtainiumError {
   NoAPKError() : super.withCode('NO_APK');
+}
+
+/// The latest release is younger than the configured minimum update age and
+/// the source cannot provide an older release (#3303).
+class MinUpdateAgeError extends ObtainiumError {
+  MinUpdateAgeError(DateTime releaseDate, int minAgeDays)
+    : super.withCode(
+        'MIN_UPDATE_AGE',
+        data: {
+          'releaseDate': releaseDate.toIso8601String(),
+          'minAgeDays': minAgeDays,
+        },
+      );
+}
+
+/// RuStore lists some apps only as aggregated cards pulled from an external
+/// source and does not host an APK for them (see #3298).
+class RuStoreAggregatedAppError extends ObtainiumError {
+  RuStoreAggregatedAppError() : super.withCode('RUSTORE_AGGREGATED_APP');
 }
 
 class NoVersionError extends ObtainiumError {
@@ -153,6 +180,23 @@ class InstallError extends ObtainiumError {
           'message': PackageInstallerStatus.byCode(code).name,
         },
       );
+}
+
+/// The downloaded APK's signing certificate does not match the expected hash
+/// (user-provided) or the installed app's certificate.
+class SigningCertMismatchError extends ObtainiumError {
+  SigningCertMismatchError({
+    required bool hardBlock,
+    required Set<String> expected,
+    required Set<String> actual,
+  }) : super.withCode(
+         'SIGNING_CERT_MISMATCH',
+         data: {
+           'hardBlock': hardBlock,
+           'expected': expected.toList(),
+           'actual': actual.toList(),
+         },
+       );
 }
 
 class IDChangedError extends ObtainiumError {
@@ -250,11 +294,20 @@ String localizeErrorCode(String code, Map<String, dynamic>? data) {
       args: [data?['sourceName'] ?? ''],
     ),
     'NO_APK' => tr('noAPKFound'),
+    'MIN_UPDATE_AGE' => tr(
+      'releaseTooYoungForMinAge',
+      args: ['${data?['minAgeDays'] ?? ''}'],
+    ),
+    'RUSTORE_AGGREGATED_APP' => tr('rustoreAggregatedAppNoApk'),
     'NO_VERSION' => tr('noVersionFound'),
     'UNSUPPORTED_URL' => tr('urlMatchesNoSource'),
     'DOWNGRADE' =>
       '${tr('cantInstallOlderVersion')} (versionCode ${data?['currentVersionCode'] ?? '?'} → ${data?['newVersionCode'] ?? '?'})',
     'INSTALL_FAILED' => data?['message']?.toString() ?? tr('installFailed'),
+    'SIGNING_CERT_MISMATCH' =>
+      data?['hardBlock'] == true
+          ? tr('signingCertMismatchHardBlock')
+          : tr('signingCertMismatchMessage'),
     'ID_CHANGED' => '${tr('appIdMismatch')} - ${data?['newId'] ?? ''}',
     'REPO_RENAMED' => tr('repoRenamed'),
     'NOT_IMPLEMENTED' => tr('functionNotImplemented'),

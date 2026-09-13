@@ -43,10 +43,10 @@ Future<bool> waitForPackageInstall(
           return true;
         }
       }
-      }
-      if (attempt < attempts - 1) {
-        await Future.delayed(interval);
-      }
+    }
+    if (attempt < attempts - 1) {
+      await Future.delayed(interval);
+    }
   }
   return false;
 }

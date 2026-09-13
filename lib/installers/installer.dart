@@ -2,10 +2,10 @@ import 'package:obtainium/providers/settings_provider.dart';
 import 'package:obtainium/providers/source_provider.dart';
 
 /// Android PackageInstaller status codes: 0 = success, 3 = cancelled / pending.
-const int installSuccessCode = 0;
-const int installAlreadyPendingCode = 3;
+const int _installSuccessCode = 0;
+const int _installAlreadyPendingCode = 3;
 
-enum InstallOutcome { success, cancelled, alreadyInstalled, error }
+enum InstallOutcome { success, cancelled, error }
 
 /// Unified result of an install operation, replacing the previous
 /// "nullable int code" pattern used by the platform install APIs.
@@ -21,32 +21,27 @@ class InstallResult {
   factory InstallResult.cancelled() =>
       const InstallResult(outcome: InstallOutcome.cancelled);
 
-  factory InstallResult.alreadyInstalled() =>
-      const InstallResult(outcome: InstallOutcome.alreadyInstalled);
-
   factory InstallResult.error(int code) =>
       InstallResult(outcome: InstallOutcome.error, errorCode: code);
 
   /// Maps a raw platform install status code to an [InstallResult].
-  /// [installSuccessCode] is a completed install, [installAlreadyPendingCode]
+  /// [_installSuccessCode] is a completed install, [_installAlreadyPendingCode]
   /// is a pending/no-op (e.g. already installed), a null code is treated as
   /// cancelled, and any other value is an error carrying the original code.
   factory InstallResult.fromPlatformCode(int? code) {
     if (code == null) {
       return InstallResult.cancelled();
     }
-    if (code == installAlreadyPendingCode) {
+    if (code == _installAlreadyPendingCode) {
       return InstallResult.cancelled();
     }
-    if (code == installSuccessCode) {
+    if (code == _installSuccessCode) {
       return InstallResult.success();
     }
     return InstallResult.error(code);
   }
 
   bool get isSuccess => outcome == InstallOutcome.success;
-  bool get isCancelled => outcome == InstallOutcome.cancelled;
-  bool get isAlreadyInstalled => outcome == InstallOutcome.alreadyInstalled;
   bool get isError => outcome == InstallOutcome.error;
 }
 

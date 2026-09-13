@@ -3,7 +3,7 @@ import 'package:easy_localization/easy_localization.dart';
 import 'package:easy_localization/src/easy_localization_controller.dart';
 // ignore: implementation_imports
 import 'package:easy_localization/src/localization.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:obtainium/custom_errors.dart';
 import 'package:obtainium/main.dart';
 import 'package:obtainium/providers/settings_provider.dart';
@@ -24,7 +24,10 @@ class TranslationLoader {
       useFallbackTranslations: true,
       path: localeDir,
       onLoadError: (FlutterError e) {
-        throw e;
+        // Do not rethrow: a failed translation asset load (e.g. only the
+        // fallback locale missing) must not abort the background task. The
+        // translations that did load remain usable.
+        debugPrint('Failed to load translations: ${e.message}');
       },
     );
     await controller.loadTranslations();

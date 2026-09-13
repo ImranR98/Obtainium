@@ -1,11 +1,6 @@
-import 'dart:math';
-
-import 'package:flutter/widgets.dart';
-
 abstract class GeneratedFormItem {
   late String key;
   late String label;
-  late List<dynamic> belowWidgets;
   late dynamic value;
   List<dynamic> additionalValidators;
   dynamic ensureType(dynamic val);
@@ -14,7 +9,6 @@ abstract class GeneratedFormItem {
   GeneratedFormItem(
     this.key, {
     this.label = 'Input',
-    this.belowWidgets = const [],
     this.value,
     this.additionalValidators = const [],
   });
@@ -25,27 +19,20 @@ class GeneratedFormTextField extends GeneratedFormItem {
   final int max;
   final String? hint;
   final bool password;
-  final TextInputType? textInputType;
   final List<String>? autoCompleteOptions;
   final String? helpUrl;
-  final Widget? trailing;
-  final String? trailingKey;
 
   GeneratedFormTextField(
     super.key, {
     super.label,
-    super.belowWidgets,
     String super.value = '',
     List<String? Function(String? value)> super.additionalValidators = const [],
     this.required = true,
     this.max = 1,
     this.hint,
     this.password = false,
-    this.textInputType,
     this.autoCompleteOptions,
     this.helpUrl,
-    this.trailing,
-    this.trailingKey,
   });
 
   @override
@@ -58,25 +45,20 @@ class GeneratedFormTextField extends GeneratedFormItem {
     return GeneratedFormTextField(
       key,
       label: label,
-      belowWidgets: belowWidgets,
       value: value,
       additionalValidators: List.from(additionalValidators),
       required: required,
       max: max,
       hint: hint,
       password: password,
-      textInputType: textInputType,
       autoCompleteOptions: autoCompleteOptions,
       helpUrl: helpUrl,
-      trailing: trailing,
-      trailingKey: trailingKey,
     );
   }
 }
 
 class GeneratedFormDropdown extends GeneratedFormItem {
   final List<MapEntry<String, String>>? opts;
-  List<String>? disabledOptKeys;
   late bool required;
   final String? helpUrl;
 
@@ -84,9 +66,7 @@ class GeneratedFormDropdown extends GeneratedFormItem {
     super.key,
     this.opts, {
     super.label,
-    super.belowWidgets,
     String super.value = '',
-    this.disabledOptKeys,
     this.required = true,
     this.helpUrl,
     List<String? Function(String? value)> super.additionalValidators = const [],
@@ -103,11 +83,7 @@ class GeneratedFormDropdown extends GeneratedFormItem {
       key,
       opts?.map((e) => MapEntry(e.key, e.value)).toList(),
       label: label,
-      belowWidgets: belowWidgets,
       value: value,
-      disabledOptKeys: disabledOptKeys != null
-          ? List.from(disabledOptKeys!)
-          : null,
       required: required,
       helpUrl: helpUrl,
       additionalValidators: List.from(additionalValidators),
@@ -121,7 +97,6 @@ class GeneratedFormSwitch extends GeneratedFormItem {
   GeneratedFormSwitch(
     super.key, {
     super.label,
-    super.belowWidgets,
     bool super.value = false,
     this.disabled = false,
     List<String? Function(bool value)> super.additionalValidators = const [],
@@ -139,7 +114,6 @@ class GeneratedFormSwitch extends GeneratedFormItem {
     return GeneratedFormSwitch(
       key,
       label: label,
-      belowWidgets: belowWidgets,
       value: value,
       disabled: disabled,
       additionalValidators: List.from(additionalValidators),
@@ -172,7 +146,6 @@ class GeneratedFormSlider extends GeneratedFormItem {
     super.key,
     this.opts, {
     super.label,
-    super.belowWidgets,
     String super.value = '',
     this.required = true,
     List<String? Function(String? value)> super.additionalValidators = const [],
@@ -189,7 +162,6 @@ class GeneratedFormSlider extends GeneratedFormItem {
       key,
       opts?.map((e) => MapEntry(e.key, e.value)).toList(),
       label: label,
-      belowWidgets: belowWidgets,
       value: value,
       required: required,
       additionalValidators: List.from(additionalValidators),
@@ -204,7 +176,6 @@ class GeneratedFormSubForm extends GeneratedFormItem {
     super.key,
     this.items, {
     super.label,
-    super.belowWidgets,
     super.value = const [],
   });
 
@@ -220,21 +191,9 @@ class GeneratedFormSubForm extends GeneratedFormItem {
       key,
       cloneFormItems(items),
       label: label,
-      belowWidgets: belowWidgets,
       value: value,
     );
   }
-}
-
-int generateDeterministicId(
-  int seed1, {
-  int seed2 = 0,
-  int seed3 = 0,
-  int max = 10000,
-}) {
-  final int combinedSeed = seed1.hashCode ^ seed2.hashCode ^ seed3.hashCode;
-  final Random random = Random(combinedSeed);
-  return random.nextInt(max);
 }
 
 Map<String, dynamic> getDefaultValuesFromFormItems(

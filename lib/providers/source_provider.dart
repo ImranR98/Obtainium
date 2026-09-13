@@ -1,24 +1,23 @@
 // ========================================================================
-// App source definitions, models, services, and JSON migration logic.
+// SourceProvider — resolves URLs to AppSource instances and builds Apps.
 //
-// AppSource is an abstract class with a concrete implementation for each source.
+// App sources, models, and services live in their own libraries. This file
+// re-exports them so existing `import source_provider.dart` call sites keep
+// resolving the same names.
 // ========================================================================
 
 import 'dart:async';
 import 'dart:convert';
-import 'dart:io';
-import 'dart:typed_data';
 
 import 'package:crypto/crypto.dart';
-import 'package:device_info_plus/device_info_plus.dart';
 import 'package:easy_localization/easy_localization.dart';
-import 'package:flutter/services.dart';
-import 'package:http/http.dart' as http;
+
+import 'package:obtainium/app_sources/apk4free.dart';
 import 'package:obtainium/app_sources/apkcombo.dart';
 import 'package:obtainium/app_sources/apkmirror.dart';
 import 'package:obtainium/app_sources/apkpure.dart';
+import 'package:obtainium/app_sources/app_source.dart';
 import 'package:obtainium/app_sources/aptoide.dart';
-import 'package:obtainium/app_sources/apk4free.dart';
 import 'package:obtainium/app_sources/codeberg.dart';
 import 'package:obtainium/app_sources/coolapk.dart';
 import 'package:obtainium/app_sources/direct_apk_link.dart';
@@ -26,17 +25,18 @@ import 'package:obtainium/app_sources/farsroid.dart';
 import 'package:obtainium/app_sources/fdroid.dart';
 import 'package:obtainium/app_sources/fdroidrepo.dart';
 import 'package:obtainium/app_sources/github.dart';
+import 'package:obtainium/app_sources/githubstars.dart';
 import 'package:obtainium/app_sources/gitlab.dart';
+import 'package:obtainium/app_sources/html.dart';
 import 'package:obtainium/app_sources/huaweiappgallery.dart';
-import 'package:obtainium/app_sources/samsunggalaxystore.dart';
 import 'package:obtainium/app_sources/itchio.dart';
 import 'package:obtainium/app_sources/izzyondroid.dart';
-import 'package:obtainium/app_sources/html.dart';
 import 'package:obtainium/app_sources/jenkins.dart';
 import 'package:obtainium/app_sources/liteapks.dart';
 import 'package:obtainium/app_sources/neutroncode.dart';
 import 'package:obtainium/app_sources/rockmods.dart';
 import 'package:obtainium/app_sources/rustore.dart';
+import 'package:obtainium/app_sources/samsunggalaxystore.dart';
 import 'package:obtainium/app_sources/sourceforge.dart';
 import 'package:obtainium/app_sources/sourcehut.dart';
 import 'package:obtainium/app_sources/telegramapp.dart';
@@ -45,947 +45,23 @@ import 'package:obtainium/app_sources/uptodown.dart';
 import 'package:obtainium/app_sources/vivoappstore.dart';
 import 'package:obtainium/components/generated_form_model.dart';
 import 'package:obtainium/custom_errors.dart';
-import 'package:obtainium/app_sources/githubstars.dart';
-import 'package:obtainium/core/logging/app_logger.dart';
+import 'package:obtainium/models/app.dart';
 import 'package:obtainium/providers/settings_provider.dart';
+import 'package:obtainium/services/apk_filter_service.dart';
+import 'package:obtainium/services/version_service.dart';
+import 'package:obtainium/utils/min_update_age.dart';
+import 'package:obtainium/utils/url_utils.dart';
 
-part 'app_json_migration.dart';
+export 'package:obtainium/app_sources/app_source.dart';
+export 'package:obtainium/models/app.dart';
+export 'package:obtainium/models/typed_settings.dart';
+export 'package:obtainium/services/apk_filter_service.dart';
+export 'package:obtainium/services/http_service.dart';
+export 'package:obtainium/services/version_service.dart';
+export 'package:obtainium/utils/string_utils.dart' show getSourceRegex;
+export 'package:obtainium/utils/url_utils.dart' show preStandardizeUrl;
 
 const int kDefaultFetchConcurrency = 4;
-
-// ------------------------------------------------------------------------
-// AppNames
-// ------------------------------------------------------------------------
-
-class AppNames {
-  final String author;
-  final String name;
-
-  const AppNames(this.author, this.name);
-
-  AppNames copyWith({String? author, String? name}) {
-    return AppNames(author ?? this.author, name ?? this.name);
-  }
-}
-
-// ------------------------------------------------------------------------
-// APKDetails
-// ------------------------------------------------------------------------
-
-class APKDetails {
-  final String version;
-  final List<MapEntry<String, String>> apkUrls;
-  final AppNames names;
-  final DateTime? releaseDate;
-  final String? changeLog;
-  final List<MapEntry<String, String>> allAssetUrls;
-
-  const APKDetails(
-    this.version,
-    this.apkUrls,
-    this.names, {
-    this.releaseDate,
-    this.changeLog,
-    this.allAssetUrls = const [],
-  });
-
-  APKDetails copyWith({
-    String? version,
-    List<MapEntry<String, String>>? apkUrls,
-    AppNames? names,
-    Object? releaseDate = _sentinel,
-    Object? changeLog = _sentinel,
-    List<MapEntry<String, String>>? allAssetUrls,
-  }) {
-    return APKDetails(
-      version ?? this.version,
-      apkUrls ?? this.apkUrls,
-      names ?? this.names,
-      releaseDate: releaseDate == _sentinel
-          ? this.releaseDate
-          : releaseDate as DateTime?,
-      changeLog: changeLog == _sentinel ? this.changeLog : changeLog as String?,
-      allAssetUrls: allAssetUrls ?? this.allAssetUrls,
-    );
-  }
-}
-
-/// Converts a list of [MapEntry] pairs into a 2D list of strings for JSON encoding.
-List<List<String>> stringMapListTo2DList(
-  List<MapEntry<String, String>> mapList,
-) => mapList.map((e) => [e.key, e.value]).toList();
-
-/// Converts a 2D list (decoded from JSON) back into a list of [MapEntry] pairs.
-List<MapEntry<String, String>> assumed2DlistToStringMapList(
-  List<dynamic> arr,
-) => arr.map((e) => MapEntry(e[0] as String, e[1] as String)).toList();
-
-// ------------------------------------------------------------------------
-// Top-level delegation helpers — convenience wrappers that forward to the
-// corresponding service classes. New code should use the services directly.
-// ------------------------------------------------------------------------
-
-/// Delegates to [HttpService.ensureAbsoluteUrl].
-String ensureAbsoluteUrl(String ambiguousUrl, Uri referenceAbsoluteUrl) =>
-    HttpService().ensureAbsoluteUrl(ambiguousUrl, referenceAbsoluteUrl);
-
-// ------------------------------------------------------------------------
-// App
-// ------------------------------------------------------------------------
-
-class App {
-  final String id;
-  final String url;
-  final String author;
-  final String name;
-  final String? installedVersion;
-  final String latestVersion;
-  final List<MapEntry<String, String>> apkUrls;
-  final List<MapEntry<String, String>> otherAssetUrls;
-  final int preferredApkIndex;
-  final Map<String, dynamic> additionalSettings;
-  final DateTime? lastUpdateCheck;
-  final bool pinned;
-  final List<String> categories;
-  final DateTime? releaseDate;
-  final String? changeLog;
-  final String? overrideSource;
-  final bool allowIdChange;
-  final String? pendingRepoRenameUrl;
-
-  const App({
-    required this.id,
-    required this.url,
-    required this.author,
-    required this.name,
-    this.installedVersion,
-    required this.latestVersion,
-    this.apkUrls = const [],
-    this.otherAssetUrls = const [],
-    required this.preferredApkIndex,
-    required this.additionalSettings,
-    this.lastUpdateCheck,
-    this.pinned = false,
-    this.categories = const [],
-    this.releaseDate,
-    this.changeLog,
-    this.overrideSource,
-    this.allowIdChange = false,
-    this.pendingRepoRenameUrl,
-  });
-
-  @override
-  String toString() {
-    return 'ID: $id URL: $url INSTALLED: $installedVersion LATEST: $latestVersion APK: $apkUrls PREFERREDAPK: $preferredApkIndex ADDITIONALSETTINGS: ${additionalSettings.toString()} LASTCHECK: ${lastUpdateCheck.toString()} PINNED $pinned';
-  }
-
-  bool get hasPendingRepoRename =>
-      pendingRepoRenameUrl != null && pendingRepoRenameUrl!.isNotEmpty;
-
-  String? get overrideName {
-    final n = settings.getStringOrNull('appName');
-    return n != null && n.trim().isNotEmpty ? n : null;
-  }
-
-  String get finalName {
-    return overrideName ?? name;
-  }
-
-  String? get overrideAuthor {
-    final a = settings.getStringOrNull('appAuthor');
-    return a != null && a.trim().isNotEmpty ? a : null;
-  }
-
-  String get finalAuthor {
-    return overrideAuthor ?? author;
-  }
-
-  /// Type-safe accessor for [additionalSettings].
-  TypedSettings get settings => TypedSettings(additionalSettings);
-
-  App copyWith({
-    String? id,
-    String? url,
-    String? author,
-    String? name,
-    Object? installedVersion = _sentinel,
-    String? latestVersion,
-    List<MapEntry<String, String>>? apkUrls,
-    List<MapEntry<String, String>>? otherAssetUrls,
-    int? preferredApkIndex,
-    Map<String, dynamic>? additionalSettings,
-    Object? lastUpdateCheck = _sentinel,
-    bool? pinned,
-    List<String>? categories,
-    Object? releaseDate = _sentinel,
-    Object? changeLog = _sentinel,
-    Object? overrideSource = _sentinel,
-    bool? allowIdChange,
-    Object? pendingRepoRenameUrl = _sentinel,
-  }) {
-    return App(
-      id: id ?? this.id,
-      url: url ?? this.url,
-      author: author ?? this.author,
-      name: name ?? this.name,
-      installedVersion: installedVersion == _sentinel
-          ? this.installedVersion
-          : installedVersion as String?,
-      latestVersion: latestVersion ?? this.latestVersion,
-      apkUrls: apkUrls ?? List<MapEntry<String, String>>.from(this.apkUrls),
-      otherAssetUrls:
-          otherAssetUrls ??
-          List<MapEntry<String, String>>.from(this.otherAssetUrls),
-      preferredApkIndex: preferredApkIndex ?? this.preferredApkIndex,
-      additionalSettings:
-          additionalSettings ??
-          Map<String, dynamic>.from(this.additionalSettings),
-      lastUpdateCheck: lastUpdateCheck == _sentinel
-          ? this.lastUpdateCheck
-          : lastUpdateCheck as DateTime?,
-      pinned: pinned ?? this.pinned,
-      categories: categories ?? List<String>.from(this.categories),
-      releaseDate: releaseDate == _sentinel
-          ? this.releaseDate
-          : releaseDate as DateTime?,
-      changeLog: changeLog == _sentinel ? this.changeLog : changeLog as String?,
-      overrideSource: overrideSource == _sentinel
-          ? this.overrideSource
-          : overrideSource as String?,
-      allowIdChange: allowIdChange ?? this.allowIdChange,
-      pendingRepoRenameUrl: pendingRepoRenameUrl == _sentinel
-          ? this.pendingRepoRenameUrl
-          : pendingRepoRenameUrl as String?,
-    );
-  }
-
-  factory App.fromJson(Map<String, dynamic> json) {
-    final Map<String, dynamic> originalJson = Map.from(json);
-    try {
-      json = appJSONCompatibilityModifiers(Map.from(json));
-    } catch (e) {
-      // Fall back to the unmigrated JSON so the app still loads rather than
-      // being lost (e.g. when its saved URL no longer matches any source).
-      json = originalJson;
-      AppLogger.warn(
-        'Error running JSON compat modifiers (using original JSON): ${e.toString()}',
-      );
-    }
-    try {
-      return App(
-        id: json['id'] as String,
-        url: json['url'] as String,
-        author: json['author'] as String,
-        name: json['name'] as String,
-        installedVersion: json['installedVersion'] == null
-            ? null
-            : json['installedVersion'] as String,
-        latestVersion: (json['latestVersion'] ?? tr('unknown')) as String,
-        apkUrls: assumed2DlistToStringMapList(
-          jsonDecode((json['apkUrls'] ?? '[["placeholder", "placeholder"]]')),
-        ),
-        preferredApkIndex: (json['preferredApkIndex'] ?? -1) as int,
-        additionalSettings:
-            jsonDecode(json['additionalSettings']) as Map<String, dynamic>,
-        lastUpdateCheck: json['lastUpdateCheck'] == null
-            ? null
-            : DateTime.fromMicrosecondsSinceEpoch(json['lastUpdateCheck']),
-        pinned: json['pinned'] ?? false,
-        categories: json['categories'] != null
-            ? (json['categories'] as List<dynamic>)
-                  .map((e) => e.toString())
-                  .toList()
-            : json['category'] != null
-            ? [json['category'] as String]
-            : [],
-        releaseDate: json['releaseDate'] == null
-            ? null
-            : DateTime.fromMicrosecondsSinceEpoch(json['releaseDate']),
-        changeLog: json['changeLog'] == null
-            ? null
-            : json['changeLog'] as String,
-        overrideSource: json['overrideSource'],
-        allowIdChange: json['allowIdChange'] ?? false,
-        otherAssetUrls: assumed2DlistToStringMapList(
-          jsonDecode((json['otherAssetUrls'] ?? '[]')),
-        ),
-        pendingRepoRenameUrl: json['pendingRepoRenameUrl'] as String?,
-      );
-    } on TypeError catch (e) {
-      AppLogger.error(
-        e,
-        stackTrace: e.stackTrace,
-        message: 'Type mismatch in App.fromJson',
-      );
-      rethrow;
-    }
-  }
-
-  Map<String, dynamic> toJson() => {
-    'id': id,
-    'url': url,
-    'author': author,
-    'name': name,
-    'installedVersion': installedVersion,
-    'latestVersion': latestVersion,
-    'apkUrls': jsonEncode(stringMapListTo2DList(apkUrls)),
-    'otherAssetUrls': jsonEncode(stringMapListTo2DList(otherAssetUrls)),
-    'preferredApkIndex': preferredApkIndex,
-    'additionalSettings': jsonEncode(additionalSettings),
-    'lastUpdateCheck': lastUpdateCheck?.microsecondsSinceEpoch,
-    'pinned': pinned,
-    'categories': categories,
-    'releaseDate': releaseDate?.microsecondsSinceEpoch,
-    'changeLog': changeLog,
-    'overrideSource': overrideSource,
-    'allowIdChange': allowIdChange,
-    'pendingRepoRenameUrl': pendingRepoRenameUrl,
-  };
-}
-
-/// Sentinel value used by [App.copyWith] to distinguish "not provided" from
-/// an explicitly supplied `null` for nullable fields. Since [Object] uses
-/// identity-based equality, a `const` sentinel guarantees it never collides
-/// with any real value the caller could pass.
-const _sentinel = Object();
-
-/// Ensures the URL is well-formed and starts with HTTPS.
-String preStandardizeUrl(String url) {
-  final firstDotIndex = url.indexOf('.');
-  if (!(firstDotIndex >= 0 && firstDotIndex != url.length - 1) &&
-      !url.contains('[')) {
-    throw UnsupportedURLError();
-  }
-  if (!url.toLowerCase().startsWith('http://') &&
-      !url.toLowerCase().startsWith('https://')) {
-    url = 'https://$url';
-  }
-  final uri = Uri.tryParse(url);
-  final trailingSlash =
-      ((uri?.path.endsWith('/') ?? false) ||
-          ((uri?.path.isEmpty ?? false) && url.endsWith('/'))) &&
-      (uri?.queryParameters.isEmpty ?? false);
-
-  // Only normalize duplicate slashes in the scheme/host/path portion; leave the
-  // query string and fragment untouched so any slashes they contain (e.g. a URL
-  // passed as a query parameter) aren't mangled.
-  var splitIndex = url.length;
-  final queryStart = url.indexOf('?');
-  if (queryStart >= 0 && queryStart < splitIndex) {
-    splitIndex = queryStart;
-  }
-  final fragmentStart = url.indexOf('#');
-  if (fragmentStart >= 0 && fragmentStart < splitIndex) {
-    splitIndex = fragmentStart;
-  }
-  var mainPart = url.substring(0, splitIndex);
-  final rest = url.substring(splitIndex);
-  mainPart = mainPart
-      .split('/')
-      .where((e) => e.isNotEmpty)
-      .join('/')
-      .replaceFirst(':/', '://');
-  url = mainPart + (trailingSlash ? '/' : '') + rest;
-  return url;
-}
-
-/// Delegates to [ApkFilterService.getApkUrlsFromUrls].
-List<MapEntry<String, String>> getApkUrlsFromUrls(List<String> urls) =>
-    ApkFilterService().getApkUrlsFromUrls(urls);
-
-/// Delegates to [ApkFilterService.filterApksByArch].
-Future<List<MapEntry<String, String>>> filterApksByArch(
-  List<MapEntry<String, String>> apkUrls,
-) async {
-  final abis = (await DeviceInfoPlugin().androidInfo).supportedAbis;
-  return ApkFilterService().filterApksByArch(apkUrls, abis);
-}
-
-/// Builds a regex alternation pattern from a list of hostname strings, escaping dots.
-String getSourceRegex(List<String> hosts) {
-  return '(${hosts.join('|').replaceAll('.', '\\.')})';
-}
-
-/// Delegates to [HttpService.createHttpClient].
-Future<HttpClient> createHttpClient(
-  Map<String, dynamic> additionalSettings,
-) async => await HttpService().createHttpClient(additionalSettings);
-
-// ------------------------------------------------------------------------
-// More top-level delegation helpers (continued)
-// ------------------------------------------------------------------------
-
-/// Delegates to [HttpService.sourceRequestStreamResponse].
-Future<MapEntry<Uri, MapEntry<HttpClient, HttpClientResponse>>>
-sourceRequestStreamResponse(
-  String method,
-  Map<String, String>? requestHeaders,
-  Map<String, dynamic> additionalSettings, {
-  bool followRedirects = true,
-  Object? postBody,
-}) => HttpService().sourceRequestStreamResponse(
-  method,
-  requestHeaders,
-  additionalSettings,
-  followRedirects: followRedirects,
-  postBody: postBody,
-);
-
-/// Delegates to [HttpService.httpClientResponseStreamToFinalResponse].
-Future<http.Response> httpClientResponseStreamToFinalResponse(
-  HttpClient httpClient,
-  String method,
-  String url,
-  HttpClientResponse response,
-) => HttpService().httpClientResponseStreamToFinalResponse(
-  httpClient,
-  method,
-  url,
-  response,
-);
-
-// ========================================================================
-// AppSource — abstract base class for all app sources.
-// ========================================================================
-
-/// Options (in days) for the minimum-age-for-updates setting. Zero disables
-/// the delay; the empty string means "use the global default" for per-app
-/// overrides.
-const List<int> minimumUpdateAgeOptions = [0, 1, 2, 3, 5, 7, 14, 30];
-
-abstract class AppSource {
-  List<String> hosts = [];
-  List<String> trustedApkHosts = [];
-  bool hostChanged = false;
-  bool hostIdenticalDespiteAnyChange = false;
-  late String name;
-  bool enforceTrackOnly = false;
-  bool changeLogIfAnyIsMarkDown = true;
-  bool changeLogPageIsStandardUrl = false;
-  bool appIdInferIsOptional = false;
-  bool inferAppIdFromUrlPath = false;
-  bool allowSubDomains = false;
-  bool naiveStandardVersionDetection = false;
-  bool allowOverride = true;
-  bool neverAutoSelect = false;
-  bool showReleaseDateAsVersionToggle = false;
-  bool versionDetectionDisallowed = false;
-  bool suppressStandardVersionExtraction = false;
-  List<String> excludeCommonSettingKeys = [];
-  bool urlsAlwaysHaveExtension = false;
-  bool allowInsecureRedirects = false;
-  bool allowIncludeZips = false;
-  bool allowIncludeTarballs = false;
-  String get sourceIdentifier => runtimeType.toString();
-
-  Future<Map<String, String>?> getRequestHeaders(
-    Map<String, dynamic> additionalSettings,
-    String url, {
-    bool forAPKDownload = false,
-  }) async {
-    return null;
-  }
-
-  AppSource() {
-    name = runtimeType.toString();
-  }
-
-  String standardizeUrl(String url) {
-    url = preStandardizeUrl(url);
-    if (!hostChanged) {
-      url = sourceSpecificStandardizeURL(url);
-    }
-    return url;
-  }
-
-  App postProcessApp(App app) {
-    return app;
-  }
-
-  Future<Map<String, dynamic>> buildMergedSettings(
-    Map<String, dynamic> additionalSettings,
-    SettingsProvider settingsProvider,
-  ) async {
-    return {
-      ...additionalSettings,
-      ...(await getSourceConfigValues(additionalSettings, settingsProvider)),
-    };
-  }
-
-  Future<http.Response> sourceRequest(
-    String url,
-    Map<String, dynamic> additionalSettings, {
-    bool followRedirects = true,
-    Object? postBody,
-  }) async {
-    final sp = SettingsProvider();
-    await sp.initializeSettings();
-    final additionalSettingsPlusSourceConfig = await buildMergedSettings(
-      additionalSettings,
-      sp,
-    );
-    url = await generalReqPrefetchModifier(
-      url,
-      additionalSettingsPlusSourceConfig,
-    );
-    additionalSettingsPlusSourceConfig['url'] = url;
-    additionalSettingsPlusSourceConfig['enableCertificatePinning'] =
-        sp.enableCertificatePinning;
-    additionalSettingsPlusSourceConfig['allowInsecureRedirects'] =
-        allowInsecureRedirects;
-    final method = postBody == null ? 'GET' : 'POST';
-    final requestHeaders = await getRequestHeaders(
-      additionalSettingsPlusSourceConfig,
-      url,
-    );
-    final streamedResponseUrlWithResponseAndClient =
-        await sourceRequestStreamResponse(
-          method,
-          requestHeaders,
-          additionalSettingsPlusSourceConfig,
-          followRedirects: followRedirects,
-          postBody: postBody,
-        );
-    return await httpClientResponseStreamToFinalResponse(
-      streamedResponseUrlWithResponseAndClient.value.key,
-      method,
-      streamedResponseUrlWithResponseAndClient.key.toString(),
-      streamedResponseUrlWithResponseAndClient.value.value,
-    );
-  }
-
-  Map<String, dynamic> runOnAddAppInputChange(String inputUrl) => {};
-
-  /// Delegates to [ApkFilterService.apkContainerExtensions].
-  static List<String> get apkContainerExtensions =>
-      ApkFilterService.apkContainerExtensions;
-
-  /// Delegates to [ApkFilterService.archiveExtensions].
-  static List<String> get archiveExtensions =>
-      ApkFilterService.archiveExtensions;
-
-  /// Delegates to [ApkFilterService.tarballExtensions].
-  static List<String> get tarballExtensions =>
-      ApkFilterService.tarballExtensions;
-
-  /// Delegates to [ApkFilterService.isApkOrContainerFile].
-  static bool isApkOrContainerFile(
-    String name, {
-    bool includeArchives = false,
-    bool includeTarballs = false,
-  }) => ApkFilterService.isApkOrContainerFile(
-    name,
-    includeArchives: includeArchives,
-    includeTarballs: includeTarballs,
-  );
-
-  /// A convenience for the common standardize-by-regex pattern: build a regex
-  /// from the source's [hosts] plus the given subdomain prefix and path, match
-  /// against [url], and return the match or throw [InvalidURLError].  Many
-  /// sources (16+) repeat this block verbatim; subclasses can call this
-  /// helper instead.
-  String standardizeUrlWithRegex(
-    String url, {
-    required String subdomainPrefix,
-    required String pathPattern,
-  }) {
-    final re = RegExp(
-      '^https?://$subdomainPrefix${getSourceRegex(hosts)}$pathPattern',
-      caseSensitive: false,
-    );
-    final match = re.firstMatch(url);
-    if (match == null) throw InvalidURLError(name)..url = url;
-    return match.group(0)!;
-  }
-
-  String sourceSpecificStandardizeURL(String url, {bool forSelection = false}) {
-    throw NotImplementedError();
-  }
-
-  Future<APKDetails> getLatestAPKDetails(
-    String standardUrl,
-    Map<String, dynamic> additionalSettings,
-  ) {
-    throw NotImplementedError();
-  }
-
-  /// Per-source additional form items (e.g. GitHub's sort method, HTML's version regex).
-  List<List<GeneratedFormItem>>
-  get additionalSourceAppSpecificSettingFormItems => [];
-
-  static List<GeneratedFormItem> get fallbackToOlderReleasesFormItem => [
-    GeneratedFormSwitch(
-      'fallbackToOlderReleases',
-      label: tr('fallbackToOlderReleases'),
-      value: true,
-    ),
-  ];
-
-  /// Some additional data may be needed for Apps regardless of Source
-  List<List<GeneratedFormItem>> get _commonAppSettingFormItems => [
-    [GeneratedFormSwitch('trackOnly', label: tr('trackOnly'))],
-    [
-      GeneratedFormTextField(
-        'versionExtractionRegEx',
-        label: tr('trimVersionString'),
-        required: false,
-        additionalValidators: [(value) => regExValidator(value)],
-      ),
-    ],
-    [
-      GeneratedFormTextField(
-        'matchGroupToUse',
-        label: tr('matchGroupToUseForX', args: [tr('trimVersionString')]),
-        required: false,
-        hint: '\$0',
-      ),
-    ],
-    [
-      GeneratedFormSwitch(
-        'versionDetection',
-        label: tr('versionDetectionExplanation'),
-        value: true,
-      ),
-    ],
-    [
-      GeneratedFormSwitch(
-        'useVersionCodeAsOSVersion',
-        label: tr('useVersionCodeAsOSVersion'),
-        value: false,
-      ),
-    ],
-    [
-      GeneratedFormTextField(
-        'apkFilterRegEx',
-        label: tr('filterAPKsByRegEx'),
-        required: false,
-        additionalValidators: [
-          (value) {
-            return regExValidator(value);
-          },
-        ],
-      ),
-    ],
-    [
-      GeneratedFormSwitch(
-        'invertAPKFilter',
-        label: '${tr('invertRegEx')} (${tr('filterAPKsByRegEx')})',
-        value: false,
-      ),
-    ],
-    [
-      GeneratedFormSwitch(
-        'autoApkFilterByArch',
-        label: tr('autoApkFilterByArch'),
-        value: true,
-      ),
-    ],
-    [
-      GeneratedFormSlider(
-        'minimumUpdateAgeDays',
-        [
-          const MapEntry('', 'useGlobalDefault'),
-          for (final days in minimumUpdateAgeOptions)
-            MapEntry(days.toString(), days == 0 ? 'none' : days.toString()),
-        ],
-        label: tr('minimumUpdateAgeDays'),
-        value: '',
-        required: false,
-      ),
-    ],
-    [GeneratedFormTextField('appName', label: tr('appName'), required: false)],
-    [GeneratedFormTextField('appAuthor', label: tr('author'), required: false)],
-    [
-      GeneratedFormSwitch(
-        'shizukuPretendToBeGooglePlay',
-        label: tr('shizukuPretendToBeGooglePlay'),
-        value: false,
-      ),
-    ],
-    [
-      GeneratedFormSwitch(
-        'allowInsecure',
-        label: tr('allowInsecure'),
-        value: false,
-      ),
-    ],
-    [
-      GeneratedFormSwitch(
-        'exemptFromBackgroundUpdates',
-        label: tr('exemptFromBackgroundUpdates'),
-      ),
-    ],
-    [
-      GeneratedFormSwitch(
-        'skipUpdateNotifications',
-        label: tr('skipUpdateNotifications'),
-      ),
-    ],
-    [GeneratedFormTextField('about', label: tr('about'), required: false)],
-    [
-      GeneratedFormSwitch(
-        'refreshBeforeDownload',
-        label: tr('refreshBeforeDownload'),
-      ),
-    ],
-  ];
-
-  /// Combines per-source form items with the common app-setting form items,
-  /// interspersing conditional items (zip/tarball options, version toggles) and
-  /// filtering out excluded keys. Cloned so that callers cannot mutate the
-  /// shared source-owned form items. Rebuilt on every access so that labels
-  /// pick up the current locale via tr().
-  List<List<GeneratedFormItem>> get combinedAppSpecificSettingFormItems {
-    var agnosticItems = cloneFormItems(_commonAppSettingFormItems);
-
-    final versionDetectionIdx = agnosticItems.indexWhere(
-      (row) => row.any((item) => item.key == 'versionDetection'),
-    );
-    if (showReleaseDateAsVersionToggle &&
-        versionDetectionIdx >= 0 &&
-        !agnosticItems.any(
-          (row) => row.any((item) => item.key == 'releaseDateAsVersion'),
-        )) {
-      agnosticItems.insert(versionDetectionIdx + 1, [
-        GeneratedFormSwitch(
-          'releaseDateAsVersion',
-          label: '${tr('releaseDateAsVersion')} (${tr('pseudoVersion')})',
-          value: false,
-        ),
-      ]);
-    }
-
-    agnosticItems = agnosticItems
-        .map(
-          (e) => e
-              .where((ee) => !excludeCommonSettingKeys.contains(ee.key))
-              .toList(),
-        )
-        .where((e) => e.isNotEmpty)
-        .toList();
-
-    final moreConditionalItems = <List<GeneratedFormItem>>[];
-    if (allowIncludeZips) {
-      moreConditionalItems.addAll([
-        [
-          GeneratedFormSwitch(
-            'includeZips',
-            label: tr('includeZips'),
-            value: false,
-          ),
-        ],
-        [
-          GeneratedFormTextField(
-            'zippedApkFilterRegEx',
-            label: tr('zippedApkFilterRegEx'),
-            required: false,
-            additionalValidators: [
-              (value) {
-                return regExValidator(value);
-              },
-            ],
-          ),
-        ],
-      ]);
-    }
-
-    if (allowIncludeTarballs) {
-      moreConditionalItems.addAll([
-        [
-          GeneratedFormSwitch(
-            'includeTarballs',
-            label: tr('includeTarballs'),
-            value: false,
-          ),
-        ],
-        [
-          GeneratedFormTextField(
-            'tarballedApkFilterRegEx',
-            label: tr('tarballedApkFilterRegEx'),
-            required: false,
-            additionalValidators: [
-              (value) {
-                return regExValidator(value);
-              },
-            ],
-          ),
-        ],
-      ]);
-    }
-
-    if (versionDetectionDisallowed) {
-      for (var item in agnosticItems.expand((row) => row)) {
-        if (item.key == 'versionDetection' ||
-            item.key == 'useVersionCodeAsOSVersion') {
-          (item as GeneratedFormSwitch).disabled = true;
-          item.value = false;
-        }
-      }
-    }
-
-    return [
-      // Clone so callers (e.g. the add-app form pre-filling default values)
-      // can't mutate the source-owned items. Sources are now cached/shared, so
-      // an in-place edit here would otherwise leak across apps.
-      ...cloneFormItems(additionalSourceAppSpecificSettingFormItems),
-      ...agnosticItems,
-      ...moreConditionalItems,
-    ];
-  }
-
-  bool get hasAppSpecificSettings =>
-      combinedAppSpecificSettingFormItems.isNotEmpty;
-
-  /// Flattened, read-only view of [combinedAppSpecificSettingFormItems],
-  /// used by callers that only need to enumerate keys without cloning.
-  List<GeneratedFormItem> get flatCombinedFormItemsReadOnly =>
-      combinedAppSpecificSettingFormItems.expand((row) => row).toList();
-
-  /// Source-level additional settings (not specific to Apps) backed by [SettingsProvider].
-  /// If the source has been overridden, per-app additional settings take precedence.
-  List<GeneratedFormItem> get sourceConfigSettingFormItems => [];
-  Future<Map<String, String>> getSourceConfigValues(
-    Map<String, dynamic> additionalSettings,
-    SettingsProvider settingsProvider,
-  ) async {
-    final Map<String, String> results = {};
-    for (var e in sourceConfigSettingFormItems) {
-      var val = hostChanged && !hostIdenticalDespiteAnyChange
-          ? additionalSettings[e.key]
-          : (additionalSettings[e.key] is String &&
-                (additionalSettings[e.key] as String).isNotEmpty)
-          ? additionalSettings[e.key]
-          : (e is GeneratedFormSwitch
-                ? settingsProvider.getSettingBool(e.key).toString()
-                : settingsProvider.getSettingString(e.key));
-      if (val != null) {
-        if (e is GeneratedFormSwitch) {
-          val = val.toString();
-        }
-        results[e.key] = val;
-      }
-    }
-    return results;
-  }
-
-  String? changeLogPageFromStandardUrl(String standardUrl) {
-    return changeLogPageIsStandardUrl ? standardUrl : null;
-  }
-
-  Future<String?> getSourceNote() async {
-    return null;
-  }
-
-  Future<String> assetUrlPrefetchModifier(
-    String assetUrl,
-    String standardUrl,
-    Map<String, dynamic> additionalSettings,
-  ) async {
-    return assetUrl;
-  }
-
-  Future<String> generalReqPrefetchModifier(
-    String reqUrl,
-    Map<String, dynamic> additionalSettings,
-  ) async {
-    return reqUrl;
-  }
-
-  bool canSearch = false;
-  bool includeAdditionalOptsInMainSearch = false;
-  List<GeneratedFormItem> get searchQuerySettingFormItems => [];
-  Future<Map<String, List<String>>> search(
-    String query, {
-    Map<String, dynamic> querySettings = const {},
-  }) {
-    throw NotImplementedError();
-  }
-
-  static String stripLastPathSegment(String url) {
-    final uri = Uri.parse(url);
-    return uri
-        .replace(
-          pathSegments: uri.pathSegments.sublist(
-            0,
-            uri.pathSegments.length - 1,
-          ),
-        )
-        .toString();
-  }
-
-  static Future<String?> tryInferAppIdFromLastPathSegment(
-    String standardUrl, {
-    Map<String, dynamic> additionalSettings = const {},
-  }) async {
-    return Uri.parse(
-      standardUrl,
-    ).pathSegments.where((s) => s.isNotEmpty).lastOrNull;
-  }
-
-  Future<String?> tryInferringAppId(
-    String standardUrl, {
-    Map<String, dynamic> additionalSettings = const {},
-  }) async {
-    if (inferAppIdFromUrlPath) {
-      return tryInferAppIdFromLastPathSegment(standardUrl);
-    }
-    return null;
-  }
-}
-
-/// Delegates to [HttpService.getHttpError].
-ObtainiumError getObtainiumHttpError(http.Response res) =>
-    HttpService().getHttpError(res);
-
-// ========================================================================
-// MassAppUrlSource — abstract base for mass URL import sources.
-// ========================================================================
-
-abstract class MassAppUrlSource {
-  String get name;
-  List<String> get requiredArgs;
-  Future<Map<String, List<String>>> getUrlsWithDescriptions(List<String> args);
-}
-
-/// Delegates to [VersionService.regExValidator].
-String? regExValidator(String? value) => VersionService().regExValidator(value);
-
-/// Returns true if the app's ID is a temporary placeholder rather than a real
-/// package name. Matches [generateTempID]'s sha256-hex prefix and legacy numeric
-/// IDs; real package names contain a dot and never match.
-bool isTempId(App app) {
-  return RegExp(r'^[0-9]+$').hasMatch(app.id) ||
-      RegExp(r'^[0-9a-f]{12}$').hasMatch(app.id);
-}
-
-/// Delegates to [VersionService.replaceMatchGroupsInString].
-String? replaceMatchGroupsInString(
-  RegExpMatch match,
-  String matchGroupString,
-) => VersionService().replaceMatchGroupsInString(match, matchGroupString);
-
-/// Delegates to [VersionService.extractVersion].
-String? extractVersion(
-  String? versionExtractionRegEx,
-  String? matchGroupString,
-  String stringToCheck,
-) => VersionService().extractVersion(
-  versionExtractionRegEx,
-  matchGroupString,
-  stringToCheck,
-);
-
-/// Delegates to [ApkFilterService.filterApks].
-List<MapEntry<String, String>> filterApks(
-  List<MapEntry<String, String>> apkUrls,
-  String? apkFilterRegEx,
-  bool? invert,
-) => ApkFilterService().filterApks(apkUrls, apkFilterRegEx, invert);
-
-/// Returns true when the app uses pseudo-versioning (track-only or disabled version detection).
-bool isVersionPseudo(App app) =>
-    app.settings.getBool('trackOnly') ||
-    (app.installedVersion != null && !app.settings.getBool('versionDetection'));
 
 // ========================================================================
 // SourceProvider — singleton that manages available AppSource instances,
@@ -997,45 +73,57 @@ class SourceProvider {
   factory SourceProvider() => _instance;
   SourceProvider._();
 
-  // Builds a fresh set of source instances. Adding a source here makes it
-  // available via the service. Kept private so callers go through [sources]
-  // (cached) or, when per-call mutation is needed, [_buildSources] directly.
-  static List<AppSource> _buildSources() => [
-    GitHub(),
-    GitLab(),
-    Codeberg(),
-    FDroid(),
-    FDroidRepo(),
-    IzzyOnDroid(),
-    SourceHut(),
-    APKPure(),
-    Aptoide(),
-    Uptodown(),
-    ItchIO(),
-    HuaweiAppGallery(),
-    Tencent(),
-    VivoAppStore(),
-    RuStore(),
-    Farsroid(),
-    SamsungGalaxyStore(),
-    LiteAPKs(),
-    Apk4Free(),
-    CoolApk(),
-    SourceForge(),
-    Jenkins(),
-    APKMirror(),
-    APKCombo(),
-    RockMods(),
-    TelegramApp(),
-    NeutronCode(),
-    DirectAPKLink(),
-    HTML(), // Must be the last entry — hostless sources are tried in order and HTML is the catch-all fallback
+  // Factories for every source, in auto-detection order: sources with hosts
+  // are matched by host, then hostless sources are tried in order. HTML is the
+  // catch-all fallback and must stay last. Adding a source means adding one
+  // entry here.
+  static final List<AppSource Function()> _sourceFactories = [
+    () => GitHub(),
+    () => GitLab(),
+    () => Codeberg(),
+    () => FDroid(),
+    () => FDroidRepo(),
+    () => IzzyOnDroid(),
+    () => SourceHut(),
+    () => APKPure(),
+    () => Aptoide(),
+    () => Uptodown(),
+    () => ItchIO(),
+    () => HuaweiAppGallery(),
+    () => Tencent(),
+    () => VivoAppStore(),
+    () => RuStore(),
+    () => Farsroid(),
+    () => SamsungGalaxyStore(),
+    () => LiteAPKs(),
+    () => Apk4Free(),
+    () => CoolApk(),
+    () => SourceForge(),
+    () => Jenkins(),
+    () => APKMirror(),
+    () => APKCombo(),
+    () => RockMods(),
+    () => TelegramApp(),
+    () => NeutronCode(),
+    () => DirectAPKLink(),
+    // HTML must stay last: hostless sources are tried in order and HTML is the
+    // catch-all fallback.
+    () => HTML(),
   ];
 
-  /// Cached, read-only source list built lazily by [_buildSources].
+  /// Cached, read-only source list built lazily from [_sourceFactories].
   /// Because sources are immutable after construction, the cache is safe.
   static List<AppSource>? _cachedSources;
-  List<AppSource> get sources => _cachedSources ??= _buildSources();
+  List<AppSource> get sources =>
+      _cachedSources ??= _sourceFactories.map((f) => f()).toList();
+
+  /// Factory lookup by persisted source identifier.
+  static Map<String, AppSource Function()>? _sourceFactoriesById;
+  static Map<String, AppSource Function()> get _sourceFactoriesByIdCache =>
+      _sourceFactoriesById ??= {
+        for (final factory in _sourceFactories)
+          factory().sourceIdentifier: factory,
+      };
 
   /// Add mass URL source classes here so they are available via the service.
   List<MassAppUrlSource> massUrlSources = [GitHubStars()];
@@ -1043,15 +131,13 @@ class SourceProvider {
   AppSource getSource(String url, {String? overrideSource}) {
     url = preStandardizeUrl(url);
     if (overrideSource != null) {
-      // The override path mutates the chosen source's host config, so build a
-      // throwaway instance here rather than touching the shared cache.
-      final srcs = _buildSources().where(
-        (e) => e.sourceIdentifier == overrideSource,
-      );
-      if (srcs.isEmpty) {
+      final factory = _sourceFactoriesByIdCache[overrideSource];
+      if (factory == null) {
         throw UnsupportedURLError()..url = url;
       }
-      final res = srcs.first;
+      // The override path mutates the chosen source's host config, so use a
+      // throwaway instance rather than touching the shared cache.
+      final res = factory();
       final originalHosts = res.hosts;
       final newHost = Uri.parse(url).host;
       res.hosts = [newHost];
@@ -1067,15 +153,9 @@ class SourceProvider {
     for (var s in allSources.where((element) => element.hosts.isNotEmpty)) {
       // A non-match here is expected control flow during source auto-detection,
       // so failures are intentionally not logged (they are just noise).
-      try {
-        if (RegExp(
-          '^${s.allowSubDomains ? '([^\\.]+\\.)*' : '(www\\.)?'}(${getSourceRegex(s.hosts)})\$',
-        ).hasMatch(Uri.parse(url).host)) {
-          source = s;
-          break;
-        }
-      } on ObtainiumError {
-        // Ignore and try the next source.
+      if (s.matchesHost(Uri.parse(url).host)) {
+        source = s;
+        break;
       }
     }
     if (source == null) {
@@ -1117,8 +197,8 @@ class SourceProvider {
   ) async {
     if (currentApp?.id != null) return currentApp!.id;
     final explicitId = additionalSettings['appId'] as String?;
-    if (explicitId != null) return explicitId;
-    if (!trackOnly &&
+    if (explicitId != null && explicitId.trim().isNotEmpty) return explicitId;
+    if ((!trackOnly || source.inferAppIdEvenWhenTrackOnly) &&
         (!source.appIdInferIsOptional ||
             (source.appIdInferIsOptional && inferAppIdIfOptional))) {
       final inferred = await source.tryInferringAppId(
@@ -1155,6 +235,17 @@ class SourceProvider {
       apk = await source.getLatestAPKDetails(standardUrl, additionalSettings);
     } on ObtainiumError catch (e) {
       throw e..withUrlContext(standardUrl);
+    }
+
+    // Adding an app must honor the minimum update age too. Sources that can
+    // look back already return an older eligible release, so this only blocks
+    // sources whose latest release is too young and has no older alternative.
+    if (currentApp == null && !trackOnly) {
+      final minAgeDays = await effectiveMinUpdateAgeDays(additionalSettings);
+      if (isReleaseTooYoung(apk.releaseDate, minAgeDays)) {
+        throw MinUpdateAgeError(apk.releaseDate!, minAgeDays)
+          ..url = standardUrl;
+      }
     }
 
     if (!source.suppressStandardVersionExtraction) {
@@ -1219,6 +310,7 @@ class SourceProvider {
       categories: currentApp?.categories ?? const [],
       releaseDate: apk.releaseDate,
       changeLog: apk.changeLog,
+      releaseUrl: apk.releaseUrl,
       overrideSource: sourceIsOverriden
           ? source.sourceIdentifier
           : currentApp?.overrideSource,

@@ -509,9 +509,7 @@ class FDroidRepo extends AppSource {
             .where(
               (v) =>
                   v.releaseChannels.isNotEmpty &&
-                  !v.releaseChannels.any(
-                    (c) => c.toLowerCase() == 'stable',
-                  ),
+                  !v.releaseChannels.any((c) => c.toLowerCase() == 'stable'),
             )
             .toList();
         if (nonStable.isNotEmpty && nonStable.length < releases.length) {

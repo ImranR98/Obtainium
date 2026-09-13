@@ -24,9 +24,7 @@ class Apk4Free extends AppSource {
   ) async {
     try {
       final res = await sourceRequest(standardUrl, additionalSettings);
-      if (res.statusCode != 200) {
-        throw getObtainiumHttpError(res);
-      }
+      ensureHttpSuccess(res);
       final html = parse(res.body);
 
       final titleElement = html.querySelector('h1.main-box-title');
@@ -99,9 +97,7 @@ class Apk4Free extends AppSource {
         downloadPageLink,
         additionalSettings,
       );
-      if (resDlPage.statusCode != 200) {
-        throw getObtainiumHttpError(resDlPage);
-      }
+      ensureHttpSuccess(resDlPage);
       final htmlDlPage = parse(resDlPage.body);
 
       final List<MapEntry<String, String>> apkUrls = [];

@@ -7,15 +7,7 @@ import 'package:obtainium/components/generated_form_model.dart';
 import 'package:obtainium/custom_errors.dart';
 import 'package:obtainium/core/logging/app_logger.dart';
 import 'package:obtainium/providers/source_provider.dart';
-
-extension Unique<E, Id> on List<E> {
-  List<E> unique([Id Function(E element)? id, bool inplace = true]) {
-    final ids = <dynamic>{};
-    final list = inplace ? this : List<E>.from(this);
-    list.retainWhere((x) => ids.add(id != null ? id(x) : x as Id));
-    return list;
-  }
-}
+import 'package:obtainium/utils/min_update_age.dart';
 
 class APKPure extends AppSource {
   APKPure() {
@@ -118,8 +110,9 @@ class APKPure extends AppSource {
           );
         })
         .nonNulls
-        .toList()
-        .unique((e) => e.key);
+        .toList();
+    final seenApkKeys = <String>{};
+    apkUrls = apkUrls.where((e) => seenApkKeys.add(e.key)).toList();
 
     if (apkUrls.isEmpty) {
       throw NoAPKError();
@@ -199,9 +192,7 @@ class APKPure extends AppSource {
         '$_apiBaseUrl=$appId&hl=en',
         additionalSettings,
       );
-      if (res.statusCode != 200) {
-        throw getObtainiumHttpError(res);
-      }
+      ensureHttpSuccess(res);
       List<Map<String, dynamic>> apks;
       try {
         apks = (jsonDecode(res.body)['version_list'] as List<dynamic>)
@@ -231,6 +222,15 @@ class APKPure extends AppSource {
         throw NoReleasesError();
       }
 
+      final int minAgeDays = await effectiveMinUpdateAgeDays(
+        additionalSettings,
+      );
+      DateTime? versionUpdateDate(List<Map<String, dynamic>> variants) {
+        final raw = variants.first['update_date'];
+        return raw != null ? DateTime.tryParse(raw.toString()) : null;
+      }
+
+      List<Map<String, dynamic>>? tooYoungVersion;
       for (var i = 0; i < versions.length; i++) {
         final v = versions[i];
         try {
@@ -239,6 +239,10 @@ class APKPure extends AppSource {
                 versions.length < 2) {
               throw NoReleasesError();
             }
+            continue;
+          }
+          if (isReleaseTooYoung(versionUpdateDate(v), minAgeDays)) {
+            tooYoungVersion ??= v;
             continue;
           }
           return await getDetailsForVersion(
@@ -252,6 +256,14 @@ class APKPure extends AppSource {
             rethrow;
           }
         }
+      }
+      // No version old enough: use the newest so the provider can suppress it.
+      if (tooYoungVersion != null) {
+        return await getDetailsForVersion(
+          tooYoungVersion,
+          supportedArchs,
+          additionalSettings,
+        );
       }
       throw NoAPKError();
     } catch (e) {
