@@ -745,7 +745,7 @@ class _SelectionModalState extends State<SelectionModal> {
                 selectAll(visible: visibleUrls);
               });
             },
-            child: Text(tr('selectAll')),
+            child: Text(tr('selectAll'), overflow: TextOverflow.ellipsis),
           )
         : TextButton(
             style: const ButtonStyle(visualDensity: VisualDensity.compact),
@@ -754,7 +754,10 @@ class _SelectionModalState extends State<SelectionModal> {
                 selectAll(deselect: true, visible: visibleUrls);
               });
             },
-            child: Text(tr('deselectX', args: [visibleSelected.toString()])),
+            child: Text(
+              tr('deselectX', args: [visibleSelected.toString()]),
+              overflow: TextOverflow.ellipsis,
+            ),
           );
   }
 
@@ -1045,36 +1048,54 @@ class _SelectionModalState extends State<SelectionModal> {
           ],
         ),
       ),
+      // A single flexible row keeps the select-all count from pushing the
+      // actions into AlertDialog's vertical overflow layout. The label
+      // ellipsizes on very narrow screens instead.
+      actionsPadding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
       actions: [
-        _buildSelectAllButton(filteredEntries),
-        TextButton(
-          autofocus: isTV,
-          onPressed: () {
-            Navigator.of(context).pop();
-          },
-          child: Text(tr('cancel')),
-        ),
-        FilledButton(
-          onPressed: entrySelections.values.where((b) => b).isEmpty
-              ? null
-              : () {
-                  Navigator.of(context).pop(
-                    entrySelections.entries
-                        .where((entry) => entry.value)
-                        .map((e) => e.key)
-                        .toList(),
-                  );
-                },
-          child: Text(
-            widget.onlyOneSelectionAllowed
-                ? tr('pick')
-                : tr(
-                    'selectX',
-                    args: [
-                      entrySelections.values.where((b) => b).length.toString(),
-                    ],
-                  ),
-          ),
+        Row(
+          children: [
+            Expanded(
+              child: Align(
+                alignment: AlignmentDirectional.centerStart,
+                child: _buildSelectAllButton(filteredEntries),
+              ),
+            ),
+            const SizedBox(width: 8),
+            TextButton(
+              autofocus: isTV,
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+              child: Text(tr('cancel')),
+            ),
+            const SizedBox(width: 8),
+            FilledButton(
+              onPressed: entrySelections.values.where((b) => b).isEmpty
+                  ? null
+                  : () {
+                      Navigator.of(context).pop(
+                        entrySelections.entries
+                            .where((entry) => entry.value)
+                            .map((e) => e.key)
+                            .toList(),
+                      );
+                    },
+              child: Text(
+                widget.onlyOneSelectionAllowed
+                    ? tr('pick')
+                    : tr(
+                        'selectX',
+                        args: [
+                          entrySelections.values
+                              .where((b) => b)
+                              .length
+                              .toString(),
+                        ],
+                      ),
+              ),
+            ),
+          ],
         ),
       ],
     );
