@@ -309,7 +309,7 @@
     "ok": "OK",
     "onlyCheckInstalledOrTrackOnlyApps": "Csak a telepített és a csak nyomon követhető alkalmazások frissítéseinek ellenőrzése",
     "onlyWorksWithNonVersionDetectApps": "Csak azoknál az alkalmazásoknál működik, amelyeknél a verziófelismerés le van tiltva.",
-    "openReleasePage": "Open release page",
+    "openReleasePage": "Kiadás oldalának megnyitása",
     "overrideSource": "Forrás felülírása",
     "parallelDownloads": "Párhuzamos letöltések engedélyezése",
     "partialAPKHash": "Részleges APK-kivonat",
