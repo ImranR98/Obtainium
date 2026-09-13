@@ -99,12 +99,17 @@ VoidCallback? getChangeLogFn(BuildContext context, App app) {
     changesUrl = trimmedChangeLog;
     changeLog = null;
   }
-  if (changeLog == null && changesUrl == null) return null;
+  if (changeLog == null &&
+      changesUrl == null &&
+      (app.releaseUrl == null || app.releaseUrl!.isEmpty)) {
+    return null;
+  }
   return () {
     final appSource = SourceProvider().getSource(
       app.url,
       overrideSource: app.overrideSource,
     );
+    changesUrl ??= app.releaseUrl;
     changesUrl ??= appSource.changeLogPageFromStandardUrl(app.url);
     if (changeLog != null) {
       showChangeLogDialog(context, app, changesUrl, appSource, changeLog);

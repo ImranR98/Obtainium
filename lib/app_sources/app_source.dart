@@ -36,6 +36,7 @@ abstract class AppSource {
   bool changeLogPageIsStandardUrl = false;
   bool appIdInferIsOptional = false;
   bool inferAppIdFromUrlPath = false;
+  bool inferAppIdEvenWhenTrackOnly = false;
   bool allowSubDomains = false;
   bool naiveStandardVersionDetection = false;
   bool allowOverride = true;
@@ -467,6 +468,16 @@ abstract class AppSource {
 
   String? changeLogPageFromStandardUrl(String standardUrl) {
     return changeLogPageIsStandardUrl ? standardUrl : null;
+  }
+
+  /// Best-effort download size (bytes) for sources whose apps carry no direct
+  /// APK URL (e.g. track-only sources). Returns null when unavailable.
+  Future<int?> resolveDownloadSize(
+    String standardUrl,
+    Map<String, dynamic> additionalSettings, {
+    String? releaseUrl,
+  }) async {
+    return null;
   }
 
   Future<String?> getSourceNote() async {

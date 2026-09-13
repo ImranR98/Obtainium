@@ -197,8 +197,8 @@ class SourceProvider {
   ) async {
     if (currentApp?.id != null) return currentApp!.id;
     final explicitId = additionalSettings['appId'] as String?;
-    if (explicitId != null) return explicitId;
-    if (!trackOnly &&
+    if (explicitId != null && explicitId.trim().isNotEmpty) return explicitId;
+    if ((!trackOnly || source.inferAppIdEvenWhenTrackOnly) &&
         (!source.appIdInferIsOptional ||
             (source.appIdInferIsOptional && inferAppIdIfOptional))) {
       final inferred = await source.tryInferringAppId(
@@ -310,6 +310,7 @@ class SourceProvider {
       categories: currentApp?.categories ?? const [],
       releaseDate: apk.releaseDate,
       changeLog: apk.changeLog,
+      releaseUrl: apk.releaseUrl,
       overrideSource: sourceIsOverriden
           ? source.sourceIdentifier
           : currentApp?.overrideSource,

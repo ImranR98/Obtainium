@@ -31,6 +31,7 @@ class APKDetails {
   final AppNames names;
   final DateTime? releaseDate;
   final String? changeLog;
+  final String? releaseUrl;
   final List<MapEntry<String, String>> allAssetUrls;
 
   const APKDetails(
@@ -39,6 +40,7 @@ class APKDetails {
     this.names, {
     this.releaseDate,
     this.changeLog,
+    this.releaseUrl,
     this.allAssetUrls = const [],
   });
 
@@ -48,6 +50,7 @@ class APKDetails {
     AppNames? names,
     Object? releaseDate = _sentinel,
     Object? changeLog = _sentinel,
+    Object? releaseUrl = _sentinel,
     List<MapEntry<String, String>>? allAssetUrls,
   }) {
     return APKDetails(
@@ -58,6 +61,9 @@ class APKDetails {
           ? this.releaseDate
           : releaseDate as DateTime?,
       changeLog: changeLog == _sentinel ? this.changeLog : changeLog as String?,
+      releaseUrl: releaseUrl == _sentinel
+          ? this.releaseUrl
+          : releaseUrl as String?,
       allAssetUrls: allAssetUrls ?? this.allAssetUrls,
     );
   }
@@ -93,6 +99,7 @@ class App {
   final List<String> categories;
   final DateTime? releaseDate;
   final String? changeLog;
+  final String? releaseUrl;
   final String? overrideSource;
   final bool allowIdChange;
   final String? pendingRepoRenameUrl;
@@ -113,6 +120,7 @@ class App {
     this.categories = const [],
     this.releaseDate,
     this.changeLog,
+    this.releaseUrl,
     this.overrideSource,
     this.allowIdChange = false,
     this.pendingRepoRenameUrl,
@@ -163,6 +171,7 @@ class App {
     List<String>? categories,
     Object? releaseDate = _sentinel,
     Object? changeLog = _sentinel,
+    Object? releaseUrl = _sentinel,
     Object? overrideSource = _sentinel,
     bool? allowIdChange,
     Object? pendingRepoRenameUrl = _sentinel,
@@ -193,6 +202,9 @@ class App {
           ? this.releaseDate
           : releaseDate as DateTime?,
       changeLog: changeLog == _sentinel ? this.changeLog : changeLog as String?,
+      releaseUrl: releaseUrl == _sentinel
+          ? this.releaseUrl
+          : releaseUrl as String?,
       overrideSource: overrideSource == _sentinel
           ? this.overrideSource
           : overrideSource as String?,
@@ -240,6 +252,7 @@ class App {
         changeLog: json['changeLog'] == null
             ? null
             : json['changeLog'] as String,
+        releaseUrl: json['releaseUrl'] as String?,
         overrideSource: json['overrideSource'],
         allowIdChange: json['allowIdChange'] ?? false,
         otherAssetUrls: assumed2DlistToStringMapList(
@@ -273,6 +286,7 @@ class App {
     'categories': categories,
     'releaseDate': releaseDate?.microsecondsSinceEpoch,
     'changeLog': changeLog,
+    'releaseUrl': releaseUrl,
     'overrideSource': overrideSource,
     'allowIdChange': allowIdChange,
     'pendingRepoRenameUrl': pendingRepoRenameUrl,
