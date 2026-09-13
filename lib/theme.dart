@@ -1,6 +1,6 @@
 // Builds the Material 3 Expressive theme for the app.
 
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 /// Builds the app-wide Material 3 Expressive [ThemeData] for a given
 /// [colorScheme]. Expressive character lives here (large rounded shapes,

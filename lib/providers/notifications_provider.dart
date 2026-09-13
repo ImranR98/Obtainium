@@ -6,7 +6,7 @@ import 'dart:isolate';
 import 'dart:ui';
 
 import 'package:easy_localization/easy_localization.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:obtainium/main.dart';
 import 'package:obtainium/utils/format_utils.dart' show formatDownloadSize;

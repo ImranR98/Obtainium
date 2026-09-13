@@ -19,7 +19,8 @@ dependencies:
   provider: ^6.1.5+1
   http: ^1.6.0
   webview_flutter: ^4.14.1
-  dynamic_system_colors: ^1.9.0
+  dynamic_color: ^2.1.0
+  material_ui: ^1.2.0
   html: ^0.15.7
   shared_preferences: ^2.5.5
   url_launcher: ^6.3.2
@@ -31,11 +32,11 @@ dependencies:
   android_package_installer: # TODO: Upstream PR pending; if not accepted, keep fork maintained
     git:
       url: https://github.com/ImranR98/android_package_installer
-      ref: c0a7e4759b20a0c2cd1b4d40a41ff395e5f3d0e4
+      ref: 94525707bd1fba8cba4d19b4cb2b928580913510
   android_package_manager: # TODO: Submit PR to upstream and switch back when merged
     git:
       url: https://github.com/ImranR98/android_package_manager
-      ref: 98661a5824c94ae990ae0f7bf0bdb1478300c4f7
+      ref: b5bc0365bd7faab6f51f6ec8baf4a9dab0df9117
   share_plus: ^13.3.0
   sqflite: ^2.4.4
   easy_localization: ^3.0.8
@@ -56,12 +57,12 @@ dependencies:
   flex_color_picker: ^4.0.0
   android_system_font: # TODO: Forked dependency; watch upstream for releases
     git:
-      url: https://github.com/re7gog/android_system_font
-      ref: 077e15d7d0acb82283b89dfd82f4984b27b28f95
+      url: https://github.com/ImranR98/android_system_font
+      ref: 7efa523a0cb40fb243318450c60dfd0e882e6b0c
   shizuku_apk_installer: # TODO: Forked dependency; watch upstream for releases
     git:
-      url: https://github.com/re7gog/shizuku_apk_installer
-      ref: 3ef7f8fbf904848d144304556b0f80c91fee82a5
+      url: https://github.com/ImranR98/shizuku_apk_installer
+      ref: 12d8447c501e6abfadd134887b8b810d07b1d1e3
   markdown: ^7.3.1
   flutter_typeahead: ^6.0.0
   battery_plus: ^7.1.1

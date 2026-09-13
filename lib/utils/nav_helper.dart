@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:obtainium/pages/add_app.dart';
 import 'package:obtainium/pages/app.dart';
 import 'package:obtainium/pages/logs.dart';

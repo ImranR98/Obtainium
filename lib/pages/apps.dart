@@ -3,7 +3,7 @@ import 'dart:convert';
 import 'dart:typed_data';
 
 import 'package:easy_localization/easy_localization.dart' hide TextDirection;
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:obtainium/components/app_list_tile.dart';
 import 'package:obtainium/utils/string_utils.dart';
 import 'package:obtainium/components/category_editor.dart';

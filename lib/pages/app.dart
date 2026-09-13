@@ -1,7 +1,7 @@
 import 'dart:async';
 
 import 'package:easy_localization/easy_localization.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_markdown_plus/flutter_markdown_plus.dart';
 import 'package:markdown/markdown.dart' as md;
 import 'package:obtainium/components/app_list_tile.dart';
@@ -988,23 +988,28 @@ class _AppPageState extends State<AppPage> {
     // rebuild (download ticks, probes, etc.).
     if (_aboutCacheKey != about || _aboutCache == null) {
       _aboutCacheKey = about;
-      _aboutCache = MarkdownBody(
-        data: about,
-        styleSheet: MarkdownStyleSheet(
-          blockquoteDecoration: BoxDecoration(
-            color: Theme.of(context).cardColor,
+      _aboutCache = LegacyMaterialBridge(
+        child: MarkdownBody(
+          data: about,
+          styleSheet: MarkdownStyleSheet(
+            blockquoteDecoration: BoxDecoration(
+              color: Theme.of(context).cardColor,
+            ),
           ),
-        ),
-        onTapLink: (text, href, title) {
-          if (href != null) {
-            unawaited(
-              launchUrlString(href, mode: LaunchMode.externalApplication),
-            );
-          }
-        },
-        extensionSet: md.ExtensionSet(
-          md.ExtensionSet.gitHubFlavored.blockSyntaxes,
-          [md.EmojiSyntax(), ...md.ExtensionSet.gitHubFlavored.inlineSyntaxes],
+          onTapLink: (text, href, title) {
+            if (href != null) {
+              unawaited(
+                launchUrlString(href, mode: LaunchMode.externalApplication),
+              );
+            }
+          },
+          extensionSet: md.ExtensionSet(
+            md.ExtensionSet.gitHubFlavored.blockSyntaxes,
+            [
+              md.EmojiSyntax(),
+              ...md.ExtensionSet.gitHubFlavored.inlineSyntaxes,
+            ],
+          ),
         ),
       );
     }

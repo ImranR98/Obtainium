@@ -21,8 +21,8 @@ packages:
     dependency: "direct main"
     description:
       path: "."
-      ref: c0a7e4759b20a0c2cd1b4d40a41ff395e5f3d0e4
-      resolved-ref: c0a7e4759b20a0c2cd1b4d40a41ff395e5f3d0e4
+      ref: "94525707bd1fba8cba4d19b4cb2b928580913510"
+      resolved-ref: "94525707bd1fba8cba4d19b4cb2b928580913510"
       url: "https://github.com/ImranR98/android_package_installer"
     source: git
     version: "0.0.1"
@@ -30,8 +30,8 @@ packages:
     dependency: "direct main"
     description:
       path: "."
-      ref: "98661a5824c94ae990ae0f7bf0bdb1478300c4f7"
-      resolved-ref: "98661a5824c94ae990ae0f7bf0bdb1478300c4f7"
+      ref: b5bc0365bd7faab6f51f6ec8baf4a9dab0df9117
+      resolved-ref: b5bc0365bd7faab6f51f6ec8baf4a9dab0df9117
       url: "https://github.com/ImranR98/android_package_manager"
     source: git
     version: "0.7.1"
@@ -39,9 +39,9 @@ packages:
     dependency: "direct main"
     description:
       path: "."
-      ref: "077e15d7d0acb82283b89dfd82f4984b27b28f95"
-      resolved-ref: "077e15d7d0acb82283b89dfd82f4984b27b28f95"
-      url: "https://github.com/re7gog/android_system_font"
+      ref: "7efa523a0cb40fb243318450c60dfd0e882e6b0c"
+      resolved-ref: "7efa523a0cb40fb243318450c60dfd0e882e6b0c"
+      url: "https://github.com/ImranR98/android_system_font"
     source: git
     version: "1.1.0"
   animations:
@@ -268,14 +268,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "8.1.0"
-  dynamic_system_colors:
+  dynamic_color:
     dependency: "direct main"
     description:
-      name: dynamic_system_colors
-      sha256: "6cda994363fe362e3c433e068af83feffc2c9a26ba0be7ecdb2b96f676d2dfd8"
+      name: dynamic_color
+      sha256: "869b3bce0100eb519768ecd71c0111f0b5ea679f5f62e1f59c49d80067e730c5"
       url: "https://pub.dev"
     source: hosted
-    version: "1.9.0"
+    version: "2.1.0"
   easy_localization:
     dependency: "direct main"
     description:
@@ -744,7 +744,7 @@ packages:
     source: hosted
     version: "0.13.0"
   material_ui:
-    dependency: transitive
+    dependency: "direct main"
     description:
       name: material_ui
       sha256: fbfb53cab6c4629438feeade5f3d305f72944bc9d9f25786b19106d32b80ec45
@@ -1052,9 +1052,9 @@ packages:
     dependency: "direct main"
     description:
       path: "."
-      ref: "3ef7f8fbf904848d144304556b0f80c91fee82a5"
-      resolved-ref: "3ef7f8fbf904848d144304556b0f80c91fee82a5"
-      url: "https://github.com/re7gog/shizuku_apk_installer"
+      ref: "12d8447c501e6abfadd134887b8b810d07b1d1e3"
+      resolved-ref: "12d8447c501e6abfadd134887b8b810d07b1d1e3"
+      url: "https://github.com/ImranR98/shizuku_apk_installer"
     source: git
     version: "1.2.0"
   sky_engine:
