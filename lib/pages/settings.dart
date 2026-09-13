@@ -6,7 +6,7 @@ import 'package:equations/equations.dart';
 import 'package:flex_color_picker/flex_color_picker.dart';
 import 'package:shizuku_apk_installer/shizuku_apk_installer.dart';
 import 'package:obtainium/components/category_editor.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:obtainium/components/ui_widgets.dart';
 import 'package:obtainium/components/generated_form_renderer.dart';
 import 'package:obtainium/custom_errors.dart';

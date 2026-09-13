@@ -6,7 +6,7 @@ import 'dart:typed_data';
 import 'package:android_intent_plus/android_intent.dart';
 import 'package:android_package_manager/android_package_manager.dart';
 import 'package:easy_localization/easy_localization.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:obtainium/custom_errors.dart';
 import 'package:obtainium/core/logging/app_logger.dart';
 import 'package:obtainium/app_sources/html.dart';

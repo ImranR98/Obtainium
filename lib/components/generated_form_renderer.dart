@@ -1,7 +1,7 @@
 import 'dart:async';
 
 import 'package:easy_localization/easy_localization.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter/services.dart';
 import 'package:obtainium/custom_errors.dart';
 import 'package:obtainium/components/generated_form_model.dart';
@@ -248,6 +248,14 @@ class _GeneratedFormState extends State<GeneratedForm> {
       itemBuilder: (context, value) {
         return ListTile(title: Text(value));
       },
+      decorationBuilder: (context, child) => LegacyMaterialBridge(
+        child: Material(
+          type: MaterialType.card,
+          elevation: 4,
+          borderRadius: BorderRadius.circular(8),
+          child: child,
+        ),
+      ),
       onSelected: (value) {
         ctrl.text = value;
         setState(() {

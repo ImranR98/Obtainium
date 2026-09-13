@@ -2,7 +2,7 @@ import 'dart:async';
 import 'dart:math' as math;
 
 import 'package:easy_localization/easy_localization.dart' hide TextDirection;
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter/semantics.dart';
 import 'package:flutter_markdown_plus/flutter_markdown_plus.dart';
 import 'package:markdown/markdown.dart' as md;
@@ -50,32 +50,34 @@ void showChangeLogDialog(
               ? const SizedBox(height: 16)
               : const SizedBox.shrink(),
           appSource.changeLogIfAnyIsMarkDown
-              ? MarkdownBody(
-                  styleSheet: MarkdownStyleSheet(
-                    blockquoteDecoration: BoxDecoration(
-                      color: Theme.of(context).cardColor,
+              ? LegacyMaterialBridge(
+                  child: MarkdownBody(
+                    styleSheet: MarkdownStyleSheet(
+                      blockquoteDecoration: BoxDecoration(
+                        color: Theme.of(context).cardColor,
+                      ),
                     ),
-                  ),
-                  data: changeLog,
-                  onTapLink: (text, href, title) {
-                    if (href != null) {
-                      unawaited(
-                        launchUrlString(
-                          href.startsWith('http://') ||
-                                  href.startsWith('https://')
-                              ? href
-                              : '${Uri.parse(app.url).origin}/$href',
-                          mode: LaunchMode.externalApplication,
-                        ),
-                      );
-                    }
-                  },
-                  extensionSet: md.ExtensionSet(
-                    md.ExtensionSet.gitHubFlavored.blockSyntaxes,
-                    [
-                      md.EmojiSyntax(),
-                      ...md.ExtensionSet.gitHubFlavored.inlineSyntaxes,
-                    ],
+                    data: changeLog,
+                    onTapLink: (text, href, title) {
+                      if (href != null) {
+                        unawaited(
+                          launchUrlString(
+                            href.startsWith('http://') ||
+                                    href.startsWith('https://')
+                                ? href
+                                : '${Uri.parse(app.url).origin}/$href',
+                            mode: LaunchMode.externalApplication,
+                          ),
+                        );
+                      }
+                    },
+                    extensionSet: md.ExtensionSet(
+                      md.ExtensionSet.gitHubFlavored.blockSyntaxes,
+                      [
+                        md.EmojiSyntax(),
+                        ...md.ExtensionSet.gitHubFlavored.inlineSyntaxes,
+                      ],
+                    ),
                   ),
                 )
               : Text(changeLog),

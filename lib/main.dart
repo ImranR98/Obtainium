@@ -1,7 +1,7 @@
 import 'dart:async';
 import 'dart:ui' show Locale, PlatformDispatcher;
 
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter/services.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:obtainium/custom_errors.dart';
@@ -14,7 +14,7 @@ import 'package:obtainium/utils/native_features.dart';
 import 'package:obtainium/pages/home.dart';
 import 'package:obtainium/theme.dart';
 import 'package:provider/provider.dart';
-import 'package:dynamic_system_colors/dynamic_system_colors.dart';
+import 'package:dynamic_color/dynamic_color.dart';
 import 'package:device_info_plus/device_info_plus.dart';
 import 'package:easy_localization/easy_localization.dart' hide TextDirection;
 import 'package:permission_handler/permission_handler.dart';
@@ -384,7 +384,10 @@ class _ObtainiumState extends State<Obtainium> {
         return MaterialApp(
           title: 'Obtainium',
           navigatorKey: appNavigatorKey,
-          localizationsDelegates: context.localizationDelegates,
+          localizationsDelegates: [
+            ...context.localizationDelegates,
+            ...GlobalMaterialLocalizations.delegates,
+          ],
           supportedLocales: context.supportedLocales,
           locale: context.locale,
           debugShowCheckedModeBanner: false,
