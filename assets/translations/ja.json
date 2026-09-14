@@ -373,6 +373,7 @@
     "selectURLs": "URLを選択",
     "selectX": "選択：{}",
     "selectedCategorizeWarning": "これにより、選択したアプリの既存のカテゴリ設定がすべて置き換えられます。",
+    "selectedX": "{} selected",
     "selfHostedNote": "ドロップダウン\"{}\"を使用すると、あらゆるソースのセルフホスト/カスタムインスタンスにアクセスできます。",
     "settings": "設定",
     "share": "共有",

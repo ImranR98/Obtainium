@@ -373,6 +373,7 @@
     "selectURLs": "Chọn URL",
     "selectX": "Lựa chọn {}",
     "selectedCategorizeWarning": "Điều này sẽ thay thế mọi thiết đặt danh mục hiện có cho Ứng dụng đã chọn.",
+    "selectedX": "{} selected",
     "selfHostedNote": "Trình đơn thả xuống \"{}\" có thể được dùng để tiếp cận các phiên bản tự lưu trữ/tùy chỉnh của bất kỳ nguồn nào.",
     "settings": "Thiết đặt",
     "share": "Chia sẻ",

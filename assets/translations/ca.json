@@ -373,6 +373,7 @@
     "selectURLs": "Selecciona URLs",
     "selectX": "Selecciona {}",
     "selectedCategorizeWarning": "Açò substituirà els paràmetres de categorització per a les aplicacions selecionades.",
+    "selectedX": "{} selected",
     "selfHostedNote": "El desplegable «{}» es pot usar per accedir a instàncies autoallotjades/personalitzades de qualsevol font.",
     "settings": "Paràmetres",
     "share": "Comparteix",

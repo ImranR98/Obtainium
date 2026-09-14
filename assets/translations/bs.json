@@ -373,6 +373,7 @@
     "selectURLs": "Odaberite URL-ove",
     "selectX": "Izaberite {}",
     "selectedCategorizeWarning": "Ovo će zamijeniti sve postojeće postavke kategorije za odabrane aplikacije.",
+    "selectedX": "{} selected",
     "selfHostedNote": "\"{}\" padajući meni se može koristiti da dosegnete vlastite/prilagođene instance bilo kojeg izvora.",
     "settings": "Postavke",
     "share": "Podijeli",

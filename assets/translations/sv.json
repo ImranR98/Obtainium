@@ -373,6 +373,7 @@
     "selectURLs": "Välj URL:er",
     "selectX": "Välj {}",
     "selectedCategorizeWarning": "Detta kommer att ersätta alla befintliga kategoriinställningar för de valda apparna.",
+    "selectedX": "{} selected",
     "selfHostedNote": "Rullgardinsmenyn \"{}\" kan användas för att nå självhostade/anpassade instanser av valfri källa.",
     "settings": "Inställningar",
     "share": "Dela",

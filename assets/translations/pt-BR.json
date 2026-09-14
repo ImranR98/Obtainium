@@ -373,6 +373,7 @@
     "selectURLs": "Selecionar URLs",
     "selectX": "Selecionar {}",
     "selectedCategorizeWarning": "Isso substituirá a configuração de categoria existente dos apps selecionados.",
+    "selectedX": "{} selected",
     "selfHostedNote": "O menu de opções \"{}\" pode ser usado para alcançar instâncias hospedadas-por-você/personalizadas de qualquer fonte.",
     "settings": "Configurações",
     "share": "Compartilhar",

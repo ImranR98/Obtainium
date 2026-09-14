@@ -373,6 +373,7 @@
     "selectURLs": "Sélectionner des URL",
     "selectX": "Sélectionner {}",
     "selectedCategorizeWarning": "Cela remplacera tous les paramètres de catégorie existants pour les applications sélectionnées.",
+    "selectedX": "{} selected",
     "selfHostedNote": "Le menu déroulant \"{}\" peut être utilisé pour accéder aux instances auto-hébergées/personnalisées de n'importe quelle source.",
     "settings": "Paramètres",
     "share": "Partager",

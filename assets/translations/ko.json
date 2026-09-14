@@ -373,6 +373,7 @@
     "selectURLs": "URL 선택",
     "selectX": "{} 선택",
     "selectedCategorizeWarning": "이 작업은 선택한 앱의 기존 카테고리 설정을 대체합니다.",
+    "selectedX": "{} selected",
     "selfHostedNote": "\"{}\" 드롭다운을 사용하여 소스의 자체 호스팅/사용자 정의 인스턴스에 도달할 수 있습니다.",
     "settings": "설정",
     "share": "공유",

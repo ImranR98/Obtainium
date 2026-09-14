@@ -373,6 +373,7 @@
     "selectURLs": "选择 URL",
     "selectX": "选择{}",
     "selectedCategorizeWarning": "这将覆盖选中应用当前的类别设置。",
+    "selectedX": "{} selected",
     "selfHostedNote": "可以通过“{}”下拉菜单来指向任意来源的自托管/自定义实例。",
     "settings": "设置",
     "share": "分享",

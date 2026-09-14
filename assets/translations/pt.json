@@ -373,6 +373,7 @@
     "selectURLs": "Selecionar URLs",
     "selectX": "Selecionar {}",
     "selectedCategorizeWarning": "Isto irá substituir qualquer configuração de categoria para as aplicações selecionadas.",
+    "selectedX": "{} selected",
     "selfHostedNote": "O menu suspenso \"{}\" pode ser usado para acessar instâncias auto-hospedadas/personalizadas de qualquer fonte.",
     "settings": "Configurações",
     "share": "Compartilhar",

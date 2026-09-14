@@ -373,6 +373,7 @@
     "selectURLs": "Seleccionar URLs",
     "selectX": "Seleccionar {}",
     "selectedCategorizeWarning": "Esto reemplazará cualquier ajuste de categoría para las aplicaciones seleccionadas.",
+    "selectedX": "{} selected",
     "selfHostedNote": "El desplegable «{}» puede usarse para acceder a instancias autoalojadas/personalizadas de cualquier fuente.",
     "settings": "Ajustes",
     "share": "Compartir",

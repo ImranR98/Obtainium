@@ -373,6 +373,7 @@
     "selectURLs": "Vælg URL'er",
     "selectX": "Vælg {}",
     "selectedCategorizeWarning": "Dette erstatter alle eksisterende kategoriindstillinger for de valgte apps.",
+    "selectedX": "{} selected",
     "selfHostedNote": "Rullemenuen \"{}\" kan bruges til at nå selvhostede/brugerdefinerede instanser af enhver kilde.",
     "settings": "Indstillinger",
     "share": "Del",

@@ -373,6 +373,7 @@
     "selectURLs": "Pilih URL",
     "selectX": "Pilih {}",
     "selectedCategorizeWarning": "Ini akan mengganti pengaturan kategori yang ada untuk aplikasi terpilih.",
+    "selectedX": "{} selected",
     "selfHostedNote": "Dropdown \"{}\" bisa digunakan untuk menjangkau instansi yang dihosting sendiri/kustom dari sumber mana pun.",
     "settings": "Pengaturan",
     "share": "Bagikan",
