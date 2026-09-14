@@ -3,6 +3,8 @@ name: Validate translation files
 on:
   pull_request:
     types: [opened, synchronize, reopened]
+    paths:
+      - 'assets/translations/*.json'
 
 jobs:
   validate:

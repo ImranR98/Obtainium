@@ -13,7 +13,8 @@ class Aptoide extends AppSource {
     showReleaseDateAsVersionToggle = true;
   }
 
-  static const String _apiBaseUrl = 'https://ws2.aptoide.com/api/7/getApp/app_id';
+  static const String _apiBaseUrl =
+      'https://ws2.aptoide.com/api/7/getApp/app_id';
 
   @override
   String sourceSpecificStandardizeURL(String url, {bool forSelection = false}) {
@@ -40,9 +41,7 @@ class Aptoide extends AppSource {
     Map<String, dynamic> additionalSettings,
   ) async {
     final res = await sourceRequest(standardUrl, additionalSettings);
-    if (res.statusCode != 200) {
-      throw getObtainiumHttpError(res);
-    }
+    ensureHttpSuccess(res);
     final idMatch = RegExp(
       r'"app"\s*:\s*\{\s*"id"\s*:\s*([0-9]+)',
     ).firstMatch(res.body);
@@ -52,13 +51,8 @@ class Aptoide extends AppSource {
     } else {
       throw NoReleasesError();
     }
-    final res2 = await sourceRequest(
-      '$_apiBaseUrl/$id',
-      additionalSettings,
-    );
-    if (res2.statusCode != 200) {
-      throw getObtainiumHttpError(res2);
-    }
+    final res2 = await sourceRequest('$_apiBaseUrl/$id', additionalSettings);
+    ensureHttpSuccess(res2);
     final data = jsonDecode(res2.body)?['nodes']?['meta']?['data'];
     if (data == null) {
       throw NoReleasesError();

@@ -42,7 +42,8 @@ class LiteAPKs extends AppSource {
           utf8.encode(
             base64.encode(
               utf8.encode(
-                (DateTime.now().millisecondsSinceEpoch ~/ 1000 + _cacheDuration.inSeconds)
+                (DateTime.now().millisecondsSinceEpoch ~/ 1000 +
+                        _cacheDuration.inSeconds)
                     .toString(),
               ),
             ),
@@ -66,9 +67,7 @@ class LiteAPKs extends AppSource {
         '${standardUri.origin}/wp-json/wp/v2/posts?slug=$slug',
         additionalSettings,
       );
-      if (res1.statusCode != 200) {
-        throw getObtainiumHttpError(res1);
-      }
+      ensureHttpSuccess(res1);
 
       final posts = jsonDecode(res1.body);
       if (posts is! List || posts.isEmpty) {
@@ -83,9 +82,7 @@ class LiteAPKs extends AppSource {
         '${standardUri.origin}/wp-json/v2/posts/$liteAppId',
         additionalSettings,
       );
-      if (res2.statusCode != 200) {
-        throw getObtainiumHttpError(res2);
-      }
+      ensureHttpSuccess(res2);
       final json = jsonDecode(res2.body);
 
       final appName = json['data']?['title'] as String?;
@@ -97,26 +94,28 @@ class LiteAPKs extends AppSource {
       if (version == null || version.isEmpty) {
         throw NoVersionError();
       }
-      final firstVersionForDownloads = (versionsJson is List && versionsJson.isNotEmpty)
+      final firstVersionForDownloads =
+          (versionsJson is List && versionsJson.isNotEmpty)
           ? versionsJson[0]
           : null;
       final apkUrls =
-          ((firstVersionForDownloads?['version_downloads']
-                          as List<dynamic>?)
-                      ?.map((l) => l['version_download_link']) ??
+          ((firstVersionForDownloads?['version_downloads'] as List<dynamic>?)
+                      ?.map(
+                        (l) => l is Map ? l['version_download_link'] : null,
+                      ) ??
                   [])
-              .map(
-                (l) {
-                  final segs = Uri.parse(l).pathSegments;
-                  final filename = segs.isNotEmpty
-                      ? segs.last
-                      : l.split('/').where((s) => s.isNotEmpty).last;
-                  return MapEntry<String, String>(
-                    Uri.decodeComponent(filename),
-                    '$l#$standardUrl',
-                  );
-                },
-              )
+              .whereType<String>()
+              .where((l) => l.isNotEmpty)
+              .map((l) {
+                final segs = Uri.parse(l).pathSegments;
+                final filename = segs.isNotEmpty
+                    ? segs.last
+                    : l.split('/').where((s) => s.isNotEmpty).last;
+                return MapEntry<String, String>(
+                  Uri.decodeComponent(filename),
+                  '$l#$standardUrl',
+                );
+              })
               .toList();
       return APKDetails(
         version,

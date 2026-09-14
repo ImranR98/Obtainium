@@ -183,7 +183,9 @@ class FDroid extends AppSource {
         String? url = e.attributes['href'];
         if (url != null) {
           try {
-            standardizeUrl(url);
+            // Keep the canonical form so search results match stored app URLs
+            // and duplicate detection works.
+            url = standardizeUrl(url);
           } catch (e) {
             url = null;
           }

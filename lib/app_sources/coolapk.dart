@@ -53,9 +53,7 @@ class CoolApk extends AppSource {
       final detailUrl = '$_apiBaseUrl/v6/apk/detail?id=$appId';
       final res = await sourceRequest(detailUrl, additionalSettings);
 
-      if (res.statusCode != 200) {
-        throw getObtainiumHttpError(res);
-      }
+      ensureHttpSuccess(res);
 
       Map<String, dynamic> json;
       try {
@@ -69,8 +67,11 @@ class CoolApk extends AppSource {
       }
 
       final detail = json['data'];
-      final String version = detail['apkversionname'].toString();
-      final String appName = detail['title'].toString();
+      final String version = detail['apkversionname']?.toString() ?? '';
+      final String appName = detail['title']?.toString() ?? tr('app');
+      if (version.isEmpty) {
+        throw NoVersionError();
+      }
       final String author = detail['developername']?.toString() ?? 'CoolApk';
       final String changelog = detail['changelog']?.toString() ?? '';
       int? releaseDate;
@@ -81,7 +82,10 @@ class CoolApk extends AppSource {
         final parsed = int.tryParse(lastUpdate.toString());
         releaseDate = parsed != null ? parsed * 1000 : null;
       }
-      final String aid = detail['id'].toString();
+      final String aid = detail['id']?.toString() ?? '';
+      if (aid.isEmpty) {
+        throw NoReleasesError();
+      }
 
       final String apkUrl = await _getLatestApkUrl(
         _apiBaseUrl,

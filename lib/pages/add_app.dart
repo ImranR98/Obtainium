@@ -1,7 +1,7 @@
 import 'dart:async';
 
 import 'package:easy_localization/easy_localization.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:obtainium/components/ui_widgets.dart';
 import 'package:obtainium/components/generated_form_renderer.dart';
 import 'package:obtainium/components/category_editor.dart';
@@ -12,6 +12,7 @@ import 'package:obtainium/providers/apps_provider.dart';
 import 'package:obtainium/providers/notifications_provider.dart';
 import 'package:obtainium/providers/settings_provider.dart';
 import 'package:obtainium/providers/source_provider.dart';
+import 'package:obtainium/utils/nav_helper.dart';
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher_string.dart';
 
@@ -139,7 +140,8 @@ class AddAppPageState extends State<AddAppPage> {
           );
         }
         additionalSettingsValid =
-            source == null || _requiredFormFieldsFilled(source, additionalSettings);
+            source == null ||
+            _requiredFormFieldsFilled(source, additionalSettings);
         inferAppIdIfOptional = true;
       } else if (valid && !updateUrlInput && _prevValid) {
         return;
@@ -167,6 +169,18 @@ class AddAppPageState extends State<AddAppPage> {
       }
     }
     return true;
+  }
+
+  /// Host portion of the search dialog's instance URL field, tolerating
+  /// scheme-less input. Returns '' when the input is not parseable.
+  static String _searchUrlHost(String url) {
+    var raw = url.trim();
+    if (raw.isEmpty) return '';
+    if (!raw.toLowerCase().startsWith('http://') &&
+        !raw.toLowerCase().startsWith('https://')) {
+      raw = 'https://$raw';
+    }
+    return Uri.tryParse(raw)?.host ?? '';
   }
 
   void setSourceOverride(String? override) {
@@ -310,6 +324,7 @@ class AddAppPageState extends State<AddAppPage> {
       }
       if (app != null && context.mounted) {
         final route = MaterialPageRoute<void>(
+          traversalEdgeBehavior: traversalEdgeBehaviorFor(context),
           builder: (context) => AppPage(appId: app!.id),
         );
         unawaited(Navigator.of(context).pushReplacement(route));
@@ -352,74 +367,105 @@ class AddAppPageState extends State<AddAppPage> {
             .toList();
         final List<MapEntry<String, Map<String, List<String>>>?>
         results = (await Future.wait(
-          sourceProvider.sources
-              .where((e) => searchSources.contains(e.name))
-              .map((e) async {
-                try {
-                  Map<String, dynamic>? querySettings = {};
-                  if (e.includeAdditionalOptsInMainSearch) {
-                    querySettings = await showDialog<Map<String, dynamic>?>(
-                      context: context,
-                      builder: (BuildContext ctx) {
-                        return GeneratedFormModal(
-                          title: tr('searchX', args: [e.name]),
-                          items: [
-                            ...e.searchQuerySettingFormItems.map((e) => [e]),
-                            [
-                              GeneratedFormTextField(
-                                'url',
-                                label: e.hosts.isNotEmpty
-                                    ? tr('overrideSource')
-                                    : plural('url', 1).substring(2),
-                                autoCompleteOptions: [
-                                  ...(e.hosts.isNotEmpty ? [e.hosts[0]] : []),
-                                  ...appsProvider.apps.values
-                                      .where(
-                                        (a) =>
-                                            sourceProvider
-                                                .getSource(
-                                                  a.app.url,
-                                                  overrideSource:
-                                                      a.app.overrideSource,
-                                                )
-                                                .sourceIdentifier ==
-                                            e.sourceIdentifier,
-                                      )
-                                      .map((a) {
-                                        final uri = Uri.parse(a.app.url);
-                                        return '${uri.origin}${uri.path}';
-                                      }),
+          sourceProvider.sources.where((e) => searchSources.contains(e.name)).map(
+            (e) async {
+              try {
+                Map<String, dynamic>? querySettings = {};
+                if (e.includeAdditionalOptsInMainSearch) {
+                  querySettings = await showDialog<Map<String, dynamic>?>(
+                    context: context,
+                    builder: (BuildContext ctx) {
+                      String currentUrl = e.hosts.isNotEmpty ? e.hosts[0] : '';
+                      String currentHost = _searchUrlHost(currentUrl);
+                      List<GeneratedFormItem> sourceItems = e
+                          .searchQuerySettingItemsForUrl(
+                            currentUrl,
+                            settingsProvider: settingsProvider,
+                          );
+                      return StatefulBuilder(
+                        builder:
+                            (BuildContext ctx, StateSetter setDialogState) {
+                              return GeneratedFormModal(
+                                title: tr('searchX', args: [e.name]),
+                                items: [
+                                  ...sourceItems.map((item) => [item]),
+                                  [
+                                    GeneratedFormTextField(
+                                      'url',
+                                      label: e.hosts.isNotEmpty
+                                          ? tr('overrideSource')
+                                          : plural('url', 1).substring(2),
+                                      autoCompleteOptions: [
+                                        ...(e.hosts.isNotEmpty
+                                            ? [e.hosts[0]]
+                                            : []),
+                                        ...appsProvider.apps.values
+                                            .where(
+                                              (a) =>
+                                                  sourceProvider
+                                                      .getSource(
+                                                        a.app.url,
+                                                        overrideSource: a
+                                                            .app
+                                                            .overrideSource,
+                                                      )
+                                                      .sourceIdentifier ==
+                                                  e.sourceIdentifier,
+                                            )
+                                            .map((a) {
+                                              final uri = Uri.parse(a.app.url);
+                                              return '${uri.origin}${uri.path}';
+                                            }),
+                                      ],
+                                      value: currentUrl,
+                                      required: true,
+                                    ),
+                                  ],
                                 ],
-                                value: e.hosts.isNotEmpty ? e.hosts[0] : '',
-                                required: true,
-                              ),
-                            ],
-                          ],
-                        );
-                      },
-                    );
-                    if (querySettings == null) {
-                      return null;
-                    }
-                  }
-                  return MapEntry(
-                    e.sourceIdentifier,
-                    await e.search(searchQuery, querySettings: querySettings),
+                                onValueChanges: (values, valid, isBuilding) {
+                                  if (isBuilding) return;
+                                  final newUrl = values['url'] as String? ?? '';
+                                  currentUrl = newUrl;
+                                  final newHost = _searchUrlHost(newUrl);
+                                  if (newHost != currentHost) {
+                                    currentHost = newHost;
+                                    setDialogState(() {
+                                      sourceItems = e
+                                          .searchQuerySettingItemsForUrl(
+                                            newUrl,
+                                            settingsProvider: settingsProvider,
+                                          );
+                                    });
+                                  }
+                                },
+                              );
+                            },
+                      );
+                    },
                   );
-                } catch (err) {
-                  final errorToShow = err is ObtainiumError
-                      ? ObtainiumError(
-                          err.message,
-                          code: err.code,
-                          unexpected: true,
-                          stack: err.stack,
-                          data: err.data,
-                        )
-                      : err;
-                  if (context.mounted) showError(errorToShow, context);
-                  return null;
+                  if (querySettings == null) {
+                    return null;
+                  }
                 }
-              }),
+                return MapEntry(
+                  e.sourceIdentifier,
+                  await e.search(searchQuery, querySettings: querySettings),
+                );
+              } catch (err) {
+                final errorToShow = err is ObtainiumError
+                    ? ObtainiumError(
+                        err.message,
+                        code: err.code,
+                        unexpected: true,
+                        stack: err.stack,
+                        data: err.data,
+                      )
+                    : err;
+                if (context.mounted) showError(errorToShow, context);
+                return null;
+              }
+            },
+          ),
         )).where((a) => a != null).toList();
 
         if (!context.mounted) return;
@@ -723,215 +769,16 @@ class AddAppPageState extends State<AddAppPage> {
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  Row(
-                    children: [
-                      Expanded(
-                        child: GeneratedForm(
-                          key: Key('url-$urlInputKey'),
-                          tileMode: true,
-                          items: [
-                            [
-                              GeneratedFormTextField(
-                                'appSourceURL',
-                                label: tr('appSourceURL'),
-                                value: userInput,
-                                required: false,
-                                additionalValidators: [
-                                  (value) {
-                                    if (value == null || value.trim().isEmpty) {
-                                      return null;
-                                    }
-                                    try {
-                                      sourceProvider
-                                          .getSource(
-                                            value,
-                                            overrideSource:
-                                                pickedSourceOverride,
-                                          )
-                                          .standardizeUrl(value);
-                                    } catch (e) {
-                                      return e is String
-                                          ? e
-                                          : e is ObtainiumError
-                                          ? e.toString()
-                                          : tr('error');
-                                    }
-                                    return null;
-                                  },
-                                ],
-                              ),
-                            ],
-                          ],
-                          onValueChanges: (values, valid, isBuilding) {
-                            changeUserInput(
-                              values['appSourceURL']!,
-                              valid,
-                              isBuilding,
-                            );
-                          },
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      gettingAppInfo
-                          ? const Padding(
-                              padding: EdgeInsets.all(12),
-                              child: SizedBox(
-                                width: 20,
-                                height: 20,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2,
-                                ),
-                              ),
-                            )
-                          : IconButton(
-                              icon: const Icon(Icons.add_rounded),
-                              visualDensity: VisualDensity.compact,
-                              tooltip: tr('add'),
-                              onPressed:
-                                  doingSomething ||
-                                      pickedSource == null ||
-                                      !_urlValid ||
-                                      userInput.trim().isEmpty ||
-                                      (pickedSource!
-                                              .combinedAppSpecificSettingFormItems
-                                              .isNotEmpty &&
-                                          !additionalSettingsValid)
-                                  ? null
-                                  : () {
-                                      settingsProvider.selectionClick();
-                                      addApp(context);
-                                    },
-                            ),
-                    ],
-                  ),
+                  _buildUrlRow(context, settingsProvider, doingSomething),
                   if (pickedSource != null) ...[
                     const SizedBox(height: 13),
-                    GeneratedForm(
-                      tileMode: true,
-                      items: [
-                        [
-                          GeneratedFormDropdown(
-                            'overrideSource',
-                            value: pickedSourceOverride ?? '',
-                            [
-                              MapEntry('', tr('none')),
-                              ...sourceProvider.sources
-                                  .where(
-                                    (s) =>
-                                        s.allowOverride ||
-                                        (pickedSource!.sourceIdentifier ==
-                                            s.sourceIdentifier),
-                                  )
-                                  .map(
-                                    (s) => MapEntry(s.sourceIdentifier, s.name),
-                                  ),
-                            ],
-                            label: tr('overrideSource'),
-                          ),
-                        ],
-                      ],
-                      onValueChanges: (values, valid, isBuilding) {
-                        final newOverride =
-                            (values['overrideSource'] == null ||
-                                values['overrideSource'] == '')
-                            ? null
-                            : values['overrideSource'] as String?;
-                        setSourceOverride(newOverride);
-                      },
-                    ),
+                    _buildSourceOverrideField(context),
                   ],
                   if (shouldShowSearchBar) ...[
                     const SizedBox(height: 13),
-                    Row(
-                      children: [
-                        Expanded(
-                          child: GeneratedForm(
-                            tileMode: true,
-                            items: [
-                              [
-                                GeneratedFormTextField(
-                                  'searchSomeSources',
-                                  label: tr('searchSomeSourcesLabel'),
-                                  required: false,
-                                ),
-                              ],
-                            ],
-                            onValueChanges: (values, valid, isBuilding) {
-                              if (values.isNotEmpty && valid && !isBuilding) {
-                                setState(() {
-                                  searchQuery = values['searchSomeSources']!
-                                      .trim();
-                                });
-                              }
-                            },
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        searching
-                            ? const Padding(
-                                padding: EdgeInsets.all(12),
-                                child: SizedBox(
-                                  width: 20,
-                                  height: 20,
-                                  child: CircularProgressIndicator(
-                                    strokeWidth: 2,
-                                  ),
-                                ),
-                              )
-                            : IconButton(
-                                icon: const Icon(Icons.search_rounded),
-                                visualDensity: VisualDensity.compact,
-                                tooltip: tr('search'),
-                                onPressed: doingSomething
-                                    ? null
-                                    : () => runSearch(context),
-                              ),
-                      ],
-                    ),
+                    _buildSearchRow(doingSomething),
                   ],
-                  if (pickedSource != null)
-                    FutureBuilder(
-                      future: _sourceNoteFuture,
-                      builder: (ctx, val) {
-                        if (val.data != null && val.data!.isNotEmpty) {
-                          return Padding(
-                            padding: const EdgeInsets.fromLTRB(0, 16, 0, 0),
-                            child: ConnectedCard(
-                              isFirst: true,
-                              isLast: true,
-                              padding: const EdgeInsets.all(16),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    pickedSource!.name,
-                                    style: Theme.of(context)
-                                        .textTheme
-                                        .titleMedium
-                                        ?.copyWith(
-                                          color: Theme.of(
-                                            context,
-                                          ).colorScheme.primary,
-                                          fontWeight: FontWeight.bold,
-                                        ),
-                                  ),
-                                  Padding(
-                                    padding: const EdgeInsets.only(top: 4),
-                                    child: Text(
-                                      val.data!,
-                                      style: Theme.of(
-                                        context,
-                                      ).textTheme.bodySmall,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          );
-                        }
-                        return const SizedBox.shrink();
-                      },
-                    ),
+                  if (pickedSource != null) _buildSourceNoteCard(context),
                   if (pickedSource != null)
                     _getAdditionalOptsCol(context, settingsProvider),
                 ],
@@ -939,6 +786,198 @@ class AddAppPageState extends State<AddAppPage> {
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildUrlRow(
+    BuildContext context,
+    SettingsProvider settingsProvider,
+    bool doingSomething,
+  ) {
+    return Row(
+      children: [
+        Expanded(
+          child: GeneratedForm(
+            key: Key('url-$urlInputKey'),
+            tileMode: true,
+            items: [
+              [
+                GeneratedFormTextField(
+                  'appSourceURL',
+                  label: tr('appSourceURL'),
+                  value: userInput,
+                  required: false,
+                  additionalValidators: [
+                    (value) {
+                      if (value == null || value.trim().isEmpty) {
+                        return null;
+                      }
+                      try {
+                        sourceProvider
+                            .getSource(
+                              value,
+                              overrideSource: pickedSourceOverride,
+                            )
+                            .standardizeUrl(value);
+                      } catch (e) {
+                        return e is String
+                            ? e
+                            : e is ObtainiumError
+                            ? e.toString()
+                            : tr('error');
+                      }
+                      return null;
+                    },
+                  ],
+                ),
+              ],
+            ],
+            onValueChanges: (values, valid, isBuilding) {
+              changeUserInput(values['appSourceURL']!, valid, isBuilding);
+            },
+          ),
+        ),
+        const SizedBox(width: 8),
+        gettingAppInfo
+            ? _smallSpinner()
+            : IconButton(
+                icon: const Icon(Icons.add_rounded),
+                visualDensity: VisualDensity.compact,
+                tooltip: tr('add'),
+                onPressed:
+                    doingSomething ||
+                        pickedSource == null ||
+                        !_urlValid ||
+                        userInput.trim().isEmpty ||
+                        (pickedSource!
+                                .combinedAppSpecificSettingFormItems
+                                .isNotEmpty &&
+                            !additionalSettingsValid)
+                    ? null
+                    : () {
+                        settingsProvider.selectionClick();
+                        addApp(context);
+                      },
+              ),
+      ],
+    );
+  }
+
+  Widget _buildSourceOverrideField(BuildContext context) {
+    return GeneratedForm(
+      tileMode: true,
+      items: [
+        [
+          GeneratedFormDropdown(
+            'overrideSource',
+            value: pickedSourceOverride ?? '',
+            [
+              MapEntry('', tr('none')),
+              ...sourceProvider.sources
+                  .where(
+                    (s) =>
+                        s.allowOverride ||
+                        (pickedSource!.sourceIdentifier == s.sourceIdentifier),
+                  )
+                  .map((s) => MapEntry(s.sourceIdentifier, s.name)),
+            ],
+            label: tr('overrideSource'),
+          ),
+        ],
+      ],
+      onValueChanges: (values, valid, isBuilding) {
+        final newOverride =
+            (values['overrideSource'] == null || values['overrideSource'] == '')
+            ? null
+            : values['overrideSource'] as String?;
+        setSourceOverride(newOverride);
+      },
+    );
+  }
+
+  Widget _buildSearchRow(bool doingSomething) {
+    return Row(
+      children: [
+        Expanded(
+          child: GeneratedForm(
+            tileMode: true,
+            items: [
+              [
+                GeneratedFormTextField(
+                  'searchSomeSources',
+                  label: tr('searchSomeSourcesLabel'),
+                  required: false,
+                ),
+              ],
+            ],
+            onValueChanges: (values, valid, isBuilding) {
+              if (values.isNotEmpty && valid && !isBuilding) {
+                setState(() {
+                  searchQuery = values['searchSomeSources']!.trim();
+                });
+              }
+            },
+          ),
+        ),
+        const SizedBox(width: 8),
+        searching
+            ? _smallSpinner()
+            : IconButton(
+                icon: const Icon(Icons.search_rounded),
+                visualDensity: VisualDensity.compact,
+                tooltip: tr('search'),
+                onPressed: doingSomething ? null : () => runSearch(context),
+              ),
+      ],
+    );
+  }
+
+  Widget _buildSourceNoteCard(BuildContext context) {
+    return FutureBuilder(
+      future: _sourceNoteFuture,
+      builder: (ctx, val) {
+        if (val.data != null && val.data!.isNotEmpty) {
+          return Padding(
+            padding: const EdgeInsets.fromLTRB(0, 16, 0, 0),
+            child: ConnectedCard(
+              isFirst: true,
+              isLast: true,
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    pickedSource!.name,
+                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                      color: Theme.of(context).colorScheme.primary,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.only(top: 4),
+                    child: Text(
+                      val.data!,
+                      style: Theme.of(context).textTheme.bodySmall,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          );
+        }
+        return const SizedBox.shrink();
+      },
+    );
+  }
+
+  Widget _smallSpinner() {
+    return const Padding(
+      padding: EdgeInsets.all(12),
+      child: SizedBox(
+        width: 20,
+        height: 20,
+        child: CircularProgressIndicator(strokeWidth: 2),
       ),
     );
   }

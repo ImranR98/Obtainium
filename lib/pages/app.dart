@@ -1,7 +1,7 @@
 import 'dart:async';
 
 import 'package:easy_localization/easy_localization.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_markdown_plus/flutter_markdown_plus.dart';
 import 'package:markdown/markdown.dart' as md;
 import 'package:obtainium/components/app_list_tile.dart';
@@ -19,6 +19,7 @@ import 'package:obtainium/providers/source_provider.dart';
 import 'package:obtainium/custom_errors.dart';
 import 'package:obtainium/utils/locale_utils.dart';
 import 'package:obtainium/main.dart';
+import 'package:obtainium/utils/nav_helper.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher_string.dart';
@@ -46,7 +47,7 @@ class AppPage extends StatefulWidget {
 class _AppPageState extends State<AppPage> {
   late final AppsProvider appsProvider;
   late final SettingsProvider settingsProvider;
-  late final String appId;
+  late String appId;
   bool _initialized = false;
 
   late final SourceProvider _sourceProvider;
@@ -62,20 +63,38 @@ class _AppPageState extends State<AppPage> {
   int? _appCacheSig;
   AppInMemory? _appCache;
 
+  String? _aboutCacheKey;
+  Widget? _aboutCache;
+
   // Best-effort download-size probe for the currently-selected APK URL.
   String? _sizeProbeKey;
   int? _probedDownloadSize;
 
   void _maybeProbeDownloadSize(AppInMemory app) {
-    if (app.app.apkUrls.isEmpty) return;
-    final idx =
+    final String? releaseUrl = app.app.releaseUrl;
+    final bool hasReleaseUrl = releaseUrl != null && releaseUrl.isNotEmpty;
+    final int apkIndex =
         (app.app.preferredApkIndex >= 0 &&
             app.app.preferredApkIndex < app.app.apkUrls.length)
         ? app.app.preferredApkIndex
         : 0;
-    final url = app.app.apkUrls[idx].value;
-    if (url.isEmpty || url == 'placeholder') return;
-    final key = '${app.app.id}|$url';
+    final List<String> urls = app.app.apkUrls.isNotEmpty
+        ? splitMultiApkUrl(
+            app.app.apkUrls[apkIndex].value,
+          ).where((u) => u.isNotEmpty && u != 'placeholder').toList()
+        : const [];
+    final String? key = urls.isNotEmpty
+        ? '${app.app.id}|${app.app.apkUrls[apkIndex].value}'
+        : hasReleaseUrl
+        ? '${app.app.id}|$releaseUrl'
+        : null;
+    if (key == null) {
+      if (_sizeProbeKey != null || _probedDownloadSize != null) {
+        _sizeProbeKey = null;
+        setState(() => _probedDownloadSize = null);
+      }
+      return;
+    }
     if (key == _sizeProbeKey) return;
     _sizeProbeKey = key;
     _probedDownloadSize = null;
@@ -85,28 +104,50 @@ class _AppPageState extends State<AppPage> {
           app.app.url,
           overrideSource: app.app.overrideSource,
         );
-        final resolvedUrl = await source.assetUrlPrefetchModifier(
-          url,
-          app.app.url,
-          app.app.additionalSettings,
-        );
-        final headers = await source.getRequestHeaders(
-          app.app.additionalSettings,
-          resolvedUrl,
-          forAPKDownload: true,
-        );
-        final size = await getDownloadSize(
-          resolvedUrl,
-          headers: headers,
-          allowInsecure: app.app.settings.getBool('allowInsecure'),
-          enableCertificatePinning: settingsProvider.enableCertificatePinning
-        );
-        if (mounted && _sizeProbeKey == key && size != null) {
-          setState(() => _probedDownloadSize = size);
+        if (urls.isNotEmpty) {
+          // A split set is downloaded in full, so report the combined size.
+          final sizes = await Future.wait(
+            urls.map((url) async {
+              final resolvedUrl = await source.assetUrlPrefetchModifier(
+                url,
+                app.app.url,
+                app.app.additionalSettings,
+              );
+              final headers = await source.getRequestHeaders(
+                app.app.additionalSettings,
+                resolvedUrl,
+                forAPKDownload: true,
+              );
+              return getDownloadSize(
+                resolvedUrl,
+                headers: headers,
+                allowInsecure: app.app.settings.getBool('allowInsecure'),
+                enableCertificatePinning:
+                    settingsProvider.enableCertificatePinning,
+              );
+            }),
+          );
+          final knownSizes = sizes.whereType<int>();
+          if (mounted && _sizeProbeKey == key && knownSizes.isNotEmpty) {
+            setState(
+              () => _probedDownloadSize = knownSizes.reduce((a, b) => a + b),
+            );
+          }
+        } else {
+          // Track-only sources (e.g. APKMirror) have no direct APK URL; let the
+          // source resolve the size from its release page instead.
+          final size = await source.resolveDownloadSize(
+            app.app.url,
+            app.app.additionalSettings,
+            releaseUrl: releaseUrl,
+          );
+          if (mounted && _sizeProbeKey == key && size != null) {
+            setState(() => _probedDownloadSize = size);
+          }
         }
       } catch (e) {
         // Best-effort only: leave the size unknown when it can't be resolved.
-        AppLogger.info('Size probe failed for $url: $e');
+        AppLogger.info('Size probe failed: $e');
       }
     }();
   }
@@ -130,8 +171,14 @@ class _AppPageState extends State<AppPage> {
     // UI updates until the WebView has finished loading to avoid
     // predictive-back crashes.
     if (_initialized && oldWidget.appId != widget.appId) {
+      // This state object can be reused for a different app (two-pane layout
+      // and list reuse); keep actions pointed at the currently shown app.
+      appId = widget.appId;
       prevApp = null;
+      _sizeProbeKey = null;
+      _probedDownloadSize = null;
       webViewLoaded = false;
+      _webViewError = null;
       _pendingAppIdChange = true;
       if (webViewReady) {
         _pendingAppIdChange = false;
@@ -202,7 +249,6 @@ class _AppPageState extends State<AppPage> {
   int appSignature(AppInMemory a) {
     final app = a.app;
     return Object.hashAll([
-      a.downloadProgress,
       identityHashCode(a.icon),
       identityHashCode(a.installedInfo),
       app.id,
@@ -314,11 +360,18 @@ class _AppPageState extends State<AppPage> {
     Map<String, dynamic> values = {};
     return Navigator.of(context).push<Map<String, dynamic>>(
       MaterialPageRoute(
+        traversalEdgeBehavior: traversalEdgeBehaviorFor(context),
         builder: (ctx) => PopScope<Map<String, dynamic>>(
           // Leaving the page saves the settings, so there is no Continue button.
           canPop: false,
           onPopInvokedWithResult: (didPop, result) {
             if (didPop) return;
+            // While a text field is being edited, the first BACK only
+            // dismisses the keyboard; it must not also save and leave.
+            if (isEditingTextField()) {
+              FocusManager.instance.primaryFocus?.unfocus();
+              return;
+            }
             Navigator.of(ctx).pop(values);
           },
           child: Scaffold(
@@ -327,7 +380,7 @@ class _AppPageState extends State<AppPage> {
               slivers: [
                 SliverAppBar(
                   pinned: true,
-                  automaticallyImplyLeading: false,
+                  automaticallyImplyLeading: true,
                   title: Text(
                     tr('additionalOptsFor', args: [app?.name ?? tr('app')]),
                   ),
@@ -366,6 +419,12 @@ class _AppPageState extends State<AppPage> {
       final s = source;
       final Map<String, dynamic> originalSettings = app.app.additionalSettings;
       final savedValues = Map<String, dynamic>.from(values);
+      // The additional-options form does not include every stored setting
+      // (e.g. the add-time package ID field and source-config overrides such
+      // as credentials), so carry those over instead of dropping them.
+      originalSettings.forEach((key, value) {
+        savedValues.putIfAbsent(key, () => value);
+      });
       app.app = app.app.copyWith(additionalSettings: savedValues);
       if (s?.enforceTrackOnly == true) {
         app.app = app.app.copyWith(
@@ -534,7 +593,7 @@ class _AppPageState extends State<AppPage> {
   }
 
   AppBar _appScreenAppBar() => AppBar(
-    automaticallyImplyLeading: false,
+    automaticallyImplyLeading: widget.onClose == null,
     leading: widget.onClose != null
         ? IconButton(
             icon: const Icon(Icons.close_rounded),
@@ -546,7 +605,6 @@ class _AppPageState extends State<AppPage> {
   Widget _getPrimaryButton(
     BuildContext context,
     AppInMemory? app,
-    AppsProvider appsProvider,
     bool areDownloadsRunning,
   ) {
     final installed = app?.app.installedVersion;
@@ -638,6 +696,17 @@ class _AppPageState extends State<AppPage> {
           },
           icon: const Icon(Icons.more_horiz),
           tooltip: tr('more'),
+        ),
+      if (app?.app.releaseUrl?.isNotEmpty == true)
+        IconButton(
+          onPressed: () => unawaited(
+            launchUrlString(
+              app!.app.releaseUrl!,
+              mode: LaunchMode.externalApplication,
+            ),
+          ),
+          tooltip: tr('openReleasePage'),
+          icon: const Icon(Icons.open_in_new),
         ),
       if (app?.app.installedVersion != null &&
           app?.app.installedVersion != app?.app.latestVersion &&
@@ -810,13 +879,16 @@ class _AppPageState extends State<AppPage> {
     return Semantics(
       button: true,
       label: app.name,
-      child: InkWell(
-        borderRadius: BorderRadius.circular(14),
-        onTap: () {
-          settingsProvider.lightImpact();
-          packageManager.openApp(app.app.id);
-        },
-        child: icon,
+      child: TvFocusRing(
+        borderRadius: 14,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(14),
+          onTap: () {
+            settingsProvider.lightImpact();
+            packageManager.openApp(app.app.id);
+          },
+          child: icon,
+        ),
       ),
     );
   }
@@ -856,6 +928,14 @@ class _AppPageState extends State<AppPage> {
     );
   }
 
+  String _installedVersionLabel(App? app) {
+    var label = appInstalledVersionText(app);
+    if (app?.installedVersion != app?.latestVersion) {
+      label += '\n${app?.latestVersion} ${tr('latest')}';
+    }
+    return label;
+  }
+
   List<Widget> _buildVersionInfoSections(AppInMemory? app) {
     final cs = Theme.of(context).colorScheme;
     final tt = Theme.of(context).textTheme;
@@ -870,18 +950,10 @@ class _AppPageState extends State<AppPage> {
         children: [
           if (trackOnly) _detailNote(tr('xIsTrackOnly', args: [tr('app')])),
           if (pseudo) _detailNote(tr('pseudoVersionInUse')),
-          () {
-            String l = appInstalledVersionText(app?.app);
-            final upToDate =
-                app?.app.installedVersion == app?.app.latestVersion;
-            if (!upToDate) {
-              l += '\n${app?.app.latestVersion} ${tr('latest')}';
-            }
-            return Text(
-              l,
-              style: tt.bodyMedium?.copyWith(fontWeight: FontWeight.bold),
-            );
-          }(),
+          Text(
+            _installedVersionLabel(app?.app),
+            style: tt.bodyMedium?.copyWith(fontWeight: FontWeight.bold),
+          ),
           if (apkCount > 0)
             _detailNote(
               apkCount == 1 ? app!.app.apkUrls[0].key : plural('apk', apkCount),
@@ -956,43 +1028,45 @@ class _AppPageState extends State<AppPage> {
   List<Widget> _buildAboutSection(AppInMemory? app) {
     final about = app?.app.additionalSettings['about'];
     if (about is! String || about.isEmpty) return const [];
-    return [
-      const SliverToBoxAdapter(child: SizedBox(height: AppSpacings.sectionGap)),
-      _buildSection(
-        true,
-        true,
-        children: [
-          MarkdownBody(
-            data: about,
-            styleSheet: MarkdownStyleSheet(
-              blockquoteDecoration: BoxDecoration(
-                color: Theme.of(context).cardColor,
-              ),
-            ),
-            onTapLink: (text, href, title) {
-              if (href != null) {
-                unawaited(
-                  launchUrlString(href, mode: LaunchMode.externalApplication),
-                );
-              }
-            },
-            extensionSet: md.ExtensionSet(
-              md.ExtensionSet.gitHubFlavored.blockSyntaxes,
-              [
-                md.EmojiSyntax(),
-                ...md.ExtensionSet.gitHubFlavored.inlineSyntaxes,
-              ],
+    // Reuse the built MarkdownBody while the content is unchanged: returning
+    // the identical widget instance lets Flutter skip re-parsing it on every
+    // rebuild (download ticks, probes, etc.).
+    if (_aboutCacheKey != about || _aboutCache == null) {
+      _aboutCacheKey = about;
+      _aboutCache = LegacyMaterialBridge(
+        child: MarkdownBody(
+          data: about,
+          styleSheet: MarkdownStyleSheet(
+            blockquoteDecoration: BoxDecoration(
+              color: Theme.of(context).cardColor,
             ),
           ),
-        ],
-      ),
+          onTapLink: (text, href, title) {
+            if (href != null) {
+              unawaited(
+                launchUrlString(href, mode: LaunchMode.externalApplication),
+              );
+            }
+          },
+          extensionSet: md.ExtensionSet(
+            md.ExtensionSet.gitHubFlavored.blockSyntaxes,
+            [
+              md.EmojiSyntax(),
+              ...md.ExtensionSet.gitHubFlavored.inlineSyntaxes,
+            ],
+          ),
+        ),
+      );
+    }
+    return [
+      const SliverToBoxAdapter(child: SizedBox(height: AppSpacings.sectionGap)),
+      _buildSection(true, true, children: [_aboutCache!]),
     ];
   }
 
   List<Widget> _buildSourceInfoSections(
     AppInMemory? app,
     AppsProvider appsProvider,
-    SettingsProvider settingsProvider,
     bool certs,
     bool hasAssets,
   ) {
@@ -1187,12 +1261,7 @@ class _AppPageState extends State<AppPage> {
                 trackOnly,
               ),
               const Spacer(),
-              _getPrimaryButton(
-                context,
-                app,
-                appsProvider,
-                areDownloadsRunning,
-              ),
+              _getPrimaryButton(context, app, areDownloadsRunning),
             ],
           ),
         ),
@@ -1212,7 +1281,10 @@ class _AppPageState extends State<AppPage> {
     final bool areDownloadsRunning = context.select<AppsProvider, bool>(
       (p) => p.areDownloadsRunning(),
     );
-    final _ = context.select<AppsProvider, double?>(
+    // Subscribe to this app's download progress so the page rebuilds as it
+    // changes: DownloadState.progress is a ValueNotifier and does not notify
+    // the provider's listeners.
+    context.select<AppsProvider, double?>(
       (p) => p.apps[widget.appId]?.downloadProgress,
     );
 
@@ -1223,7 +1295,11 @@ class _AppPageState extends State<AppPage> {
         app.downloadProgress == null &&
         !updating &&
         !areDownloadsRunning) {
-      _maybeProbeDownloadSize(app);
+      // Probe from a post-frame callback: build must stay side-effect free, and
+      // the key guard inside makes repeat scheduling a cheap no-op.
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) _maybeProbeDownloadSize(app);
+      });
     }
     final source = this.source;
 
@@ -1252,15 +1328,10 @@ class _AppPageState extends State<AppPage> {
           ? FloatingActionButton(
               onPressed: () {
                 settingsProvider.selectionClick();
-                Navigator.push(
+                NavHelper.pushAppPage(
                   context,
-                  MaterialPageRoute(
-                    builder: (_) => AppPage(
-                      appId: widget.appId,
-                      showOppositeOfPreferredView: true,
-                      onClose: widget.onClose,
-                    ),
-                  ),
+                  widget.appId,
+                  showOppositeOfPreferredView: true,
                 );
               },
               tooltip: tr('more'),
@@ -1298,7 +1369,6 @@ class _AppPageState extends State<AppPage> {
                         ..._buildSourceInfoSections(
                           app,
                           appsProvider,
-                          settingsProvider,
                           certs,
                           hasAssets,
                         ),
