@@ -155,7 +155,7 @@ class Uptodown extends AppSource {
       if (version == null || version.isEmpty) {
         throw NoVersionError();
       }
-      if (fileId == null) {
+      if (fileId == null || (extension != 'apk' && extension != 'xapk')) {
         throw NoAPKError();
       }
       final apkUrl = '$standardUrl/$fileId-x';
@@ -171,12 +171,7 @@ class Uptodown extends AppSource {
       }
       return APKDetails(
         version,
-        [
-          MapEntry(
-            '$appId.${(extension != null && extension.isNotEmpty) ? extension : 'apk'}',
-            apkUrl,
-          ),
-        ],
+        [MapEntry('$appId.$extension', apkUrl)],
         AppNames(author, appName),
         releaseDate: relDate,
       );
@@ -218,38 +213,30 @@ class Uptodown extends AppSource {
     final appNameElement = html.querySelector('#detail-app-name');
     final String? name = appNameElement?.text.trim();
     final String? author = html.querySelector('#author-link')?.text.trim();
-    // Pair each technical-information row's <th> label with its value <td>, so
-    // values are found by label instead of by position (which breaks whenever
-    // Uptodown inserts or removes a row).
+    // Read technical information by label (URL normalization should force English).
+    // Fall back to icons when labels are missing or still localized.
+    const iconLabels = {
+      'icon-40-package': 'package name',
+      'icon-40-date': 'date',
+      'icon-40-type': 'file type',
+    };
     final Map<String, String> info = {};
     for (final row in html.querySelectorAll('#technical-information tr')) {
-      final label = row.querySelector('th')?.text.trim().toLowerCase();
-      if (label == null || label.isEmpty) continue;
+      var label = row.querySelector('th')?.text.trim().toLowerCase();
+      if (!iconLabels.values.contains(label)) {
+        final src = row.querySelector('td img')?.attributes['src'];
+        label = iconLabels[Uri.tryParse(src ?? '')?.fragment];
+      }
+      if (label == null) continue;
       final cells = row.querySelectorAll('td');
       final value = cells.isEmpty ? null : cells.last.text.trim();
       if (value != null && value.isNotEmpty) {
         info[label] = value;
       }
     }
-    // Fallback for older layouts. Indexing is guarded because the old
-    // elementAtOrNull calls threw on negative indices.
-    final List<String> detailElements = html
-        .querySelectorAll('#technical-information td')
-        .map((e) => e.text.trim())
-        .where((e) => e.isNotEmpty)
-        .toList();
-    final String? appId = info['package name'] ?? detailElements.lastOrNull;
-    final String? dateStr =
-        info['date'] ??
-        (detailElements.length >= 5
-            ? detailElements[detailElements.length - 5]
-            : null);
-    final String? extension =
-        (info['file type'] ??
-                (detailElements.length >= 4
-                    ? detailElements[detailElements.length - 4]
-                    : null))
-            ?.toLowerCase();
+    final String? appId = info['package name'];
+    final String? dateStr = info['date'];
+    final String? extension = info['file type']?.toLowerCase();
     final String? fileId =
         html
             .querySelector('#detail-download-button')
