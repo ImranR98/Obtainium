@@ -368,3 +368,661 @@ class SourceProvider {
     return [apps, errors];
   }
 }
+
+// ========================================================================
+// TypedSettings — type-safe wrapper around App.additionalSettings.
+// ========================================================================
+
+/// Type-safe wrapper around [App.additionalSettings] that eliminates
+/// manual casts and null checks when reading per-source configuration values.
+///
+/// Usage:
+/// ```dart
+/// if (app.settings.getBool('trackOnly')) { ... }
+/// String? regex = app.settings.getStringOrNull('apkFilterRegEx');
+/// ```
+class TypedSettings {
+  final Map<String, dynamic> _raw;
+
+  const TypedSettings(Map<String, dynamic> raw) : _raw = raw;
+
+  bool getBool(String key, {bool defaultValue = false}) {
+    final val = _raw[key];
+    if (val == null) return defaultValue;
+    if (val is bool) return val;
+    if (val is String) return val == 'true';
+    return defaultValue;
+  }
+
+  int? getIntOrNull(String key) {
+    final val = _raw[key];
+    if (val is int) return val;
+    if (val is String) return int.tryParse(val);
+    return null;
+  }
+
+  String? getStringOrNull(String key) {
+    final val = _raw[key];
+    if (val == null) return null;
+    if (val is String) return val.isNotEmpty ? val : null;
+    return val.toString();
+  }
+
+  String getString(String key, {String defaultValue = ''}) =>
+      getStringOrNull(key) ?? defaultValue;
+
+  @override
+  String toString() => _raw.toString();
+}
+
+// ========================================================================
+// HttpService — HTTP client creation, streaming requests, and error mapping.
+// ========================================================================
+
+class HttpService {
+  static const int maxRedirects = 10;
+
+  /// Headers that must never be forwarded to a different origin on redirect.
+  static const Set<String> sensitiveRedirectHeaders = {
+    'authorization',
+    'proxy-authorization',
+    'cookie',
+  };
+
+  static const Map<String, List<String>> _certificatePinAssetNames = {
+    'github.com': [
+      'assets/ca-certs/sectigo-pub-serv-auth-r46.crt',
+      'assets/ca-certs/sectigo-pub-serv-auth-e46.crt',
+
+      // redirects from api.github.com for obtaining release assets point to
+      // release-assets.githubusercontent.com which uses ISRG (Let's Encrypt)
+      // adding that as another section doesn't work because of
+      // HttpClient follows redirects (as intended)
+      'assets/ca-certs/isrg-root-x1.crt',
+      'assets/ca-certs/isrg-root-x2.crt',
+      'assets/ca-certs/isrg-root-ye.crt',
+      'assets/ca-certs/isrg-root-yr.crt',
+    ],
+    'codeberg.org': [
+      'assets/ca-certs/isrg-root-x1.crt',
+      'assets/ca-certs/isrg-root-x2.crt',
+      'assets/ca-certs/isrg-root-ye.crt',
+      'assets/ca-certs/isrg-root-yr.crt',
+    ],
+    'gitlab.com': [
+      'assets/ca-certs/sectigo-pub-serv-auth-r46.crt',
+      'assets/ca-certs/sectigo-pub-serv-auth-e46.crt',
+    ],
+    'rustore.ru': [
+      'assets/ca-certs/harica-tls-root-2021-rsa.crt',
+      'assets/ca-certs/harica-tls-root-2021-ecc.crt',
+      'assets/ca-certs/russian-mintsifry-root.crt',
+    ],
+  };
+
+  static final Map<String, Future<List<Uint8List>>> _certificatePins =
+      _certificatePinAssetNames.map(
+        (host, assets) => MapEntry(host, _loadCertificateFromAsset(assets)),
+      );
+
+  static Future<List<Uint8List>> _loadCertificateFromAsset(
+    List<String> assetsPath,
+  ) async {
+    final List<Uint8List> certsBytes = [];
+    for (final certPath in assetsPath) {
+      final cert = await rootBundle.load(certPath);
+      certsBytes.add(cert.buffer.asUint8List());
+    }
+    return certsBytes;
+  }
+
+  static String _extractRootHost(String host) {
+    final parts = host.split('.');
+    return parts.length > 2
+        ? parts.sublist(parts.length - 2).join('.')
+        : host;
+  }
+
+  /// Resolves TLS policy using the same exact-host-then-root-host lookup used
+  /// by [_createCertPinning]. A null result means system trust only.
+  static Map<String, dynamic>? tlsPolicyForUrl(
+    String url, {
+    required bool certificatePinning,
+  }) {
+    final host = Uri.parse(url).host;
+    final rootHost = _extractRootHost(host);
+    final policyHost = certificatePinning
+        ? (_certificatePinAssetNames.containsKey(host)
+              ? host
+              : _certificatePinAssetNames.containsKey(rootHost)
+              ? rootHost
+              : null)
+        : null;
+
+    if (policyHost != null) {
+      return {
+        'certificates': _certificatePinAssetNames[policyHost],
+        'useSystemRoots': false,
+      };
+    }
+
+    // RuStore needs its additional CA even when certificate pinning is off.
+    if (!certificatePinning &&
+        (host == 'rustore.ru' || rootHost == 'rustore.ru')) {
+      return {
+        'certificates': ['assets/ca-certs/russian-mintsifry-root.crt'],
+        'useSystemRoots': true,
+      };
+    }
+    return null;
+  }
+
+  Future<SecurityContext?> _createCertPinning(String url) async {
+    final uri = Uri.parse(url);
+    final host = uri.host;
+    final rootHost = _extractRootHost(host);
+    if (_certificatePins.containsKey(host)) {
+      final certsBytes = await _certificatePins[host]!;
+      final securityContext = SecurityContext();
+      for (final certBytes in certsBytes) {
+        securityContext.setTrustedCertificatesBytes(certBytes);
+      }
+      return securityContext;
+    }
+    else if (_certificatePins.containsKey(rootHost)) {
+      final certsBytes = await _certificatePins[rootHost]!;
+      final securityContext = SecurityContext();
+      for (final certBytes in certsBytes) {
+        securityContext.setTrustedCertificatesBytes(certBytes);
+      }
+      return securityContext;
+    }
+    else {
+      return null;
+    }
+  }
+
+  /* Basically RuStore switched partially (and in the future it may be fully)
+     to russian government Mintsifry CA, which isnt trusted by Android nor
+     Chrome Root Store. This is workaround to trust Mintsifry CA for network
+     requests made to RuStore domains and subdomains
+   */
+  Future<SecurityContext> _ruStoreWorkaroundSecurityContext() async {
+    final securityContext = SecurityContext(withTrustedRoots: true);
+    final cert = await rootBundle.load('assets/ca-certs/russian-mintsifry-root.crt');
+    securityContext.setTrustedCertificatesBytes(cert.buffer.asUint8List());
+    return securityContext;
+  }
+
+  Future<HttpClient> createHttpClient(
+    Map<String, dynamic> additionalSettings,
+  ) async {
+    final insecure = additionalSettings['allowInsecure'] == true;
+    final url = additionalSettings['url'] as String;
+    final pinning = additionalSettings['enableCertificatePinning'] == true;
+    SecurityContext? securityContext;
+    final host = Uri.parse(url).host;
+    if (pinning) {
+      securityContext = await _createCertPinning(url);
+    }
+    else if (_extractRootHost(host) == 'rustore.ru') {
+      securityContext = await _ruStoreWorkaroundSecurityContext();
+    }
+    final client = securityContext != null
+        ? HttpClient(context: securityContext)
+        : HttpClient();
+    if (insecure) {
+      client.badCertificateCallback =
+          (X509Certificate cert, String host, int port) {
+            if (_certificatePins.containsKey(host) && pinning) {
+              return false;
+            }
+            return true;
+          };
+    }
+    return client;
+  }
+
+  /// Whether two URIs share the same origin (scheme, host, and port — Dart
+  /// normalizes default ports for http/https, so explicit and implicit
+  /// default ports compare equal).
+  static bool isSameOrigin(Uri a, Uri b) =>
+      a.scheme.toLowerCase() == b.scheme.toLowerCase() &&
+      a.host.toLowerCase() == b.host.toLowerCase() &&
+      a.port == b.port;
+
+  String ensureAbsoluteUrl(String ambiguousUrl, Uri referenceAbsoluteUrl) {
+    try {
+      ambiguousUrl = ambiguousUrl.trim();
+      if (Uri.parse(ambiguousUrl).isAbsolute) {
+        return ambiguousUrl;
+      }
+    } on FormatException {
+      // Non-parsable URL, fall through to resolve logic below
+    }
+    return referenceAbsoluteUrl.resolve(ambiguousUrl).toString();
+  }
+
+  /// Performs an HTTP request with redirect following, returning the final URL, client, and streamed response.
+  Future<MapEntry<Uri, MapEntry<HttpClient, HttpClientResponse>>>
+  sourceRequestStreamResponse(
+    String method,
+    Map<String, String>? requestHeaders,
+    Map<String, dynamic> additionalSettings, {
+    bool followRedirects = true,
+    Object? postBody,
+  }) async {
+    final url = additionalSettings['url'] as String;
+    var currentUrl = Uri.parse(url);
+    var redirectCount = 0;
+    List<Cookie> cookies = [];
+    HttpClient? httpClient;
+    while (redirectCount < maxRedirects) {
+      httpClient = await createHttpClient(additionalSettings);
+      final request = await httpClient.openUrl(method, currentUrl);
+      if (requestHeaders != null) {
+        requestHeaders.forEach((key, value) {
+          request.headers.set(key, value);
+        });
+      }
+      request.cookies.addAll(cookies);
+      request.followRedirects = false;
+      if (postBody != null) {
+        if (postBody is String) {
+          request.write(postBody);
+        } else {
+          request.headers.contentType = ContentType.json;
+          request.write(jsonEncode(postBody));
+        }
+      }
+      final response = await request.close();
+
+      if (followRedirects &&
+          (response.statusCode >= 300 && response.statusCode <= 399)) {
+        final location = response.headers.value(HttpHeaders.locationHeader);
+        if (location != null) {
+          final nextUrl = Uri.parse(ensureAbsoluteUrl(location, currentUrl));
+          if (currentUrl.scheme == 'https' &&
+              nextUrl.scheme == 'http' &&
+              additionalSettings['allowInsecure'] != true &&
+              additionalSettings['allowInsecureRedirects'] != true) {
+            // Never follow a redirect that downgrades to cleartext HTTP.
+            httpClient.close();
+            throw ObtainiumError(tr('insecureRedirect'));
+          }
+          if (!isSameOrigin(currentUrl, nextUrl)) {
+            // Do not forward credentials or session cookies to a
+            // different origin.
+            requestHeaders = requestHeaders == null
+                ? null
+                : (Map<String, String>.from(requestHeaders)..removeWhere(
+                    (key, _) =>
+                        sensitiveRedirectHeaders.contains(key.toLowerCase()),
+                  ));
+            cookies = [];
+          } else {
+            cookies = response.cookies;
+          }
+          currentUrl = nextUrl;
+          redirectCount++;
+          httpClient.close();
+          httpClient = null;
+          continue;
+        }
+      }
+
+      return MapEntry(currentUrl, MapEntry(httpClient, response));
+    }
+    httpClient?.close();
+    throw ObtainiumError(tr('tooManyRedirects'));
+  }
+
+  Future<http.Response> httpClientResponseStreamToFinalResponse(
+    HttpClient httpClient,
+    String method,
+    String url,
+    HttpClientResponse response,
+  ) async {
+    try {
+      final bytes = (await response.fold<BytesBuilder>(
+        BytesBuilder(),
+        (b, d) => b..add(d),
+      )).toBytes();
+
+      final headers = <String, String>{};
+      response.headers.forEach((name, values) {
+        headers[name] = values.join(', ');
+      });
+
+      return http.Response.bytes(
+        bytes,
+        response.statusCode,
+        headers: headers,
+        request: http.Request(method, Uri.parse(url)),
+      );
+    } finally {
+      httpClient.close();
+    }
+  }
+
+  ObtainiumError getHttpError(http.Response res) {
+    if (res.statusCode == 404) return NoReleasesError();
+    if (res.statusCode == 429 || res.statusCode == 403) {
+      final retryAfter = res.headers['retry-after'];
+      final secs = retryAfter != null ? int.tryParse(retryAfter) : null;
+      if (secs != null) return RateLimitError((secs / 60).ceil());
+      return RateLimitError(1);
+    }
+    return ObtainiumError(
+      (res.reasonPhrase != null && res.reasonPhrase!.isNotEmpty)
+          ? res.reasonPhrase!
+          : tr('errorWithHttpStatusCode', args: [res.statusCode.toString()]),
+      code: 'HTTP_ERROR',
+    );
+  }
+}
+
+// ========================================================================
+// VersionService — regex-based version extraction, validation, and matching.
+// ========================================================================
+
+class VersionService {
+  static const defaultMatchGroup = '0';
+
+  static final List<String> standardVersionRegExStrings =
+      _generateStandardVersionRegExStrings();
+
+  static final List<MapEntry<String, RegExp>> strictStandardVersionRegExes =
+      standardVersionRegExStrings
+          .map((p) => MapEntry(p, RegExp('^$p\$')))
+          .toList();
+
+  static final List<MapEntry<String, RegExp>> looseStandardVersionRegExes =
+      standardVersionRegExStrings.map((p) => MapEntry(p, RegExp(p))).toList();
+
+  static List<String> _generateStandardVersionRegExStrings() {
+    final basics = [
+      '[0-9]+',
+      '[0-9]+\\.[0-9]+',
+      '[0-9]+\\.[0-9]+\\.[0-9]+',
+      '[0-9]+\\.[0-9]+\\.[0-9]+\\.[0-9]+',
+    ];
+    final preSuffixes = ['-', '\\+'];
+    final suffixes = [
+      'alpha',
+      'beta',
+      'rc',
+      'pre',
+      'dev',
+      'snapshot',
+      'nightly',
+      'ose',
+      '[0-9]+',
+    ];
+    final finals = ['\\+[0-9]+', '[0-9]+'];
+    final List<String> results = [];
+    for (var b in basics) {
+      results.add(b);
+      for (var p in preSuffixes) {
+        for (var s in suffixes) {
+          results.add('$b$s');
+          results.add('$b$p$s');
+          for (var f in finals) {
+            results.add('$b$s$f');
+            results.add('$b$p$s$f');
+          }
+        }
+      }
+    }
+    return results.toSet().toList();
+  }
+
+  String? regExValidator(String? value) {
+    if (value == null || value.isEmpty) {
+      return null;
+    }
+    try {
+      RegExp(value);
+    } catch (e) {
+      return tr('invalidRegEx');
+    }
+    return null;
+  }
+
+  /// Replaces `$N` references in a string with the corresponding regex match groups.
+  String? replaceMatchGroupsInString(
+    RegExpMatch match,
+    String matchGroupString,
+  ) {
+    if (RegExp('^\\d+\$').hasMatch(matchGroupString)) {
+      matchGroupString = '\$$matchGroupString';
+    }
+    final numberRegex = RegExp(r'\$\d+');
+    final numbers = numberRegex.allMatches(matchGroupString);
+    if (numbers.isEmpty) {
+      return null;
+    }
+    var outputString = matchGroupString;
+    for (final numberMatch in numbers) {
+      final number = numberMatch.group(0)!;
+      final matchGroup = match.group(int.parse(number.substring(1))) ?? '';
+      final isEscaped = outputString.contains('\\$number');
+      if (!isEscaped) {
+        outputString = outputString.replaceAll(number, matchGroup);
+      } else {
+        outputString = outputString.replaceAll('\\$number', number);
+      }
+    }
+    return outputString;
+  }
+
+  /// Applies a version extraction regex to a string and returns the captured match group.
+  String? extractVersion(
+    String? versionExtractionRegEx,
+    String? matchGroupString,
+    String stringToCheck,
+  ) {
+    if (versionExtractionRegEx?.isNotEmpty == true) {
+      String? version = stringToCheck;
+      final match = RegExp(versionExtractionRegEx!).allMatches(version);
+      if (match.isEmpty) {
+        throw NoVersionError();
+      }
+      matchGroupString = matchGroupString?.trim() ?? '';
+      if (matchGroupString.isEmpty) {
+        matchGroupString = defaultMatchGroup;
+      }
+      version = replaceMatchGroupsInString(match.last, matchGroupString);
+      if (version?.isNotEmpty != true) {
+        throw NoVersionError();
+      }
+      return version!;
+    } else {
+      return null;
+    }
+  }
+
+  static final Map<String, Set<String>> _strictFormatCache = {};
+  static final Map<String, Set<String>> _looseFormatCache = {};
+  static const int _maxFormatCacheSize = 4096;
+
+  Set<String> findStandardFormatsForVersion(String version, bool strict) {
+    final cache = strict ? _strictFormatCache : _looseFormatCache;
+    final cached = cache[version];
+    if (cached != null) return cached;
+
+    final Set<String> results = {};
+    final patterns = strict
+        ? strictStandardVersionRegExes
+        : looseStandardVersionRegExes;
+    for (var entry in patterns) {
+      if (entry.value.hasMatch(version)) {
+        results.add(entry.key);
+      }
+    }
+    if (cache.length >= _maxFormatCacheSize) cache.clear();
+    cache[version] = results;
+    return results;
+  }
+
+  bool doStringsMatchUnderRegEx(String pattern, String value1, String value2) {
+    final r = RegExp(pattern);
+    final m1 = r.firstMatch(value1);
+    final m2 = r.firstMatch(value2);
+    return m1 != null && m2 != null
+        ? value1.substring(m1.start, m1.end) ==
+              value2.substring(m2.start, m2.end)
+        : false;
+  }
+
+  /// Compares two versions numerically when they share a common non-strict
+  /// standard format. Returns a negative value if [version1] is older than
+  /// [version2], a positive value if it is newer, 0 if they are numerically
+  /// equal, and null if they cannot be compared in a valid way.
+  int? compareVersionsNumerically(String version1, String version2) {
+    final commonFormats = findStandardFormatsForVersion(
+      version1,
+      false,
+    ).intersection(findStandardFormatsForVersion(version2, false));
+    if (commonFormats.isEmpty) {
+      return null;
+    }
+    final digitRunRegex = RegExp('[0-9]+');
+    String mostSpecific = commonFormats.first;
+    var mostSpecificRuns = digitRunRegex.allMatches(mostSpecific).length;
+    for (final format in commonFormats) {
+      final runs = digitRunRegex.allMatches(format).length;
+      if (runs > mostSpecificRuns ||
+          (runs == mostSpecificRuns && format.length > mostSpecific.length)) {
+        mostSpecific = format;
+        mostSpecificRuns = runs;
+      }
+    }
+    List<int> extractNumericRuns(String version) {
+      final match = RegExp(mostSpecific).firstMatch(version);
+      return digitRunRegex
+          .allMatches(match!.group(0)!)
+          .map((e) => int.parse(e.group(0)!))
+          .toList();
+    }
+
+    final runs1 = extractNumericRuns(version1);
+    final runs2 = extractNumericRuns(version2);
+    for (var i = 0; i < runs1.length; i++) {
+      if (runs1[i] != runs2[i]) {
+        return runs1[i] > runs2[i] ? 1 : -1;
+      }
+    }
+    return 0;
+  }
+}
+
+/// Whether [app] should be presented as having an update available: its
+/// installed version differs from its latest version and is not numerically
+/// newer than it. Numeric comparison only applies when both versions share a
+/// common non-strict standard format (see
+/// [VersionService.compareVersionsNumerically]) and the "hide downgrades"
+/// setting is enabled — otherwise a downgrade is still presented as an update.
+bool isAppUpdateable(App app, SettingsProvider settingsProvider) {
+  final installed = app.installedVersion;
+  final latest = app.latestVersion;
+  if (installed == null || installed == latest) {
+    return false;
+  }
+  if (!settingsProvider.hideDowngrades) {
+    return true;
+  }
+  final comparison = VersionService().compareVersionsNumerically(
+    installed,
+    latest,
+  );
+  return comparison == null || comparison <= 0;
+}
+
+// ========================================================================
+// ApkFilterService — APK file detection, filtering, and arch-splitting.
+// ========================================================================
+
+class ApkFilterService {
+  static const List<String> apkContainerExtensions = [
+    '.apk',
+    '.xapk',
+    '.apkm',
+    '.apks',
+  ];
+
+  static const List<String> archiveExtensions = ['.zip'];
+
+  static const List<String> tarballExtensions = [
+    '.tar.gz',
+    '.tgz',
+    '.tar.bz2',
+    '.tar.xz',
+  ];
+
+  static bool isApkOrContainerFile(
+    String name, {
+    bool includeArchives = false,
+    bool includeTarballs = false,
+  }) {
+    final lower = name.toLowerCase();
+    bool endsWithAny(List<String> exts) => exts.any(lower.endsWith);
+    return endsWithAny(apkContainerExtensions) ||
+        (includeArchives && endsWithAny(archiveExtensions)) ||
+        (includeTarballs && endsWithAny(tarballExtensions));
+  }
+
+  List<MapEntry<String, String>> getApkUrlsFromUrls(List<String> urls) =>
+      urls.map((e) {
+        final segments = e.split('/').where((el) => el.trim().isNotEmpty);
+        final apkSegs = segments.where((s) => isApkOrContainerFile(s));
+        return MapEntry(apkSegs.isNotEmpty ? apkSegs.last : segments.last, e);
+      }).toList();
+
+  List<MapEntry<String, String>> filterApks(
+    List<MapEntry<String, String>> apkUrls,
+    String? apkFilterRegEx,
+    bool? invert,
+  ) {
+    if (apkFilterRegEx?.isNotEmpty == true) {
+      final reg = RegExp(apkFilterRegEx!);
+      apkUrls = apkUrls.where((element) {
+        final hasMatch = reg.hasMatch(element.key);
+        return invert == true ? !hasMatch : hasMatch;
+      }).toList();
+    }
+    return apkUrls;
+  }
+
+  /// Non-canonical ABI names commonly used in APK filenames, mapped to the
+  /// canonical device ABI strings they correspond to (see #3249).
+  static const Map<String, List<String>> abiNameAliases = {
+    'arm64-v8a': ['aarch64', 'arm64'],
+    'armeabi-v7a': ['armv7', 'armeabi'],
+    'x86_64': ['x64'],
+  };
+
+  Future<List<MapEntry<String, String>>> filterApksByArch(
+    List<MapEntry<String, String>> apkUrls,
+    List<String> abis, {
+    bool preferSplits = true, // TODO: Implement preferSplits filtering logic
+  }) async {
+    if (apkUrls.length > 1) {
+      for (var abi in abis) {
+        final variants = [abi, ...?abiNameAliases[abi]];
+        final abiRegex = RegExp(
+          '.*(?:${variants.join('|')}).*',
+          caseSensitive: false,
+        );
+        final urls2 = apkUrls
+            .where((element) => abiRegex.hasMatch(element.key))
+            .toList();
+        if (urls2.isNotEmpty && urls2.length < apkUrls.length) {
+          apkUrls = urls2;
+          break;
+        }
+      }
+    }
+    return apkUrls;
+  }
+}
