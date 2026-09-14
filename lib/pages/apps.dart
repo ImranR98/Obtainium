@@ -1500,7 +1500,7 @@ class _BulkUpdateDialogState extends State<_BulkUpdateDialog> {
                   onPressed: _toggleAll,
                   child: Text(
                     allSelected
-                        ? tr('deselectX', args: [widget.totalApps.toString()])
+                        ? tr('selectedX', args: [widget.totalApps.toString()])
                         : tr('selectAll'),
                   ),
                 ),

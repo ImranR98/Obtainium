@@ -351,6 +351,7 @@
     "selectURLs": "Select URLs",
     "selectX": "Select {}",
     "selectedCategorizeWarning": "This will replace any existing category settings for the selected apps.",
+    "selectedX": "{} selected",
     "selfHostedNote": "The \"{}\" dropdown can be used to reach self-hosted/custom instances of any source.",
     "settings": "Settings",
     "share": "Share",
