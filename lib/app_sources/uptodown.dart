@@ -64,11 +64,19 @@ class Uptodown extends AppSource {
 
   @override
   String sourceSpecificStandardizeURL(String url, {bool forSelection = false}) {
-    url = url.replaceFirst(
-      RegExp(r'\.([a-z]{2,3})\.uptodown\.', caseSensitive: false),
-      '.en.uptodown.',
+    final uri = Uri.parse(
+      standardizeUrlWithRegex(
+        url,
+        subdomainPrefix: r'([^\\.]+\.)+',
+        pathPattern: '',
+      ),
     );
-    return '${standardizeUrlWithRegex(url, subdomainPrefix: r'([^\\.]+\.)+', pathPattern: '')}/android/download';
+    return uri
+        .replace(
+          host: '${uri.host.split('.').first}.en.uptodown.com',
+          path: '/android/download',
+        )
+        .toString();
   }
 
   @override
