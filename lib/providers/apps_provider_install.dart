@@ -61,6 +61,11 @@ const int _bgInstallConfirmAttempts = 20; // 20 × 500ms = 10 seconds
 const int _installConfirmPollAttempts = 300; // 300 × 1s ≈ 5 minutes
 const Duration _installConfirmTimeout = Duration(minutes: 10);
 
+// How long a download retry waits for the user to bring the app back before
+// giving up and reporting the error (#2894). Matches the wait used when an
+// install needs the user to return.
+const Duration _backgroundRetryWait = Duration(minutes: 5);
+
 class _InstallResult {
   final String id;
   final bool willBeSilent;
@@ -261,6 +266,7 @@ extension AppsProviderInstall on AppsProvider {
         additionalSettingsPlusSourceConfig,
         useExisting: useExisting,
         cancellationToken: cancellationToken,
+        holdRetry: () => _holdRetryUntilForeground(cancellationToken),
       );
       completedDownloads = 1;
       if (apps[app.id] != null) {
@@ -321,6 +327,7 @@ extension AppsProviderInstall on AppsProvider {
               useExisting: useExisting,
               headers: splitHeaders,
               cancellationToken: cancellationToken,
+              holdRetry: () => _holdRetryUntilForeground(cancellationToken),
             );
             if (splitFile.path.toLowerCase().endsWith('.apk')) {
               splitFile.renameSync(
@@ -493,6 +500,43 @@ extension AppsProviderInstall on AppsProvider {
           );
       await notificationsProvider.cancel(completeInstallationNotification.id);
     }
+  }
+
+  /// Holds a download retry back while the app is in the background, and
+  /// reports whether retrying still makes sense.
+  ///
+  /// Android blocks network access for apps in the background, so a retry there
+  /// fails again straight away and the attempts run out before the user returns
+  /// (#2894). Waiting for the app to come back keeps the partial file, so the
+  /// download resumes from it.
+  ///
+  /// Returns false — meaning the original error should be reported instead of
+  /// retrying — when the app never comes back within [_backgroundRetryWait].
+  /// Throws [CancellationException] when the download was cancelled while
+  /// waiting.
+  Future<bool> _holdRetryUntilForeground(
+    CancellationToken? cancellationToken,
+  ) async {
+    // A background (WorkManager) download has no user to come back, and an app
+    // already on screen has network access: neither needs to wait.
+    if (isBg) return true;
+    if (isForeground) return true;
+    AppLogger.info(
+      'Download interrupted in the background, waiting for the app to return before retrying',
+    );
+    final returned = await FGBGEvents.instance.stream
+        .firstWhere((t) => t == FGBGType.foreground)
+        .timeout(_backgroundRetryWait, onTimeout: () => FGBGType.background);
+    if (returned != FGBGType.foreground) {
+      AppLogger.info(
+        'App did not return within ${_backgroundRetryWait.inMinutes} minutes, reporting the download error',
+      );
+      return false;
+    }
+    // A cancellation is the user's choice, not a failure: surface it as one so
+    // no error is shown for a download the user stopped on purpose.
+    cancellationToken?.throwIfCancelled();
+    return true;
   }
 
   Future<bool> canDowngradeApps() async =>
@@ -1699,6 +1743,7 @@ extension AppsProviderInstall on AppsProvider {
                 forAPKDownload: AppSource.isApkOrContainerFile(fileName),
               ),
           useExisting: false,
+          holdRetry: () => _holdRetryUntilForeground(null),
         );
         unawaited(
           notificationsProvider.notify(
