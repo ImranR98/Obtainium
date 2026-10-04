@@ -58,11 +58,13 @@ class ShizukuInstaller extends Installer {
       code = await ShizukuApkInstaller().installAABSplits(
         uris,
         fakeInstallSource,
+        packageName: appId,
       );
     } else {
       code = await ShizukuApkInstaller().installAPK(
         uris.first,
         fakeInstallSource,
+        packageName: appId,
       );
     }
     return InstallResult.fromPlatformCode(code);

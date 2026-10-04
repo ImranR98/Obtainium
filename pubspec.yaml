@@ -62,8 +62,8 @@ dependencies:
       ref: 7efa523a0cb40fb243318450c60dfd0e882e6b0c
   shizuku_apk_installer: # TODO: Forked dependency; watch upstream for releases
     git:
-      url: https://github.com/ImranR98/shizuku_apk_installer
-      ref: 12d8447c501e6abfadd134887b8b810d07b1d1e3
+      url: https://github.com/mjktfw/shizuku_apk_installer
+      ref: 435b298bea177d8bf6bf456d0b4bd3e7b9c4f2f1
   markdown: ^7.3.1
   flutter_typeahead: ^6.0.0
   battery_plus: ^7.1.1
