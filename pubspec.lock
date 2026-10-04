@@ -1052,9 +1052,9 @@ packages:
     dependency: "direct main"
     description:
       path: "."
-      ref: "12d8447c501e6abfadd134887b8b810d07b1d1e3"
-      resolved-ref: "12d8447c501e6abfadd134887b8b810d07b1d1e3"
-      url: "https://github.com/ImranR98/shizuku_apk_installer"
+      ref: "435b298bea177d8bf6bf456d0b4bd3e7b9c4f2f1"
+      resolved-ref: "435b298bea177d8bf6bf456d0b4bd3e7b9c4f2f1"
+      url: "https://github.com/mjktfw/shizuku_apk_installer"
     source: git
     version: "1.2.0"
   sky_engine:
