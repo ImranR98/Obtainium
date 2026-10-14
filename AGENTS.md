@@ -26,7 +26,9 @@ Read these first when relevant:
    locales — they are community/Weblate-owned. The script warns before dropping keys that are
    missing from the template; `git` is the backup.
 4. **Stage explicitly.** Use `git add <path> ...`; never `git add -A` or `git add .`. Never
-   stage or modify the `.flutter` submodule, `build/`, `data/`, or generated artifacts.
+   stage or modify the `.flutter` submodule, `build/`, `data/`, or generated artifacts. The
+   one exception is the `dependency-updates` skill, whose purpose is to advance the pinned
+   `.flutter` submodule pointer; outside that workflow, leave it untouched.
 5. **Do not add code comments** unless asked. Keep the K&R bracing style and the indentation
    of the file being edited (new files use 4 spaces).
 6. All user-facing strings go through `tr()` / `plural()` with a key in `en.json`.
