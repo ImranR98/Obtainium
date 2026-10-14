@@ -7,6 +7,7 @@ App _app({
   DateTime? releaseDate,
   String? changeLog,
   List<MapEntry<String, String>> apkUrls = const [],
+  int? apkSizeBytes,
 }) => App(
   id: 'com.example.app',
   url: 'https://example.com/app',
@@ -18,6 +19,7 @@ App _app({
   additionalSettings: const {},
   releaseDate: releaseDate,
   changeLog: changeLog,
+  apkSizeBytes: apkSizeBytes,
 );
 
 void main() {
@@ -53,6 +55,7 @@ void main() {
         latestVersion: '0.12.6',
         releaseDate: DateTime(2026, 8, 28),
         changeLog: 'old',
+        apkSizeBytes: 111,
         apkUrls: const [
           MapEntry('old.apk', 'https://example.com/0.12.6/old.apk'),
         ],
@@ -61,6 +64,7 @@ void main() {
         latestVersion: '0.12.8',
         releaseDate: DateTime(2026, 9, 7),
         changeLog: 'new',
+        apkSizeBytes: 222,
         apkUrls: const [
           MapEntry('new.apk', 'https://example.com/0.12.8/new.apk'),
         ],
@@ -69,6 +73,7 @@ void main() {
       expect(result.latestVersion, '0.12.6');
       expect(result.releaseDate, DateTime(2026, 8, 28));
       expect(result.changeLog, 'old');
+      expect(result.apkSizeBytes, 111);
       expect(result.apkUrls.single.key, 'old.apk');
       expect(result.apkUrls.single.value, 'https://example.com/0.12.6/old.apk');
       // Non-release metadata still comes from the fetch.

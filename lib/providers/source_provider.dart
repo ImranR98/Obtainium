@@ -193,11 +193,15 @@ class SourceProvider {
     Map<String, dynamic> additionalSettings,
     bool trackOnly,
     String standardUrl,
-    bool inferAppIdIfOptional,
-  ) async {
+    bool inferAppIdIfOptional, {
+    String? inferredAppId,
+  }) async {
     if (currentApp?.id != null) return currentApp!.id;
     final explicitId = additionalSettings['appId'] as String?;
     if (explicitId != null && explicitId.trim().isNotEmpty) return explicitId;
+    if (inferredAppId != null && inferredAppId.trim().isNotEmpty) {
+      return inferredAppId;
+    }
     if ((!trackOnly || source.inferAppIdEvenWhenTrackOnly) &&
         (!source.appIdInferIsOptional ||
             (source.appIdInferIsOptional && inferAppIdIfOptional))) {
@@ -232,7 +236,11 @@ class SourceProvider {
     }
     APKDetails apk;
     try {
-      apk = await source.getLatestAPKDetails(standardUrl, additionalSettings);
+      apk = await source.getLatestAPKDetailsWithContext(
+        standardUrl,
+        additionalSettings,
+        currentApp: currentApp,
+      );
     } on ObtainiumError catch (e) {
       throw e..withUrlContext(standardUrl);
     }
@@ -294,6 +302,7 @@ class SourceProvider {
         trackOnly,
         standardUrl,
         inferAppIdIfOptional,
+        inferredAppId: apk.appId,
       ),
       url: standardUrl,
       author: apk.names.author,
@@ -320,6 +329,7 @@ class SourceProvider {
       otherAssetUrls: apk.allAssetUrls
           .where((a) => apk.apkUrls.indexWhere((p) => a.key == p.key) < 0)
           .toList(),
+      apkSizeBytes: apk.apkSizeBytes,
     );
     return source.postProcessApp(finalApp);
   }

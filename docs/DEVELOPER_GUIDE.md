@@ -178,8 +178,10 @@ Override the contract methods you need:
 | Method | Responsibility |
 | --- | --- |
 | `sourceSpecificStandardizeURL(url, {forSelection})` | Validate + normalize a URL to a canonical form, or throw `InvalidURLError`. Used for both selection and storage. |
-| `getLatestAPKDetails(standardUrl, additionalSettings)` | **The main job:** fetch the latest release and return `APKDetails(version, apkUrls, names, releaseDate, changeLog, allAssetUrls)`. |
-| `tryInferringAppId(standardUrl, {...})` | Best-effort detect the Android package id (optional). |
+| `getLatestAPKDetails(standardUrl, additionalSettings)` | **The main job:** fetch the latest release and return `APKDetails(version, apkUrls, names, releaseDate, changeLog, releaseUrl, appId, apkSizeBytes)`. |
+| `getLatestAPKDetailsWithContext(standardUrl, additionalSettings, {currentApp})` | Update-check entry point (the base class delegates to `getLatestAPKDetails`). Override when the previous app matters, e.g. to skip scraping when the release is unchanged (APKMirror). |
+| `prefetchUpdateInfo(apps)` | Optional pre-pass before a batch of checks. Override to fetch shared data once (APKMirror batches its API lookup into 1 request per 100 apps). |
+| `tryInferringAppId(standardUrl, {...})` | Best-effort detect the Android package id (optional). Can be skipped by returning an id via `APKDetails.appId`. |
 | `search(query, {querySettings})` | Return `{url: [name, description]}` (only if `canSearch`). |
 | `getRequestHeaders(...)` | Provide auth/format headers (defined on `AppSource`). |
 | `getSourceNote()` | Markdown note shown in the UI (e.g. "add a token to avoid rate limits"). |
@@ -197,9 +199,31 @@ Override the contract methods you need:
   hand-rolling `.endsWith('.apk')`, which historically missed split-APK formats.
 - `sourceRequest(...)` — the base HTTP method. It merges source config + per-app
   settings, applies header/prefetch modifiers, follows redirects with a cap, and
-  always closes the `HttpClient`. **Use this**, not a raw `http.get`.
+  always closes the `HttpClient`. **Use this**, not a raw `http.get`. Sources can opt
+  into a per-host request gate (`enableHostRequestGate`, `maxConcurrentRequestsPerHost`)
+  that bounds metadata concurrency and short-circuits a host for a window after a
+  `429`/`503`/Cloudflare challenge (APKMirror uses 2 concurrent).
 - `filterApks`, `filterApksByArch`, `extractVersion`, `findStandardFormatsForVersion`,
   `getLinksFromParsedHTML`, `getApkUrlsFromUrls`.
+
+### Source-specific notes: APKMirror
+
+APKMirror is track-only and keeps regular-page traffic to a minimum:
+
+- **Update checks** use the batched `app_exists` API (`1 request per ≤100 apps`)
+  via `prefetchUpdateInfo`/`getLatestAPKDetailsWithContext`. The API credential is
+  APKUpdater's shared key (`APKMirror._apiBasicAuth`); swap the constant when
+  APKMirror issues Obtainium its own. Failures set an API cooldown and surface as
+  `RateLimitError` — there is intentionally no feed fallback on API failure.
+- **Feed fallbacks** cover apps whose id is a temporary placeholder (hash-only
+  icon filename) and listings whose returned `app.link` does not match the tracked
+  listing (packages can map to several listings, e.g. Spotify phone/Wear/Automotive).
+- **Scraping** (release page → size, changelog when the API's `whats_new` is empty)
+  happens once per *new release* only, during the check, and the result is persisted
+  on `App.apkSizeBytes`. It is skipped when the stored `releaseUrl` is unchanged and
+  when the release is too young for the minimum update age.
+- Package ids are inferred from the feed icon filename at add time; the feed is the
+  only non-API source that is listing-scoped. Temp-ID apps stay on the feed.
 
 ### `SourceProvider` (the service)
 
@@ -347,7 +371,9 @@ Background work is scheduled via **`workmanager`** (Android periodic tasks). The
 
 - **`fetchUpdate(appId)`** fetches new metadata **without saving**;
   **`checkUpdate(appId)`** fetches and saves.
-- **`checkUpdates()`** processes app IDs in **bounded chunks (max 8 concurrent)** and
+- **`checkUpdates()`** first calls `AppSource.prefetchUpdateInfo` for each source
+  present in the batch (APKMirror uses this to fetch up to 100 apps in one API
+  request), then processes app IDs in **bounded chunks (max 4 concurrent)** and
   persists each chunk with a **single `saveApps()`** call. This is the key fix for the
   pull-to-refresh UI freeze: it caps concurrent network/parse load and cuts rebuilds from
   O(N) to O(N/chunk).

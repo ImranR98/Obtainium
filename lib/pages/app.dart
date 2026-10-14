@@ -71,8 +71,6 @@ class _AppPageState extends State<AppPage> {
   int? _probedDownloadSize;
 
   void _maybeProbeDownloadSize(AppInMemory app) {
-    final String? releaseUrl = app.app.releaseUrl;
-    final bool hasReleaseUrl = releaseUrl != null && releaseUrl.isNotEmpty;
     final int apkIndex =
         (app.app.preferredApkIndex >= 0 &&
             app.app.preferredApkIndex < app.app.apkUrls.length)
@@ -83,18 +81,18 @@ class _AppPageState extends State<AppPage> {
             app.app.apkUrls[apkIndex].value,
           ).where((u) => u.isNotEmpty && u != 'placeholder').toList()
         : const [];
-    final String? key = urls.isNotEmpty
-        ? '${app.app.id}|${app.app.apkUrls[apkIndex].value}'
-        : hasReleaseUrl
-        ? '${app.app.id}|$releaseUrl'
-        : null;
-    if (key == null) {
-      if (_sizeProbeKey != null || _probedDownloadSize != null) {
-        _sizeProbeKey = null;
-        setState(() => _probedDownloadSize = null);
+    if (urls.isEmpty) {
+      // Track-only sources resolve the size during update checks.
+      final storedSize = app.app.apkSizeBytes;
+      final key = '${app.app.id}|size';
+      if (key == _sizeProbeKey && _probedDownloadSize == storedSize) return;
+      _sizeProbeKey = key;
+      if (mounted) {
+        setState(() => _probedDownloadSize = storedSize);
       }
       return;
     }
+    final key = '${app.app.id}|${app.app.apkUrls[apkIndex].value}';
     if (key == _sizeProbeKey) return;
     _sizeProbeKey = key;
     _probedDownloadSize = null;
@@ -104,46 +102,33 @@ class _AppPageState extends State<AppPage> {
           app.app.url,
           overrideSource: app.app.overrideSource,
         );
-        if (urls.isNotEmpty) {
-          // A split set is downloaded in full, so report the combined size.
-          final sizes = await Future.wait(
-            urls.map((url) async {
-              final resolvedUrl = await source.assetUrlPrefetchModifier(
-                url,
-                app.app.url,
-                app.app.additionalSettings,
-              );
-              final headers = await source.getRequestHeaders(
-                app.app.additionalSettings,
-                resolvedUrl,
-                forAPKDownload: true,
-              );
-              return getDownloadSize(
-                resolvedUrl,
-                headers: headers,
-                allowInsecure: app.app.settings.getBool('allowInsecure'),
-                enableCertificatePinning:
-                    settingsProvider.enableCertificatePinning,
-              );
-            }),
-          );
-          final knownSizes = sizes.whereType<int>();
-          if (mounted && _sizeProbeKey == key && knownSizes.isNotEmpty) {
-            setState(
-              () => _probedDownloadSize = knownSizes.reduce((a, b) => a + b),
+        // A split set is downloaded in full, so report the combined size.
+        final sizes = await Future.wait(
+          urls.map((url) async {
+            final resolvedUrl = await source.assetUrlPrefetchModifier(
+              url,
+              app.app.url,
+              app.app.additionalSettings,
             );
-          }
-        } else {
-          // Track-only sources (e.g. APKMirror) have no direct APK URL; let the
-          // source resolve the size from its release page instead.
-          final size = await source.resolveDownloadSize(
-            app.app.url,
-            app.app.additionalSettings,
-            releaseUrl: releaseUrl,
+            final headers = await source.getRequestHeaders(
+              app.app.additionalSettings,
+              resolvedUrl,
+              forAPKDownload: true,
+            );
+            return getDownloadSize(
+              resolvedUrl,
+              headers: headers,
+              allowInsecure: app.app.settings.getBool('allowInsecure'),
+              enableCertificatePinning:
+                  settingsProvider.enableCertificatePinning,
+            );
+          }),
+        );
+        final knownSizes = sizes.whereType<int>();
+        if (mounted && _sizeProbeKey == key && knownSizes.isNotEmpty) {
+          setState(
+            () => _probedDownloadSize = knownSizes.reduce((a, b) => a + b),
           );
-          if (mounted && _sizeProbeKey == key && size != null) {
-            setState(() => _probedDownloadSize = size);
-          }
         }
       } catch (e) {
         // Best-effort only: leave the size unknown when it can't be resolved.
