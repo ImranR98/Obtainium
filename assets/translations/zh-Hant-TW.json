@@ -16,6 +16,11 @@
     "alreadyUpToDateQuestion": "應用程式已是最新版本？",
     "alwaysUsePhoneLayout": "Always use phone layout",
     "and": "和",
+    "andNMoreErrors": {
+        "one": "…and {} more error",
+        "other": "…and {} more errors"
+    },
+    "andOneMoreError": "…and 1 more error",
     "apk": {
         "one": "{} 個 APK",
         "other": "{} 個 APK"

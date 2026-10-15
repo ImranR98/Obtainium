@@ -16,6 +16,11 @@
     "alreadyUpToDateQuestion": "Застосунок вже оновлено?",
     "alwaysUsePhoneLayout": "Always use phone layout",
     "and": "та",
+    "andNMoreErrors": {
+        "one": "…and {} more error",
+        "other": "…and {} more errors"
+    },
+    "andOneMoreError": "…and 1 more error",
     "apk": {
         "one": "{} APK",
         "other": "{} APK-файли"

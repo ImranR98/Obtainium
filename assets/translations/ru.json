@@ -16,6 +16,11 @@
     "alreadyUpToDateQuestion": "Приложение уже обновлено?",
     "alwaysUsePhoneLayout": "Постоянное телефонное расположение элементов",
     "and": "и",
+    "andNMoreErrors": {
+        "one": "…and {} more error",
+        "other": "…and {} more errors"
+    },
+    "andOneMoreError": "…and 1 more error",
     "apk": {
         "one": "{} APK-файл",
         "few": "{} APK-файла",

@@ -16,6 +16,11 @@
     "alreadyUpToDateQuestion": "Ĉu la apo estas ĝisdata?",
     "alwaysUsePhoneLayout": "Always use phone layout",
     "and": "kaj",
+    "andNMoreErrors": {
+        "one": "…and {} more error",
+        "other": "…and {} more errors"
+    },
+    "andOneMoreError": "…and 1 more error",
     "apk": {
         "one": "{} APK",
         "other": "{} APKj"

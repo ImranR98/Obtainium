@@ -16,6 +16,11 @@
     "alreadyUpToDateQuestion": "L'application est-elle à jour ?",
     "alwaysUsePhoneLayout": "Toujours utiliser la mise en page du téléphone",
     "and": "et",
+    "andNMoreErrors": {
+        "one": "…and {} more error",
+        "other": "…and {} more errors"
+    },
+    "andOneMoreError": "…and 1 more error",
     "apk": {
         "one": "{} APK",
         "other": "{} APK"

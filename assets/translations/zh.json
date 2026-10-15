@@ -16,6 +16,11 @@
     "alreadyUpToDateQuestion": "应用是否已经为最新版本？",
     "alwaysUsePhoneLayout": "总是使用手机布局",
     "and": "和",
+    "andNMoreErrors": {
+        "one": "…and {} more error",
+        "other": "…and {} more errors"
+    },
+    "andOneMoreError": "…and 1 more error",
     "apk": {
         "one": "{} 个 APK 文件",
         "other": "{} 个 APK 文件"

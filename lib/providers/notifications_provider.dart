@@ -103,6 +103,7 @@ class ObtainiumNotification {
   String? payload;
   String? appId;
   List<AndroidNotificationAction>? androidActions;
+  StyleInformation? style;
 
   ObtainiumNotification(
     this.id,
@@ -117,6 +118,7 @@ class ObtainiumNotification {
     this.payload,
     this.appId,
     this.androidActions,
+    this.style,
   });
 }
 
@@ -209,6 +211,7 @@ class ErrorCheckingUpdatesNotification extends ObtainiumNotification {
         tr('errorCheckingUpdatesNotifDescription'),
         Importance.high,
         payload: "${tr('errorCheckingUpdates')}\n$error",
+        style: BigTextStyleInformation(error),
       );
 }
 
@@ -445,6 +448,7 @@ class NotificationsProvider {
     bool onlyAlertOnce = false,
     String? payload,
     List<AndroidNotificationAction>? androidActions,
+    StyleInformation? style,
   }) async {
     if (cancelExisting) {
       await cancel(id);
@@ -471,6 +475,7 @@ class NotificationsProvider {
           onlyAlertOnce: onlyAlertOnce,
           indeterminate: progPercent != null && progPercent < 0,
           actions: androidActions,
+          styleInformation: style,
         ),
       ),
       payload: payload,
@@ -495,5 +500,6 @@ class NotificationsProvider {
         ? '$appIdTapPayloadPrefix${notif.appId}'
         : notif.payload,
     androidActions: notif.androidActions,
+    style: notif.style,
   );
 }

@@ -16,6 +16,11 @@
     "alreadyUpToDateQuestion": "ആപ്പ് ഇതിനകം ഏറ്റവും പുതിയ പതിപ്പിലാണോ?",
     "alwaysUsePhoneLayout": "Always use phone layout",
     "and": "കൂടാതെ",
+    "andNMoreErrors": {
+        "one": "…and {} more error",
+        "other": "…and {} more errors"
+    },
+    "andOneMoreError": "…and 1 more error",
     "apk": {
         "one": "{} APK",
         "other": "{} APK-കൾ"

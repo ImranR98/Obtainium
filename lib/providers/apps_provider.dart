@@ -1011,18 +1011,11 @@ Future<void> _runBGInstallMode(
     );
   } catch (e) {
     if (e is MultiAppMultiError) {
-      e.idsByErrorString.forEach((key, value) {
-        unawaited(
-          notificationsProvider.notify(
-            ErrorCheckingUpdatesNotification(
-              e.errorsAppsString(key, value),
-              // Distinct IDs per error group, offset from the update-check
-              // error range so one install failure doesn't replace another.
-              id: errorCheckingUpdatesNotificationId + 200 + key.hashCode.abs(),
-            ),
-          ),
-        );
-      });
+      unawaited(
+        notificationsProvider.notify(
+          ErrorCheckingUpdatesNotification(e.notificationErrorString()),
+        ),
+      );
     } else {
       AppLogger.error(e, message: 'Fatal error in BG install task');
       rethrow;
@@ -1168,19 +1161,13 @@ Future<void> bgUpdateCheck(
     );
 
     if (result.toThrow.rawErrors.isNotEmpty && result.errors != null) {
-      for (var element in result.toThrow.idsByErrorString.entries) {
-        unawaited(
-          notificationsProvider.notify(
-            ErrorCheckingUpdatesNotification(
-              result.errors!.errorsAppsString(element.key, element.value),
-              id:
-                  errorCheckingUpdatesNotificationId +
-                  100 +
-                  element.key.hashCode.abs(),
-            ),
+      unawaited(
+        notificationsProvider.notify(
+          ErrorCheckingUpdatesNotification(
+            result.toThrow.notificationErrorString(),
           ),
-        );
-      }
+        ),
+      );
     }
   } else {
     AppLogger.info('BG update task: No apps due for checking.');

@@ -16,6 +16,11 @@
     "alreadyUpToDateQuestion": "앱이 이미 최신 상태입니까?",
     "alwaysUsePhoneLayout": "항상 폰 레이아웃 사용",
     "and": "그리고",
+    "andNMoreErrors": {
+        "one": "…and {} more error",
+        "other": "…and {} more errors"
+    },
+    "andOneMoreError": "…and 1 more error",
     "apk": {
         "one": "{} APK",
         "other": "{} APK"

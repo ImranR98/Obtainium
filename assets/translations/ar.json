@@ -16,6 +16,11 @@
     "alreadyUpToDateQuestion": "التطبيق محدَّث بالفعل؟",
     "alwaysUsePhoneLayout": "استخدم دائمًا تخطيط الجوّال",
     "and": "و",
+    "andNMoreErrors": {
+        "one": "…and {} more error",
+        "other": "…and {} more errors"
+    },
+    "andOneMoreError": "…and 1 more error",
     "apk": {
         "one": "{} APK",
         "other": "{} APKs"

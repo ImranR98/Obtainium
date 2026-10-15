@@ -16,6 +16,11 @@
     "alreadyUpToDateQuestion": "App al bijgewerkt?",
     "alwaysUsePhoneLayout": "Altijd telefoonindeling gebruiken",
     "and": "en",
+    "andNMoreErrors": {
+        "one": "…and {} more error",
+        "other": "…and {} more errors"
+    },
+    "andOneMoreError": "…and 1 more error",
     "apk": {
         "one": "{} APK",
         "other": "{} APK's"

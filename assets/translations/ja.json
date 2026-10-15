@@ -16,6 +16,11 @@
     "alreadyUpToDateQuestion": "アプリはすでに最新ですか？",
     "alwaysUsePhoneLayout": "常にスマホレイアウトを使用する",
     "and": "と",
+    "andNMoreErrors": {
+        "one": "…and {} more error",
+        "other": "…and {} more errors"
+    },
+    "andOneMoreError": "…and 1 more error",
     "apk": {
         "one": "{} APK",
         "other": "{} APK"
