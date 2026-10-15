@@ -445,7 +445,7 @@ class GitHub extends AppSource {
     final filteredAssets = rel['filteredAssets'] as List<dynamic>?;
     final t = (filteredAssets ?? allAssets)
         ?.map((e) {
-          final updated = e?['updated_at'];
+          final updated = e?['updated_at'] ?? e?['created_at'];
           return updated is String ? DateTime.tryParse(updated) : null;
         })
         .where((e) => e != null)

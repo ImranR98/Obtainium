@@ -42,4 +42,11 @@ void main() {
       );
     });
   });
+
+  test('Codeberg exposes the release-date pseudo-version toggle', () {
+    final items = Codeberg().combinedAppSpecificSettingFormItems
+        .expand((row) => row)
+        .toList();
+    expect(items.any((e) => e.key == 'releaseDateAsVersion'), isTrue);
+  });
 }
