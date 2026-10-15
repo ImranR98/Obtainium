@@ -617,6 +617,9 @@ class AddAppPageState extends State<AddAppPage> {
             additionalSettings = values;
             additionalSettingsValid = valid;
           });
+        } else {
+          additionalSettings = values;
+          additionalSettingsValid = valid;
         }
       },
     );

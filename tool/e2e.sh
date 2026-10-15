@@ -86,6 +86,7 @@ fi
 PHONE_SUITES=(
   smoke_test.dart
   add_remove_app_test.dart
+  add_app_defaults_test.dart
   html_links_test.dart
   app_list_density_test.dart
   codeberg_auth_test.dart
