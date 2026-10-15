@@ -87,6 +87,7 @@ PHONE_SUITES=(
   smoke_test.dart
   add_remove_app_test.dart
   add_app_defaults_test.dart
+  form_inputs_test.dart
   redirected_zip_test.dart
   html_links_test.dart
   app_list_density_test.dart
