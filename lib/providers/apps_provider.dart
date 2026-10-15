@@ -736,6 +736,23 @@ Future<Directory> getAppStorageDir() async {
   return await getApplicationDocumentsDirectory();
 }
 
+Directory? selectPrimaryExternalCache(
+  List<Directory>? cacheDirs,
+  Directory? primaryExternal,
+) {
+  if (cacheDirs == null || cacheDirs.isEmpty || primaryExternal == null) {
+    return null;
+  }
+  final primary = primaryExternal.absolute.path;
+  for (final dir in cacheDirs) {
+    final path = dir.absolute.path;
+    if (path == primary || path.startsWith('$primary/')) {
+      return dir;
+    }
+  }
+  return null;
+}
+
 class AppsProvider with ChangeNotifier {
   // Static, app-lifetime cross-instance save-notification bus; intentionally
   // never closed. The foreground instance subscribes so it can detect saves
@@ -901,27 +918,26 @@ class AppsProvider with ChangeNotifier {
     }
     () async {
       await this.settingsProvider.initializeSettings();
-      var useExternalCache = false;
+      Directory? cacheRoot;
       try {
-        final cacheDirs = await getExternalCacheDirectories();
-        if (cacheDirs?.isNotEmpty ?? false) {
-          _apkDir = cacheDirs!.first;
-          _iconsCacheDir = Directory('${cacheDirs.first.path}/icons');
-          if (!_iconsCacheDir!.existsSync()) {
-            _iconsCacheDir!.createSync();
-          }
-          useExternalCache = true;
-        }
+        cacheRoot = selectPrimaryExternalCache(
+          await getExternalCacheDirectories(),
+          await getExternalStorageDirectory(),
+        );
       } catch (_) {}
-      if (!useExternalCache) {
-        _apkDir = Directory('${(await getAppStorageDir()).path}/apks');
-        if (!_apkDir!.existsSync()) {
-          _apkDir!.createSync();
-        }
-        _iconsCacheDir = Directory('${(await getAppStorageDir()).path}/icons');
-        if (!_iconsCacheDir!.existsSync()) {
-          _iconsCacheDir!.createSync();
-        }
+      if (cacheRoot == null) {
+        final internalCache = await getApplicationCacheDirectory();
+        _apkDir = Directory('${internalCache.path}/apks');
+        _iconsCacheDir = Directory('${internalCache.path}/icons');
+      } else {
+        _apkDir = cacheRoot;
+        _iconsCacheDir = Directory('${cacheRoot.path}/icons');
+      }
+      if (!_apkDir!.existsSync()) {
+        _apkDir!.createSync(recursive: true);
+      }
+      if (!_iconsCacheDir!.existsSync()) {
+        _iconsCacheDir!.createSync(recursive: true);
       }
       if (!isBg) {
         loadingApps = true;
