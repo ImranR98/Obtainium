@@ -88,6 +88,13 @@ class GitHub extends AppSource {
       ),
     ],
     [
+      GeneratedFormSwitch(
+        'invertReleaseTitlesFilter',
+        label: '${tr('invertRegEx')} (${tr('filterReleaseTitlesByRegEx')})',
+        value: false,
+      ),
+    ],
+    [
       GeneratedFormTextField(
         'filterReleaseNotesByRegEx',
         label: tr('filterReleaseNotesByRegEx'),
@@ -97,6 +104,13 @@ class GitHub extends AppSource {
             return regExValidator(value);
           },
         ],
+      ),
+    ],
+    [
+      GeneratedFormSwitch(
+        'invertReleaseNotesFilter',
+        label: '${tr('invertRegEx')} (${tr('filterReleaseNotesByRegEx')})',
+        value: false,
       ),
     ],
     [GeneratedFormSwitch('verifyLatestTag', label: tr('verifyLatestTag'))],
@@ -576,6 +590,10 @@ class GitHub extends AppSource {
     final notesRegex = regexNotesFilter != null
         ? RegExp(regexNotesFilter)
         : null;
+    final bool invertTitleFilter =
+        additionalSettings['invertReleaseTitlesFilter'] == true;
+    final bool invertNotesFilter =
+        additionalSettings['invertReleaseNotesFilter'] == true;
     for (int i = 0; i < releases.length; i++) {
       if (!fallbackToOlderReleases && i > releaseSkipped) break;
       if (!includePrereleases && releases[i]['prerelease'] == true) {
@@ -590,12 +608,19 @@ class GitHub extends AppSource {
       if (nameToFilter == null || nameToFilter.trim().isEmpty) {
         nameToFilter = releases[i]['tag_name']?.toString() ?? '';
       }
-      if (titleRegex != null && !titleRegex.hasMatch(nameToFilter.trim())) {
+      if (titleRegex != null &&
+          !passesRegExFilter(
+            titleRegex,
+            nameToFilter.trim(),
+            invert: invertTitleFilter,
+          )) {
         continue;
       }
       if (notesRegex != null &&
-          !notesRegex.hasMatch(
+          !passesRegExFilter(
+            notesRegex,
             ((releases[i]['body'] as String?) ?? '').trim(),
+            invert: invertNotesFilter,
           )) {
         continue;
       }

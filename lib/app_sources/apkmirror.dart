@@ -67,6 +67,13 @@ class APKMirror extends AppSource {
         ],
       ),
     ],
+    [
+      GeneratedFormSwitch(
+        'invertReleaseTitlesFilter',
+        label: '${tr('invertRegEx')} (${tr('filterReleaseTitlesByRegEx')})',
+        value: false,
+      ),
+    ],
   ];
 
   @override
@@ -162,7 +169,11 @@ class APKMirror extends AppSource {
       final title =
           '${info.appName ?? ''} ${info.version} by ${info.developerName ?? ''}'
               .trim();
-      if (!RegExp(regexFilter).hasMatch(title)) {
+      if (!passesRegExFilter(
+        RegExp(regexFilter),
+        title,
+        invert: additionalSettings['invertReleaseTitlesFilter'] == true,
+      )) {
         throw NoReleasesError(note: tr('noMatchingReleaseFound'));
       }
     }
@@ -237,7 +248,11 @@ class APKMirror extends AppSource {
               ?.innerHtml;
           if (regexFilter != null &&
               nameToFilter != null &&
-              !RegExp(regexFilter).hasMatch(nameToFilter.trim())) {
+              !passesRegExFilter(
+                RegExp(regexFilter),
+                nameToFilter.trim(),
+                invert: additionalSettings['invertReleaseTitlesFilter'] == true,
+              )) {
             continue;
           }
           if (isReleaseTooYoung(releaseDateFor(items[i]), minAgeDays)) {

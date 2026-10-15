@@ -58,7 +58,8 @@ export 'package:obtainium/models/typed_settings.dart';
 export 'package:obtainium/services/apk_filter_service.dart';
 export 'package:obtainium/services/http_service.dart';
 export 'package:obtainium/services/version_service.dart';
-export 'package:obtainium/utils/string_utils.dart' show getSourceRegex;
+export 'package:obtainium/utils/string_utils.dart'
+    show getSourceRegex, passesRegExFilter;
 export 'package:obtainium/utils/url_utils.dart' show preStandardizeUrl;
 
 const int kDefaultFetchConcurrency = 4;
