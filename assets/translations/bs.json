@@ -339,6 +339,8 @@
     "releaseDate": "Datum izdavanja",
     "releaseDateAsVersion": "Koristi datum izdanja kao verziju",
     "releaseDateAsVersionExplanation": "Ova opcija bi se trebala koristiti samo za aplikacije gdje detekcija verzije ne radi ispravno, ali je datum izdavanja dostupan.",
+    "releaseDateDateFormat": "Date format for release date (intl pattern, e.g. 'EEE. MMMM do, yyyy - h:mma')",
+    "releaseDateRegEx": "Release date extraction RegEx",
     "releaseTitleAsVersion": "Koristi naslov izdanja kao string verzije",
     "releaseTooYoungForMinAge": "The latest release is younger than the minimum update age ({} days) and this source does not provide older releases.",
     "remove": "Izbriši",

@@ -339,6 +339,8 @@
     "releaseDate": "Ngày phát hành",
     "releaseDateAsVersion": "Sử dụng ngày phát hành làm phiên bản",
     "releaseDateAsVersionExplanation": "Chỉ nên sử dụng tùy chọn này cho Ứng dụng trong đó tính năng phát hiện phiên bản không hoạt động chính xác nhưng đã có ngày phát hành.",
+    "releaseDateDateFormat": "Date format for release date (intl pattern, e.g. 'EEE. MMMM do, yyyy - h:mma')",
+    "releaseDateRegEx": "Release date extraction RegEx",
     "releaseTitleAsVersion": "Sử dụng tiêu đề bản phát hành làm chuỗi phiên bản",
     "releaseTooYoungForMinAge": "The latest release is younger than the minimum update age ({} days) and this source does not provide older releases.",
     "remove": "Loại bỏ",

@@ -346,6 +346,8 @@
     "releaseDate": "Datum vydání",
     "releaseDateAsVersion": "Použít datum vydání jako verzi",
     "releaseDateAsVersionExplanation": "Tato možnost by měla být použita pouze u aplikace, kde detekce verzí nefunguje správně, ale je k dispozici datum vydání.",
+    "releaseDateDateFormat": "Date format for release date (intl pattern, e.g. 'EEE. MMMM do, yyyy - h:mma')",
+    "releaseDateRegEx": "Release date extraction RegEx",
     "releaseTitleAsVersion": "Použít název vydání jako řetězec verze",
     "releaseTooYoungForMinAge": "The latest release is younger than the minimum update age ({} days) and this source does not provide older releases.",
     "remove": "Odebrat",

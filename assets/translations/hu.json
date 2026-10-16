@@ -339,6 +339,8 @@
     "releaseDate": "Kiadás dátuma",
     "releaseDateAsVersion": "Kiadás dátumának használata verzió-karakterláncként",
     "releaseDateAsVersionExplanation": "Ezt a beállítást csak olyan alkalmazásoknál szabad használni, ahol a verziófelismerés nem működik megfelelően, de elérhető a kiadás dátuma.",
+    "releaseDateDateFormat": "Date format for release date (intl pattern, e.g. 'EEE. MMMM do, yyyy - h:mma')",
+    "releaseDateRegEx": "Release date extraction RegEx",
     "releaseTitleAsVersion": "Kiadás címének használata verzió-karakterláncként",
     "releaseTooYoungForMinAge": "A legutóbbi kiadás frissebb mint a megengedett késleltetési korlát ({} nap), és ez a forrás nem biztosít régebbi kiadásokat.",
     "remove": "Eltávolítás",

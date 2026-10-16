@@ -339,6 +339,8 @@
     "releaseDate": "Tanggal rilis",
     "releaseDateAsVersion": "Gunakan tanggal rilis sebagai versi string",
     "releaseDateAsVersionExplanation": "Opsi ini hanya boleh digunakan untuk aplikasi dengan pendeteksi versi yang tidak berfungsi dengan benar, tetapi tanggal rilisnya tersedia.",
+    "releaseDateDateFormat": "Date format for release date (intl pattern, e.g. 'EEE. MMMM do, yyyy - h:mma')",
+    "releaseDateRegEx": "Release date extraction RegEx",
     "releaseTitleAsVersion": "Gunakan judul rilis sebagai string versi",
     "releaseTooYoungForMinAge": "The latest release is younger than the minimum update age ({} days) and this source does not provide older releases.",
     "remove": "Hapus",

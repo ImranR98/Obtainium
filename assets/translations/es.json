@@ -339,6 +339,8 @@
     "releaseDate": "Fecha de publicación",
     "releaseDateAsVersion": "Usar fecha de publicación como cadena de versión",
     "releaseDateAsVersionExplanation": "Esta opción solo se debería usar con aplicaciones en las que la detección de versiones no funciona pero hay disponible una fecha de publicación.",
+    "releaseDateDateFormat": "Date format for release date (intl pattern, e.g. 'EEE. MMMM do, yyyy - h:mma')",
+    "releaseDateRegEx": "Release date extraction RegEx",
     "releaseTitleAsVersion": "Usar título de lanzamiento como cadena de versión",
     "releaseTooYoungForMinAge": "The latest release is younger than the minimum update age ({} days) and this source does not provide older releases.",
     "remove": "Eliminar",

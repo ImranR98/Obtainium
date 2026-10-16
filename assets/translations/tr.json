@@ -339,6 +339,8 @@
     "releaseDate": "Yayın tarihi",
     "releaseDateAsVersion": "Yayın tarihini sürüm olarak kullan",
     "releaseDateAsVersionExplanation": "Bu, yalnızca sürüm algılamasının düzgün çalışmadığı ve yayın tarihi mevcut olan uygulamalar için kullanılmalıdır.",
+    "releaseDateDateFormat": "Date format for release date (intl pattern, e.g. 'EEE. MMMM do, yyyy - h:mma')",
+    "releaseDateRegEx": "Release date extraction RegEx",
     "releaseTitleAsVersion": "Yayın başlığını sürüm olarak kullan",
     "releaseTooYoungForMinAge": "The latest release is younger than the minimum update age ({} days) and this source does not provide older releases.",
     "remove": "Kaldır",

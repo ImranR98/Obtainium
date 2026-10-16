@@ -339,6 +339,8 @@
     "releaseDate": "Date de sortie",
     "releaseDateAsVersion": "Utiliser la date de la release comme version",
     "releaseDateAsVersionExplanation": "Cette option ne doit être utilisée que si la détection de la release échoue, mais qu'une date de sortie est disponible.",
+    "releaseDateDateFormat": "Date format for release date (intl pattern, e.g. 'EEE. MMMM do, yyyy - h:mma')",
+    "releaseDateRegEx": "Release date extraction RegEx",
     "releaseTitleAsVersion": "Utiliser le titre de la version comme chaîne de version",
     "releaseTooYoungForMinAge": "The latest release is younger than the minimum update age ({} days) and this source does not provide older releases.",
     "remove": "Supprimer",

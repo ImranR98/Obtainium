@@ -339,6 +339,8 @@
     "releaseDate": "發佈日期",
     "releaseDateAsVersion": "將發佈日期作為版本字串",
     "releaseDateAsVersionExplanation": "此選項應僅用於版本偵測無法正確運作，但有提供發佈日期的應用程式。",
+    "releaseDateDateFormat": "Date format for release date (intl pattern, e.g. 'EEE. MMMM do, yyyy - h:mma')",
+    "releaseDateRegEx": "Release date extraction RegEx",
     "releaseTitleAsVersion": "將發佈標題作為版本字串",
     "releaseTooYoungForMinAge": "The latest release is younger than the minimum update age ({} days) and this source does not provide older releases.",
     "remove": "移除",

@@ -339,6 +339,8 @@
     "releaseDate": "Udgivelsesdato",
     "releaseDateAsVersion": "Brug udgivelsesdato som versionsstreng",
     "releaseDateAsVersionExplanation": "Denne indstilling bør kun bruges til apps, hvor versionsregistrering ikke virker korrekt, men hvor en udgivelsesdato er tilgængelig.",
+    "releaseDateDateFormat": "Date format for release date (intl pattern, e.g. 'EEE. MMMM do, yyyy - h:mma')",
+    "releaseDateRegEx": "Release date extraction RegEx",
     "releaseTitleAsVersion": "Brug udgivelsestitel som versionsstreng",
     "releaseTooYoungForMinAge": "The latest release is younger than the minimum update age ({} days) and this source does not provide older releases.",
     "remove": "Fjern",

@@ -339,6 +339,8 @@
     "releaseDate": "릴리스 날짜",
     "releaseDateAsVersion": "릴리스 날짜를 버전 문자열로 사용",
     "releaseDateAsVersionExplanation": "이 옵션은 버전 감지가 올바르게 작동하지 않지만 릴리스 날짜가 있는 앱에만 사용해야 합니다.",
+    "releaseDateDateFormat": "Date format for release date (intl pattern, e.g. 'EEE. MMMM do, yyyy - h:mma')",
+    "releaseDateRegEx": "Release date extraction RegEx",
     "releaseTitleAsVersion": "릴리스 제목을 버전 문자열로 사용",
     "releaseTooYoungForMinAge": "The latest release is younger than the minimum update age ({} days) and this source does not provide older releases.",
     "remove": "제거",

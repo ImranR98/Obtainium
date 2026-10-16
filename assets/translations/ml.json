@@ -339,6 +339,8 @@
     "releaseDate": "റിലീസ് തീയതി",
     "releaseDateAsVersion": "റിലീസ് തീയതി പതിപ്പ് സ്ട്രിംഗായി ഉപയോഗിക്കുക",
     "releaseDateAsVersionExplanation": "പതിപ്പ് കണ്ടെത്തൽ ശരിയായി പ്രവർത്തിക്കാത്തതും എന്നാൽ റിലീസ് തീയതി ലഭ്യമായതുമായ ആപ്പുകൾക്ക് മാത്രമേ ഈ ഓപ്ഷൻ ഉപയോഗിക്കാവൂ.",
+    "releaseDateDateFormat": "Date format for release date (intl pattern, e.g. 'EEE. MMMM do, yyyy - h:mma')",
+    "releaseDateRegEx": "Release date extraction RegEx",
     "releaseTitleAsVersion": "റിലീസ് ശീർഷകം പതിപ്പ് സ്ട്രിംഗായി ഉപയോഗിക്കുക",
     "releaseTooYoungForMinAge": "The latest release is younger than the minimum update age ({} days) and this source does not provide older releases.",
     "remove": "നീക്കം ചെയ്യുക",

@@ -339,6 +339,8 @@
     "releaseDate": "Data de publicació",
     "releaseDateAsVersion": "Usa la data de llançament com a cadena de la versió",
     "releaseDateAsVersionExplanation": "Aquest opció només s'hauria d'usar per a aplicacions en què la detecció de la versió no funciona correctament però disposem de la data de publicació.",
+    "releaseDateDateFormat": "Date format for release date (intl pattern, e.g. 'EEE. MMMM do, yyyy - h:mma')",
+    "releaseDateRegEx": "Release date extraction RegEx",
     "releaseTitleAsVersion": "Usa el títol com a cadena de la versió",
     "releaseTooYoungForMinAge": "The latest release is younger than the minimum update age ({} days) and this source does not provide older releases.",
     "remove": "Suprimeix",

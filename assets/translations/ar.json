@@ -339,6 +339,8 @@
     "releaseDate": "تاريخ الإصدار",
     "releaseDateAsVersion": "استخدم تاريخ الإصدار كسلسلة إصدار",
     "releaseDateAsVersionExplanation": "يجب استخدام هذا الخيار فقط للتطبيقات التي لا يعمل فيها اكتشاف الإصدار بشكل صحيح، ولكن تاريخ الإصدار متاح.",
+    "releaseDateDateFormat": "Date format for release date (intl pattern, e.g. 'EEE. MMMM do, yyyy - h:mma')",
+    "releaseDateRegEx": "Release date extraction RegEx",
     "releaseTitleAsVersion": "استخدم عنوان الإصدار كسلسلة إصدار",
     "releaseTooYoungForMinAge": "The latest release is younger than the minimum update age ({} days) and this source does not provide older releases.",
     "remove": "أزِل",

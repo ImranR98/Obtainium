@@ -346,6 +346,8 @@
     "releaseDate": "Дата выпуска",
     "releaseDateAsVersion": "Использовать дату выпуска в качестве версии",
     "releaseDateAsVersionExplanation": "Эта настройка должна использоваться только для приложений, в которых определение версии не работает правильно, но имеется дата выпуска",
+    "releaseDateDateFormat": "Date format for release date (intl pattern, e.g. 'EEE. MMMM do, yyyy - h:mma')",
+    "releaseDateRegEx": "Release date extraction RegEx",
     "releaseTitleAsVersion": "Использовать название выпуска в качестве версии",
     "releaseTooYoungForMinAge": "Последняя версия новее минимального возраста обновления ({} дн.) и данный источник не предоставляет более старые выпуски",
     "remove": "Удалить",

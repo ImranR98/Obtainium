@@ -339,6 +339,8 @@
     "releaseDate": "Дата випуску",
     "releaseDateAsVersion": "Використовувати дату випуску як рядок версії",
     "releaseDateAsVersionExplanation": "Цю опцію слід використовувати лише для застосунків, де визначення версії працює неправильно, але є дата випуску.",
+    "releaseDateDateFormat": "Date format for release date (intl pattern, e.g. 'EEE. MMMM do, yyyy - h:mma')",
+    "releaseDateRegEx": "Release date extraction RegEx",
     "releaseTitleAsVersion": "Використовувати назву випуску як рядок версії",
     "releaseTooYoungForMinAge": "The latest release is younger than the minimum update age ({} days) and this source does not provide older releases.",
     "remove": "Видалити",

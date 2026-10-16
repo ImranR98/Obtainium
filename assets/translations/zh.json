@@ -339,6 +339,8 @@
     "releaseDate": "发行日期",
     "releaseDateAsVersion": "将发行日期作为版本号",
     "releaseDateAsVersionExplanation": "此选项应该仅用于无法进行版本检测但能够获取发行日期的应用。",
+    "releaseDateDateFormat": "Date format for release date (intl pattern, e.g. 'EEE. MMMM do, yyyy - h:mma')",
+    "releaseDateRegEx": "Release date extraction RegEx",
     "releaseTitleAsVersion": "将发行标题作为版本字符串",
     "releaseTooYoungForMinAge": "最新版本发布至今不足最小更新间隔（{} 天），且此来源不提供更旧的版本。",
     "remove": "删除",

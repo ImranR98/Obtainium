@@ -339,6 +339,8 @@
     "releaseDate": "Eldondato",
     "releaseDateAsVersion": "Uzi eldondato kiel versioĉeno",
     "releaseDateAsVersionExplanation": "Tiu opcio devas esti uzata nur por apoj, por kiu la versiodetekto ne funkcias ĝuste, sed eldondato estas havebla.",
+    "releaseDateDateFormat": "Date format for release date (intl pattern, e.g. 'EEE. MMMM do, yyyy - h:mma')",
+    "releaseDateRegEx": "Release date extraction RegEx",
     "releaseTitleAsVersion": "Use release title as version string",
     "releaseTooYoungForMinAge": "The latest release is younger than the minimum update age ({} days) and this source does not provide older releases.",
     "remove": "Forigi",

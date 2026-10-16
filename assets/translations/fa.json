@@ -339,6 +339,8 @@
     "releaseDate": "تاریخ انتشار",
     "releaseDateAsVersion": "از تاریخ انتشار به عنوان نسخه استفاده کنید",
     "releaseDateAsVersionExplanation": "این گزینه فقط باید برای برنامه هایی استفاده شود که تشخیص نسخه به درستی کار نمی کند، اما تاریخ انتشار در دسترس است.",
+    "releaseDateDateFormat": "Date format for release date (intl pattern, e.g. 'EEE. MMMM do, yyyy - h:mma')",
+    "releaseDateRegEx": "Release date extraction RegEx",
     "releaseTitleAsVersion": "از عنوان انتشار به عنوان رشته نسخه استفاده کنید",
     "releaseTooYoungForMinAge": "The latest release is younger than the minimum update age ({} days) and this source does not provide older releases.",
     "remove": "حذف",

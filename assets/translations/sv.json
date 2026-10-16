@@ -339,6 +339,8 @@
     "releaseDate": "Releasedatum",
     "releaseDateAsVersion": "Använd releasedatum som version",
     "releaseDateAsVersionExplanation": "Det här alternativet bör endast användas för appar där versionsidentifiering inte fungerar korrekt, men ett releasedatum är tillgängligt.",
+    "releaseDateDateFormat": "Date format for release date (intl pattern, e.g. 'EEE. MMMM do, yyyy - h:mma')",
+    "releaseDateRegEx": "Release date extraction RegEx",
     "releaseTitleAsVersion": "Använd release-titel som versionssträng",
     "releaseTooYoungForMinAge": "The latest release is younger than the minimum update age ({} days) and this source does not provide older releases.",
     "remove": "Ta bort",

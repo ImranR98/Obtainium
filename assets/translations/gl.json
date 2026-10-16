@@ -339,6 +339,8 @@
     "releaseDate": "Data de publicación",
     "releaseDateAsVersion": "Usar data de publicación como texto da versión.",
     "releaseDateAsVersionExplanation": "Só se debería usar esta opción para apps nas que non funciona ben a detección da versión pero si está dispoñible a data de publicación.",
+    "releaseDateDateFormat": "Date format for release date (intl pattern, e.g. 'EEE. MMMM do, yyyy - h:mma')",
+    "releaseDateRegEx": "Release date extraction RegEx",
     "releaseTitleAsVersion": "Usar título da publicación como texto da versión.",
     "releaseTooYoungForMinAge": "The latest release is younger than the minimum update age ({} days) and this source does not provide older releases.",
     "remove": "Retirar",

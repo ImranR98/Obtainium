@@ -339,6 +339,8 @@
     "releaseDate": "Publicatiedatum",
     "releaseDateAsVersion": "Publicatiedatum als versie gebruiken",
     "releaseDateAsVersionExplanation": "Deze optie moet alleen worden gebruikt voor apps waar versieherkenning niet correct werkt, maar waar wel een publicatiedatum beschikbaar is.",
+    "releaseDateDateFormat": "Date format for release date (intl pattern, e.g. 'EEE. MMMM do, yyyy - h:mma')",
+    "releaseDateRegEx": "Release date extraction RegEx",
     "releaseTitleAsVersion": "Publicatietitel als versie gebruiken",
     "releaseTooYoungForMinAge": "The latest release is younger than the minimum update age ({} days) and this source does not provide older releases.",
     "remove": "Verwijderen",

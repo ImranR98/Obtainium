@@ -339,6 +339,8 @@
     "releaseDate": "リリース日",
     "releaseDateAsVersion": "リリース日をバージョンとして使用する",
     "releaseDateAsVersionExplanation": "このオプションは、バージョン検出が正しく機能しないアプリで、リリース日が利用可能な場合にのみ使用する必要があります。",
+    "releaseDateDateFormat": "Date format for release date (intl pattern, e.g. 'EEE. MMMM do, yyyy - h:mma')",
+    "releaseDateRegEx": "Release date extraction RegEx",
     "releaseTitleAsVersion": "リリースタイトルをバージョンとして使用する",
     "releaseTooYoungForMinAge": "最新リリースの公開からアップデートの最低経過日数（{}日）が経過しておらず、このソースは古いリリースを提供していません。",
     "remove": "削除",
