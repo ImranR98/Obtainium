@@ -12,6 +12,7 @@ import 'package:obtainium/main.dart';
 
 import 'package:obtainium/providers/apps_provider.dart';
 import 'package:obtainium/core/logging/app_logger.dart';
+import 'package:obtainium/providers/document_tree_bridge.dart';
 import 'package:obtainium/providers/source_provider.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:device_info_plus/device_info_plus.dart';
@@ -686,7 +687,15 @@ class SettingsProvider with ChangeNotifier {
         throw ObtainiumError(tr('noFilePickerAvailable'));
       }
       try {
-        newOneWayDataSyncDir = (await saf.openDocumentTree());
+        Uri? picked;
+        try {
+          picked = await DocumentTreeBridge.instance.pickDocumentTree();
+        } on MissingPluginException {
+          picked = await saf.openDocumentTree();
+        } on PlatformException {
+          picked = await saf.openDocumentTree();
+        }
+        newOneWayDataSyncDir = picked;
       } catch (e) {
         AppLogger.error(e, message: 'Failed to open document tree');
         throw ObtainiumError(tr('noFilePickerAvailable'));
