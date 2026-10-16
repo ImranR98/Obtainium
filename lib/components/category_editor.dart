@@ -2,6 +2,7 @@ import 'package:easy_localization/easy_localization.dart';
 import 'package:flex_color_picker/flex_color_picker.dart';
 import 'package:flutter/foundation.dart' show setEquals;
 import 'package:material_ui/material_ui.dart';
+import 'package:obtainium/theme.dart';
 import 'package:obtainium/utils/color_utils.dart' show generateRandomLightColor;
 import 'package:obtainium/components/generated_form_renderer.dart';
 import 'package:obtainium/components/ui_widgets.dart';
@@ -85,8 +86,19 @@ class _CategoryEditorSheetState extends State<_CategoryEditorSheet> {
   );
   final FocusNode _nameFocus = FocusNode();
   late Color _color = widget.initialColor;
+  late bool _excludeFromChecks;
 
   bool get _isEditing => widget.existingName != null;
+
+  @override
+  void initState() {
+    super.initState();
+    _excludeFromChecks =
+        widget.existingName != null &&
+        context.read<SettingsProvider>().categoriesExcludedFromChecks.contains(
+          widget.existingName,
+        );
+  }
 
   @override
   void dispose() {
@@ -133,6 +145,12 @@ class _CategoryEditorSheetState extends State<_CategoryEditorSheet> {
     }
     cats[name] = _color.toARGB32();
     settingsProvider.setCategories(cats, appsProvider: appsProvider);
+    final excluded = Set<String>.from(
+      settingsProvider.categoriesExcludedFromChecks,
+    );
+    excluded.remove(name);
+    if (_excludeFromChecks) excluded.add(name);
+    settingsProvider.categoriesExcludedFromChecks = excluded;
     if (context.mounted) {
       // ignore: use_build_context_synchronously
       Navigator.of(context).pop(CategoryEditResult(name: name, previous: prev));
@@ -278,12 +296,12 @@ class _CategoryEditorSheetState extends State<_CategoryEditorSheet> {
                     : field;
               }(),
             ),
-            const SizedBox(height: 20),
+            const SizedBox(height: AppSpacings.sectionGap),
             Text(tr('colour'), style: textTheme.titleSmall),
-            const SizedBox(height: 8),
+            const SizedBox(height: AppSpacings.elementGap),
             Wrap(
-              spacing: 8,
-              runSpacing: 8,
+              spacing: AppSpacings.elementGap,
+              runSpacing: AppSpacings.elementGap,
               children: [
                 for (final c in kCategoryPalette)
                   _swatch(
@@ -312,7 +330,14 @@ class _CategoryEditorSheetState extends State<_CategoryEditorSheet> {
                 ),
               ],
             ),
-            const SizedBox(height: 24),
+            const SizedBox(height: AppSpacings.elementGap),
+            SwitchListTile(
+              contentPadding: EdgeInsets.zero,
+              title: Text(tr('skipUpdateChecks')),
+              value: _excludeFromChecks,
+              onChanged: (value) => setState(() => _excludeFromChecks = value),
+            ),
+            const SizedBox(height: 16),
             Row(
               children: [
                 if (_isEditing)
@@ -329,7 +354,7 @@ class _CategoryEditorSheetState extends State<_CategoryEditorSheet> {
                   onPressed: () => Navigator.of(context).pop(),
                   child: Text(tr('cancel')),
                 ),
-                const SizedBox(width: 8),
+                const SizedBox(width: AppSpacings.elementGap),
                 ValueListenableBuilder<TextEditingValue>(
                   valueListenable: _nameCtrl,
                   builder: (context, value, _) {
@@ -460,8 +485,8 @@ class _CategorySelectorState extends State<CategorySelector> {
     if (names.isEmpty && widget.allowCreate) {
       return Wrap(
         alignment: widget.alignment,
-        spacing: 8,
-        runSpacing: 8,
+        spacing: AppSpacings.elementGap,
+        runSpacing: AppSpacings.elementGap,
         children: [
           Tooltip(
             message: tr('newCategory'),
@@ -475,8 +500,8 @@ class _CategorySelectorState extends State<CategorySelector> {
       width: double.infinity,
       child: Wrap(
         alignment: widget.alignment,
-        spacing: 8,
-        runSpacing: 8,
+        spacing: AppSpacings.elementGap,
+        runSpacing: AppSpacings.elementGap,
         children: [
           for (final name in names)
             Tooltip(
@@ -558,8 +583,8 @@ class CategoryManager extends StatelessWidget {
     return SizedBox(
       width: double.infinity,
       child: Wrap(
-        spacing: 8,
-        runSpacing: 8,
+        spacing: AppSpacings.elementGap,
+        runSpacing: AppSpacings.elementGap,
         crossAxisAlignment: WrapCrossAlignment.center,
         children: [
           for (final name in names)

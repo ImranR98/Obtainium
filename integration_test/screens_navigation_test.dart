@@ -1,6 +1,8 @@
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:integration_test/integration_test.dart';
+import 'package:obtainium/providers/apps_provider.dart';
+import 'package:obtainium/providers/settings_provider.dart';
 
 import 'e2e_helpers.dart';
 
@@ -72,6 +74,64 @@ void main() {
     );
     await tester.tap(continueButton);
     await pumpUntil(tester, find.widgetWithText(ActionChip, 'E2E Category'));
+
+    // Category editor exposes the update-check exclusion switch (#3375).
+    await tester.tap(find.widgetWithText(ActionChip, 'E2E Category'));
+    await pumpUntil(tester, find.text('Skip update checks'));
+    final skipSwitch = find.descendant(
+      of: find.widgetWithText(SwitchListTile, 'Skip update checks'),
+      matching: find.byType(Switch),
+    );
+    await tester.scrollUntilVisible(
+      skipSwitch,
+      200,
+      scrollable: find.byType(Scrollable).last,
+    );
+    await pumpFor(tester, const Duration(milliseconds: 300));
+    await tester.tap(skipSwitch);
+    await pumpFor(tester, const Duration(milliseconds: 300));
+    await tester.tap(find.widgetWithText(FilledButton, 'Continue').last);
+    await pumpUntil(tester, find.widgetWithText(ActionChip, 'E2E Category'));
+    expect(
+      readProvider<SettingsProvider>().categoriesExcludedFromChecks,
+      contains('E2E Category'),
+    );
+
+    // An app in the excluded category is skipped by update checks.
+    final appsProvider = readProvider<AppsProvider>();
+    await appsProvider.saveApps([
+      appsProvider.apps['e2e.app1']!.app.copyWith(categories: ['E2E Category']),
+    ]);
+    expect(
+      appsProvider.getAppsSortedByUpdateCheckTime(forceAll: true),
+      isNot(contains('e2e.app1')),
+    );
+
+    // Turning the switch back off removes the exclusion.
+    await tester.tap(find.widgetWithText(ActionChip, 'E2E Category'));
+    await pumpUntil(tester, find.text('Skip update checks'));
+    final skipSwitch2 = find.descendant(
+      of: find.widgetWithText(SwitchListTile, 'Skip update checks'),
+      matching: find.byType(Switch),
+    );
+    await tester.scrollUntilVisible(
+      skipSwitch2,
+      200,
+      scrollable: find.byType(Scrollable).last,
+    );
+    await pumpFor(tester, const Duration(milliseconds: 300));
+    await tester.tap(skipSwitch2);
+    await pumpFor(tester, const Duration(milliseconds: 300));
+    await tester.tap(find.widgetWithText(FilledButton, 'Continue').last);
+    await pumpUntil(tester, find.widgetWithText(ActionChip, 'E2E Category'));
+    expect(
+      readProvider<SettingsProvider>().categoriesExcludedFromChecks,
+      isNot(contains('E2E Category')),
+    );
+    expect(
+      appsProvider.getAppsSortedByUpdateCheckTime(forceAll: true),
+      contains('e2e.app1'),
+    );
 
     // Settings -> Import/export.
     await pressBack(tester);

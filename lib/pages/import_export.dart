@@ -12,6 +12,7 @@ import 'package:obtainium/providers/apps_provider.dart';
 import 'package:obtainium/core/logging/app_logger.dart';
 import 'package:obtainium/providers/settings_provider.dart';
 import 'package:obtainium/providers/source_provider.dart';
+import 'package:obtainium/theme.dart';
 import 'package:obtainium/utils/nav_helper.dart';
 import 'package:provider/provider.dart';
 import 'package:file_picker/file_picker.dart';
@@ -193,7 +194,7 @@ class _ImportFromURLListPageState extends State<ImportFromURLListPage> {
                         ConnectedCard(
                           isFirst: true,
                           isLast: true,
-                          padding: const EdgeInsets.all(16),
+                          padding: AppPaddings.cardInner,
                           child: Text(
                             tr('importedAppsIdDisclaimer'),
                             textAlign: TextAlign.center,
@@ -846,13 +847,13 @@ class _SelectionModalState extends State<SelectionModal> {
             _selectThis(entry.key, value);
           },
         ),
-        const SizedBox(width: 8),
+        const SizedBox(width: AppSpacings.elementGap),
         Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              const SizedBox(height: 8),
+              const SizedBox(height: AppSpacings.elementGap),
               InkWell(
                 onTap: widget.titlesAreLinks
                     ? null
@@ -875,7 +876,7 @@ class _SelectionModalState extends State<SelectionModal> {
                       },
                       child: _buildDescriptionText(entry),
                     ),
-              const SizedBox(height: 8),
+              const SizedBox(height: AppSpacings.elementGap),
             ],
           ),
         ),
@@ -932,7 +933,7 @@ class _SelectionModalState extends State<SelectionModal> {
       return [];
     }
     return [
-      const SizedBox(height: 8),
+      const SizedBox(height: AppSpacings.elementGap),
       Row(
         mainAxisAlignment: MainAxisAlignment.end,
         children: [
@@ -1061,7 +1062,7 @@ class _SelectionModalState extends State<SelectionModal> {
                 child: _buildSelectAllButton(filteredEntries),
               ),
             ),
-            const SizedBox(width: 8),
+            const SizedBox(width: AppSpacings.elementGap),
             TextButton(
               autofocus: isTV,
               onPressed: () {
@@ -1069,7 +1070,7 @@ class _SelectionModalState extends State<SelectionModal> {
               },
               child: Text(tr('cancel')),
             ),
-            const SizedBox(width: 8),
+            const SizedBox(width: AppSpacings.elementGap),
             FilledButton(
               onPressed: entrySelections.values.where((b) => b).isEmpty
                   ? null

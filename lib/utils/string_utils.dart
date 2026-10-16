@@ -13,3 +13,8 @@ bool isObtainiumVariant(String id) =>
 String getSourceRegex(List<String> hosts) {
   return '(${hosts.join('|').replaceAll('.', '\\.')})';
 }
+
+bool passesRegExFilter(RegExp regEx, String value, {bool invert = false}) {
+  final matches = regEx.hasMatch(value);
+  return invert ? !matches : matches;
+}

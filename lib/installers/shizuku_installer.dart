@@ -11,6 +11,17 @@ import 'package:shizuku_apk_installer/shizuku_apk_installer.dart';
 class ShizukuInstaller extends Installer {
   ShizukuInstaller(super.settingsProvider);
 
+  /// Maps the `shizukuInstallerMode` setting to the plugin's backend mode.
+  static InstallerMode modeForSetting(String setting) => switch (setting) {
+    'shizuku' => InstallerMode.shizuku,
+    'dhizuku' => InstallerMode.dhizuku,
+    _ => InstallerMode.auto,
+  };
+
+  Future<void> _applyBackend() => ShizukuApkInstaller().setInstallerMode(
+    modeForSetting(settingsProvider.shizukuInstallerMode),
+  );
+
   @override
   String get modeKey => 'shizuku';
 
@@ -18,12 +29,17 @@ class ShizukuInstaller extends Installer {
   Future<bool> canInstallSilently(App app) async => true;
 
   @override
-  Future<bool> checkPermission() async =>
-      (await ShizukuApkInstaller().checkPermission())?.startsWith('granted') ??
-      false;
+  Future<bool> checkPermission() async {
+    await _applyBackend();
+    return (await ShizukuApkInstaller().checkPermission())?.startsWith(
+          'granted',
+        ) ??
+        false;
+  }
 
   @override
   Future<void> ensurePermission() async {
+    await _applyBackend();
     switch ((await ShizukuApkInstaller().checkPermission())) {
       case 'granted_owner':
       case 'granted_root':
@@ -48,6 +64,7 @@ class ShizukuInstaller extends Installer {
     required String appId,
     Map<String, dynamic> installOptions = const {},
   }) async {
+    await _applyBackend();
     final fakeInstallSource =
         installOptions['shizukuPretendToBeGooglePlay'] == true
         ? 'com.android.vending'

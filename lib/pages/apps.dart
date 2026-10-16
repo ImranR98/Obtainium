@@ -447,7 +447,7 @@ class AppsPageState extends State<AppsPage> {
                         onPressed: () => Navigator.of(ctx).pop(false),
                         child: Text(tr('cancel')),
                       ),
-                      const SizedBox(width: 8),
+                      const SizedBox(width: AppSpacings.elementGap),
                       FilledButton(
                         onPressed: () => Navigator.of(ctx).pop(true),
                         child: Text(tr('continue')),
@@ -619,6 +619,19 @@ class AppsPageState extends State<AppsPage> {
     );
   }
 
+  void setSelectedAppsDisabled(Set<App> selectedApps, bool disabled) {
+    final current = selectedApps
+        .map((e) => appsProvider.apps[e.id]?.app)
+        .whereType<App>()
+        .toList();
+    if (current.isEmpty) return;
+    unawaited(
+      appsProvider.saveApps(
+        current.map((a) => a.copyWith(disabled: disabled)).toList(),
+      ),
+    );
+  }
+
   /// Splits [apps] into existing updates, new installs, and track-only
   /// updates. Track-only apps never appear in the other two groups.
   (List<String>, List<String>, List<String>) _classifyForUpdate(
@@ -628,6 +641,7 @@ class AppsPageState extends State<AppsPage> {
     final newInstallIds = <String>[];
     final trackOnlyUpdateIds = <String>[];
     for (final app in apps) {
+      if (app.disabled) continue;
       final trackOnly = app.settings.getBool('trackOnly');
       if (trackOnly) {
         if (isAppUpdateable(app, settingsProvider)) {
@@ -644,6 +658,7 @@ class AppsPageState extends State<AppsPage> {
 
   void showMoreOptionsBottomSheet(BuildContext context, Set<App> selectedApps) {
     final isPinned = selectedApps.where((e) => e.pinned).isNotEmpty;
+    final isDisabled = selectedApps.where((e) => e.disabled).isNotEmpty;
 
     final (existingUpdateIds, newInstallIds, trackOnlyUpdateIds) =
         _classifyForUpdate(selectedApps);
@@ -693,6 +708,16 @@ class AppsPageState extends State<AppsPage> {
                   onTap: () {
                     settingsProvider.selectionClick();
                     pinSelectedApps(selectedApps);
+                  },
+                ),
+                optionTile(
+                  icon: isDisabled
+                      ? Icons.visibility_outlined
+                      : Icons.visibility_off_outlined,
+                  label: isDisabled ? tr('enableApp') : tr('disableApp'),
+                  onTap: () {
+                    settingsProvider.selectionClick();
+                    setSelectedAppsDisabled(selectedApps, !isDisabled);
                   },
                 ),
                 if (hasObtainActions && !appsProvider.areDownloadsRunning())
@@ -1244,6 +1269,16 @@ class AppsPageState extends State<AppsPage> {
       },
       child: Scaffold(
         backgroundColor: Theme.of(context).colorScheme.surface,
+        bottomNavigationBar: settingsProvider.isTV
+            ? _TvAppListFooter(
+                selectionMode: _selectionMode,
+                selectedCount: selectedAppIds.length,
+                onAddApp: () => NavHelper.pushAddAppPage(context),
+                onSelectedActions: selectedAppIds.isEmpty
+                    ? null
+                    : () => showSelectedAppActions(),
+              )
+            : null,
         body: GestureDetector(
           behavior: HitTestBehavior.translucent,
           onTap: () => FocusManager.instance.primaryFocus?.unfocus(),
@@ -1317,35 +1352,6 @@ class AppsPageState extends State<AppsPage> {
                           (settingsProvider.isTV ? 160 : 96),
                     ),
                   ),
-                  if (settingsProvider.isTV)
-                    SliverToBoxAdapter(
-                      child: Padding(
-                        padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.stretch,
-                          spacing: 8,
-                          children: [
-                            if (_selectionMode)
-                              FilledButton.icon(
-                                onPressed: selectedAppIds.isEmpty
-                                    ? null
-                                    : () => showSelectedAppActions(),
-                                icon: const Icon(Icons.more_vert),
-                                label: Text(
-                                  '${plural('action', 2)}'
-                                  ' (${selectedAppIds.length})',
-                                ),
-                              ),
-                            FilledButton.tonalIcon(
-                              onPressed: () =>
-                                  NavHelper.pushAddAppPage(context),
-                              icon: const Icon(Icons.add),
-                              label: Text(tr('addApp')),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
                 ],
               ),
             ),
@@ -1459,7 +1465,7 @@ class _BulkUpdateDialogState extends State<_BulkUpdateDialog> {
       padding: const EdgeInsets.only(top: 12, bottom: 4),
       child: Row(
         children: [
-          const SizedBox(width: 8),
+          const SizedBox(width: AppSpacings.elementGap),
           Text(
             label,
             style: tt.bodySmall?.copyWith(
@@ -1663,6 +1669,56 @@ class _TVSearchBarState extends State<_TVSearchBar> {
           children: widget.trailing,
         ),
       ],
+    );
+  }
+}
+
+/// Pinned footer for the TV app list: keeps the Add app (and selection
+/// Actions) buttons visible at the bottom of the viewport without scrolling
+/// past the whole list (#3351)./// Always-visible footer for the TV app list: keeps the Add app (and
+/// selection Actions) buttons reachable without scrolling to the end of the
+/// list (#3351).
+class _TvAppListFooter extends StatelessWidget {
+  const _TvAppListFooter({
+    required this.selectionMode,
+    required this.selectedCount,
+    required this.onAddApp,
+    required this.onSelectedActions,
+  });
+
+  final bool selectionMode;
+  final int selectedCount;
+  final VoidCallback onAddApp;
+  final VoidCallback? onSelectedActions;
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: Theme.of(context).colorScheme.surface,
+      child: SafeArea(
+        top: false,
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            spacing: AppSpacings.elementGap,
+            children: [
+              if (selectionMode)
+                FilledButton.icon(
+                  onPressed: onSelectedActions,
+                  icon: const Icon(Icons.more_vert),
+                  label: Text('${plural('action', 2)} ($selectedCount)'),
+                ),
+              FilledButton.tonalIcon(
+                onPressed: onAddApp,
+                icon: const Icon(Icons.add),
+                label: Text(tr('addApp')),
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 }

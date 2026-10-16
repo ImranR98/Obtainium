@@ -10,6 +10,7 @@ import 'package:obtainium/custom_errors.dart';
 import 'package:obtainium/models/app.dart';
 import 'package:obtainium/providers/settings_provider.dart';
 import 'package:obtainium/services/apk_filter_service.dart';
+import 'package:obtainium/services/host_request_gate.dart';
 import 'package:obtainium/services/http_service.dart';
 import 'package:obtainium/services/version_service.dart';
 import 'package:obtainium/utils/signing_cert_utils.dart';
@@ -49,6 +50,8 @@ abstract class AppSource {
   bool allowInsecureRedirects = false;
   bool allowIncludeZips = false;
   bool allowIncludeTarballs = false;
+  bool enableHostRequestGate = false;
+  int maxConcurrentRequestsPerHost = 2;
   String get sourceIdentifier => runtimeType.toString();
 
   RegExp? _hostMatchRegExp;
@@ -122,20 +125,44 @@ abstract class AppSource {
       additionalSettingsPlusSourceConfig,
       url,
     );
-    final streamedResponseUrlWithResponseAndClient = await HttpService()
-        .sourceRequestStreamResponse(
-          method,
-          requestHeaders,
-          additionalSettingsPlusSourceConfig,
-          followRedirects: followRedirects,
-          postBody: postBody,
-        );
-    return await HttpService().httpClientResponseStreamToFinalResponse(
-      streamedResponseUrlWithResponseAndClient.value.key,
-      method,
-      streamedResponseUrlWithResponseAndClient.key.toString(),
-      streamedResponseUrlWithResponseAndClient.value.value,
+    Future<http.Response> perform() async {
+      final streamedResponseUrlWithResponseAndClient = await HttpService()
+          .sourceRequestStreamResponse(
+            method,
+            requestHeaders,
+            additionalSettingsPlusSourceConfig,
+            followRedirects: followRedirects,
+            postBody: postBody,
+          );
+      return await HttpService().httpClientResponseStreamToFinalResponse(
+        streamedResponseUrlWithResponseAndClient.value.key,
+        method,
+        streamedResponseUrlWithResponseAndClient.key.toString(),
+        streamedResponseUrlWithResponseAndClient.value.value,
+      );
+    }
+
+    if (!enableHostRequestGate) {
+      return perform();
+    }
+    final uri = Uri.parse(url);
+    final host = uri.host;
+    final blockKey = '$host|${_hostGateBucket(uri)}';
+    final gate = HostRequestGate.instance;
+    final response = await gate.run(
+      host,
+      blockKey,
+      maxConcurrentRequestsPerHost,
+      perform,
     );
+    gate.observe(blockKey, response.statusCode, response.headers);
+    return response;
+  }
+
+  static String _hostGateBucket(Uri uri) {
+    if (uri.path.contains('/wp-json/')) return 'api';
+    if (uri.path.endsWith('/feed/')) return 'feed';
+    return 'html';
   }
 
   Map<String, dynamic> runOnAddAppInputChange(String inputUrl) => {};
@@ -192,6 +219,21 @@ abstract class AppSource {
   ) {
     throw NotImplementedError();
   }
+
+  /// Update-check entry point that also receives the app being updated, so
+  /// sources can avoid repeat work (e.g. scraping) when nothing changed.
+  /// Sources that do not need the previous app just inherit this delegate.
+  Future<APKDetails> getLatestAPKDetailsWithContext(
+    String standardUrl,
+    Map<String, dynamic> additionalSettings, {
+    App? currentApp,
+  }) {
+    return getLatestAPKDetails(standardUrl, additionalSettings);
+  }
+
+  /// Optional pre-pass before a batch of update checks, allowing sources to
+  /// fetch shared data once (e.g. APKMirror's batched API lookup).
+  Future<void> prefetchUpdateInfo(List<App> apps) async {}
 
   /// Per-source additional form items (e.g. GitHub's sort method, HTML's version regex).
   List<List<GeneratedFormItem>>
@@ -468,16 +510,6 @@ abstract class AppSource {
 
   String? changeLogPageFromStandardUrl(String standardUrl) {
     return changeLogPageIsStandardUrl ? standardUrl : null;
-  }
-
-  /// Best-effort download size (bytes) for sources whose apps carry no direct
-  /// APK URL (e.g. track-only sources). Returns null when unavailable.
-  Future<int?> resolveDownloadSize(
-    String standardUrl,
-    Map<String, dynamic> additionalSettings, {
-    String? releaseUrl,
-  }) async {
-    return null;
   }
 
   Future<String?> getSourceNote() async {
