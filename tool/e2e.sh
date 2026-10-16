@@ -94,6 +94,7 @@ PHONE_SUITES=(
   codeberg_auth_test.dart
   screens_navigation_test.dart
   track_only_actions_test.dart
+  disabled_app_test.dart
 )
 TV_SUITES=(
   tv_navigation_test.dart

@@ -322,7 +322,7 @@ class AppListTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final showChangesFn = getChangeLogFn(context, _app);
-    final hasUpdate = isAppUpdateable(_app, settingsProvider);
+    final hasUpdate = !_app.disabled && isAppUpdateable(_app, settingsProvider);
     final isTV = settingsProvider.isTV;
     final Widget trailingRow = LayoutBuilder(
       builder: (context, constraints) => Row(
@@ -519,6 +519,9 @@ class AppListTile extends StatelessWidget {
                     : trailingRow,
                 onTap: onTap,
               );
+              final tileChild = _app.disabled
+                  ? Opacity(opacity: 0.5, child: tile)
+                  : tile;
               if (settingsProvider.isTV) {
                 return TvFocusRing(
                   borderRadius:
@@ -535,12 +538,12 @@ class AppListTile extends StatelessWidget {
                             },
                           ),
                         ),
-                      Expanded(child: tile),
+                      Expanded(child: tileChild),
                     ],
                   ),
                 );
               }
-              return tile;
+              return tileChild;
             }(),
           ),
         );
@@ -934,15 +937,20 @@ class AppListBuilder {
     }
 
     if (buryNonInstalled) {
-      final temp = <AppInMemory>[];
+      final tempDisabled = <AppInMemory>[];
+      final tempNotInstalled = <AppInMemory>[];
       apps = apps.where((sa) {
+        if (sa.app.disabled) {
+          tempDisabled.add(sa);
+          return false;
+        }
         if (sa.app.installedVersion == null) {
-          temp.add(sa);
+          tempNotInstalled.add(sa);
           return false;
         }
         return true;
       }).toList();
-      apps = [...apps, ...temp];
+      apps = [...apps, ...tempDisabled, ...tempNotInstalled];
     }
 
     final tempRenamed = <AppInMemory>[];
@@ -980,7 +988,7 @@ class _VersionLabel extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final app = appInMemory.app;
-    final hasUpdate = isAppUpdateable(app, settingsProvider);
+    final hasUpdate = !app.disabled && isAppUpdateable(app, settingsProvider);
     final updateColor = hasUpdate
         ? Theme.of(context).colorScheme.primary
         : Theme.of(context).colorScheme.onSurfaceVariant;
@@ -1066,6 +1074,9 @@ class _VersionLabel extends StatelessWidget {
   }
 
   String installedVersionText(App app) {
+    if (app.disabled) {
+      return tr('disabled');
+    }
     final installed = app.installedVersion;
     final latest = app.latestVersion;
     if (isVersionUpdate(app)) {

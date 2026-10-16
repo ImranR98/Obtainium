@@ -113,6 +113,7 @@ Map<String, dynamic> appJson({
   ],
   Map<String, dynamic> additionalSettings = const {'versionDetection': true},
   bool pinned = false,
+  bool disabled = false,
   List<String> categories = const [],
   String? releaseUrl,
 }) => {
@@ -128,6 +129,7 @@ Map<String, dynamic> appJson({
   'additionalSettings': jsonEncode(additionalSettings),
   'lastUpdateCheck': null,
   'pinned': pinned,
+  'disabled': disabled,
   'categories': categories,
   'releaseDate': null,
   'changeLog': null,

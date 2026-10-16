@@ -110,7 +110,8 @@ narrowly** to avoid rebuild amplification:
 `url`, `author`, `name`, `installedVersion`, `latestVersion`, `apkUrls`
 (`List<MapEntry<name, url>>`), `preferredApkIndex`, `additionalSettings`
 (`Map<String, dynamic>` — per-app source options), `categories`, `pinned`,
-`overrideSource`, `pendingRepoRenameUrl`, and `allowIdChange`.
+`disabled` (skips all update checks and background installs while keeping the
+entry in the list), `overrideSource`, `pendingRepoRenameUrl`, and `allowIdChange`.
 
 - `App.toJson()` / `App.fromJson()` serialize to/from disk.
 - `App.fromJson()` runs **`appJSONCompatibilityModifiers()`** — a chain of idempotent
@@ -376,6 +377,8 @@ Background work is scheduled via **`workmanager`** (Android periodic tasks). The
 
 - **`fetchUpdate(appId)`** fetches new metadata **without saving**;
   **`checkUpdate(appId)`** fetches and saves.
+- Disabled apps are skipped by automatic checks and background installs;
+  `fetchUpdate` returns early for them.
 - **`checkUpdates()`** first calls `AppSource.prefetchUpdateInfo` for each source
   present in the batch (APKMirror uses this to fetch up to 100 apps in one API
   request), then processes app IDs in **bounded chunks (max 4 concurrent)** and

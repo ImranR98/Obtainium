@@ -619,6 +619,19 @@ class AppsPageState extends State<AppsPage> {
     );
   }
 
+  void setSelectedAppsDisabled(Set<App> selectedApps, bool disabled) {
+    final current = selectedApps
+        .map((e) => appsProvider.apps[e.id]?.app)
+        .whereType<App>()
+        .toList();
+    if (current.isEmpty) return;
+    unawaited(
+      appsProvider.saveApps(
+        current.map((a) => a.copyWith(disabled: disabled)).toList(),
+      ),
+    );
+  }
+
   /// Splits [apps] into existing updates, new installs, and track-only
   /// updates. Track-only apps never appear in the other two groups.
   (List<String>, List<String>, List<String>) _classifyForUpdate(
@@ -628,6 +641,7 @@ class AppsPageState extends State<AppsPage> {
     final newInstallIds = <String>[];
     final trackOnlyUpdateIds = <String>[];
     for (final app in apps) {
+      if (app.disabled) continue;
       final trackOnly = app.settings.getBool('trackOnly');
       if (trackOnly) {
         if (isAppUpdateable(app, settingsProvider)) {
@@ -644,6 +658,7 @@ class AppsPageState extends State<AppsPage> {
 
   void showMoreOptionsBottomSheet(BuildContext context, Set<App> selectedApps) {
     final isPinned = selectedApps.where((e) => e.pinned).isNotEmpty;
+    final isDisabled = selectedApps.where((e) => e.disabled).isNotEmpty;
 
     final (existingUpdateIds, newInstallIds, trackOnlyUpdateIds) =
         _classifyForUpdate(selectedApps);
@@ -693,6 +708,16 @@ class AppsPageState extends State<AppsPage> {
                   onTap: () {
                     settingsProvider.selectionClick();
                     pinSelectedApps(selectedApps);
+                  },
+                ),
+                optionTile(
+                  icon: isDisabled
+                      ? Icons.visibility_outlined
+                      : Icons.visibility_off_outlined,
+                  label: isDisabled ? tr('enableApp') : tr('disableApp'),
+                  onTap: () {
+                    settingsProvider.selectionClick();
+                    setSelectedAppsDisabled(selectedApps, !isDisabled);
                   },
                 ),
                 if (hasObtainActions && !appsProvider.areDownloadsRunning())

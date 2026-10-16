@@ -502,6 +502,13 @@ class _AppPageState extends State<AppPage> {
     unawaited(appsProvider.saveApps([app.app]));
   }
 
+  void toggleAppDisabled(AppInMemory? app) {
+    if (app == null) return;
+    settingsProvider.selectionClick();
+    app.app = app.app.copyWith(disabled: !app.app.disabled);
+    unawaited(appsProvider.saveApps([app.app]));
+  }
+
   Future<bool> removeApp(BuildContext context, AppInMemory? app) async {
     if (app == null) return false;
     return await appsProvider.removeAppsWithModal(context, [app.app]) == true;
@@ -716,6 +723,18 @@ class _AppPageState extends State<AppPage> {
                 },
           icon: const Icon(Icons.restore_rounded),
           tooltip: tr('resetInstallStatus'),
+        ),
+      if (app != null)
+        IconButton(
+          onPressed: app.downloadProgress != null || updating
+              ? null
+              : () => toggleAppDisabled(app),
+          tooltip: app.app.disabled ? tr('enableApp') : tr('disableApp'),
+          icon: Icon(
+            app.app.disabled
+                ? Icons.visibility_outlined
+                : Icons.visibility_off_outlined,
+          ),
         ),
       IconButton(
         onPressed: app == null || app.downloadProgress != null || updating
@@ -1235,17 +1254,24 @@ class _AppPageState extends State<AppPage> {
           padding: const EdgeInsets.only(top: 4),
           child: Row(
             children: [
-              ..._getSecondaryActions(
-                context,
-                app,
-                source,
-                appsProvider,
-                settingsProvider,
-                showAppWebpageFinal,
-                isVersionDetectionStandard,
-                trackOnly,
+              Expanded(
+                child: SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  child: Row(
+                    children: _getSecondaryActions(
+                      context,
+                      app,
+                      source,
+                      appsProvider,
+                      settingsProvider,
+                      showAppWebpageFinal,
+                      isVersionDetectionStandard,
+                      trackOnly,
+                    ),
+                  ),
+                ),
               ),
-              const Spacer(),
+              const SizedBox(width: 8),
               _getPrimaryButton(context, app, areDownloadsRunning),
             ],
           ),

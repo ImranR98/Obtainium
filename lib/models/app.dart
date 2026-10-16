@@ -112,6 +112,7 @@ class App {
   final Map<String, dynamic> additionalSettings;
   final DateTime? lastUpdateCheck;
   final bool pinned;
+  final bool disabled;
   final List<String> categories;
   final DateTime? releaseDate;
   final String? changeLog;
@@ -134,6 +135,7 @@ class App {
     required this.additionalSettings,
     this.lastUpdateCheck,
     this.pinned = false,
+    this.disabled = false,
     this.categories = const [],
     this.releaseDate,
     this.changeLog,
@@ -186,6 +188,7 @@ class App {
     Map<String, dynamic>? additionalSettings,
     Object? lastUpdateCheck = _sentinel,
     bool? pinned,
+    bool? disabled,
     List<String>? categories,
     Object? releaseDate = _sentinel,
     Object? changeLog = _sentinel,
@@ -216,6 +219,7 @@ class App {
           ? this.lastUpdateCheck
           : lastUpdateCheck as DateTime?,
       pinned: pinned ?? this.pinned,
+      disabled: disabled ?? this.disabled,
       categories: categories ?? List<String>.from(this.categories),
       releaseDate: releaseDate == _sentinel
           ? this.releaseDate
@@ -261,6 +265,7 @@ class App {
             ? null
             : DateTime.fromMicrosecondsSinceEpoch(json['lastUpdateCheck']),
         pinned: json['pinned'] ?? false,
+        disabled: json['disabled'] ?? false,
         categories: json['categories'] != null
             ? (json['categories'] as List<dynamic>)
                   .map((e) => e.toString())
@@ -306,6 +311,7 @@ class App {
     'additionalSettings': jsonEncode(additionalSettings),
     'lastUpdateCheck': lastUpdateCheck?.microsecondsSinceEpoch,
     'pinned': pinned,
+    'disabled': disabled,
     'categories': categories,
     'releaseDate': releaseDate?.microsecondsSinceEpoch,
     'changeLog': changeLog,
