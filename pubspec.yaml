@@ -2,7 +2,7 @@ name: obtainium
 description: Get Android app updates straight from the source.
 publish_to: 'none'
 
-version: 1.6.18+2357
+version: 1.7.0+2358
 
 environment:
   sdk: ^3.12.0
@@ -12,23 +12,23 @@ dependencies:
   flutter:
     sdk: flutter
 
-  cupertino_icons: ^1.0.9
+  cupertino_icons: ^2.0.0
   path_provider: ^2.1.6
   flutter_fgbg: ^0.8.0
-  flutter_local_notifications: ^22.3.0
+  flutter_local_notifications: ^22.3.2
   provider: ^6.1.5+1
   http: ^1.6.0
   webview_flutter: ^4.14.1
   dynamic_color: ^2.1.0
-  material_ui: ^1.2.0
+  material_ui: ^1.7.0
   material_color_utilities: ^0.13.0
   html: ^0.15.7
-  shared_preferences: ^2.5.5
-  url_launcher: ^6.3.2
+  shared_preferences: ^2.5.6
+  url_launcher: ^6.3.3
   permission_handler: ^13.0.2
-  fluttertoast: ^10.0.0
-  device_info_plus: ^13.2.0
-  file_picker: ^12.3.0
+  fluttertoast: 10.0.0 # TODO: 10.0.1+ applies KGP unconditionally, breaking AGP 9 built-in Kotlin
+  device_info_plus: ^13.3.0
+  file_picker: ^13.1.0
   animations: ^3.0.0
   android_package_installer: # TODO: Upstream PR pending; if not accepted, keep fork maintained
     git:
@@ -38,13 +38,13 @@ dependencies:
     git:
       url: https://github.com/ImranR98/android_package_manager
       ref: b5bc0365bd7faab6f51f6ec8baf4a9dab0df9117
-  share_plus: ^13.3.0
-  sqflite: ^2.4.4
+  share_plus: ^13.3.1
+  sqflite: ^2.4.4+2
   easy_localization: ^3.0.8
   intl: ^0.20.3
   android_intent_plus: ^6.1.0
   flutter_archive: ^6.3.1
-  archive: ^4.2.0
+  archive: ^4.5.2
   hsluv: ^1.1.3
   connectivity_plus: ^7.3.1
   shared_storage: # TODO: Upstream maintenance uncertain; consider alternatives or fork to org
@@ -53,7 +53,7 @@ dependencies:
       ref: 6dbcdf2c2045e326f59c062f542724aedf73cb6e
   crypto: ^3.0.7
   bcrypt: ^1.2.0
-  app_links: ^7.2.1
+  app_links: ^7.2.2
   equations: ^6.0.0
   flex_color_picker: ^4.0.0
   android_system_font: # TODO: Forked dependency; watch upstream for releases
@@ -63,10 +63,10 @@ dependencies:
   shizuku_apk_installer: # TODO: Forked dependency; watch upstream for releases
     git:
       url: https://github.com/ImranR98/shizuku_apk_installer
-      ref: 12d8447c501e6abfadd134887b8b810d07b1d1e3
+      ref: 9777a8bc78dd19300b4647e34e9d52bca772d8e1
   markdown: ^7.3.1
   flutter_typeahead: ^6.0.0
-  battery_plus: ^7.1.1
+  battery_plus: ^7.1.2
   flutter_charset_detector: ^6.0.0
   flutter_markdown_plus: ^1.0.12
   workmanager: ^0.10.10

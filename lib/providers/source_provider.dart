@@ -58,7 +58,8 @@ export 'package:obtainium/models/typed_settings.dart';
 export 'package:obtainium/services/apk_filter_service.dart';
 export 'package:obtainium/services/http_service.dart';
 export 'package:obtainium/services/version_service.dart';
-export 'package:obtainium/utils/string_utils.dart' show getSourceRegex;
+export 'package:obtainium/utils/string_utils.dart'
+    show getSourceRegex, passesRegExFilter;
 export 'package:obtainium/utils/url_utils.dart' show preStandardizeUrl;
 
 const int kDefaultFetchConcurrency = 4;
@@ -187,17 +188,46 @@ class SourceProvider {
       .toString()
       .substring(0, 12);
 
+  /// Builds a placeholder [App] for [url] when its source could not be
+  /// checked (e.g. no connection). The entry is filled in by the next
+  /// successful check, and its real package ID is adopted on first install.
+  App buildPlaceholderApp(
+    AppSource source,
+    String url,
+    Map<String, dynamic> additionalSettings, {
+    bool sourceIsOverriden = false,
+  }) {
+    final standardUrl = source.standardizeUrl(url);
+    final settings = Map<String, dynamic>.from(additionalSettings);
+    final app = App(
+      id: generateTempID(standardUrl, settings),
+      url: standardUrl,
+      author: source.name,
+      name: standardUrl,
+      latestVersion: tr('unknown'),
+      apkUrls: const [MapEntry('placeholder', 'placeholder')],
+      preferredApkIndex: 0,
+      additionalSettings: settings,
+      overrideSource: sourceIsOverriden ? source.sourceIdentifier : null,
+    );
+    return source.postProcessApp(app);
+  }
+
   Future<String> _resolveAppId(
     AppSource source,
     App? currentApp,
     Map<String, dynamic> additionalSettings,
     bool trackOnly,
     String standardUrl,
-    bool inferAppIdIfOptional,
-  ) async {
+    bool inferAppIdIfOptional, {
+    String? inferredAppId,
+  }) async {
     if (currentApp?.id != null) return currentApp!.id;
     final explicitId = additionalSettings['appId'] as String?;
     if (explicitId != null && explicitId.trim().isNotEmpty) return explicitId;
+    if (inferredAppId != null && inferredAppId.trim().isNotEmpty) {
+      return inferredAppId;
+    }
     if ((!trackOnly || source.inferAppIdEvenWhenTrackOnly) &&
         (!source.appIdInferIsOptional ||
             (source.appIdInferIsOptional && inferAppIdIfOptional))) {
@@ -232,7 +262,11 @@ class SourceProvider {
     }
     APKDetails apk;
     try {
-      apk = await source.getLatestAPKDetails(standardUrl, additionalSettings);
+      apk = await source.getLatestAPKDetailsWithContext(
+        standardUrl,
+        additionalSettings,
+        currentApp: currentApp,
+      );
     } on ObtainiumError catch (e) {
       throw e..withUrlContext(standardUrl);
     }
@@ -294,6 +328,7 @@ class SourceProvider {
         trackOnly,
         standardUrl,
         inferAppIdIfOptional,
+        inferredAppId: apk.appId,
       ),
       url: standardUrl,
       author: apk.names.author,
@@ -320,6 +355,7 @@ class SourceProvider {
       otherAssetUrls: apk.allAssetUrls
           .where((a) => apk.apkUrls.indexWhere((p) => a.key == p.key) < 0)
           .toList(),
+      apkSizeBytes: apk.apkSizeBytes,
     );
     return source.postProcessApp(finalApp);
   }

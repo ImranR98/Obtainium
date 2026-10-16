@@ -113,6 +113,7 @@ cat > "$OUT_DIR/html/index.html" <<EOF
 EOF
 cat > "$OUT_DIR/js/app.0334504e.js" <<EOF
 window.__assets={apkUrl:"$PUBLIC_BASE_URL/srr230-b6.apk"}}),e("download-button-unstable",{attrs:{title1:"iOS v
+Last modified: Thu. September 3rd, 2026 - 11:41pm
 EOF
 cp "$OUT_DIR/testapp-v2.apk" "$OUT_DIR/srr230-b6.apk"
 

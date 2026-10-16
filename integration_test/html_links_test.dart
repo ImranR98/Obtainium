@@ -43,11 +43,19 @@ void main() {
       ],
       'customLinkFilterRegex': finalFilter,
       'defaultPseudoVersioningMethod': 'APKLinkHash',
+      'releaseDateRegEx': r'Last modified: (.*)',
+      'releaseDateMatchGroup': r'$1',
+      'releaseDateDateFormat': 'EEE. MMMM d, yyyy - h:mma',
     });
     expect(
       details.apkUrls.map((e) => e.value),
       contains(expectedApkUrl),
       reason: 'relative intermediate link and quoted JS URL must resolve',
+    );
+    expect(
+      details.releaseDate,
+      DateTime(2026, 9, 3, 23, 41),
+      reason: 'the HTML source must extract the release date from the page',
     );
 
     // 2. Direct JS body: the URL must stop at the closing quote instead of
@@ -62,6 +70,11 @@ void main() {
       jsDetails.apkUrls.map((e) => e.value),
       contains(expectedApkUrl),
       reason: 'trailing JS characters must not become part of the URL',
+    );
+    expect(
+      jsDetails.releaseDate,
+      isNull,
+      reason: 'no release date is extracted when no RegEx is configured',
     );
 
     restoreErrorWidgetBuilder();

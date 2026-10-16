@@ -27,10 +27,14 @@ import java.io.File
 class MainActivity : FlutterActivity() {
     private companion object {
         const val EXTERNAL_INSTALL_CHANNEL = "dev.imranr.obtainium/external_install"
+        const val DOCUMENT_TREE_CHANNEL = "dev.imranr.obtainium/document_tree"
         const val APK_MIME = "application/vnd.android.package-archive"
 
         /** Request code for tracked external-installer launches. */
         const val THIRD_PARTY_INSTALL_REQUEST_CODE = 5108
+
+        /** Request code for the read+write document-tree picker. */
+        const val DOCUMENT_TREE_REQUEST_CODE = 5209
 
         /** Hard ceiling for a tracked external install (5 minutes). */
         const val INSTALL_TIMEOUT_MS = 300_000L
@@ -51,6 +55,8 @@ class MainActivity : FlutterActivity() {
     }
 
     private var pendingShareIntent: Intent? = null
+
+    private var pendingDocumentTreeResult: MethodChannel.Result? = null
 
     private val installHandler = Handler(Looper.getMainLooper())
     private var installWatcher: InstallWatcher? = null
@@ -193,6 +199,15 @@ class MainActivity : FlutterActivity() {
                 else -> result.notImplemented()
             }
         }
+        MethodChannel(
+            flutterEngine.dartExecutor.binaryMessenger,
+            DOCUMENT_TREE_CHANNEL,
+        ).setMethodCallHandler { call, result ->
+            when (call.method) {
+                "pickDocumentTree" -> pickDocumentTree(result)
+                else -> result.notImplemented()
+            }
+        }
         pendingShareIntent?.let {
             super.onNewIntent(it)
             pendingShareIntent = null
@@ -273,6 +288,33 @@ class MainActivity : FlutterActivity() {
             }
             return
         }
+        if (requestCode == DOCUMENT_TREE_REQUEST_CODE) {
+            val pending = pendingDocumentTreeResult
+            pendingDocumentTreeResult = null
+            val uri = data?.data
+            if (resultCode != Activity.RESULT_OK || uri == null) {
+                pending?.success(null)
+                return
+            }
+            try {
+                contentResolver.takePersistableUriPermission(
+                    uri,
+                    Intent.FLAG_GRANT_READ_URI_PERMISSION or
+                        Intent.FLAG_GRANT_WRITE_URI_PERMISSION,
+                )
+            } catch (e: Exception) {
+                try {
+                    contentResolver.takePersistableUriPermission(
+                        uri,
+                        Intent.FLAG_GRANT_WRITE_URI_PERMISSION,
+                    )
+                } catch (_: Exception) {
+                    // Session-only access; later availability checks report it.
+                }
+            }
+            pending?.success(uri.toString())
+            return
+        }
         super.onActivityResult(requestCode, resultCode, data)
     }
 
@@ -324,6 +366,33 @@ class MainActivity : FlutterActivity() {
     private fun contentUriForFile(path: String): String {
         val uri = FileProvider.getUriForFile(this, packageName, File(path))
         return uri.toString()
+    }
+
+    /**
+     * Opens the system folder picker requesting read+write persistable access.
+     * shared_storage can only request one of the two, so a persisted export
+     * directory loses read access after a restart (#3227).
+     */
+    @Suppress("DEPRECATION")
+    private fun pickDocumentTree(methodResult: MethodChannel.Result) {
+        if (pendingDocumentTreeResult != null) {
+            methodResult.error("BUSY", "A folder picker is already open", null)
+            return
+        }
+        val intent = Intent(Intent.ACTION_OPEN_DOCUMENT_TREE).apply {
+            addFlags(
+                Intent.FLAG_GRANT_READ_URI_PERMISSION or
+                    Intent.FLAG_GRANT_WRITE_URI_PERMISSION or
+                    Intent.FLAG_GRANT_PERSISTABLE_URI_PERMISSION,
+            )
+        }
+        pendingDocumentTreeResult = methodResult
+        try {
+            startActivityForResult(intent, DOCUMENT_TREE_REQUEST_CODE)
+        } catch (e: Exception) {
+            pendingDocumentTreeResult = null
+            methodResult.error("NO_PICKER", e.message, null)
+        }
     }
 
     private fun transformShareIntent(intent: Intent): Intent {
