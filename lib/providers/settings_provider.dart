@@ -730,7 +730,7 @@ class SettingsProvider with ChangeNotifier {
     final uri = Uri.parse(uriString);
     // The directory may be temporarily unreadable (e.g. a WebDAV mount not
     // yet available right after a reboot). Keep the stored URI so it can be
-    // retried later, and only clear it via pickExportDir.
+    // retried later.
     try {
       if (!(await saf.canRead(uri) ?? false) ||
           !(await saf.canWrite(uri) ?? false)) {
@@ -745,27 +745,22 @@ class SettingsProvider with ChangeNotifier {
     return uri;
   }
 
-  Future<void> pickExportDir({bool remove = false}) async {
+  Future<void> pickExportDir() async {
     final existingSAFPerms = (await saf.persistedUriPermissions()) ?? [];
     final currentOneWayDataSyncDir = await getExportDir();
-    Uri? newOneWayDataSyncDir;
-    if (!remove) {
-      try {
-        newOneWayDataSyncDir = await DocumentTreeBridge.instance
-            .pickDocumentTree();
-      } catch (e) {
-        AppLogger.error(e, message: 'Failed to open document tree');
-        throw ObtainiumError(tr('noFilePickerAvailable'));
-      }
+    final Uri? newOneWayDataSyncDir;
+    try {
+      newOneWayDataSyncDir = await DocumentTreeBridge.instance
+          .pickDocumentTree();
+    } catch (e) {
+      AppLogger.error(e, message: 'Failed to open document tree');
+      throw ObtainiumError(tr('noFilePickerAvailable'));
     }
-    if (currentOneWayDataSyncDir?.path != newOneWayDataSyncDir?.path) {
-      if (newOneWayDataSyncDir == null) {
-        await prefs?.remove('exportDir');
-      } else {
-        unawaited(
-          prefs?.setString('exportDir', newOneWayDataSyncDir.toString()),
-        );
-      }
+    if (newOneWayDataSyncDir == null) {
+      return;
+    }
+    if (currentOneWayDataSyncDir?.path != newOneWayDataSyncDir.path) {
+      unawaited(prefs?.setString('exportDir', newOneWayDataSyncDir.toString()));
       notifyListeners();
     }
     for (var e in existingSAFPerms) {
