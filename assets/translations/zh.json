@@ -379,6 +379,7 @@
     "runBgCheckNow": "立即进行后台更新检查",
     "rustoreAggregatedAppNoApk": "RuStore 从外部来源列出此应用，并未托管其 APK 文件",
     "samsungGalaxyStoreApiError": "Samsung Galaxy Store API 错误",
+    "samsungGalaxyStoreLoginRequired": "This Galaxy Store app requires a Samsung account and cannot be downloaded anonymously.",
     "search": "搜索",
     "searchFailed": "{}：搜索失败（{}）",
     "searchQuery": "搜索查询",

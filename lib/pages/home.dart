@@ -364,6 +364,7 @@ class _HomePageState extends State<HomePage> {
     final actionsFab = TvFocusRing(
       borderRadius: 16,
       child: FloatingActionButton.extended(
+        heroTag: null,
         onPressed: onActionsPressed,
         tooltip: plural('action', 2),
         icon: const Icon(Icons.more_vert),
@@ -371,6 +372,7 @@ class _HomePageState extends State<HomePage> {
       ),
     );
     final createFabExtended = FloatingActionButton.extended(
+      heroTag: null,
       onPressed: onAddPressed,
       tooltip: tr('addApp'),
       icon: const Icon(Icons.add),

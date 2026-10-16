@@ -348,6 +348,12 @@ Inbound links arrive via `AppLinks` (Android App Links / intent filters) — the
 (cold start) and `uriLinkStream` (warm start) feed into `interpretLink`, with a
 dedup guard so the initial link isn't processed twice.
 
+Flutter's built-in route-based deeplinking is disabled
+(`flutter_deeplinking_enabled=false` in `AndroidManifest.xml`). The engine
+default is enabled, which pushed every `obtainium://` intent to the Navigator
+as a route with no matching handler and logged an `onUnknownRoute` error
+alongside this dispatcher.
+
 The **share sheet** (`ACTION_SEND` intent) added in the `MainActivity.kt` native layer
 rewrites shared URLs as `obtainium://add/<url>` before they reach `interpretLink`, so
 the same Dart-side dispatch handles both manual deeplinks and share-target intents.

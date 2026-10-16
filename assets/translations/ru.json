@@ -386,6 +386,7 @@
     "runBgCheckNow": "Запустить фоновую проверку обновлений",
     "rustoreAggregatedAppNoApk": "RuStore публикует это приложение, ссылаясь на внешний источник, и не размещает его APK-файл",
     "samsungGalaxyStoreApiError": "Ошибка API Samsung Galaxy Store",
+    "samsungGalaxyStoreLoginRequired": "This Galaxy Store app requires a Samsung account and cannot be downloaded anonymously.",
     "search": "Поиск",
     "searchFailed": "{}: ошибка поиска ({})",
     "searchQuery": "Поисковый запрос",

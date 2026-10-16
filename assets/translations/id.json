@@ -379,6 +379,7 @@
     "runBgCheckNow": "Jalankan pemeriksaan pembaruan latar belakang sekarang",
     "rustoreAggregatedAppNoApk": "RuStore lists this app from an external source and does not host its APK",
     "samsungGalaxyStoreApiError": "Samsung Galaxy Store API error",
+    "samsungGalaxyStoreLoginRequired": "This Galaxy Store app requires a Samsung account and cannot be downloaded anonymously.",
     "search": "Cari",
     "searchFailed": "{}: search failed ({})",
     "searchQuery": "Cari Kueri",
