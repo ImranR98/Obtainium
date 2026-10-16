@@ -5,6 +5,7 @@ import 'package:crypto/crypto.dart';
 import 'package:device_info_plus/device_info_plus.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:http/http.dart';
+import 'package:obtainium/core/logging/app_logger.dart';
 import 'package:obtainium/custom_errors.dart';
 import 'package:obtainium/providers/source_provider.dart';
 import 'package:obtainium/components/generated_form_model.dart';
@@ -363,7 +364,10 @@ class SamsungGalaxyStore extends AppSource {
       return uri.replace(scheme: 'https', port: 443).toString();
     } on RateLimitError {
       rethrow;
-    } catch (_) {
+    } catch (e) {
+      AppLogger.info(
+        'Galaxy Store endpoint discovery failed, using $fallback: ${e.runtimeType}',
+      );
       return fallback;
     }
   }
@@ -452,8 +456,9 @@ class SamsungGalaxyStore extends AppSource {
             ? overview['updateDescription']
             : null,
       );
-    } catch (_) {
+    } catch (e) {
       // Optional store details cannot invalidate an already authorized APK.
+      AppLogger.info('Galaxy Store details unavailable: ${e.runtimeType}');
       return result;
     }
   }
@@ -729,7 +734,10 @@ class SamsungGalaxyStore extends AppSource {
       );
     } on RateLimitError {
       rethrow;
-    } catch (_) {
+    } catch (e) {
+      AppLogger.info(
+        'Galaxy Store stub unavailable, trying ODS: ${e.runtimeType}',
+      );
       return _getOdsDetails(packageName, device, additionalSettings);
     }
   }
