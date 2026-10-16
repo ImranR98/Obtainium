@@ -109,8 +109,10 @@ extension AppsProviderUpdates on AppsProvider {
     final minAge = DateTime.now().subtract(
       Duration(minutes: settingsProvider.updateInterval),
     );
+    final excludedCategories = settingsProvider.categoriesExcludedFromChecks;
     final List<String> appIds = apps.values
         .where((app) => !app.app.disabled)
+        .where((app) => !app.app.categories.any(excludedCategories.contains))
         .where(
           (app) =>
               forceAll ||

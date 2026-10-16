@@ -85,8 +85,19 @@ class _CategoryEditorSheetState extends State<_CategoryEditorSheet> {
   );
   final FocusNode _nameFocus = FocusNode();
   late Color _color = widget.initialColor;
+  late bool _excludeFromChecks;
 
   bool get _isEditing => widget.existingName != null;
+
+  @override
+  void initState() {
+    super.initState();
+    _excludeFromChecks =
+        widget.existingName != null &&
+        context.read<SettingsProvider>().categoriesExcludedFromChecks.contains(
+          widget.existingName,
+        );
+  }
 
   @override
   void dispose() {
@@ -133,6 +144,12 @@ class _CategoryEditorSheetState extends State<_CategoryEditorSheet> {
     }
     cats[name] = _color.toARGB32();
     settingsProvider.setCategories(cats, appsProvider: appsProvider);
+    final excluded = Set<String>.from(
+      settingsProvider.categoriesExcludedFromChecks,
+    );
+    excluded.remove(name);
+    if (_excludeFromChecks) excluded.add(name);
+    settingsProvider.categoriesExcludedFromChecks = excluded;
     if (context.mounted) {
       // ignore: use_build_context_synchronously
       Navigator.of(context).pop(CategoryEditResult(name: name, previous: prev));
@@ -312,7 +329,14 @@ class _CategoryEditorSheetState extends State<_CategoryEditorSheet> {
                 ),
               ],
             ),
-            const SizedBox(height: 24),
+            const SizedBox(height: 8),
+            SwitchListTile(
+              contentPadding: EdgeInsets.zero,
+              title: Text(tr('skipUpdateChecks')),
+              value: _excludeFromChecks,
+              onChanged: (value) => setState(() => _excludeFromChecks = value),
+            ),
+            const SizedBox(height: 16),
             Row(
               children: [
                 if (_isEditing)

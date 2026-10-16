@@ -419,6 +419,7 @@
     "signingCertMismatchWarningBody": "“{}”的签名证书与已安装版本不同。安装很可能会失败。仅当您信任此来源时才继续。",
     "signingCertMismatchHardBlockBody": "为“{}”下载的文件与您配置的签名证书哈希值不符。安装已被阻止。",
     "actualSigningCertHash": "已下载的证书哈希值",
+    "skipUpdateChecks": "Skip update checks",
     "skipUpdateNotifications": "忽略更新通知",
     "smartname": "名称（智能）",
     "someErrors": "出现了一些错误",

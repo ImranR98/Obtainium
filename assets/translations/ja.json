@@ -419,6 +419,7 @@
     "signingCertMismatchWarningBody": "{}は、インストール済みのバージョンとは異なる証明書で署名されています。インストールは失敗する可能性が非常に高いです。このソースを信頼できる場合にのみ続行してください。",
     "signingCertMismatchHardBlockBody": "ダウンロードした{}のファイルが、設定した署名証明書ハッシュと一致しません。インストールをブロックしました。",
     "actualSigningCertHash": "ダウンロードした証明書ハッシュ",
+    "skipUpdateChecks": "Skip update checks",
     "skipUpdateNotifications": "アップデート通知を行わない",
     "smartname": "名前（スマート）",
     "someErrors": "何らかのエラーが発生しました",

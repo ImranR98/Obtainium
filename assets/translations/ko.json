@@ -419,6 +419,7 @@
     "signingCertMismatchWarningBody": "{} is signed with a different certificate than the installed version. Installing it will most likely fail. Only continue if you trust this source.",
     "signingCertMismatchHardBlockBody": "The downloaded file for {} does not match the signing certificate hash you configured. The install has been blocked.",
     "actualSigningCertHash": "Downloaded certificate hash",
+    "skipUpdateChecks": "Skip update checks",
     "skipUpdateNotifications": "업데이트 알림 건너뛰기",
     "smartname": "이름(스마트)",
     "someErrors": "일부 오류가 발생했습니다",

@@ -503,6 +503,40 @@ class SettingsProvider with ChangeNotifier {
       }
     }
     prefs?.setString('categories', jsonEncode(cats));
+    // Deleted/renamed categories must not leave stale exclusions behind.
+    final excluded = categoriesExcludedFromChecks
+        .where(cats.containsKey)
+        .toSet();
+    prefs?.setString(
+      'categoriesExcludedFromChecks',
+      jsonEncode(excluded.toList()),
+    );
+    notifyListeners();
+  }
+
+  /// Categories whose apps are skipped by automatic update checks (#3375).
+  Set<String> get categoriesExcludedFromChecks {
+    final raw = _getString('categoriesExcludedFromChecks');
+    if (raw == null || raw.isEmpty) return <String>{};
+    try {
+      final decoded = jsonDecode(raw);
+      if (decoded is List) {
+        return decoded.map((e) => e.toString()).toSet();
+      }
+    } catch (e) {
+      AppLogger.error(
+        e,
+        message: 'Corrupted category exclusion data, resetting',
+      );
+    }
+    return <String>{};
+  }
+
+  set categoriesExcludedFromChecks(Set<String> categories) {
+    prefs?.setString(
+      'categoriesExcludedFromChecks',
+      jsonEncode(categories.toList()),
+    );
     notifyListeners();
   }
 

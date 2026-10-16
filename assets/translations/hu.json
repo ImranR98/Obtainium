@@ -419,6 +419,7 @@
     "signingCertMismatchWarningBody": "A(z) {} más tanúsítvánnyal van aláírva, mint a telepített verzió. A telepítés nagy valószínűséggel meg fog hiúsulni. Csak akkor folytassa, ha megbízik ebben a forrásban.",
     "signingCertMismatchHardBlockBody": "A(z) {} letöltött APK-fájlja nem egyezik a beállított aláírási tanúsítvány kivonatával. A telepítés le lett tiltva.",
     "actualSigningCertHash": "Letöltött tanúsítvány-kivonat",
+    "skipUpdateChecks": "Skip update checks",
     "skipUpdateNotifications": "Frissítési értesítések kihagyása",
     "smartname": "Név (Okos)",
     "someErrors": "Néhány hiba történt",

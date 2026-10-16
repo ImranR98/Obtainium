@@ -377,8 +377,9 @@ Background work is scheduled via **`workmanager`** (Android periodic tasks). The
 
 - **`fetchUpdate(appId)`** fetches new metadata **without saving**;
   **`checkUpdate(appId)`** fetches and saves.
-- Disabled apps are skipped by automatic checks and background installs;
-  `fetchUpdate` returns early for them.
+- Disabled apps and apps in a category listed in
+  `categoriesExcludedFromChecks` are skipped by automatic checks (and disabled
+  apps by background installs); `fetchUpdate` returns early for them.
 - **`checkUpdates()`** first calls `AppSource.prefetchUpdateInfo` for each source
   present in the batch (APKMirror uses this to fetch up to 100 apps in one API
   request), then processes app IDs in **bounded chunks (max 4 concurrent)** and
