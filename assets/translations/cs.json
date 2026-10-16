@@ -386,6 +386,7 @@
     "runBgCheckNow": "Spustit kontrolu aktualizací na pozadí nyní",
     "rustoreAggregatedAppNoApk": "RuStore lists this app from an external source and does not host its APK",
     "samsungGalaxyStoreApiError": "Samsung Galaxy Store API error",
+    "samsungGalaxyStoreLoginRequired": "This Galaxy Store app requires a Samsung account and cannot be downloaded anonymously.",
     "search": "Hledat",
     "searchFailed": "{}: search failed ({})",
     "searchQuery": "Vyhledávací dotaz",

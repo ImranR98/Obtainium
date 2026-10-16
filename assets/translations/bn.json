@@ -376,6 +376,7 @@
     "runBgCheckNow": "এখনই ব্যাকগ্রাউন্ড আপডেট চেক চালান",
     "rustoreAggregatedAppNoApk": "RuStore এই অ্যাপটি বহিরাগত সোর্স থেকে তালিকাভুক্ত করে এবং এর APK হোস্ট করে না",
     "samsungGalaxyStoreApiError": "Samsung Galaxy Store API ত্রুটি",
+    "samsungGalaxyStoreLoginRequired": "This Galaxy Store app requires a Samsung account and cannot be downloaded anonymously.",
     "search": "অনুসন্ধান করুন",
     "searchFailed": "{}: অনুসন্ধান ব্যর্থ হয়েছে ({})",
     "searchQuery": "অনুসন্ধান কোয়েরি",

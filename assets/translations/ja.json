@@ -379,6 +379,7 @@
     "runBgCheckNow": "今すぐバックグラウンドでのアップデート確認を開始する",
     "rustoreAggregatedAppNoApk": "このアプリは外部ソースからの掲載のため、RuStoreではAPKを提供していません",
     "samsungGalaxyStoreApiError": "Samsung Galaxy Store APIエラー",
+    "samsungGalaxyStoreLoginRequired": "This Galaxy Store app requires a Samsung account and cannot be downloaded anonymously.",
     "search": "検索",
     "searchFailed": "{}：検索に失敗しました（{}）",
     "searchQuery": "検索キーワード",

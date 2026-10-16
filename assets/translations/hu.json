@@ -379,6 +379,7 @@
     "runBgCheckNow": "Frissítések ellenőrzése a háttérben most",
     "rustoreAggregatedAppNoApk": "A RuStore külső forrásból listázza ezt az alkalmazást, és nem tárolja annak APK-fájlját",
     "samsungGalaxyStoreApiError": "Samsung Galaxy Store API-hiba",
+    "samsungGalaxyStoreLoginRequired": "This Galaxy Store app requires a Samsung account and cannot be downloaded anonymously.",
     "search": "Keresés",
     "searchFailed": "{}: sikertelen keresés ({})",
     "searchQuery": "Keresési lekérdezés",

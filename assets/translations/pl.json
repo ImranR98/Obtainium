@@ -399,6 +399,7 @@
     "runBgCheckNow": "Sprawdź aktualizacje w tle teraz",
     "rustoreAggregatedAppNoApk": "RuStore wyświetla tę aplikację z zewnętrznego źródła i nie hostuje jej pliku APK",
     "samsungGalaxyStoreApiError": "Błąd API Samsung Galaxy Store",
+    "samsungGalaxyStoreLoginRequired": "This Galaxy Store app requires a Samsung account and cannot be downloaded anonymously.",
     "search": "Szukaj",
     "searchFailed": "{}: wyszukiwanie nie powiodło się ({})",
     "searchQuery": "Szukana fraza",

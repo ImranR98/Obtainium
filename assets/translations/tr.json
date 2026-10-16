@@ -379,6 +379,7 @@
     "runBgCheckNow": "Arka plan güncelleme denetlemesini şimdi başlat",
     "rustoreAggregatedAppNoApk": "RuStore lists this app from an external source and does not host its APK",
     "samsungGalaxyStoreApiError": "Samsung Galaxy Store API hatası",
+    "samsungGalaxyStoreLoginRequired": "This Galaxy Store app requires a Samsung account and cannot be downloaded anonymously.",
     "search": "Ara",
     "searchFailed": "{}: search failed ({})",
     "searchQuery": "Arama sorgusu",
