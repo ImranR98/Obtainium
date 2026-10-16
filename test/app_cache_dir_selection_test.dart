@@ -4,7 +4,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:obtainium/providers/apps_provider.dart';
 
 void main() {
-  final primary = Directory('/storage/emulated/0');
+  final primary = Directory('/storage/emulated/0/Android/data/app/files');
 
   test('selects the external cache that lives on the primary volume', () {
     final chosen = selectPrimaryExternalCache([

@@ -751,10 +751,9 @@ Directory? selectPrimaryExternalCache(
   if (cacheDirs == null || cacheDirs.isEmpty || primaryExternal == null) {
     return null;
   }
-  final primary = primaryExternal.absolute.path;
+  final primaryDataDir = primaryExternal.absolute.parent.parent.path;
   for (final dir in cacheDirs) {
-    final path = dir.absolute.path;
-    if (path == primary || path.startsWith('$primary/')) {
+    if (dir.absolute.parent.parent.path == primaryDataDir) {
       return dir;
     }
   }
