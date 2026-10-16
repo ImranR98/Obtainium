@@ -1673,9 +1673,7 @@ class _TVSearchBarState extends State<_TVSearchBar> {
   }
 }
 
-/// Pinned footer for the TV app list: keeps the Add app (and selection
-/// Actions) buttons visible at the bottom of the viewport without scrolling
-/// past the whole list (#3351)./// Always-visible footer for the TV app list: keeps the Add app (and
+/// Always-visible footer for the TV app list: keeps the Add app (and
 /// selection Actions) buttons reachable without scrolling to the end of the
 /// list (#3351).
 class _TvAppListFooter extends StatelessWidget {
