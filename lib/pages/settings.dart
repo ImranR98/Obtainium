@@ -488,7 +488,9 @@ class _SettingsPageState extends State<SettingsPage> {
                 CustomAppBar(title: title),
                 SliverPadding(
                   padding: AppPaddings.page,
-                  sliver: SliverToBoxAdapter(child: childBuilder(ctx)),
+                  sliver: SliverToBoxAdapter(
+                    child: TvInitialFocus(child: childBuilder(ctx)),
+                  ),
                 ),
                 SliverToBoxAdapter(
                   child: SizedBox(height: MediaQuery.of(ctx).padding.bottom),

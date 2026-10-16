@@ -10,6 +10,7 @@ import 'package:obtainium/components/ui_widgets.dart';
 import 'package:obtainium/custom_errors.dart';
 import 'package:obtainium/providers/apps_provider.dart';
 import 'package:obtainium/core/logging/app_logger.dart';
+import 'package:obtainium/providers/document_tree_bridge.dart';
 import 'package:obtainium/providers/settings_provider.dart';
 import 'package:obtainium/providers/source_provider.dart';
 import 'package:obtainium/theme.dart';
@@ -243,6 +244,18 @@ class _ImportSectionState extends State<ImportSection> {
             onTap: importInProgress ? null : () => _runObtainiumImport(context),
           ),
         ),
+        if (context.read<SettingsProvider>().isTV)
+          ConnectedCard(
+            isFirst: true,
+            isLast: true,
+            child: ActionListTile(
+              icon: Icons.folder_open_outlined,
+              label: tr('importFromDownloads'),
+              onTap: importInProgress
+                  ? null
+                  : () => _runDownloadsImport(context),
+            ),
+          ),
         Column(
           spacing: 2,
           children: () {
@@ -287,7 +300,6 @@ class _ImportSectionState extends State<ImportSection> {
   }
 
   Future<void> _runObtainiumImport(BuildContext context) async {
-    final appsProvider = context.read<AppsProvider>();
     final settingsProvider = context.read<SettingsProvider>();
     settingsProvider.selectionClick();
     final PlatformFile? file;
@@ -317,36 +329,122 @@ class _ImportSectionState extends State<ImportSection> {
         }
         data = utf8.decode(bytesData);
       }
-      try {
-        jsonDecode(data);
-      } catch (e) {
+      if (!context.mounted) return;
+      await _importData(context, data);
+    } catch (e) {
+      if (context.mounted) _showImportError(e, context);
+    } finally {
+      if (mounted) {
+        setState(() {
+          importInProgress = false;
+        });
+      }
+    }
+  }
+
+  /// Imports a JSON payload, confirming overwrites first.
+  Future<void> _importData(BuildContext context, String data) async {
+    final appsProvider = context.read<AppsProvider>();
+    final settingsProvider = context.read<SettingsProvider>();
+    try {
+      jsonDecode(data);
+    } catch (e) {
+      throw ObtainiumError(tr('invalidInput'));
+    }
+    // Importing overwrites matching apps and applies the file's settings;
+    // make that explicit before touching existing data.
+    final conflictCount = appsProvider
+        .appIdsInImportJSON(data)
+        .where((id) => appsProvider.apps.containsKey(id))
+        .length;
+    if (conflictCount > 0) {
+      if (!context.mounted) return;
+      final proceed = await showConfirmDialog(
+        context,
+        title: tr('importX', args: [tr('appsString').toLowerCase()]),
+        content: Text(
+          tr('importOverwriteWarning', args: [conflictCount.toString()]),
+        ),
+        confirmText: tr('continue'),
+      );
+      if (!proceed) return;
+    }
+    final value = await appsProvider.import(data);
+    appsProvider.addMissingCategories(settingsProvider);
+    if (!context.mounted) return;
+    showMessage(
+      '${tr('importedX', args: [plural('apps', value.key.length).toLowerCase()])}${value.value ? ' + ${tr('settings').toLowerCase()}' : ''}',
+      context,
+    );
+  }
+
+  /// Imports an export previously written to `Downloads/Obtainium/` (the
+  /// picker-less export destination for TVs).
+  Future<void> _runDownloadsImport(BuildContext context) async {
+    final settingsProvider = context.read<SettingsProvider>();
+    settingsProvider.selectionClick();
+    final List<DownloadsExport> exports;
+    try {
+      exports = await DocumentTreeBridge.instance.downloadsExports();
+    } catch (e) {
+      if (context.mounted) _showImportError(e, context);
+      return;
+    }
+    if (!context.mounted) return;
+    if (exports.isEmpty) {
+      showMessage(tr('noDownloadsExports'), context);
+      return;
+    }
+    final chosen = await showDialog<DownloadsExport>(
+      context: context,
+      builder: (BuildContext ctx) => AlertDialog(
+        title: Text(tr('importFromDownloads')),
+        content: SizedBox(
+          width: 480,
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxHeight: 420),
+            child: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  for (var i = 0; i < exports.length; i++)
+                    ListTile(
+                      autofocus: i == 0,
+                      title: Text(exports[i].name),
+                      subtitle: Text(
+                        exports[i].date.toLocal().toString().split('.').first,
+                      ),
+                      onTap: () => Navigator.of(ctx).pop(exports[i]),
+                    ),
+                ],
+              ),
+            ),
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(),
+            child: Text(tr('cancel')),
+          ),
+        ],
+      ),
+    );
+    if (chosen == null) return;
+    if (mounted) {
+      setState(() {
+        importInProgress = true;
+      });
+    }
+    try {
+      final bytes = await DocumentTreeBridge.instance.readDownloadsExport(
+        chosen.uri,
+      );
+      if (bytes == null || bytes.isEmpty) {
         throw ObtainiumError(tr('invalidInput'));
       }
-      // Importing overwrites matching apps and applies the file's settings;
-      // make that explicit before touching existing data.
-      final conflictCount = appsProvider
-          .appIdsInImportJSON(data)
-          .where((id) => appsProvider.apps.containsKey(id))
-          .length;
-      if (conflictCount > 0) {
-        if (!context.mounted) return;
-        final proceed = await showConfirmDialog(
-          context,
-          title: tr('importX', args: [tr('appsString').toLowerCase()]),
-          content: Text(
-            tr('importOverwriteWarning', args: [conflictCount.toString()]),
-          ),
-          confirmText: tr('continue'),
-        );
-        if (!proceed) return;
-      }
-      final value = await appsProvider.import(data);
-      appsProvider.addMissingCategories(settingsProvider);
       if (!context.mounted) return;
-      showMessage(
-        '${tr('importedX', args: [plural('apps', value.key.length).toLowerCase()])}${value.value ? ' + ${tr('settings').toLowerCase()}' : ''}',
-        context,
-      );
+      await _importData(context, utf8.decode(bytes));
     } catch (e) {
       if (context.mounted) _showImportError(e, context);
     } finally {
@@ -520,7 +618,8 @@ class _ExportSectionState extends State<ExportSection> {
             child: ActionListTile(
               icon: Icons.folder_open_outlined,
               label: tr('pickExportDir'),
-              trailing: snapshot.data != null
+              trailing:
+                  snapshot.data != null && exportDirKey != kDownloadsExportDir
                   ? Icon(
                       Icons.check_circle,
                       color: Theme.of(context).colorScheme.primary,
@@ -531,6 +630,27 @@ class _ExportSectionState extends State<ExportSection> {
                   : () => runObtainiumExport(pickOnly: true),
             ),
           ),
+          if (settingsProvider.isTV)
+            ConnectedCard(
+              isFirst: false,
+              isLast: false,
+              child: ActionListTile(
+                icon: Icons.download_outlined,
+                label: tr('useDownloadsFolder'),
+                trailing: exportDirKey == kDownloadsExportDir
+                    ? Icon(
+                        Icons.check_circle,
+                        color: Theme.of(context).colorScheme.primary,
+                      )
+                    : null,
+                onTap: exportInProgress || exportDirKey == kDownloadsExportDir
+                    ? null
+                    : () {
+                        settingsProvider.selectionClick();
+                        settingsProvider.useDownloadsExportDir();
+                      },
+              ),
+            ),
           ConnectedCard(
             isFirst: false,
             isLast: snapshot.data == null,

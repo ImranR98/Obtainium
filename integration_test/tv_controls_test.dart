@@ -5,6 +5,8 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:integration_test/integration_test.dart';
 import 'package:obtainium/components/app_list_tile.dart';
 import 'package:obtainium/components/generated_form_renderer.dart';
+import 'package:obtainium/providers/apps_provider.dart';
+import 'package:obtainium/providers/document_tree_bridge.dart';
 import 'package:obtainium/providers/settings_provider.dart';
 
 import 'e2e_helpers.dart';
@@ -185,6 +187,76 @@ void main() {
     await pressKey(tester, LogicalKeyboardKey.select);
     await pumpFor(tester, const Duration(milliseconds: 500));
     expect(find.text('Continue'), findsNothing, reason: 'dialog confirmed');
+
+    restoreErrorWidgetBuilder();
+  });
+
+  testWidgets('TV exports and imports through Downloads without a picker', (
+    tester,
+  ) async {
+    if (await skipUnlessTV()) return;
+
+    await clearAppData();
+    await seedAppJson(appJson(id: 'e2e.downloads', name: 'E2E Downloads'));
+    await launchApp(tester);
+    await pumpUntil(tester, find.text('E2E Downloads'));
+
+    final settings = readProvider<SettingsProvider>();
+    await settings.useDownloadsExportDir();
+    await pumpFor(tester, const Duration(milliseconds: 300));
+
+    // Import/export offers the Downloads destination on TV.
+    await focusAppBarButton(tester, 'Settings');
+    await pressKey(tester, LogicalKeyboardKey.select);
+    await pumpUntil(tester, find.text('Import/export'));
+    await pressKey(tester, LogicalKeyboardKey.select);
+    await pumpUntil(tester, find.text('Pick export directory'));
+    expect(find.text('Use the Downloads folder'), findsOneWidget);
+
+    // Export with the remote; the file lands in Downloads/Obtainium.
+    await pressUntil(
+      tester,
+      LogicalKeyboardKey.arrowDown,
+      () => focusIsOnText('Obtainium export'),
+      reason: 'export row reachable',
+    );
+    await pressKey(tester, LogicalKeyboardKey.select);
+    await pumpFor(tester, const Duration(seconds: 2));
+    final bridge = DocumentTreeBridge.instance;
+    var exports = await bridge.downloadsExports();
+    expect(exports, isNotEmpty, reason: 'export written to Downloads');
+
+    // Auto-export replaces the previous -auto file on every change.
+    settings.autoExportOnChanges = true;
+    final apps = readProvider<AppsProvider>();
+    final app = apps.apps['e2e.downloads']!.app;
+    await apps.saveApps([app]);
+    await pumpFor(tester, const Duration(seconds: 4));
+    exports = await bridge.downloadsExports();
+    expect(exports.where((e) => e.name.endsWith('-auto.json')), hasLength(1));
+    await apps.saveApps([app]);
+    await pumpFor(tester, const Duration(seconds: 4));
+    exports = await bridge.downloadsExports();
+    expect(
+      exports.where((e) => e.name.endsWith('-auto.json')),
+      hasLength(1),
+      reason: 'the previous -auto export is pruned',
+    );
+
+    // Import the newest export through the Downloads list.
+    await pressUntil(
+      tester,
+      LogicalKeyboardKey.arrowDown,
+      () => focusIsOnText('Import from Downloads'),
+      reason: 'import row reachable',
+    );
+    await pressKey(tester, LogicalKeyboardKey.select);
+    await pumpUntil(tester, find.textContaining('.json'));
+    await pressKey(tester, LogicalKeyboardKey.select);
+    await pumpUntil(tester, find.text('Continue'));
+    await pressKey(tester, LogicalKeyboardKey.arrowRight);
+    await pressKey(tester, LogicalKeyboardKey.select);
+    await pumpUntil(tester, find.textContaining('Imported'));
 
     restoreErrorWidgetBuilder();
   });

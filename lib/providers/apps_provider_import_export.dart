@@ -9,6 +9,7 @@ import 'package:obtainium/core/logging/app_logger.dart';
 
 import 'package:obtainium/providers/app_json_migration.dart';
 import 'package:obtainium/providers/apps_provider.dart';
+import 'package:obtainium/providers/document_tree_bridge.dart';
 import 'package:obtainium/providers/settings_provider.dart';
 import 'package:obtainium/providers/source_provider.dart';
 import 'package:shared_storage/shared_storage.dart' as saf;
@@ -101,6 +102,10 @@ extension AppsProviderImportExport on AppsProvider {
     final customName = settingsProvider.autoExportFileName;
     final hasCustomName = customName != null && customName.isNotEmpty;
     var exportDir = await settingsProvider.getExportDir();
+    bool matchesAutoExportName(String name) =>
+        name.endsWith('-auto.json') ||
+        (hasCustomName && name == '$customName.json');
+    final useDownloadsDir = exportDir?.toString() == kDownloadsExportDir;
     if (isAuto) {
       if (!settingsProvider.autoExportOnChanges) {
         return null;
@@ -113,20 +118,25 @@ extension AppsProviderImportExport on AppsProvider {
         }
         return null;
       }
-      final files = await saf
-          .listFiles(exportDir, columns: [saf.DocumentFileColumn.id])
-          .where((f) {
-            final name = f.uri.pathSegments.last;
-            return name.endsWith('-auto.json') ||
-                (hasCustomName && name == '$customName.json');
-          })
-          .toList();
-      if (files.isNotEmpty) {
-        for (final f in files) {
+      if (useDownloadsDir) {
+        for (final f
+            in (await DocumentTreeBridge.instance.downloadsExports()).where(
+              (f) => matchesAutoExportName(f.name),
+            )) {
           // Await so the old files are gone before the replacement is created;
           // an unawaited delete could race the new file (same custom name) and
           // an export failure would otherwise already have lost the backup.
-          await saf.delete(f.uri);
+          await DocumentTreeBridge.instance.deleteDownloadsExport(f.uri);
+        }
+      } else {
+        final files = await saf
+            .listFiles(exportDir, columns: [saf.DocumentFileColumn.id])
+            .where((f) => matchesAutoExportName(f.uri.pathSegments.last))
+            .toList();
+        if (files.isNotEmpty) {
+          for (final f in files) {
+            await saf.delete(f.uri);
+          }
         }
       }
     }
@@ -146,18 +156,30 @@ extension AppsProviderImportExport on AppsProvider {
       final displayName = (isAuto && hasCustomName)
           ? '$customName.json'
           : '${tr('obtainiumExportHyphenatedLowercase')}-${DateTime.now().toIso8601String().replaceAll(':', '-')}${isAuto ? '-auto' : ''}.json';
-      final result = await saf.createFile(
-        exportDir,
-        displayName: displayName,
-        mimeType: 'application/json',
-        bytes: Uint8List.fromList(utf8.encode(encoder.convert(finalExport))),
-      );
-      if (result == null) {
-        throw ObtainiumError(tr('unexpectedError'));
+      if (exportDir.toString() == kDownloadsExportDir) {
+        final path = await DocumentTreeBridge.instance.exportToDownloads(
+          name: displayName,
+          mimeType: 'application/json',
+          bytes: Uint8List.fromList(utf8.encode(encoder.convert(finalExport))),
+        );
+        if (path == null) {
+          throw ObtainiumError(tr('unexpectedError'));
+        }
+        returnPath = path;
+      } else {
+        final result = await saf.createFile(
+          exportDir,
+          displayName: displayName,
+          mimeType: 'application/json',
+          bytes: Uint8List.fromList(utf8.encode(encoder.convert(finalExport))),
+        );
+        if (result == null) {
+          throw ObtainiumError(tr('unexpectedError'));
+        }
+        returnPath = exportDir.pathSegments
+            .join('/')
+            .replaceFirst(RegExp(r'^tree/[^:]+:'), '/');
       }
-      returnPath = exportDir.pathSegments
-          .join('/')
-          .replaceFirst(RegExp(r'^tree/[^:]+:'), '/');
     }
     return returnPath;
   }

@@ -378,12 +378,14 @@ class _AppPageState extends State<AppPage> {
                       16,
                       MediaQuery.of(context).padding.bottom,
                     ),
-                    child: GeneratedForm(
-                      tileMode: true,
-                      items: items,
-                      onValueChanges: (v, valid, isBuilding) {
-                        values = v;
-                      },
+                    child: TvInitialFocus(
+                      child: GeneratedForm(
+                        tileMode: true,
+                        items: items,
+                        onValueChanges: (v, valid, isBuilding) {
+                          values = v;
+                        },
+                      ),
                     ),
                   ),
                 ),

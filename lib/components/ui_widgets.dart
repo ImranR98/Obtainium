@@ -36,6 +36,10 @@ Future<bool> showConfirmDialog(
       content: content,
       actions: [
         TextButton(
+          // On TV, focus the safe option unless the caller asked for the
+          // confirm button: an unfocused dialog would let remote input fall
+          // through to the page behind it.
+          autofocus: !autofocusConfirm && context.read<SettingsProvider>().isTV,
           onPressed: () => Navigator.of(ctx).pop(false),
           child: Text(cancelText ?? tr('no')),
         ),
@@ -627,6 +631,52 @@ class CustomAppBar extends StatelessWidget {
       actions: actions,
     );
   }
+}
+
+/// Gives freshly pushed pages an initial focus ring on TV.
+///
+/// Pages without an explicit autofocus open unfocused, so the first SELECT
+/// does nothing until a direction key is pressed. This focuses the first
+/// control below the app bar unless the page already focused something;
+/// arrow-up still reaches the bar geometrically.
+class TvInitialFocus extends StatefulWidget {
+  final Widget child;
+
+  const TvInitialFocus({super.key, required this.child});
+
+  @override
+  State<TvInitialFocus> createState() => _TvInitialFocusState();
+}
+
+class _TvInitialFocusState extends State<TvInitialFocus> {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted || !context.read<SettingsProvider>().isTV) return;
+      final scope = FocusScope.of(context);
+      if (scope.hasFocus) return;
+      final policy = FocusTraversalGroup.maybeOf(context);
+      if (policy == null) return;
+      FocusNode? first = policy.findFirstFocus(scope, ignoreCurrentFocus: true);
+      // Skip leading app-bar buttons (e.g. Back) so the first content
+      // control gets the ring.
+      for (var i = 0; i < 4 && first != null; i++) {
+        final ctx = first.context;
+        final inAppBar =
+            ctx?.findAncestorWidgetOfExactType<CustomAppBar>() != null ||
+            ctx?.findAncestorWidgetOfExactType<SliverAppBar>() != null ||
+            ctx?.findAncestorWidgetOfExactType<AppBar>() != null;
+        if (!inAppBar) break;
+        if (!first.nextFocus()) return;
+        first = FocusManager.instance.primaryFocus;
+      }
+      first?.requestFocus();
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) => widget.child;
 }
 
 class _TileClipper extends CustomClipper<Path> {

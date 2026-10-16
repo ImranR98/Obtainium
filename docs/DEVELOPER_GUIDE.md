@@ -80,7 +80,7 @@ lib/
 │  ├─ settings_provider.dart      Typed getters/setters over SharedPreferences
 │  ├─ logs_provider.dart          sqflite-backed logs + Logger/AppLogger
 │  ├─ notifications_provider.dart Local notifications
-│  ├─ document_tree_bridge.dart   Read+write document-tree picker for the export directory
+│  ├─ document_tree_bridge.dart   Document-tree picker + Downloads exports (for picker-less TVs)
 │  └─ external_install_bridge.dart External installer discovery + content-URI conversion
 ├─ installers/                    Install strategy abstraction
 │  ├─ installer.dart              Abstract Installer + InstallResult
