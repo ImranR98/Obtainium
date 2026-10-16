@@ -226,6 +226,7 @@
     "githubSourceNote": "A GitHub/GitLab lekérdezés-korlátozás elkerülhető egy API-kulcs használatával.",
     "githubStarredRepos": "Csillagozott GitHub-tárolók",
     "globalApkFilterRegEx": "Globális APK-szűrő-reguláriskifejezés",
+    "globalVersionExtractionRegEx": "Global version trimming regex",
     "gitlabPATLabel": "GitLab személyes hozzáférési token",
     "googleVerificationWarningP1": "A Google bejelentette, hogy 2026/2027-től kezdődően az összes alkalmazáshoz, amely „tanúsított” (certified) Android eszközökön fut, a fejlesztőknek a személyes azonosító adataikat közvetlenül a Google-nek kell majd benyújtaniuk.\n\nMivel az Obtainium alkalmazás fejlesztői nem fogadják el ezt a követelményt, ezért az Obtainium az említett időpont után már nem fog működni a tanúsított Android eszközökön.",
     "googleVerificationWarningP2": "További tudnivalókért látogasson el a https://keepandroidopen.org/ weboldalra.",

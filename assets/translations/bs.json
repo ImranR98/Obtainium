@@ -226,6 +226,7 @@
     "githubSourceNote": "GitHub ograničavanje se može izbjeći korišćenjem tokena za lični pristup.",
     "githubStarredRepos": "GitHub repo-i sa zvjezdicom",
     "globalApkFilterRegEx": "Sveopšti APK filtera regex-a",
+    "globalVersionExtractionRegEx": "Global version trimming regex",
     "gitlabPATLabel": "GitLab token za lični pristup",
     "googleVerificationWarningP1": "Google je najavio da će, počevši od 2026./2027., sve aplikacije na „certificiranim\" Android uređajima zahtijevati da programer Googleu dostavi lične podatke o identitetu.\n\nPošto se programeri ove aplikacije ne slažu s tim zahtjevom, Obtainium više neće raditi na certificiranim Android uređajima nakon tog vremena.",
     "googleVerificationWarningP2": "Posjetite https://keepandroidopen.org/ za više informacija.",
