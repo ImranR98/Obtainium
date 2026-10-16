@@ -558,7 +558,7 @@ class _ExportSectionState extends State<ExportSection> {
             ConnectedCard(
               isFirst: false,
               isLast: false,
-              padding: const EdgeInsets.fromLTRB(16, 4, 16, 4),
+              color: Theme.of(context).colorScheme.surfaceContainerHighest,
               child: () {
                 final field = TextFormField(
                   focusNode: _fileNameFocus,
