@@ -444,7 +444,8 @@ Background work is scheduled via **`workmanager`** (Android periodic tasks). The
    nothing/checksOnly/checksAndUpdates via `evaluateBgGuards`). `nothing` under an
    unmet condition aborts the task entirely; `checksOnly` allows checks and
    notifications but suppresses installs. The manual "Run background update check
-   now" (`forceAll`) bypasses the guards.
+   now" (`forceAll`) bypasses the "do nothing" guard for checks but only checks —
+   it never installs, since the guards alone decide installs.
 3. **Update mode** (`toCheck` non-empty): checks updates, splits results into
    notify-only vs silently-installable, sends grouped notifications, and **schedules
    retries that actually `await` the retry delay** so rate-limited hosts aren't hammered.

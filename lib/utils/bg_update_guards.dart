@@ -35,3 +35,11 @@ BgGuardDecision evaluateBgGuards({
       (charging || chargingMode == BgGuardMode.checksAndUpdates);
   return BgGuardDecision(skipChecks: skipChecks, allowInstalls: allowInstalls);
 }
+
+/// Whether a background task may silently install updates.
+///
+/// Manual runs (`forceAll`) only check, so the guards alone decide installs.
+bool canInstallInBackground({
+  required bool forceAll,
+  required BgGuardDecision decision,
+}) => !forceAll && decision.allowInstalls;
