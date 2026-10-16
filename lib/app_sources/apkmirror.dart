@@ -86,7 +86,10 @@ class APKMirror extends AppSource {
       'User-Agent':
           'Obtainium/${(await getInstalledInfo(obtainiumId))?.versionName ?? _fallbackVersion} (+https://github.com/ImranR98/Obtainium)',
     };
-    if (url.contains('/wp-json/apkm/v1/')) {
+    final uri = Uri.tryParse(url);
+    if (uri != null &&
+        _apiHostAllowed(uri) &&
+        uri.path.startsWith('/wp-json/apkm/v1/')) {
       headers['Authorization'] = _apiBasicAuth;
     }
     return headers;
@@ -148,7 +151,11 @@ class APKMirror extends AppSource {
     }
     final info = await _getApiInfo(pname, additionalSettings);
     if (info == null) {
-      throw RateLimitError(_apiBlockedMinutes ?? 5);
+      final blockedMinutes = _apiBlockedMinutes;
+      if (blockedMinutes != null) {
+        throw RateLimitError(blockedMinutes);
+      }
+      return null;
     }
     if (!info.exists ||
         info.version == null ||
@@ -159,6 +166,8 @@ class APKMirror extends AppSource {
     if (!apkMirrorApiEntryMatchesStandardUrl(info.appLink, standardUrl)) {
       return null;
     }
+    final bool fallbackToOlderReleases =
+        additionalSettings['fallbackToOlderReleases'] == true;
     final String? regexFilter =
         (additionalSettings['filterReleaseTitlesByRegEx'] as String?)
                 ?.isNotEmpty ==
@@ -174,13 +183,17 @@ class APKMirror extends AppSource {
         title,
         invert: additionalSettings['invertReleaseTitlesFilter'] == true,
       )) {
+        if (fallbackToOlderReleases) return null;
         throw NoReleasesError(note: tr('noMatchingReleaseFound'));
       }
     }
     final releaseUrl = _absoluteApiLink(info.releaseLink!, standardUrl);
+    final releaseUri = Uri.tryParse(releaseUrl);
+    if (releaseUri == null || !_apiHostAllowed(releaseUri)) return null;
     final bool isNewRelease = releaseUrl != currentApp?.releaseUrl;
     final int minAgeDays = await effectiveMinUpdateAgeDays(additionalSettings);
     final bool tooYoung = isReleaseTooYoung(info.releaseDate, minAgeDays);
+    if (tooYoung && fallbackToOlderReleases) return null;
     _ReleaseScrape? scrape;
     if (isNewRelease && !tooYoung) {
       scrape = await _scrapeReleaseDetails(releaseUrl, additionalSettings);
@@ -381,7 +394,12 @@ class APKMirror extends AppSource {
       final end = i + _apiBatchSize > list.length
           ? list.length
           : i + _apiBatchSize;
-      await _fetchAppInfoBatch(list.sublist(i, end), settings ?? const {});
+      try {
+        await _fetchAppInfoBatch(list.sublist(i, end), settings ?? const {});
+      } catch (e) {
+        AppLogger.info('APKMirror batch prefetch failed: $e');
+        return;
+      }
       if (_apiBlockedMinutes != null) return;
     }
   }
@@ -486,8 +504,7 @@ class APKMirror extends AppSource {
       return result;
     } catch (e) {
       AppLogger.info('APKMirror API request failed: $e');
-      _apiBlockedUntil = DateTime.now().add(_apiTransientBlockDuration);
-      return const {};
+      rethrow;
     }
   }
 

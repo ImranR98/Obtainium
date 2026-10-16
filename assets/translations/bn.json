@@ -21,7 +21,10 @@
     "alreadyUpToDateQuestion": "অ্যাপ কি ইতিমধ্যে আপ-টু-ডেট?",
     "alwaysUsePhoneLayout": "সর্বদা ফোন লেআউট ব্যবহার করুন",
     "and": "এবং",
-    "andNMoreErrors": "…and {} more errors",
+    "andNMoreErrors": {
+        "one": "…and {} more error",
+        "other": "…and {} more errors"
+    },
     "andOneMoreError": "…and 1 more error",
     "apk": {
         "one": "{}টি APK",

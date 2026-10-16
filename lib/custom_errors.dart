@@ -280,7 +280,7 @@ class MultiAppMultiError extends ObtainiumError {
       if (i > 0 && buffer.length + separator.length + text.length > maxChars) {
         final remaining = entries.length - i;
         buffer.write(
-          '\n\n${remaining == 1 ? tr('andOneMoreError') : tr('andNMoreErrors', args: ['$remaining'])}',
+          '\n\n${remaining == 1 ? tr('andOneMoreError') : plural('andNMoreErrors', remaining)}',
         );
         break;
       }

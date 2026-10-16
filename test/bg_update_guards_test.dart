@@ -76,6 +76,42 @@ void main() {
     });
   });
 
+  group('canInstallInBackground', () {
+    const allowed = BgGuardDecision(skipChecks: false, allowInstalls: true);
+    const blocked = BgGuardDecision(skipChecks: false, allowInstalls: false);
+    const skipped = BgGuardDecision(skipChecks: true, allowInstalls: false);
+
+    test('guards decide installs for background tasks', () {
+      expect(
+        canInstallInBackground(forceAll: false, decision: allowed),
+        isTrue,
+      );
+      expect(
+        canInstallInBackground(forceAll: false, decision: blocked),
+        isFalse,
+      );
+      expect(
+        canInstallInBackground(forceAll: false, decision: skipped),
+        isFalse,
+      );
+    });
+
+    test('manual runs never install', () {
+      expect(
+        canInstallInBackground(forceAll: true, decision: allowed),
+        isFalse,
+      );
+      expect(
+        canInstallInBackground(forceAll: true, decision: blocked),
+        isFalse,
+      );
+      expect(
+        canInstallInBackground(forceAll: true, decision: skipped),
+        isFalse,
+      );
+    });
+  });
+
   group('SettingsProvider background guard modes', () {
     late SettingsProvider settings;
 

@@ -751,10 +751,9 @@ Directory? selectPrimaryExternalCache(
   if (cacheDirs == null || cacheDirs.isEmpty || primaryExternal == null) {
     return null;
   }
-  final primary = primaryExternal.absolute.path;
+  final primaryDataDir = primaryExternal.absolute.parent.parent.path;
   for (final dir in cacheDirs) {
-    final path = dir.absolute.path;
-    if (path == primary || path.startsWith('$primary/')) {
+    if (dir.absolute.parent.parent.path == primaryDataDir) {
       return dir;
     }
   }
@@ -1144,7 +1143,13 @@ Future<void> bgUpdateCheck(
     );
   }
 
-  final canInstall = forceAll || guardDecision.allowInstalls;
+  final canInstall = canInstallInBackground(
+    forceAll: forceAll,
+    decision: guardDecision,
+  );
+  if (forceAll) {
+    AppLogger.info('BG update task: Manual run: checks only, no installs.');
+  }
   final silentlyInstallable = <String>[];
 
   if (toCheck.isNotEmpty) {
@@ -1224,7 +1229,7 @@ Future<void> bgUpdateCheck(
       'BG install task: Found ${silentlyInstallable.length} apps to install (${existing.length} from checks, ${silentlyInstallable.length - existing.length} pre-existing).',
     );
   }
-  if (params['toCheck'] == null) {
+  if (canInstall && params['toCheck'] == null) {
     await _runBGInstallMode(
       silentlyInstallable,
       appsProvider,
