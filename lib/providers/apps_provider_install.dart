@@ -61,6 +61,22 @@ const int _bgInstallConfirmAttempts = 20; // 20 × 500ms = 10 seconds
 const int _installConfirmPollAttempts = 300; // 300 × 1s ≈ 5 minutes
 const Duration _installConfirmTimeout = Duration(minutes: 10);
 
+/// Whether an install should be confirmed by polling the package state in
+/// addition to awaiting the installer result (#3255, #3369).
+///
+/// The background stock workaround must not be raced (its result never
+/// arrives, see #896), and the external installer already reports completion
+/// through its own native timeout. Everything else — including Shizuku, whose
+/// result callback can be lost when the installer service stalls — is raced so
+/// one app can never block the install chain indefinitely.
+bool shouldPollForInstallConfirmation(
+  String installerModeKey, {
+  required bool needsBGWorkaround,
+}) {
+  if (needsBGWorkaround) return false;
+  return installerModeKey != 'external';
+}
+
 class _InstallResult {
   final String id;
   final bool willBeSilent;
@@ -276,7 +292,7 @@ extension AppsProviderInstall on AppsProvider {
       PackageInfo? newInfo;
       final originalAssetName = app.apkUrls[app.preferredApkIndex].key
           .toLowerCase();
-      final isAPK = downloadedFile.path.toLowerCase().endsWith('.apk');
+      var isAPK = downloadedFile.path.toLowerCase().endsWith('.apk');
       final isXAPK = downloadedFile.path.toLowerCase().endsWith('.xapk');
       final isTarball =
           originalAssetName.endsWith('.tar.gz') ||
@@ -288,7 +304,11 @@ extension AppsProviderInstall on AppsProvider {
         newInfo = await packageManager.getPackageArchiveInfo(
           archiveFilePath: downloadedFile.path,
         );
-      } else {
+        if (newInfo == null) {
+          isAPK = false;
+        }
+      }
+      if (!isAPK || multipleApks) {
         final String apkDirPath = '${downloadedFile.path}-dir';
         if (isTarball) {
           await extractTarballFile(downloadedFile.path, apkDirPath);
@@ -717,17 +737,20 @@ extension AppsProviderInstall on AppsProvider {
     allAPKs.addAll(additionalAPKs.map((a) => a.file.path));
     final installer = getInstaller();
     final InstallResult result =
-        needsBGWorkaround || installer.modeKey != 'stock'
-        ? await installer.installApk(
-            allAPKs,
-            appId: file.appId,
-            installOptions: installOptions,
-          )
-        : await _installWithPollConfirmation(
+        shouldPollForInstallConfirmation(
+          installer.modeKey,
+          needsBGWorkaround: needsBGWorkaround,
+        )
+        ? await _installWithPollConfirmation(
             installer,
             allAPKs,
             file.appId,
             installOptions,
+          )
+        : await installer.installApk(
+            allAPKs,
+            appId: file.appId,
+            installOptions: installOptions,
           );
     bool installed = false;
     if (result.isError) {
@@ -753,10 +776,10 @@ extension AppsProviderInstall on AppsProvider {
     return installed;
   }
 
-  /// Installs via the stock installer while racing the intent-based result
-  /// against polling for the package to land; the first conclusive outcome
-  /// wins, and the overall wait is capped, so a lost install result can never
-  /// stall the install chain (#3255).
+  /// Installs via [installer] while racing its result against polling for the
+  /// package to land; the first conclusive outcome wins, and the overall wait
+  /// is capped, so a lost install result can never stall the install chain
+  /// (#3255, #3369).
   Future<InstallResult> _installWithPollConfirmation(
     Installer installer,
     List<String> apkPaths,

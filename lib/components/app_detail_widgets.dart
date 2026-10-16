@@ -2,6 +2,7 @@ import 'package:easy_localization/easy_localization.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:obtainium/components/ui_widgets.dart';
 import 'package:obtainium/custom_errors.dart';
+import 'package:obtainium/theme.dart';
 import 'package:obtainium/utils/locale_utils.dart';
 import 'package:obtainium/providers/apps_provider.dart';
 import 'package:obtainium/providers/settings_provider.dart';
@@ -58,7 +59,7 @@ class AppInfoDialog extends StatelessWidget {
             ),
           ),
           Text(app.app.id, style: textTheme.labelSmall),
-          const SizedBox(height: 8),
+          const SizedBox(height: AppSpacings.elementGap),
           Text(appInstalledVersionText(app.app), style: textTheme.bodyMedium),
           Text(
             tr(
@@ -245,7 +246,7 @@ class _APKOriginWarningDialogState extends State<APKOriginWarningDialog> {
               ],
             ),
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: AppSpacings.elementGap),
           CheckboxListTile(
             autofocus: isTV,
             contentPadding: EdgeInsets.zero,
@@ -330,7 +331,7 @@ class SigningCertMismatchDialog extends StatelessWidget {
           ),
           const SizedBox(height: 12),
           hashBlock(tr('expectedSigningCertHash'), expectedHashes),
-          const SizedBox(height: 8),
+          const SizedBox(height: AppSpacings.elementGap),
           hashBlock(tr('actualSigningCertHash'), actualHashes),
         ],
       ),
