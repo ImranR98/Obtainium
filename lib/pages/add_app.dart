@@ -267,15 +267,53 @@ class AddAppPageState extends State<AddAppPage> {
       if (confirmed) {
         final s = pickedSource!;
         final trackOnly = s.enforceTrackOnly || userPickedTrackOnly;
-        app = await sourceProvider.getApp(
-          s,
-          userInput.trim(),
-          additionalSettings,
-          trackOnlyOverride: trackOnly,
-          sourceIsOverriden: pickedSourceOverride != null,
-          inferAppIdIfOptional: inferAppIdIfOptional,
-        );
-        if (isTempId(app) && !app.settings.getBool('trackOnly')) {
+        var addedWithoutCheck = false;
+        try {
+          app = await sourceProvider.getApp(
+            s,
+            userInput.trim(),
+            additionalSettings,
+            trackOnlyOverride: trackOnly,
+            sourceIsOverriden: pickedSourceOverride != null,
+            inferAppIdIfOptional: inferAppIdIfOptional,
+          );
+        } catch (e) {
+          // Only offer the fallback for unexpected failures (network issues,
+          // source bugs); typed errors mean the source was reachable and the
+          // user should see the real problem.
+          final unexpected = e is! ObtainiumError || e.unexpected;
+          if (!unexpected || !settingsProvider.allowAddingAppsWithoutCheck) {
+            rethrow;
+          }
+          if (!context.mounted) return;
+          final proceed = await showConfirmDialog(
+            context,
+            title: tr('addWithoutCheckQuestion'),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(tr('addWithoutCheckExplanation')),
+                const SizedBox(height: 8),
+                Text('$e'),
+              ],
+            ),
+            confirmText: tr('addAnyway'),
+            autofocusConfirm: settingsProvider.isTV,
+          );
+          if (!proceed) return;
+          if (!context.mounted) return;
+          app = sourceProvider.buildPlaceholderApp(
+            s,
+            userInput.trim(),
+            additionalSettings,
+            sourceIsOverriden: pickedSourceOverride != null,
+          );
+          addedWithoutCheck = true;
+        }
+        if (!addedWithoutCheck &&
+            isTempId(app) &&
+            !app.settings.getBool('trackOnly')) {
           if (!context.mounted) return;
           final apkUrl = await appsProvider.confirmAppFileUrl(
             app,
@@ -315,8 +353,9 @@ class AddAppPageState extends State<AddAppPage> {
             '${tr('appAlreadyAdded')}: ${existing?.app.name ?? app.id} (${app.id})',
           );
         }
-        if (app.settings.getBool('trackOnly') ||
-            !app.settings.getBool('versionDetection')) {
+        if (!addedWithoutCheck &&
+            (app.settings.getBool('trackOnly') ||
+                !app.settings.getBool('versionDetection'))) {
           app = app.copyWith(installedVersion: app.latestVersion);
         }
         app = app.copyWith(categories: pickedCategories);

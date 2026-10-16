@@ -95,6 +95,7 @@ PHONE_SUITES=(
   screens_navigation_test.dart
   track_only_actions_test.dart
   disabled_app_test.dart
+  add_without_check_test.dart
 )
 TV_SUITES=(
   tv_navigation_test.dart

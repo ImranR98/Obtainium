@@ -594,6 +594,13 @@ class _SettingsPageState extends State<SettingsPage> {
         onChanged: (value) => settingsProvider.checkUpdateOnDetailPage = value,
       ),
       ToggleTile(
+        label: tr('allowAddingAppsWithoutCheck'),
+        value: settingsProvider.allowAddingAppsWithoutCheck,
+        onChanged: (value) =>
+            settingsProvider.allowAddingAppsWithoutCheck = value,
+        helpWidgets: [Text(tr('allowAddingAppsWithoutCheckHelp'))],
+      ),
+      ToggleTile(
         label: tr('onlyCheckInstalledOrTrackOnlyApps'),
         value: settingsProvider.onlyCheckInstalledOrTrackOnlyApps,
         onChanged: (value) =>

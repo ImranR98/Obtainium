@@ -640,6 +640,15 @@ class SettingsProvider with ChangeNotifier {
     notifyListeners();
   }
 
+  bool get allowAddingAppsWithoutCheck {
+    return _getBool('allowAddingAppsWithoutCheck') ?? false;
+  }
+
+  set allowAddingAppsWithoutCheck(bool value) {
+    prefs?.setBool('allowAddingAppsWithoutCheck', value);
+    notifyListeners();
+  }
+
   bool get enableBackgroundUpdates {
     return _getBool('enableBackgroundUpdates') ?? true;
   }

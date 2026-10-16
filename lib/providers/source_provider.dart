@@ -188,6 +188,31 @@ class SourceProvider {
       .toString()
       .substring(0, 12);
 
+  /// Builds a placeholder [App] for [url] when its source could not be
+  /// checked (e.g. no connection). The entry is filled in by the next
+  /// successful check, and its real package ID is adopted on first install.
+  App buildPlaceholderApp(
+    AppSource source,
+    String url,
+    Map<String, dynamic> additionalSettings, {
+    bool sourceIsOverriden = false,
+  }) {
+    final standardUrl = source.standardizeUrl(url);
+    final settings = Map<String, dynamic>.from(additionalSettings);
+    final app = App(
+      id: generateTempID(standardUrl, settings),
+      url: standardUrl,
+      author: source.name,
+      name: standardUrl,
+      latestVersion: tr('unknown'),
+      apkUrls: const [MapEntry('placeholder', 'placeholder')],
+      preferredApkIndex: 0,
+      additionalSettings: settings,
+      overrideSource: sourceIsOverriden ? source.sourceIdentifier : null,
+    );
+    return source.postProcessApp(app);
+  }
+
   Future<String> _resolveAppId(
     AppSource source,
     App? currentApp,

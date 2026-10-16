@@ -241,6 +241,10 @@ APKMirror is track-only and keeps regular-page traffic to a minimum:
   → arch filtering → builds the final `App`. This is where `versionExtractionRegEx`,
   `releaseDateAsVersion`, `apkFilterRegEx`, `autoApkFilterByArch`, app-id inference, and
   `overrideSource` are all applied.
+- `buildPlaceholderApp(...)`: builds a not-yet-checked entry (URL as name, source as
+  author, temp ID, `placeholder` APK URLs). Used by the add flow when the setting
+  `allowAddingAppsWithoutCheck` is on and the check fails unexpectedly; the next
+  successful check fills it in and the real package ID is adopted on first install.
 
 ---
 
