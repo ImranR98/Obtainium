@@ -1337,6 +1337,7 @@ class _AppPageState extends State<AppPage> {
       appBar: showAppWebpageFinal ? _appScreenAppBar() : null,
       floatingActionButton: showAppWebpageFinal
           ? FloatingActionButton(
+              heroTag: null,
               onPressed: () {
                 settingsProvider.selectionClick();
                 NavHelper.pushAppPage(
