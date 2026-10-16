@@ -750,22 +750,9 @@ class SettingsProvider with ChangeNotifier {
     final currentOneWayDataSyncDir = await getExportDir();
     Uri? newOneWayDataSyncDir;
     if (!remove) {
-      // Some devices (e.g. certain Android TV boxes) have no activity that
-      // handles ACTION_OPEN_DOCUMENT_TREE; check first so the user gets a
-      // clear message instead of a raw platform exception.
-      if ((await saf.canOpenDocumentTree()) != true) {
-        throw ObtainiumError(tr('noFilePickerAvailable'));
-      }
       try {
-        Uri? picked;
-        try {
-          picked = await DocumentTreeBridge.instance.pickDocumentTree();
-        } on MissingPluginException {
-          picked = await saf.openDocumentTree();
-        } on PlatformException {
-          picked = await saf.openDocumentTree();
-        }
-        newOneWayDataSyncDir = picked;
+        newOneWayDataSyncDir = await DocumentTreeBridge.instance
+            .pickDocumentTree();
       } catch (e) {
         AppLogger.error(e, message: 'Failed to open document tree');
         throw ObtainiumError(tr('noFilePickerAvailable'));
