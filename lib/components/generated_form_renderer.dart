@@ -7,6 +7,7 @@ import 'package:obtainium/custom_errors.dart';
 import 'package:obtainium/components/generated_form_model.dart';
 import 'package:obtainium/components/ui_widgets.dart';
 import 'package:obtainium/providers/settings_provider.dart';
+import 'package:obtainium/theme.dart';
 import 'package:flutter_typeahead/flutter_typeahead.dart';
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher_string.dart';
@@ -455,7 +456,7 @@ class _GeneratedFormState extends State<GeneratedForm> {
                     ),
                   ),
                 ),
-                const SizedBox(height: 8),
+                const SizedBox(height: AppSpacings.elementGap),
               ],
               GeneratedForm(
                 key: ValueKey('$fieldKey#$i#$generation'),
@@ -660,7 +661,7 @@ class _GeneratedFormState extends State<GeneratedForm> {
     final List<Widget> children = [];
     for (var r = 0; r < inputRowWidgets.length; r++) {
       if (r > 0) {
-        children.add(const SizedBox(height: 8));
+        children.add(const SizedBox(height: AppSpacings.elementGap));
       }
       children.add(inputRowWidgets[r]);
     }

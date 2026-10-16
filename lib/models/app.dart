@@ -34,6 +34,14 @@ class APKDetails {
   final String? releaseUrl;
   final List<MapEntry<String, String>> allAssetUrls;
 
+  /// Package name when the source can infer it (e.g. APKMirror's feed icon),
+  /// so callers can resolve an app ID without a second request.
+  final String? appId;
+
+  /// Download size in bytes when the source can resolve it (e.g. APKMirror's
+  /// release page) and the app has no direct APK URL to probe.
+  final int? apkSizeBytes;
+
   const APKDetails(
     this.version,
     this.apkUrls,
@@ -42,6 +50,8 @@ class APKDetails {
     this.changeLog,
     this.releaseUrl,
     this.allAssetUrls = const [],
+    this.appId,
+    this.apkSizeBytes,
   });
 
   APKDetails copyWith({
@@ -52,6 +62,8 @@ class APKDetails {
     Object? changeLog = _sentinel,
     Object? releaseUrl = _sentinel,
     List<MapEntry<String, String>>? allAssetUrls,
+    Object? appId = _sentinel,
+    Object? apkSizeBytes = _sentinel,
   }) {
     return APKDetails(
       version ?? this.version,
@@ -65,6 +77,10 @@ class APKDetails {
           ? this.releaseUrl
           : releaseUrl as String?,
       allAssetUrls: allAssetUrls ?? this.allAssetUrls,
+      appId: appId == _sentinel ? this.appId : appId as String?,
+      apkSizeBytes: apkSizeBytes == _sentinel
+          ? this.apkSizeBytes
+          : apkSizeBytes as int?,
     );
   }
 }
@@ -96,6 +112,7 @@ class App {
   final Map<String, dynamic> additionalSettings;
   final DateTime? lastUpdateCheck;
   final bool pinned;
+  final bool disabled;
   final List<String> categories;
   final DateTime? releaseDate;
   final String? changeLog;
@@ -103,6 +120,7 @@ class App {
   final String? overrideSource;
   final bool allowIdChange;
   final String? pendingRepoRenameUrl;
+  final int? apkSizeBytes;
 
   const App({
     required this.id,
@@ -117,6 +135,7 @@ class App {
     required this.additionalSettings,
     this.lastUpdateCheck,
     this.pinned = false,
+    this.disabled = false,
     this.categories = const [],
     this.releaseDate,
     this.changeLog,
@@ -124,6 +143,7 @@ class App {
     this.overrideSource,
     this.allowIdChange = false,
     this.pendingRepoRenameUrl,
+    this.apkSizeBytes,
   });
 
   @override
@@ -168,6 +188,7 @@ class App {
     Map<String, dynamic>? additionalSettings,
     Object? lastUpdateCheck = _sentinel,
     bool? pinned,
+    bool? disabled,
     List<String>? categories,
     Object? releaseDate = _sentinel,
     Object? changeLog = _sentinel,
@@ -175,6 +196,7 @@ class App {
     Object? overrideSource = _sentinel,
     bool? allowIdChange,
     Object? pendingRepoRenameUrl = _sentinel,
+    Object? apkSizeBytes = _sentinel,
   }) {
     return App(
       id: id ?? this.id,
@@ -197,6 +219,7 @@ class App {
           ? this.lastUpdateCheck
           : lastUpdateCheck as DateTime?,
       pinned: pinned ?? this.pinned,
+      disabled: disabled ?? this.disabled,
       categories: categories ?? List<String>.from(this.categories),
       releaseDate: releaseDate == _sentinel
           ? this.releaseDate
@@ -212,6 +235,9 @@ class App {
       pendingRepoRenameUrl: pendingRepoRenameUrl == _sentinel
           ? this.pendingRepoRenameUrl
           : pendingRepoRenameUrl as String?,
+      apkSizeBytes: apkSizeBytes == _sentinel
+          ? this.apkSizeBytes
+          : apkSizeBytes as int?,
     );
   }
 
@@ -239,6 +265,7 @@ class App {
             ? null
             : DateTime.fromMicrosecondsSinceEpoch(json['lastUpdateCheck']),
         pinned: json['pinned'] ?? false,
+        disabled: json['disabled'] ?? false,
         categories: json['categories'] != null
             ? (json['categories'] as List<dynamic>)
                   .map((e) => e.toString())
@@ -259,6 +286,7 @@ class App {
           jsonDecode((json['otherAssetUrls'] ?? '[]')),
         ),
         pendingRepoRenameUrl: json['pendingRepoRenameUrl'] as String?,
+        apkSizeBytes: json['apkSizeBytes'] as int?,
       );
     } on TypeError catch (e) {
       AppLogger.error(
@@ -283,6 +311,7 @@ class App {
     'additionalSettings': jsonEncode(additionalSettings),
     'lastUpdateCheck': lastUpdateCheck?.microsecondsSinceEpoch,
     'pinned': pinned,
+    'disabled': disabled,
     'categories': categories,
     'releaseDate': releaseDate?.microsecondsSinceEpoch,
     'changeLog': changeLog,
@@ -290,6 +319,7 @@ class App {
     'overrideSource': overrideSource,
     'allowIdChange': allowIdChange,
     'pendingRepoRenameUrl': pendingRepoRenameUrl,
+    'apkSizeBytes': apkSizeBytes,
   };
 }
 
