@@ -1269,6 +1269,16 @@ class AppsPageState extends State<AppsPage> {
       },
       child: Scaffold(
         backgroundColor: Theme.of(context).colorScheme.surface,
+        bottomNavigationBar: settingsProvider.isTV
+            ? _TvAppListFooter(
+                selectionMode: _selectionMode,
+                selectedCount: selectedAppIds.length,
+                onAddApp: () => NavHelper.pushAddAppPage(context),
+                onSelectedActions: selectedAppIds.isEmpty
+                    ? null
+                    : () => showSelectedAppActions(),
+              )
+            : null,
         body: GestureDetector(
           behavior: HitTestBehavior.translucent,
           onTap: () => FocusManager.instance.primaryFocus?.unfocus(),
@@ -1342,35 +1352,6 @@ class AppsPageState extends State<AppsPage> {
                           (settingsProvider.isTV ? 160 : 96),
                     ),
                   ),
-                  if (settingsProvider.isTV)
-                    SliverToBoxAdapter(
-                      child: Padding(
-                        padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.stretch,
-                          spacing: 8,
-                          children: [
-                            if (_selectionMode)
-                              FilledButton.icon(
-                                onPressed: selectedAppIds.isEmpty
-                                    ? null
-                                    : () => showSelectedAppActions(),
-                                icon: const Icon(Icons.more_vert),
-                                label: Text(
-                                  '${plural('action', 2)}'
-                                  ' (${selectedAppIds.length})',
-                                ),
-                              ),
-                            FilledButton.tonalIcon(
-                              onPressed: () =>
-                                  NavHelper.pushAddAppPage(context),
-                              icon: const Icon(Icons.add),
-                              label: Text(tr('addApp')),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
                 ],
               ),
             ),
@@ -1688,6 +1669,56 @@ class _TVSearchBarState extends State<_TVSearchBar> {
           children: widget.trailing,
         ),
       ],
+    );
+  }
+}
+
+/// Pinned footer for the TV app list: keeps the Add app (and selection
+/// Actions) buttons visible at the bottom of the viewport without scrolling
+/// past the whole list (#3351)./// Always-visible footer for the TV app list: keeps the Add app (and
+/// selection Actions) buttons reachable without scrolling to the end of the
+/// list (#3351).
+class _TvAppListFooter extends StatelessWidget {
+  const _TvAppListFooter({
+    required this.selectionMode,
+    required this.selectedCount,
+    required this.onAddApp,
+    required this.onSelectedActions,
+  });
+
+  final bool selectionMode;
+  final int selectedCount;
+  final VoidCallback onAddApp;
+  final VoidCallback? onSelectedActions;
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: Theme.of(context).colorScheme.surface,
+      child: SafeArea(
+        top: false,
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            spacing: 8,
+            children: [
+              if (selectionMode)
+                FilledButton.icon(
+                  onPressed: onSelectedActions,
+                  icon: const Icon(Icons.more_vert),
+                  label: Text('${plural('action', 2)} ($selectedCount)'),
+                ),
+              FilledButton.tonalIcon(
+                onPressed: onAddApp,
+                icon: const Icon(Icons.add),
+                label: Text(tr('addApp')),
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 }
