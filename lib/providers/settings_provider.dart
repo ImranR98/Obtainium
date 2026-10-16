@@ -166,6 +166,19 @@ class SettingsProvider with ChangeNotifier {
         : InstallerMode.system.name;
   }
 
+  String get shizukuInstallerMode {
+    final stored = _getString('shizukuInstallerMode');
+    return stored == 'shizuku' || stored == 'dhizuku' ? stored! : 'auto';
+  }
+
+  set shizukuInstallerMode(String mode) {
+    prefs?.setString(
+      'shizukuInstallerMode',
+      mode == 'shizuku' || mode == 'dhizuku' ? mode : 'auto',
+    );
+    notifyListeners();
+  }
+
   String? get externalInstallerPackage =>
       getSettingString('externalInstallerPackage');
 

@@ -1044,11 +1044,11 @@ packages:
     dependency: "direct main"
     description:
       path: "."
-      ref: "12d8447c501e6abfadd134887b8b810d07b1d1e3"
-      resolved-ref: "12d8447c501e6abfadd134887b8b810d07b1d1e3"
+      ref: "9777a8bc78dd19300b4647e34e9d52bca772d8e1"
+      resolved-ref: "9777a8bc78dd19300b4647e34e9d52bca772d8e1"
       url: "https://github.com/ImranR98/shizuku_apk_installer"
     source: git
-    version: "1.2.0"
+    version: "1.4.0"
   sky_engine:
     dependency: transitive
     description: flutter

@@ -4,7 +4,8 @@ import 'package:device_info_plus/device_info_plus.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:equations/equations.dart';
 import 'package:flex_color_picker/flex_color_picker.dart';
-import 'package:shizuku_apk_installer/shizuku_apk_installer.dart';
+import 'package:shizuku_apk_installer/shizuku_apk_installer.dart'
+    hide InstallerMode;
 import 'package:obtainium/components/category_editor.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:obtainium/components/ui_widgets.dart';
@@ -12,6 +13,7 @@ import 'package:obtainium/components/generated_form_renderer.dart';
 import 'package:obtainium/custom_errors.dart';
 import 'package:obtainium/core/logging/app_logger.dart';
 import 'package:obtainium/installers/root_installer.dart';
+import 'package:obtainium/installers/shizuku_installer.dart';
 import 'package:obtainium/main.dart';
 import 'package:obtainium/pages/import_export.dart';
 import 'package:obtainium/providers/apps_provider.dart';
@@ -164,7 +166,12 @@ class _SettingsPageState extends State<SettingsPage> {
       _installerCheckSeq++;
       final seq = _installerCheckSeq;
       ShizukuApkInstaller()
-          .checkPermission()
+          .setInstallerMode(
+            ShizukuInstaller.modeForSetting(
+              settingsProvider.shizukuInstallerMode,
+            ),
+          )
+          .then((_) => ShizukuApkInstaller().checkPermission())
           .then((resCode) {
             if (_installerCheckSeq != seq) return;
             settingsProvider.installerMode =
@@ -662,6 +669,32 @@ class _SettingsPageState extends State<SettingsPage> {
           },
         ),
       ),
+      if (settingsProvider.installerMode == InstallerMode.shizuku.name)
+        _fieldTile(
+          context,
+          TvDropdownMenu<String>(
+            expandedInsets: EdgeInsets.zero,
+            label: Text(tr('shizukuBackend')),
+            initialSelection: settingsProvider.shizukuInstallerMode,
+            dropdownMenuEntries: [
+              DropdownMenuEntry(value: 'auto', label: tr('shizukuBackendAuto')),
+              DropdownMenuEntry(
+                value: 'shizuku',
+                label: tr('shizukuBackendShizuku'),
+              ),
+              DropdownMenuEntry(
+                value: 'dhizuku',
+                label: tr('shizukuBackendDhizuku'),
+              ),
+            ],
+            onSelected: (value) {
+              if (value != null) {
+                settingsProvider.shizukuInstallerMode = value;
+                settingsProvider.selectionClick();
+              }
+            },
+          ),
+        ),
       if (settingsProvider.installerMode == InstallerMode.shizuku.name ||
           settingsProvider.installerMode == InstallerMode.root.name)
         ToggleTile(
