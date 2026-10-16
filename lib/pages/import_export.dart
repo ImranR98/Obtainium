@@ -450,6 +450,22 @@ class _ExportSectionState extends State<ExportSection> {
     super.dispose();
   }
 
+  Future<Uri?> _availableExportDir(
+    SettingsProvider settingsProvider, {
+    required bool hasStoredDir,
+  }) async {
+    var dir = await settingsProvider.getExportDir();
+    for (
+      var attempt = 0;
+      dir == null && hasStoredDir && attempt < 3;
+      attempt++
+    ) {
+      await Future.delayed(const Duration(milliseconds: 400));
+      dir = await settingsProvider.getExportDir();
+    }
+    return dir;
+  }
+
   @override
   Widget build(BuildContext context) {
     final appsProvider = context.read<AppsProvider>();
@@ -458,7 +474,10 @@ class _ExportSectionState extends State<ExportSection> {
     final exportDirKey = settingsProvider.prefs?.getString('exportDir');
     if (_exportDirFuture == null || exportDirKey != _lastExportDirKey) {
       _lastExportDirKey = exportDirKey;
-      _exportDirFuture = settingsProvider.getExportDir();
+      _exportDirFuture = _availableExportDir(
+        settingsProvider,
+        hasStoredDir: exportDirKey != null,
+      );
     }
 
     Future<void> runObtainiumExport({bool pickOnly = false}) async {
@@ -468,10 +487,11 @@ class _ExportSectionState extends State<ExportSection> {
         final proceed = await confirmExportIncludesSecrets(context);
         if (!proceed) return;
       }
+      final bool hadDir = (await settingsProvider.getExportDir()) != null;
       setState(() => exportInProgress = true);
       try {
         final result = await appsProvider.export(
-          pickOnly: pickOnly || (await settingsProvider.getExportDir()) == null,
+          pickOnly: pickOnly || !hadDir,
           sp: settingsProvider,
         );
         if (result != null && context.mounted) {
@@ -481,7 +501,10 @@ class _ExportSectionState extends State<ExportSection> {
         if (context.mounted) showError(e, context);
       } finally {
         if (mounted) {
-          setState(() => exportInProgress = false);
+          setState(() {
+            exportInProgress = false;
+            if (pickOnly || !hadDir) _lastExportDirKey = null;
+          });
         }
       }
     }
@@ -535,7 +558,7 @@ class _ExportSectionState extends State<ExportSection> {
             ConnectedCard(
               isFirst: false,
               isLast: false,
-              padding: const EdgeInsets.fromLTRB(16, 4, 16, 4),
+              color: Theme.of(context).colorScheme.surfaceContainerHighest,
               child: () {
                 final field = TextFormField(
                   focusNode: _fileNameFocus,
