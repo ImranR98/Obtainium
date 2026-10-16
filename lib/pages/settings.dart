@@ -118,8 +118,8 @@ class _SettingsPageState extends State<SettingsPage> {
       width: 48,
       height: 48,
       borderRadius: 24,
-      spacing: 8,
-      runSpacing: 8,
+      spacing: AppSpacings.elementGap,
+      runSpacing: AppSpacings.elementGap,
       enableShadesSelection: false,
       customColorSwatchesAndNames: colorsNameMap,
       showMaterialName: true,
@@ -260,7 +260,7 @@ class _SettingsPageState extends State<SettingsPage> {
         slivers: <Widget>[
           CustomAppBar(title: tr('settings')),
           SliverPadding(
-            padding: const EdgeInsets.fromLTRB(16, 0, 16, 0),
+            padding: AppPaddings.page,
             sliver: SliverToBoxAdapter(
               child: settingsProvider.prefs == null
                   ? const Padding(
@@ -286,7 +286,7 @@ class _SettingsPageState extends State<SettingsPage> {
         .any((e) => e.sourceConfigSettingFormItems.isNotEmpty);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
-      spacing: 20,
+      spacing: AppSpacings.sectionGap,
       children: [
         Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -470,7 +470,7 @@ class _SettingsPageState extends State<SettingsPage> {
               slivers: [
                 CustomAppBar(title: title),
                 SliverPadding(
-                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 0),
+                  padding: AppPaddings.page,
                   sliver: SliverToBoxAdapter(child: childBuilder(ctx)),
                 ),
                 SliverToBoxAdapter(
@@ -503,7 +503,7 @@ class _SettingsPageState extends State<SettingsPage> {
               settingsProvider.enableBackgroundUpdates = value,
           helpWidgets: [
             Text(tr('backgroundUpdateReqsExplanation')),
-            const SizedBox(height: 8),
+            const SizedBox(height: AppSpacings.elementGap),
             Text(tr('backgroundUpdateLimitsExplanation')),
           ],
         ),
@@ -1435,7 +1435,7 @@ class _ExternalInstallerTileState extends State<_ExternalInstallerTile> {
           content: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.stretch,
-            spacing: 8,
+            spacing: AppSpacings.elementGap,
             children: [
               for (var i = 0; i < entries.length; i++)
                 ConnectedCard(

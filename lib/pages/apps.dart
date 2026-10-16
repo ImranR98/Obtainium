@@ -447,7 +447,7 @@ class AppsPageState extends State<AppsPage> {
                         onPressed: () => Navigator.of(ctx).pop(false),
                         child: Text(tr('cancel')),
                       ),
-                      const SizedBox(width: 8),
+                      const SizedBox(width: AppSpacings.elementGap),
                       FilledButton(
                         onPressed: () => Navigator.of(ctx).pop(true),
                         child: Text(tr('continue')),
@@ -1465,7 +1465,7 @@ class _BulkUpdateDialogState extends State<_BulkUpdateDialog> {
       padding: const EdgeInsets.only(top: 12, bottom: 4),
       child: Row(
         children: [
-          const SizedBox(width: 8),
+          const SizedBox(width: AppSpacings.elementGap),
           Text(
             label,
             style: tt.bodySmall?.copyWith(
@@ -1702,7 +1702,7 @@ class _TvAppListFooter extends StatelessWidget {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.stretch,
-            spacing: 8,
+            spacing: AppSpacings.elementGap,
             children: [
               if (selectionMode)
                 FilledButton.icon(

@@ -12,6 +12,7 @@ import 'package:obtainium/providers/apps_provider.dart';
 import 'package:obtainium/providers/notifications_provider.dart';
 import 'package:obtainium/providers/settings_provider.dart';
 import 'package:obtainium/providers/source_provider.dart';
+import 'package:obtainium/theme.dart';
 import 'package:obtainium/utils/nav_helper.dart';
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher_string.dart';
@@ -294,7 +295,7 @@ class AddAppPageState extends State<AddAppPage> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(tr('addWithoutCheckExplanation')),
-                const SizedBox(height: 8),
+                const SizedBox(height: AppSpacings.elementGap),
                 Text('$e'),
               ],
             ),
@@ -572,8 +573,8 @@ class AddAppPageState extends State<AddAppPage> {
           items: const [],
           additionalWidgets: [
             Wrap(
-              spacing: 8,
-              runSpacing: 8,
+              spacing: AppSpacings.elementGap,
+              runSpacing: AppSpacings.elementGap,
               children: sourceProvider.sources.map((e) {
                 return ActionChip(
                   label: Text(
@@ -880,7 +881,7 @@ class AddAppPageState extends State<AddAppPage> {
             },
           ),
         ),
-        const SizedBox(width: 8),
+        const SizedBox(width: AppSpacings.elementGap),
         gettingAppInfo
             ? _smallSpinner()
             : IconButton(
@@ -962,7 +963,7 @@ class AddAppPageState extends State<AddAppPage> {
             },
           ),
         ),
-        const SizedBox(width: 8),
+        const SizedBox(width: AppSpacings.elementGap),
         searching
             ? _smallSpinner()
             : IconButton(
@@ -985,7 +986,7 @@ class AddAppPageState extends State<AddAppPage> {
             child: ConnectedCard(
               isFirst: true,
               isLast: true,
-              padding: const EdgeInsets.all(16),
+              padding: AppPaddings.cardInner,
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [

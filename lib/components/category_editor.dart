@@ -2,6 +2,7 @@ import 'package:easy_localization/easy_localization.dart';
 import 'package:flex_color_picker/flex_color_picker.dart';
 import 'package:flutter/foundation.dart' show setEquals;
 import 'package:material_ui/material_ui.dart';
+import 'package:obtainium/theme.dart';
 import 'package:obtainium/utils/color_utils.dart' show generateRandomLightColor;
 import 'package:obtainium/components/generated_form_renderer.dart';
 import 'package:obtainium/components/ui_widgets.dart';
@@ -295,12 +296,12 @@ class _CategoryEditorSheetState extends State<_CategoryEditorSheet> {
                     : field;
               }(),
             ),
-            const SizedBox(height: 20),
+            const SizedBox(height: AppSpacings.sectionGap),
             Text(tr('colour'), style: textTheme.titleSmall),
-            const SizedBox(height: 8),
+            const SizedBox(height: AppSpacings.elementGap),
             Wrap(
-              spacing: 8,
-              runSpacing: 8,
+              spacing: AppSpacings.elementGap,
+              runSpacing: AppSpacings.elementGap,
               children: [
                 for (final c in kCategoryPalette)
                   _swatch(
@@ -329,7 +330,7 @@ class _CategoryEditorSheetState extends State<_CategoryEditorSheet> {
                 ),
               ],
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: AppSpacings.elementGap),
             SwitchListTile(
               contentPadding: EdgeInsets.zero,
               title: Text(tr('skipUpdateChecks')),
@@ -353,7 +354,7 @@ class _CategoryEditorSheetState extends State<_CategoryEditorSheet> {
                   onPressed: () => Navigator.of(context).pop(),
                   child: Text(tr('cancel')),
                 ),
-                const SizedBox(width: 8),
+                const SizedBox(width: AppSpacings.elementGap),
                 ValueListenableBuilder<TextEditingValue>(
                   valueListenable: _nameCtrl,
                   builder: (context, value, _) {
@@ -484,8 +485,8 @@ class _CategorySelectorState extends State<CategorySelector> {
     if (names.isEmpty && widget.allowCreate) {
       return Wrap(
         alignment: widget.alignment,
-        spacing: 8,
-        runSpacing: 8,
+        spacing: AppSpacings.elementGap,
+        runSpacing: AppSpacings.elementGap,
         children: [
           Tooltip(
             message: tr('newCategory'),
@@ -499,8 +500,8 @@ class _CategorySelectorState extends State<CategorySelector> {
       width: double.infinity,
       child: Wrap(
         alignment: widget.alignment,
-        spacing: 8,
-        runSpacing: 8,
+        spacing: AppSpacings.elementGap,
+        runSpacing: AppSpacings.elementGap,
         children: [
           for (final name in names)
             Tooltip(
@@ -582,8 +583,8 @@ class CategoryManager extends StatelessWidget {
     return SizedBox(
       width: double.infinity,
       child: Wrap(
-        spacing: 8,
-        runSpacing: 8,
+        spacing: AppSpacings.elementGap,
+        runSpacing: AppSpacings.elementGap,
         crossAxisAlignment: WrapCrossAlignment.center,
         children: [
           for (final name in names)

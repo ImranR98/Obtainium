@@ -336,7 +336,7 @@ class AppListTile extends StatelessWidget {
               ExcludeFocus(child: _updateButton(context))
             else
               _updateButton(context),
-            const SizedBox(width: 8),
+            const SizedBox(width: AppSpacings.elementGap),
           ],
           if (isTV)
             ExcludeFocus(
@@ -383,7 +383,7 @@ class AppListTile extends StatelessWidget {
               mainAxisSize: MainAxisSize.min,
               children: [
                 Icon(Icons.install_mobile, color: cs.onPrimaryContainer),
-                const SizedBox(width: 8),
+                const SizedBox(width: AppSpacings.elementGap),
                 Text(
                   tr('install'),
                   style: TextStyle(color: cs.onPrimaryContainer),
@@ -403,7 +403,7 @@ class AppListTile extends StatelessWidget {
                   Icons.system_update_alt_rounded,
                   color: cs.onPrimaryContainer,
                 ),
-                const SizedBox(width: 8),
+                const SizedBox(width: AppSpacings.elementGap),
                 Text(
                   tr('update'),
                   style: TextStyle(color: cs.onPrimaryContainer),

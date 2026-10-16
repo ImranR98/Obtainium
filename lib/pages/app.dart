@@ -1229,7 +1229,7 @@ class _AppPageState extends State<AppPage> {
                   ),
                 ),
                 if (app.downloadProgress! >= 0) ...[
-                  const SizedBox(width: 8),
+                  const SizedBox(width: AppSpacings.elementGap),
                   DownloadCancelButton(
                     onPressed: () => appsProvider.cancelDownload(widget.appId),
                   ),
@@ -1271,7 +1271,7 @@ class _AppPageState extends State<AppPage> {
                   ),
                 ),
               ),
-              const SizedBox(width: 8),
+              const SizedBox(width: AppSpacings.elementGap),
               _getPrimaryButton(context, app, areDownloadsRunning),
             ],
           ),
