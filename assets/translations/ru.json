@@ -84,6 +84,9 @@
         "one": "При проверке в фоновом режиме было обнаружено {} обновления — пользователь будет уведомлен по необходимости",
         "other": "При проверке в фоновом режиме было обнаружено {} обновлений — пользователь будет уведомлен по необходимости"
     },
+    "bgGuardChecksAndUpdates": "Check and update",
+    "bgGuardChecksOnly": "Check only",
+    "bgGuardNothing": "Nothing",
     "bgTaskStarted": "Фоновая задача начата — проверьте журналы",
     "bgUpdateCheckInterval": "Интервал проверки обновлений в фоновом режиме",
     "bgUpdateGotErrorRetryInMinutes": {
@@ -500,6 +503,8 @@
     "warning": "Предупреждение",
     "webviewLoadError": "Не удалось загрузить WebView",
     "welcome": "Добро пожаловать",
+    "whenNotCharging": "When not charging",
+    "whenNotOnWiFi": "When not on Wi-Fi",
     "wiki": "Помощь/Вики",
     "wrongArgNum": "Неверное количество предоставленных аргументов",
     "xAndNMoreUpdatesAvailable": {

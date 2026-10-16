@@ -82,6 +82,9 @@
         "one": "后台检查发现 {} 个应用更新 - 如有需要将发送通知",
         "other": "后台检查发现 {} 个应用更新 - 如有需要将发送通知"
     },
+    "bgGuardChecksAndUpdates": "Check and update",
+    "bgGuardChecksOnly": "Check only",
+    "bgGuardNothing": "Nothing",
     "bgTaskStarted": "后台任务已启动 - 详见日志",
     "bgUpdateCheckInterval": "后台更新检查间隔",
     "bgUpdateGotErrorRetryInMinutes": {
@@ -491,6 +494,8 @@
     "warning": "警告",
     "webviewLoadError": "WebView 加载失败",
     "welcome": "欢迎",
+    "whenNotCharging": "When not charging",
+    "whenNotOnWiFi": "When not on Wi-Fi",
     "wiki": "帮助/Wiki",
     "wrongArgNum": "参数数量错误",
     "xAndNMoreUpdatesAvailable": {

@@ -82,6 +82,9 @@
         "one": "Die Aktualisierungsprüfung fand {} Aktualisierung – benachrichtigt, falls erforderlich",
         "other": "Die Aktualisierungsprüfung fand {} Aktualisierungen – benachrichtigt, falls erforderlich"
     },
+    "bgGuardChecksAndUpdates": "Check and update",
+    "bgGuardChecksOnly": "Check only",
+    "bgGuardNothing": "Nothing",
     "bgTaskStarted": "Hintergrundaufgabe gestartet – Logs prüfen.",
     "bgUpdateCheckInterval": "Prüfintervall für Hintergrundaktualisierung",
     "bgUpdateGotErrorRetryInMinutes": {
@@ -491,6 +494,8 @@
     "warning": "Warnung",
     "webviewLoadError": "WebView failed to load",
     "welcome": "Willkommen",
+    "whenNotCharging": "When not charging",
+    "whenNotOnWiFi": "When not on Wi-Fi",
     "wiki": "Hilfe/Wiki",
     "wrongArgNum": "Falsche Anzahl von Argumenten (Parametern) übermittelt",
     "xAndNMoreUpdatesAvailable": {

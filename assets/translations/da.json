@@ -82,6 +82,9 @@
         "one": "Baggrundsopdateringstjek fandt {} opdatering. Underretter brugeren, hvis nødvendigt",
         "other": "Baggrundsopdateringstjek fandt {} opdateringer. Underretter brugeren, hvis nødvendigt"
     },
+    "bgGuardChecksAndUpdates": "Check and update",
+    "bgGuardChecksOnly": "Check only",
+    "bgGuardNothing": "Nothing",
     "bgTaskStarted": "Baggrundsopgave startet - tjek logfiler.",
     "bgUpdateCheckInterval": "Kontrolinterval for baggrundsopdatering",
     "bgUpdateGotErrorRetryInMinutes": {
@@ -491,6 +494,8 @@
     "warning": "Advarsel",
     "webviewLoadError": "WebView failed to load",
     "welcome": "Velkommen",
+    "whenNotCharging": "When not charging",
+    "whenNotOnWiFi": "When not on Wi-Fi",
     "wiki": "Hjælp/Wiki",
     "wrongArgNum": "Forkert antal argumenter angivet",
     "xAndNMoreUpdatesAvailable": {

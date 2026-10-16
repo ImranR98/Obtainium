@@ -82,6 +82,9 @@
         "one": "La serĉo de fonaj ĝisdatigoj trovis {} ĝisdatigon - la uzanto estas sciigota se necesa",
         "other": "La serĉo de fonaj ĝisdatigoj trovis {} ĝisdatigojn - la uzanto estas sciigota se necesa"
     },
+    "bgGuardChecksAndUpdates": "Check and update",
+    "bgGuardChecksOnly": "Check only",
+    "bgGuardNothing": "Nothing",
     "bgTaskStarted": "Fona tasko startita - inspektu la protokolojn.",
     "bgUpdateCheckInterval": "Serĉo-intertempo de fonaj ĝisdatigoj",
     "bgUpdateGotErrorRetryInMinutes": {
@@ -491,6 +494,8 @@
     "warning": "Avertu",
     "webviewLoadError": "WebView failed to load",
     "welcome": "Welcome",
+    "whenNotCharging": "When not charging",
+    "whenNotOnWiFi": "When not on Wi-Fi",
     "wiki": "Helpo/Vikio",
     "wrongArgNum": "Malĝusta nombro da provizitaj argumentoj",
     "xAndNMoreUpdatesAvailable": {

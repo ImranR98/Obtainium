@@ -82,6 +82,9 @@
         "one": "バックグラウンドでのアップデート確認で {} 個のアップデートを発見 - 必要に応じてユーザーに通知します",
         "other": "バックグラウンドでのアップデート確認で {} 個のアップデートを発見 - 必要に応じてユーザーに通知します"
     },
+    "bgGuardChecksAndUpdates": "Check and update",
+    "bgGuardChecksOnly": "Check only",
+    "bgGuardNothing": "Nothing",
     "bgTaskStarted": "バックグラウンドタスクが開始されました - ログを確認してください。",
     "bgUpdateCheckInterval": "バックグラウンドでのアップデート確認の間隔",
     "bgUpdateGotErrorRetryInMinutes": {
@@ -491,6 +494,8 @@
     "warning": "警告",
     "webviewLoadError": "WebViewの読み込みに失敗しました",
     "welcome": "ようこそ",
+    "whenNotCharging": "When not charging",
+    "whenNotOnWiFi": "When not on Wi-Fi",
     "wiki": "ヘルプ/ウィキ",
     "wrongArgNum": "引数の数が間違っています",
     "xAndNMoreUpdatesAvailable": {

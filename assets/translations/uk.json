@@ -82,6 +82,9 @@
         "one": "Фонова перевірка оновлень знайшла {} оновлення - сповістити користувача, якщо це необхідно",
         "other": "Фонова перевірка оновлень знайшла {} оновлень - сповістити користувача, якщо це необхідно"
     },
+    "bgGuardChecksAndUpdates": "Check and update",
+    "bgGuardChecksOnly": "Check only",
+    "bgGuardNothing": "Nothing",
     "bgTaskStarted": "Запущено фонове завдання - перевірте журнали.",
     "bgUpdateCheckInterval": "Інтервал перевірки оновлень у фоновому режимі",
     "bgUpdateGotErrorRetryInMinutes": {
@@ -491,6 +494,8 @@
     "warning": "Попередження",
     "webviewLoadError": "WebView failed to load",
     "welcome": "Ласкаво просимо.",
+    "whenNotCharging": "When not charging",
+    "whenNotOnWiFi": "When not on Wi-Fi",
     "wiki": "Довідка/Вікі",
     "wrongArgNum": "Надано неправильну кількість аргументів",
     "xAndNMoreUpdatesAvailable": {

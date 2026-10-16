@@ -82,6 +82,9 @@
         "one": "Arka plan güncelleme denetlemesi {} güncelleme buldu - gerekirse kullanıcıya bildirilecek",
         "other": "Arka plan güncelleme denetlemesi {} güncelleme buldu - gerekirse kullanıcıya bildirilecek"
     },
+    "bgGuardChecksAndUpdates": "Check and update",
+    "bgGuardChecksOnly": "Check only",
+    "bgGuardNothing": "Nothing",
     "bgTaskStarted": "Arka plan işlemi başladı - günlükleri kontrol et.",
     "bgUpdateCheckInterval": "Arka planda güncelleme denetleme sıklığı",
     "bgUpdateGotErrorRetryInMinutes": {
@@ -491,6 +494,8 @@
     "warning": "Uyarı",
     "webviewLoadError": "WebView yüklenemedi",
     "welcome": "Hoş geldiniz",
+    "whenNotCharging": "When not charging",
+    "whenNotOnWiFi": "When not on Wi-Fi",
     "wiki": "Yardım/wiki",
     "wrongArgNum": "Yanlış sayıda argüman sağlandı",
     "xAndNMoreUpdatesAvailable": {

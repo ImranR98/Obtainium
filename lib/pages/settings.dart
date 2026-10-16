@@ -508,16 +508,57 @@ class _SettingsPageState extends State<SettingsPage> {
           ],
         ),
         if (settingsProvider.updateInterval != 0) ...[
-          ToggleTile(
-            label: tr('bgUpdatesOnWiFiOnly'),
-            value: settingsProvider.bgUpdatesOnWiFiOnly,
-            onChanged: (value) => settingsProvider.bgUpdatesOnWiFiOnly = value,
+          _fieldTile(
+            context,
+            TvDropdownMenu<BgGuardMode>(
+              expandedInsets: EdgeInsets.zero,
+              label: Text(tr('whenNotOnWiFi')),
+              initialSelection: settingsProvider.bgGuardOnWiFi,
+              dropdownMenuEntries: [
+                DropdownMenuEntry(
+                  value: BgGuardMode.nothing,
+                  label: tr('bgGuardNothing'),
+                ),
+                DropdownMenuEntry(
+                  value: BgGuardMode.checksOnly,
+                  label: tr('bgGuardChecksOnly'),
+                ),
+                DropdownMenuEntry(
+                  value: BgGuardMode.checksAndUpdates,
+                  label: tr('bgGuardChecksAndUpdates'),
+                ),
+              ],
+              onSelected: (value) {
+                if (value != null) settingsProvider.bgGuardOnWiFi = value;
+              },
+            ),
           ),
-          ToggleTile(
-            label: tr('bgUpdatesWhileChargingOnly'),
-            value: settingsProvider.bgUpdatesWhileChargingOnly,
-            onChanged: (value) =>
-                settingsProvider.bgUpdatesWhileChargingOnly = value,
+          _fieldTile(
+            context,
+            TvDropdownMenu<BgGuardMode>(
+              expandedInsets: EdgeInsets.zero,
+              label: Text(tr('whenNotCharging')),
+              initialSelection: settingsProvider.bgGuardWhileCharging,
+              dropdownMenuEntries: [
+                DropdownMenuEntry(
+                  value: BgGuardMode.nothing,
+                  label: tr('bgGuardNothing'),
+                ),
+                DropdownMenuEntry(
+                  value: BgGuardMode.checksOnly,
+                  label: tr('bgGuardChecksOnly'),
+                ),
+                DropdownMenuEntry(
+                  value: BgGuardMode.checksAndUpdates,
+                  label: tr('bgGuardChecksAndUpdates'),
+                ),
+              ],
+              onSelected: (value) {
+                if (value != null) {
+                  settingsProvider.bgGuardWhileCharging = value;
+                }
+              },
+            ),
           ),
           CardTile(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),

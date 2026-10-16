@@ -82,6 +82,9 @@
         "one": "A actualización en segundo plano atopou {} actualización - avisará a usuaria se fose preciso",
         "other": "A actualización en segundo plano atopou {} actualizacións - avisará á usuaria se fose preciso"
     },
+    "bgGuardChecksAndUpdates": "Check and update",
+    "bgGuardChecksOnly": "Check only",
+    "bgGuardNothing": "Nothing",
     "bgTaskStarted": "Comezou a tarefa en segundo plano - comproba o rexistro.",
     "bgUpdateCheckInterval": "Período para comprobar actualizacións",
     "bgUpdateGotErrorRetryInMinutes": {
@@ -491,6 +494,8 @@
     "warning": "Aviso",
     "webviewLoadError": "WebView failed to load",
     "welcome": "Benvida",
+    "whenNotCharging": "When not charging",
+    "whenNotOnWiFi": "When not on Wi-Fi",
     "wiki": "Axuda/wiki",
     "wrongArgNum": "Número de argumentos proporcionados incorrecto",
     "xAndNMoreUpdatesAvailable": {

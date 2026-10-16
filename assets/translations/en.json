@@ -79,6 +79,9 @@
         "one": "BG update checking found {} update - will notify user if needed",
         "other": "BG update checking found {} updates - will notify user if needed"
     },
+    "bgGuardChecksAndUpdates": "Check and update",
+    "bgGuardChecksOnly": "Check only",
+    "bgGuardNothing": "Nothing",
     "bgTaskStarted": "Background task started - check logs.",
     "bgUpdateCheckInterval": "Background update checking interval",
     "bgUpdateGotErrorRetryInMinutes": {
@@ -488,6 +491,8 @@
     "warning": "Warning",
     "webviewLoadError": "WebView failed to load",
     "welcome": "Welcome",
+    "whenNotCharging": "When not charging",
+    "whenNotOnWiFi": "When not on Wi-Fi",
     "wiki": "Help/wiki",
     "wrongArgNum": "Wrong number of arguments provided",
     "xAndNMoreUpdatesAvailable": {

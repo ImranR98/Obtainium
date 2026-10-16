@@ -84,6 +84,9 @@
         "few": "Při kontrole aktualizací na pozadí nalezeny {} aktualizace – v případě potřeby bude upozorněn uživatel",
         "other": "Při kontrole aktualizací na pozadí nalezeno {} aktualizací – v případě potřeby bude upozorněn uživatel"
     },
+    "bgGuardChecksAndUpdates": "Check and update",
+    "bgGuardChecksOnly": "Check only",
+    "bgGuardNothing": "Nothing",
     "bgTaskStarted": "Spuštěna úloha na pozadí - zkontrolujte protokoly.",
     "bgUpdateCheckInterval": "Interval kontroly aktualizace na pozadí",
     "bgUpdateGotErrorRetryInMinutes": {
@@ -500,6 +503,8 @@
     "warning": "Varování",
     "webviewLoadError": "WebView failed to load",
     "welcome": "Vítejte na",
+    "whenNotCharging": "When not charging",
+    "whenNotOnWiFi": "When not on Wi-Fi",
     "wiki": "Nápověda/Wiki",
     "wrongArgNum": "Nesprávný počet zadaných argumentů",
     "xAndNMoreUpdatesAvailable": {

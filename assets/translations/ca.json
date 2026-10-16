@@ -82,6 +82,9 @@
         "one": "La comprovació d'actualitzacions en segon pla ha trobat {} actualització, t'ho notificarem si cal",
         "other": "La comprovació d'actualitzacions en segon pla ha trobat {} actualitzacions, t'ho notificarem si cal"
     },
+    "bgGuardChecksAndUpdates": "Check and update",
+    "bgGuardChecksOnly": "Check only",
+    "bgGuardNothing": "Nothing",
     "bgTaskStarted": "S'ha iniciat la tasca en segon pla (revisa-ho als registres).",
     "bgUpdateCheckInterval": "Comprova les actualitzacions en segon pla",
     "bgUpdateGotErrorRetryInMinutes": {
@@ -491,6 +494,8 @@
     "warning": "Avís",
     "webviewLoadError": "WebView failed to load",
     "welcome": "Benvinguda",
+    "whenNotCharging": "When not charging",
+    "whenNotOnWiFi": "When not on Wi-Fi",
     "wiki": "Ajuda/Wiki",
     "wrongArgNum": "Nombre d'arguments proveït invàlid",
     "xAndNMoreUpdatesAvailable": {

@@ -82,6 +82,9 @@
         "one": "背景更新檢查找到 {} 個更新 - 必要時將通知使用者",
         "other": "背景更新檢查找到 {} 個更新 - 必要時將通知使用者"
     },
+    "bgGuardChecksAndUpdates": "Check and update",
+    "bgGuardChecksOnly": "Check only",
+    "bgGuardNothing": "Nothing",
     "bgTaskStarted": "背景工作已啟動 - 請檢查記錄。",
     "bgUpdateCheckInterval": "背景更新檢查間隔",
     "bgUpdateGotErrorRetryInMinutes": {
@@ -491,6 +494,8 @@
     "warning": "警告",
     "webviewLoadError": "WebView failed to load",
     "welcome": "歡迎",
+    "whenNotCharging": "When not charging",
+    "whenNotOnWiFi": "When not on Wi-Fi",
     "wiki": "說明／Wiki",
     "wrongArgNum": "提供的引數數量錯誤",
     "xAndNMoreUpdatesAvailable": {

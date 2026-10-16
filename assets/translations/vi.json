@@ -82,6 +82,9 @@
         "one": "Đang kiểm tra bản cập nhật BG tìm thấy {} bản cập nhật - sẽ thông báo cho người dùng nếu cần",
         "other": "Đang kiểm tra bản cập nhật BG tìm thấy {} bản cập nhật - sẽ thông báo cho người dùng nếu cần"
     },
+    "bgGuardChecksAndUpdates": "Check and update",
+    "bgGuardChecksOnly": "Check only",
+    "bgGuardNothing": "Nothing",
     "bgTaskStarted": "Tác vụ nền đã bắt đầu - kiểm tra nhật ký.",
     "bgUpdateCheckInterval": "Thời gian tự động kiểm tra cập nhật",
     "bgUpdateGotErrorRetryInMinutes": {
@@ -491,6 +494,8 @@
     "warning": "Cảnh báo",
     "webviewLoadError": "WebView failed to load",
     "welcome": "Chào mừng",
+    "whenNotCharging": "When not charging",
+    "whenNotOnWiFi": "When not on Wi-Fi",
     "wiki": "Trợ giúp/Wiki",
     "wrongArgNum": "Số lượng đối số được cung cấp sai",
     "xAndNMoreUpdatesAvailable": {

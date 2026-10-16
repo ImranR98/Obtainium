@@ -82,6 +82,9 @@
         "one": "ബാക്ക്ഗ്രൗണ്ട് അപ്‌ഡേറ്റ് പരിശോധനയിൽ {} അപ്‌ഡേറ്റ് കണ്ടെത്തി - ആവശ്യമെങ്കിൽ ഉപയോക്താവിനെ അറിയിക്കും",
         "other": "ബാക്ക്ഗ്രൗണ്ട് അപ്‌ഡേറ്റ് പരിശോധനയിൽ {} അപ്‌ഡേറ്റുകൾ കണ്ടെത്തി - ആവശ്യമെങ്കിൽ ഉപയോക്താവിനെ അറിയിക്കും"
     },
+    "bgGuardChecksAndUpdates": "Check and update",
+    "bgGuardChecksOnly": "Check only",
+    "bgGuardNothing": "Nothing",
     "bgTaskStarted": "ബാക്ക്ഗ്രൗണ്ട് ടാസ്ക് ആരംഭിച്ചു - ലോഗുകൾ പരിശോധിക്കുക.",
     "bgUpdateCheckInterval": "ബാക്ക്ഗ്രൗണ്ട് അപ്‌ഡേറ്റ് പരിശോധന ഇടവേള",
     "bgUpdateGotErrorRetryInMinutes": {
@@ -491,6 +494,8 @@
     "warning": "മുന്നറിയിപ്പ്",
     "webviewLoadError": "WebView failed to load",
     "welcome": "സ്വാഗതം",
+    "whenNotCharging": "When not charging",
+    "whenNotOnWiFi": "When not on Wi-Fi",
     "wiki": "സഹായം/വിക്കി",
     "wrongArgNum": "തെറ്റായ എണ്ണം ആർഗ്യുമെന്റുകൾ നൽകി",
     "xAndNMoreUpdatesAvailable": {

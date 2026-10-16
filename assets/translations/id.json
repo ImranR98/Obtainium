@@ -82,6 +82,9 @@
         "one": "Pemeriksaan pembaruan latar belakang menemukan {} pembaruan - akan memberi tahu pengguna jika diperlukan",
         "other": "Pemeriksaan pembaruan latar belakang menemukan {} pembaruan - akan memberi tahu pengguna jika diperlukan"
     },
+    "bgGuardChecksAndUpdates": "Check and update",
+    "bgGuardChecksOnly": "Check only",
+    "bgGuardNothing": "Nothing",
     "bgTaskStarted": "Tugas latar belakang dimulai - periksa catatan.",
     "bgUpdateCheckInterval": "Interval pemeriksaan pembaruan di latar belakang",
     "bgUpdateGotErrorRetryInMinutes": {
@@ -491,6 +494,8 @@
     "warning": "Peringatan",
     "webviewLoadError": "WebView failed to load",
     "welcome": "Selamat datang.",
+    "whenNotCharging": "When not charging",
+    "whenNotOnWiFi": "When not on Wi-Fi",
     "wiki": "Bantuan/Wiki",
     "wrongArgNum": "Salah memberikan jumlah argumen",
     "xAndNMoreUpdatesAvailable": {

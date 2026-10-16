@@ -82,6 +82,9 @@
         "one": "وجد التحقق من التحديثات في الخلفية {} تحديث - سيتم إخطار المستخدم إذا لزم الأمر",
         "other": "وجد التحقق من التحديثات في الخلفية {} تحديثات - سيتم إخطار المستخدم إذا لزم الأمر"
     },
+    "bgGuardChecksAndUpdates": "Check and update",
+    "bgGuardChecksOnly": "Check only",
+    "bgGuardNothing": "Nothing",
     "bgTaskStarted": "بدأت المهمة في الخلفية - تحقق من السجلات.",
     "bgUpdateCheckInterval": "فترة التحقُق من التحديثات في الخلفية",
     "bgUpdateGotErrorRetryInMinutes": {
@@ -491,6 +494,8 @@
     "warning": "تحذير",
     "webviewLoadError": "فشل WebView في التحميل",
     "welcome": "مرحبًا",
+    "whenNotCharging": "When not charging",
+    "whenNotOnWiFi": "When not on Wi-Fi",
     "wiki": "المساعدة/ويكي",
     "wrongArgNum": "عدد وسائط غير صحيح",
     "xAndNMoreUpdatesAvailable": {

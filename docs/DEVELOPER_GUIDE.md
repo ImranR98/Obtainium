@@ -357,7 +357,12 @@ Background work is scheduled via **`workmanager`** (Android periodic tasks). The
 ### `bgUpdateCheck` behaviour
 
 1. Loads translations manually (no `BuildContext` available).
-2. Bails early on no network / restrictions (Wi-Fi-only, charging-only) / disabled settings.
+2. Bails early on no network / disabled settings, then evaluates the per-condition
+   background guards (`bgGuardOnWiFi`, `bgGuardWhileCharging`, tri-state
+   nothing/checksOnly/checksAndUpdates via `evaluateBgGuards`). `nothing` under an
+   unmet condition aborts the task entirely; `checksOnly` allows checks and
+   notifications but suppresses installs. The manual "Run background update check
+   now" (`forceAll`) bypasses the guards.
 3. **Update mode** (`toCheck` non-empty): checks updates, splits results into
    notify-only vs silently-installable, sends grouped notifications, and **schedules
    retries that actually `await` the retry delay** so rate-limited hosts aren't hammered.

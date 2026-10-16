@@ -82,6 +82,9 @@
         "one": "BG-uppdateringskontroll hittades {} uppdatering - kommer att meddela användaren om det behövs",
         "other": "BG-uppdateringskontroll hittades {} uppdateringar - kommer att meddela användaren om det behövs"
     },
+    "bgGuardChecksAndUpdates": "Check and update",
+    "bgGuardChecksOnly": "Check only",
+    "bgGuardNothing": "Nothing",
     "bgTaskStarted": "Bakgrundsuppgift startat - kontrollera loggar.",
     "bgUpdateCheckInterval": "Bakgrundsuppdateringskollfrekvens",
     "bgUpdateGotErrorRetryInMinutes": {
@@ -491,6 +494,8 @@
     "warning": "Varning",
     "webviewLoadError": "WebView failed to load",
     "welcome": "Välkommen",
+    "whenNotCharging": "When not charging",
+    "whenNotOnWiFi": "When not on Wi-Fi",
     "wiki": "Hjälp/Wiki",
     "wrongArgNum": "Fel antal argument har angetts",
     "xAndNMoreUpdatesAvailable": {

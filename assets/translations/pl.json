@@ -88,6 +88,9 @@
         "many": "Sprawdzanie w tle znalazło {} aktualizacji - powiadomię, jeśli to konieczne",
         "other": "Sprawdzanie w tle znalazło {} aktualizacji - powiadomię, jeśli to konieczne"
     },
+    "bgGuardChecksAndUpdates": "Check and update",
+    "bgGuardChecksOnly": "Check only",
+    "bgGuardNothing": "Nothing",
     "bgTaskStarted": "Uruchomiono zadanie w tle - sprawdź logi.",
     "bgUpdateCheckInterval": "Częstotliwość aktualizacji w tle",
     "bgUpdateGotErrorRetryInMinutes": {
@@ -515,6 +518,8 @@
     "warning": "Uwaga",
     "webviewLoadError": "Nie udało się załadować WebView",
     "welcome": "Witamy",
+    "whenNotCharging": "When not charging",
+    "whenNotOnWiFi": "When not on Wi-Fi",
     "wiki": "Pomoc / Wiki",
     "wrongArgNum": "Podano nieprawidłową liczbę argumentów",
     "xAndNMoreUpdatesAvailable": {

@@ -60,6 +60,10 @@ enum ActionBannerMode { all, updatesOnly, none }
 /// How much vertical space each app row uses in the app list.
 enum AppListDensity { standard, compact, dense }
 
+/// What background work may run when a guard condition (not on Wi-Fi, not
+/// charging) is unmet. When the condition is met the mode is irrelevant.
+enum BgGuardMode { nothing, checksOnly, checksAndUpdates }
+
 class SettingsProvider with ChangeNotifier {
   SharedPreferences? prefs;
   String? defaultAppDir;
@@ -620,23 +624,33 @@ class SettingsProvider with ChangeNotifier {
     notifyListeners();
   }
 
-  bool get bgUpdatesOnWiFiOnly {
-    return _getBool('bgUpdatesOnWiFiOnly') ?? false;
+  BgGuardMode _bgGuardMode(String key, String legacyKey) {
+    final stored = _getString(key);
+    if (stored != null && BgGuardMode.values.any((m) => m.name == stored)) {
+      return BgGuardMode.values.byName(stored);
+    }
+    final legacy = _getBool(legacyKey);
+    if (legacy != null) {
+      return legacy ? BgGuardMode.checksOnly : BgGuardMode.checksAndUpdates;
+    }
+    return BgGuardMode.checksAndUpdates;
   }
 
-  set bgUpdatesOnWiFiOnly(bool val) {
-    prefs?.setBool('bgUpdatesOnWiFiOnly', val);
+  void _setBgGuardMode(String key, BgGuardMode mode) {
+    prefs?.setString(key, mode.name);
     notifyListeners();
   }
 
-  bool get bgUpdatesWhileChargingOnly {
-    return _getBool('bgUpdatesWhileChargingOnly') ?? false;
-  }
+  BgGuardMode get bgGuardOnWiFi =>
+      _bgGuardMode('bgGuardOnWiFi', 'bgUpdatesOnWiFiOnly');
 
-  set bgUpdatesWhileChargingOnly(bool val) {
-    prefs?.setBool('bgUpdatesWhileChargingOnly', val);
-    notifyListeners();
-  }
+  set bgGuardOnWiFi(BgGuardMode mode) => _setBgGuardMode('bgGuardOnWiFi', mode);
+
+  BgGuardMode get bgGuardWhileCharging =>
+      _bgGuardMode('bgGuardWhileCharging', 'bgUpdatesWhileChargingOnly');
+
+  set bgGuardWhileCharging(BgGuardMode mode) =>
+      _setBgGuardMode('bgGuardWhileCharging', mode);
 
   bool get highlightTouchTargets {
     return _getBool('highlightTouchTargets') ?? false;

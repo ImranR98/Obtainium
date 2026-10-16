@@ -82,6 +82,9 @@
         "one": "Il controllo degli aggiornamenti in secondo piano ha trovato {} aggiornamento - notificherà l'utente se necessario",
         "other": "Il controllo degli aggiornamenti in secondo piano ha trovato {} aggiornamenti - notificherà l'utente se necessario"
     },
+    "bgGuardChecksAndUpdates": "Check and update",
+    "bgGuardChecksOnly": "Check only",
+    "bgGuardNothing": "Nothing",
     "bgTaskStarted": "Attività in secondo piano iniziata - controllo log.",
     "bgUpdateCheckInterval": "Intervallo di controllo degli aggiornamenti in secondo piano",
     "bgUpdateGotErrorRetryInMinutes": {
@@ -491,6 +494,8 @@
     "warning": "Attenzione",
     "webviewLoadError": "WebView failed to load",
     "welcome": "Benvenuti",
+    "whenNotCharging": "When not charging",
+    "whenNotOnWiFi": "When not on Wi-Fi",
     "wiki": "Aiuto/Wiki",
     "wrongArgNum": "Numero di argomenti forniti errato",
     "xAndNMoreUpdatesAvailable": {

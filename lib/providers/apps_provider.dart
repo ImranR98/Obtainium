@@ -29,6 +29,7 @@ import 'package:obtainium/providers/apps_provider_install.dart';
 import 'package:obtainium/providers/apps_provider_lifecycle.dart';
 import 'package:obtainium/providers/apps_provider_updates.dart';
 
+import 'package:obtainium/utils/bg_update_guards.dart';
 import 'package:obtainium/utils/signing_cert_utils.dart';
 import 'package:obtainium/utils/translation_loader.dart';
 
@@ -1110,24 +1111,33 @@ Future<void> bgUpdateCheck(
             .map((e) => MapEntry(e, 0))),
   ];
 
-  final networkRestricted =
-      appsProvider.settingsProvider.bgUpdatesOnWiFiOnly &&
-      !netResult.contains(ConnectivityResult.wifi) &&
-      !netResult.contains(ConnectivityResult.ethernet);
+  final onUnmeteredNetwork =
+      netResult.contains(ConnectivityResult.wifi) ||
+      netResult.contains(ConnectivityResult.ethernet);
+  final onCharging = (await Battery().batteryState) == BatteryState.charging;
 
-  final chargingRestricted =
-      appsProvider.settingsProvider.bgUpdatesWhileChargingOnly &&
-      (await Battery().batteryState) != BatteryState.charging;
+  final guardDecision = evaluateBgGuards(
+    wifiMode: appsProvider.settingsProvider.bgGuardOnWiFi,
+    chargingMode: appsProvider.settingsProvider.bgGuardWhileCharging,
+    onUnmeteredNetwork: onUnmeteredNetwork,
+    charging: onCharging,
+  );
 
-  if (networkRestricted) {
-    AppLogger.info('BG update task: Network restriction in effect.');
+  if (guardDecision.skipChecks) {
+    if (!forceAll) {
+      AppLogger.info(
+        'BG update task: Skipped (guards set to do nothing for the current network/charging state).',
+      );
+      return;
+    }
+    AppLogger.info('BG update task: Manual run overriding "do nothing" guard.');
+  } else if (!guardDecision.allowInstalls) {
+    AppLogger.info(
+      'BG update task: Restrictions in effect (checks only, no installs).',
+    );
   }
 
-  if (chargingRestricted) {
-    AppLogger.info('BG update task: Charging restriction in effect.');
-  }
-
-  final canInstall = !networkRestricted && !chargingRestricted;
+  final canInstall = forceAll || guardDecision.allowInstalls;
   final silentlyInstallable = <String>[];
 
   if (toCheck.isNotEmpty) {
@@ -1297,11 +1307,13 @@ _bgRunUpdateCheck(
       retryName,
       initialDelay: Duration(seconds: retryAfterXSeconds),
       constraints: Constraints(
-        networkType: appsProvider.settingsProvider.bgUpdatesOnWiFiOnly
+        networkType:
+            appsProvider.settingsProvider.bgGuardOnWiFi == BgGuardMode.nothing
             ? NetworkType.unmetered
             : NetworkType.connected,
         requiresCharging:
-            appsProvider.settingsProvider.bgUpdatesWhileChargingOnly,
+            appsProvider.settingsProvider.bgGuardWhileCharging ==
+            BgGuardMode.nothing,
         requiresBatteryNotLow: false,
         requiresDeviceIdle: false,
         requiresStorageNotLow: false,

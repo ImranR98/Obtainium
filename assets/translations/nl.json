@@ -82,6 +82,9 @@
         "one": "Achtergrond-updatecontrole heeft {} update gevonden - zal de gebruiker op de hoogte stellen indien nodig",
         "other": "Achtergrond-updatecontrole heeft {} updates gevonden - zal de gebruiker op de hoogte stellen indien nodig"
     },
+    "bgGuardChecksAndUpdates": "Check and update",
+    "bgGuardChecksOnly": "Check only",
+    "bgGuardNothing": "Nothing",
     "bgTaskStarted": "Achtergrondtaak gestart - controleer de logs.",
     "bgUpdateCheckInterval": "Frequentie voor achtergrond-updatecontrole",
     "bgUpdateGotErrorRetryInMinutes": {
@@ -491,6 +494,8 @@
     "warning": "Waarschuwing",
     "webviewLoadError": "WebView laden mislukt",
     "welcome": "Welkom",
+    "whenNotCharging": "When not charging",
+    "whenNotOnWiFi": "When not on Wi-Fi",
     "wiki": "Help/wiki",
     "wrongArgNum": "Incorrect aantal argumenten.",
     "xAndNMoreUpdatesAvailable": {

@@ -82,6 +82,9 @@
         "one": "BG 업데이트 확인에서 {}개의 업데이트를 발견했습니다 - 필요 시 사용자에게 알립니다",
         "other": "BG 업데이트 확인에서 {}개의 업데이트를 발견했습니다 - 필요 시 사용자에게 알립니다"
     },
+    "bgGuardChecksAndUpdates": "Check and update",
+    "bgGuardChecksOnly": "Check only",
+    "bgGuardNothing": "Nothing",
     "bgTaskStarted": "백그라운드 작업 시작됨 - 로그를 확인하세요.",
     "bgUpdateCheckInterval": "백그라운드 업데이트 확인 간격",
     "bgUpdateGotErrorRetryInMinutes": {
@@ -491,6 +494,8 @@
     "warning": "경고",
     "webviewLoadError": "WebView 불러오기 실패",
     "welcome": "환영",
+    "whenNotCharging": "When not charging",
+    "whenNotOnWiFi": "When not on Wi-Fi",
     "wiki": "도움말/위키",
     "wrongArgNum": "잘못된 인수 수 제공",
     "xAndNMoreUpdatesAvailable": {

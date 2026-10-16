@@ -82,6 +82,9 @@
         "one": "Frissítések ellenőrzése a háttérben {} frissítést talált - szükség esetén értesíti a felhasználót",
         "other": "Frissítések ellenőrzése a háttérben {} frissítést talált - szükség esetén értesíti a felhasználót"
     },
+    "bgGuardChecksAndUpdates": "Check and update",
+    "bgGuardChecksOnly": "Check only",
+    "bgGuardNothing": "Nothing",
     "bgTaskStarted": "A háttérfeladat elindult – ellenőrizze a naplókat.",
     "bgUpdateCheckInterval": "Időtartam a frissítések háttérellenőrzése között",
     "bgUpdateGotErrorRetryInMinutes": {
@@ -491,6 +494,8 @@
     "warning": "Figyelem",
     "webviewLoadError": "Nem sikerült betölteni a WebViewt",
     "welcome": "Üdvözöljük!",
+    "whenNotCharging": "When not charging",
+    "whenNotOnWiFi": "When not on Wi-Fi",
     "wiki": "Súgó/Wiki",
     "wrongArgNum": "A megadott argumentumok száma nem megfelelő",
     "xAndNMoreUpdatesAvailable": {

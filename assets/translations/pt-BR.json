@@ -82,6 +82,9 @@
         "one": "A busca de atualizações em segundo plano encontrou {} atualização - notificará o usuário se necessário",
         "other": "A busca de atualizações em segundo plano encontrou {} atualizações - notificará o usuário se necessário"
     },
+    "bgGuardChecksAndUpdates": "Check and update",
+    "bgGuardChecksOnly": "Check only",
+    "bgGuardNothing": "Nothing",
     "bgTaskStarted": "Tarefa em segundo plano iniciada - verifique os registros.",
     "bgUpdateCheckInterval": "Intervalo de busca por atualizações em segundo plano",
     "bgUpdateGotErrorRetryInMinutes": {
@@ -491,6 +494,8 @@
     "warning": "Alerta",
     "webviewLoadError": "Falha ao carregar o WebView",
     "welcome": "Boas vindas",
+    "whenNotCharging": "When not charging",
+    "whenNotOnWiFi": "When not on Wi-Fi",
     "wiki": "Ajuda/Wiki",
     "wrongArgNum": "Número errado de argumentos fornecidos",
     "xAndNMoreUpdatesAvailable": {

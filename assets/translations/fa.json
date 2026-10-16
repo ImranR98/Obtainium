@@ -82,6 +82,9 @@
         "one": "بررسی به‌روزرسانی BG پیدا شد {} به‌روزرسانی - در صورت نیاز به کاربر اطلاع می‌دهد",
         "other": "بررسی به‌روزرسانی BG {} به‌روزرسانی‌های یافت شده - در صورت نیاز به کاربر اطلاع می‌دهد"
     },
+    "bgGuardChecksAndUpdates": "Check and update",
+    "bgGuardChecksOnly": "Check only",
+    "bgGuardNothing": "Nothing",
     "bgTaskStarted": "کار پس زمینه شروع شد - لاگ های مربوط را بررسی کنید.",
     "bgUpdateCheckInterval": "فاصله بررسی به‌روزرسانی در پس‌زمینه",
     "bgUpdateGotErrorRetryInMinutes": {
@@ -491,6 +494,8 @@
     "warning": "اخطار",
     "webviewLoadError": "WebView failed to load",
     "welcome": "خوش آمدید خوش آمدید",
+    "whenNotCharging": "When not charging",
+    "whenNotOnWiFi": "When not on Wi-Fi",
     "wiki": "راهنما/ویکی",
     "wrongArgNum": "تعداد آرگومان های ارائه شده اشتباه است",
     "xAndNMoreUpdatesAvailable": {

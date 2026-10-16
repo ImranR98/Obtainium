@@ -82,6 +82,9 @@
         "one": "Provjera ažuriranja u pozadini je pronašla {} ažuriranje - korisnik će biti obavješten ako je to potrebno",
         "other": "Provjera ažuriranja u pozadini je pronašla {} ažuriranja - korisnik će biti obavješten ako je to potrebno"
     },
+    "bgGuardChecksAndUpdates": "Check and update",
+    "bgGuardChecksOnly": "Check only",
+    "bgGuardNothing": "Nothing",
     "bgTaskStarted": "Rad u pozadini pokrenut - provjerite log-ove.",
     "bgUpdateCheckInterval": "Interval provjere ažuriranja u pozadini",
     "bgUpdateGotErrorRetryInMinutes": {
@@ -491,6 +494,8 @@
     "warning": "Upozorenje",
     "webviewLoadError": "WebView se nije uspio učitati",
     "welcome": "Dobrodošli",
+    "whenNotCharging": "When not charging",
+    "whenNotOnWiFi": "When not on Wi-Fi",
     "wiki": "Pomoć/Wiki",
     "wrongArgNum": "Naveden je pogrešan broj argumenata",
     "xAndNMoreUpdatesAvailable": {
