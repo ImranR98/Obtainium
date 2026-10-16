@@ -118,17 +118,15 @@ class ExternalInstallerBridge {
   }
 
   /// Hands [uri] to the chosen external installer and waits for the tracked
-  /// result. Returns null when result tracking is unavailable (non-Android or
-  /// an older native side), in which case the caller should fall back to
-  /// polling the package state.
-  Future<ExternalInstallResult?> launchInstallIntent({
+  /// result. The native side always reports one; a missing or malformed
+  /// payload is treated as an error.
+  Future<ExternalInstallResult> launchInstallIntent({
     required String uri,
     required String type,
     required String expectedPackageName,
     String? package,
     String? activity,
   }) async {
-    if (!Platform.isAndroid) return null;
     final raw = await _channel
         .invokeMethod<Map<dynamic, dynamic>>('launchInstallIntent', {
           'uri': uri,
@@ -137,6 +135,13 @@ class ExternalInstallerBridge {
           'activity': activity,
           'expectedPackageName': expectedPackageName,
         });
-    return externalInstallResultFromNative(raw);
+    final result = externalInstallResultFromNative(raw);
+    if (result == null) {
+      throw PlatformException(
+        code: 'UNAVAILABLE',
+        message: 'External install result tracking is unavailable',
+      );
+    }
+    return result;
   }
 }

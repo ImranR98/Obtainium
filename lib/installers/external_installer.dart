@@ -73,7 +73,7 @@ class ExternalInstaller extends Installer {
 
     final baseline = await captureInstallBaseline(appId);
 
-    ExternalInstallResult? lastResult;
+    late ExternalInstallResult lastResult;
     var reportedInstalled = false;
     for (final filePath in apkFilePaths) {
       final contentUri = await ExternalInstallerBridge.instance
@@ -91,27 +91,15 @@ class ExternalInstaller extends Installer {
         activity: settingsProvider.externalInstallerComponent,
         expectedPackageName: appId,
       );
-      if (lastResult == null) {
-        // Result tracking unavailable: fall back to bounded polling.
-        AppLogger.info(
-          'External install result tracking unavailable; polling package state for $appId.',
-        );
-        final installed = await waitForPackageInstall(
-          appId,
-          baseline,
-          attempts: _confirmAttempts,
-        );
-        return installed ? InstallResult.success() : InstallResult.cancelled();
-      }
       if (lastResult.installed) {
         reportedInstalled = true;
         break;
       }
     }
 
-    if (lastResult?.errorCode != null) {
+    if (lastResult.errorCode != null) {
       AppLogger.warn(
-        'External installer reported failure for $appId (code ${lastResult!.errorCode}).',
+        'External installer reported failure for $appId (code ${lastResult.errorCode}).',
       );
     }
 
