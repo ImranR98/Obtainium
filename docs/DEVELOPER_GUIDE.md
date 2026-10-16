@@ -207,6 +207,77 @@ Override the contract methods you need:
 - `filterApks`, `filterApksByArch`, `extractVersion`, `findStandardFormatsForVersion`,
   `getLinksFromParsedHTML`, `getApkUrlsFromUrls`.
 
+### Samsung Galaxy Store settings
+
+Galaxy Store exposes per-app device model (`deviceId`) and CSC (`csc`) settings.
+Empty fields retain the defaults `SM-S948B` and `DBT`. CSC `CHC` automatically
+selects mobile country code `460` and mobile network code `00`; other CSCs retain
+the existing `425` and `01` defaults. CHC matching ignores case and surrounding
+whitespace. App configs that carry nonempty `mcc` and `mnc` values (for example
+via an imported settings file) still override these defaults independently. They
+remain strings to preserve leading zeros.
+
+For example, Samsung Assistant (`com.samsung.android.app.sreminder`) can be
+queried with device model `SM-S9480` and CSC `CHC` for the China release.
+Availability still depends on the requested app, device, and Android SDK version.
+
+After a failed stub request, ODS uses the same configured device and network
+parameters. `CHC` with MCC `460` selects the China service; other configurations
+use the global service. `countrySearchEx` (`2300`) discovers the endpoint without
+changing MCC, MNC, or CSC. Only known Samsung ODS hosts and `/ods.as` are accepted;
+trusted HTTP endpoints are upgraded to HTTPS. This preserves the existing
+`425`/`01` global profile through the observed `il-odc.samsungapps.com` endpoint.
+Discovery failure uses a fixed China or global endpoint with the original
+request parameters.
+
+ODS queries `getDownloadInfo` (`2298`). Native products then obtain a full APK
+through `downloadEx2` (`2311`). This stateless request omits the installed
+`versionCode` and uses the protocol spelling `dowloadType=new`. Only HTTP 400–599 responses
+that are not rate limits or a valid nonzero API rejection may retry
+`downloadForRestore` (`2316`). If both reject a
+China request with a known full-package size, `downloadInfoForTencent` (`2801`)
+is attempted once. Its result must identify the exact package, product, version,
+version code, and full size and use a Samsung HTTPS APK URL. Partial or third-party
+mirror responses fail; no purchase or order requests are made. A successful
+anonymous `2801` response has not been demonstrated for Samsung Assistant.
+
+China linked products with `linkProductYn=1` and a known full-package size use
+`downloadInfoForTencent` (`2801`) directly. Linked replies must match the selected
+version, version code, and full size. They may omit `GUID` and `productID`, but
+either field must match when present; their `appId` is a Tencent catalog ID,
+not an Android package name. Only this branch additionally permits the exact
+HTTPS APK host `auto-dd.myapp.com`. Stub, native, restore, and nonlinked mirror
+responses retain the Samsung-only host restriction. Unknown linked flags,
+linked products outside China, or linked products without a full size fail
+before authorization. No purchase or order request is made.
+
+Stub and ODS responses reject malformed XML, duplicate critical fields,
+incorrect identities, mismatched grants, and unsafe APK URLs. ODS response IDs
+must match the requested interface. Login-required or non-installable metadata
+fails before authorization. Full APKs, including universal `32n64` packages, are
+accepted; delta URLs are unused. ODS POST redirects are disabled and headers do
+not affect APK transfers.
+
+Optional store dates and publisher notes use same-endpoint main (`2290`),
+overview (`2291`), and main (`2290`) requests. Both main responses must match the
+selected package, product, version, version code, and full size; overview must
+match its version and size. This binds overview fields that omit package and
+version code. Structured display branches are ignored while critical fields
+remain unique scalar values. The validated overview `lastUpdateDate` populates
+`releaseDate`; APK filename timestamps are not release dates. Publisher
+`updateDescription` populates `changeLog` without rewriting its text. Missing,
+changed, malformed, or unavailable details leave these fields unset and preserve
+the authorized APK.
+
+The source remains per-app: it does not add cross-app update batches or new
+settings. Anonymous ODS requests reuse one generated identity throughout the
+operation and do not require account credentials. Stub and ODS requests have
+40-second deadlines. A stub timeout can use the same-profile ODS fallback;
+ODS timeouts do not trigger restore or mirror authorization. Rate limits retain
+their retry timing and stop the fallback chain. During optional discovery or
+store details, a rate limit preserves the already authorized APK and stops
+further detail requests.
+
 ### Source-specific notes: APKMirror
 
 APKMirror is track-only and keeps regular-page traffic to a minimum:
@@ -406,6 +477,14 @@ Background work is scheduled via **`workmanager`** (Android periodic tasks). The
 - `downloadAndInstallLatestApps(...)` is the orchestrator used by both UI and background.
 - Installs require the foreground (`waitForUserToReturnToForeground`); the swipe-to-install
   tile stays locked from download start through install handoff.
+- `downloadFileWithRetry` retries transient network errors (3 attempts, 5 s apart). Android
+  blocks network access for backgrounded apps, so foreground downloads pass
+  `holdRetry: _holdRetryUntilForeground`, which holds the retry until the app is back in the
+  foreground (#2894) instead of spending the attempts offline. Callers that allow reusing
+  partial files (`useExisting`) then resume from where the download stopped. The hook returns
+  false — reporting the original error rather than retrying — when the app does not come back
+  within `_backgroundRetryWait`; a cancellation while waiting surfaces as a
+  `CancellationException` instead, so no error is shown for a download the user stopped.
 
 ### Installer abstraction (`lib/installers/`)
 
