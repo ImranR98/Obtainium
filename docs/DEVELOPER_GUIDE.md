@@ -406,6 +406,14 @@ Background work is scheduled via **`workmanager`** (Android periodic tasks). The
 - `downloadAndInstallLatestApps(...)` is the orchestrator used by both UI and background.
 - Installs require the foreground (`waitForUserToReturnToForeground`); the swipe-to-install
   tile stays locked from download start through install handoff.
+- `downloadFileWithRetry` retries transient network errors (3 attempts, 5 s apart). Android
+  blocks network access for backgrounded apps, so foreground downloads pass
+  `holdRetry: _holdRetryUntilForeground`, which holds the retry until the app is back in the
+  foreground (#2894) instead of spending the attempts offline. Callers that allow reusing
+  partial files (`useExisting`) then resume from where the download stopped. The hook returns
+  false — reporting the original error rather than retrying — when the app does not come back
+  within `_backgroundRetryWait`; a cancellation while waiting surfaces as a
+  `CancellationException` instead, so no error is shown for a download the user stopped.
 
 ### Installer abstraction (`lib/installers/`)
 

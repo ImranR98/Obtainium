@@ -180,6 +180,7 @@ Future<File> downloadFileWithRetry(
   Map<String, String>? headers,
   int retries = _defaultRetries,
   CancellationToken? cancellationToken,
+  Future<bool> Function()? holdRetry,
 }) async {
   try {
     return await downloadFile(
@@ -204,6 +205,11 @@ Future<File> downloadFileWithRetry(
             e is TimeoutException ||
             e is HttpException ||
             retryableHTTPError)) {
+      // The hook may hold the retry back (see AppsProviderInstall) and returns
+      // false when retrying is pointless, so the original error is reported.
+      if (holdRetry != null && !await holdRetry()) {
+        rethrow;
+      }
       await Future.delayed(const Duration(seconds: _retryDelaySeconds));
       return await downloadFileWithRetry(
         fileName,
@@ -215,6 +221,7 @@ Future<File> downloadFileWithRetry(
         headers: headers,
         retries: (retries - 1),
         cancellationToken: cancellationToken,
+        holdRetry: holdRetry,
       );
     } else {
       rethrow;
