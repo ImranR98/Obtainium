@@ -412,7 +412,8 @@ Background work is scheduled via **`workmanager`** (Android periodic tasks). The
   foreground (#2894) instead of spending the attempts offline. Callers that allow reusing
   partial files (`useExisting`) then resume from where the download stopped. The hook returns
   false — reporting the original error rather than retrying — when the app does not come back
-  within `_backgroundRetryWait`, or when the download was cancelled while waiting.
+  within `_backgroundRetryWait`; a cancellation while waiting surfaces as a
+  `CancellationException` instead, so no error is shown for a download the user stopped.
 
 ### Installer abstraction (`lib/installers/`)
 

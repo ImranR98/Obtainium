@@ -547,15 +547,19 @@ extension AppsProviderInstall on AppsProvider {
     final returned = await FGBGEvents.instance.stream
         .firstWhere((t) => t == FGBGType.foreground)
         .timeout(_backgroundRetryWait, onTimeout: () => FGBGType.background);
+    // A cancellation is the user's choice, not a failure: surface it as one so
+    // no error is shown for a download the user stopped on purpose, including
+    // when they cancelled while still away and the wait times out.
+    cancellationToken?.throwIfCancelled();
     if (returned != FGBGType.foreground) {
+      // The process can be frozen while away, so the timeout may fire before a
+      // queued foreground event is delivered: retry if the app is back now.
+      if (isForeground) return true;
       AppLogger.info(
         'App did not return within ${_backgroundRetryWait.inMinutes} minutes, reporting the download error',
       );
       return false;
     }
-    // A cancellation is the user's choice, not a failure: surface it as one so
-    // no error is shown for a download the user stopped on purpose.
-    cancellationToken?.throwIfCancelled();
     return true;
   }
 
