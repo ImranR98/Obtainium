@@ -106,11 +106,16 @@ class AppsPageState extends State<AppsPage> {
   }
 
   void selectThese(List<App> apps) {
-    if (selectedAppIds.isEmpty) {
+    if (selectedAppIds.isEmpty && apps.isNotEmpty) {
       for (var a in apps) {
         selectedAppIds.add(a.id);
       }
-      setState(() {});
+      if (settingsProvider.isTV) settingsProvider.selectionClick();
+      setState(() {
+        // On TV the selection is only visible in selection mode, so entering
+        // it here keeps "select all" from looking like a no-op.
+        if (settingsProvider.isTV) _selectionMode = true;
+      });
       widget.onSelectionChanged?.call(selectedAppIds.isNotEmpty);
     }
   }

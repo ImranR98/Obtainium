@@ -8,6 +8,7 @@ import 'package:obtainium/components/generated_form_renderer.dart';
 import 'package:obtainium/custom_errors.dart';
 import 'package:obtainium/core/logging/app_logger.dart';
 import 'package:obtainium/providers/settings_provider.dart';
+import 'package:obtainium/utils/color_utils.dart';
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher_string.dart';
 
@@ -115,12 +116,12 @@ void showError(dynamic e, BuildContext context) {
 
 /// Dropdown menu that is operable with a TV remote.
 ///
-/// Material's [DropdownMenu] makes its field non-focusable on Android
-/// (`requestFocusOnTap` defaults to false), which leaves remote users unable to
-/// reach or open it. On TV this wrapper owns focus, opens the menu with the
-/// select button, and draws a focus ring; the menu items are then navigable
-/// with the D-pad as usual. On touch devices it renders the plain
-/// [DropdownMenu].
+/// Material's [DropdownMenu] can only be driven with arrow keys and Enter on
+/// its internal node (`LogicalKeyboardKey.select`, which a D-pad's OK button
+/// produces, is not handled), and on Android its field is not focusable at
+/// all. On TV this wrapper owns focus, draws a focus ring, and opens a
+/// dialog picker on select; the entries are ordinary focusable list tiles.
+/// On touch devices it renders the plain [DropdownMenu].
 class TvDropdownMenu<T> extends StatefulWidget {
   const TvDropdownMenu({
     super.key,
@@ -152,16 +153,56 @@ class TvDropdownMenu<T> extends StatefulWidget {
 class _TvDropdownMenuState<T> extends State<TvDropdownMenu<T>> {
   final MenuController _menuController = MenuController();
   final FocusNode _focusNode = FocusNode();
+  final TextEditingController _displayController = TextEditingController();
+  T? _selected;
+
+  @override
+  void initState() {
+    super.initState();
+    _selected = widget.initialSelection;
+    _displayController.text = _labelFor(_selected);
+  }
+
+  @override
+  void didUpdateWidget(covariant TvDropdownMenu<T> oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.initialSelection != widget.initialSelection) {
+      _selected = widget.initialSelection;
+      _displayController.text = _labelFor(_selected);
+    }
+  }
 
   @override
   void dispose() {
     _focusNode.dispose();
+    _displayController.dispose();
     super.dispose();
   }
 
-  void _openMenu() {
+  String _labelFor(T? value) {
+    if (value == null) return '';
+    for (final entry in widget.dropdownMenuEntries) {
+      if (entry.value == value) return entry.label;
+    }
+    return '';
+  }
+
+  Future<void> _showOptions() async {
     context.read<SettingsProvider>().selectionClick();
-    _menuController.open();
+    final selected = await showDialog<T>(
+      context: context,
+      builder: (ctx) => _TvDropdownOptionsDialog<T>(
+        entries: widget.dropdownMenuEntries,
+        selected: _selected,
+        title: widget.label,
+      ),
+    );
+    if (selected == null || !mounted) return;
+    setState(() {
+      _selected = selected;
+      _displayController.text = _labelFor(selected);
+    });
+    widget.onSelected?.call(selected);
   }
 
   @override
@@ -169,9 +210,20 @@ class _TvDropdownMenuState<T> extends State<TvDropdownMenu<T>> {
     final isTV = context.select<SettingsProvider, bool>((p) => p.isTV);
     final dropdown = DropdownMenu<T>(
       menuController: _menuController,
-      initialSelection: widget.initialSelection,
+      controller: isTV ? _displayController : null,
+      initialSelection: isTV ? _selected : widget.initialSelection,
       dropdownMenuEntries: widget.dropdownMenuEntries,
-      onSelected: widget.onSelected,
+      onSelected: (value) {
+        if (isTV) {
+          // Only reachable through the Material menu's own controls, which
+          // the TV flow above does not use; keep the display in sync anyway.
+          setState(() {
+            _selected = value ?? _selected;
+            _displayController.text = _labelFor(_selected);
+          });
+        }
+        widget.onSelected?.call(value);
+      },
       label: widget.label,
       expandedInsets: widget.expandedInsets,
       width: widget.width,
@@ -189,28 +241,94 @@ class _TvDropdownMenuState<T> extends State<TvDropdownMenu<T>> {
         if (event is KeyDownEvent &&
             (event.logicalKey == LogicalKeyboardKey.select ||
                 event.logicalKey == LogicalKeyboardKey.enter)) {
-          _openMenu();
+          _showOptions();
           return KeyEventResult.handled;
         }
         return KeyEventResult.ignored;
       },
-      child: ListenableBuilder(
-        listenable: _focusNode,
-        builder: (context, child) => DecoratedBox(
-          position: DecorationPosition.foreground,
-          decoration: BoxDecoration(
-            border: _focusNode.hasFocus
-                ? Border.all(
-                    color: Theme.of(context).colorScheme.primary,
-                    width: 3,
-                  )
-                : null,
-            borderRadius: BorderRadius.circular(16),
+      // Focus must never enter the DropdownMenu subtree on TV: its closed
+      // menu consumes arrow keys without navigating, which would trap the
+      // D-pad on the row.
+      child: ExcludeFocus(
+        child: ListenableBuilder(
+          listenable: _focusNode,
+          builder: (context, child) => DecoratedBox(
+            position: DecorationPosition.foreground,
+            decoration: BoxDecoration(
+              border: _focusNode.hasFocus
+                  ? Border.all(
+                      color: Theme.of(context).colorScheme.primary,
+                      width: 3,
+                    )
+                  : null,
+              borderRadius: BorderRadius.circular(16),
+            ),
+            child: child,
           ),
-          child: child,
+          child: dropdown,
         ),
-        child: dropdown,
       ),
+    );
+  }
+}
+
+class _TvDropdownOptionsDialog<T> extends StatelessWidget {
+  final List<DropdownMenuEntry<T>> entries;
+  final T? selected;
+  final Widget? title;
+
+  const _TvDropdownOptionsDialog({
+    required this.entries,
+    this.selected,
+    this.title,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    var initialFocus = entries.indexWhere(
+      (e) => e.enabled && e.value == selected,
+    );
+    if (initialFocus < 0) {
+      initialFocus = entries.indexWhere((e) => e.enabled);
+    }
+    return AlertDialog(
+      title: title,
+      content: SizedBox(
+        width: 480,
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxHeight: 420),
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                for (var i = 0; i < entries.length; i++)
+                  ListTile(
+                    autofocus: i == initialFocus,
+                    enabled: entries[i].enabled,
+                    leading: entries[i].leadingIcon,
+                    title: Text(entries[i].label),
+                    trailing: entries[i].value == selected
+                        ? Icon(
+                            Icons.check,
+                            color: Theme.of(context).colorScheme.primary,
+                          )
+                        : null,
+                    onTap: entries[i].enabled
+                        ? () => Navigator.of(context).pop(entries[i].value)
+                        : null,
+                  ),
+              ],
+            ),
+          ),
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(),
+          child: Text(tr('cancel')),
+        ),
+      ],
     );
   }
 }
@@ -704,5 +822,181 @@ class LegacyMaterialBridge extends StatelessWidget {
   Widget build(BuildContext context) {
     // ignore: deprecated_member_use
     return MaterialUiCompatibilityBridge(child: child);
+  }
+}
+
+/// A curated palette shared by the TV colour pickers (categories and the app
+/// accent colour).
+const List<Color> kPickerPalette = [
+  Color(0xFFEF5350),
+  Color(0xFFFF7043),
+  Color(0xFFFFA726),
+  Color(0xFFFFCA28),
+  Color(0xFF9CCC65),
+  Color(0xFF66BB6A),
+  Color(0xFF26A69A),
+  Color(0xFF26C6DA),
+  Color(0xFF29B6F6),
+  Color(0xFF42A5F5),
+  Color(0xFF5C6BC0),
+  Color(0xFF7E57C2),
+  Color(0xFFAB47BC),
+  Color(0xFFEC407A),
+  Color(0xFF8D6E63),
+  Color(0xFF78909C),
+];
+
+/// TV-friendly colour picker: a focusable palette (plus random) instead of
+/// the gesture-driven wheel, which a remote cannot operate. Returns the
+/// confirmed colour, or null when cancelled.
+Future<Color?> showTvColourPickerDialog(
+  BuildContext context, {
+  required Color initialColor,
+  required String title,
+  ValueChanged<Color>? onColorChanged,
+  List<Color> extraColors = const [],
+}) {
+  return showDialog<Color>(
+    context: context,
+    builder: (ctx) => _TvColourPickerDialog(
+      initialColor: initialColor,
+      title: title,
+      onColorChanged: onColorChanged,
+      extraColors: extraColors,
+    ),
+  );
+}
+
+class _TvColourPickerDialog extends StatefulWidget {
+  final Color initialColor;
+  final String title;
+  final ValueChanged<Color>? onColorChanged;
+  final List<Color> extraColors;
+
+  const _TvColourPickerDialog({
+    required this.initialColor,
+    required this.title,
+    this.onColorChanged,
+    this.extraColors = const [],
+  });
+
+  @override
+  State<_TvColourPickerDialog> createState() => _TvColourPickerDialogState();
+}
+
+class _TvColourPickerDialogState extends State<_TvColourPickerDialog> {
+  late Color _color = widget.initialColor;
+
+  void _pick(Color color) {
+    setState(() => _color = color);
+    widget.onColorChanged?.call(color);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final seen = <int>{};
+    final colors = <Color>[
+      for (final c in [
+        ...kPickerPalette,
+        ...widget.extraColors,
+        widget.initialColor,
+      ])
+        if (seen.add(c.toARGB32())) c,
+    ];
+    return AlertDialog(
+      title: Text(widget.title),
+      content: SingleChildScrollView(
+        child: Wrap(
+          spacing: AppSpacings.elementGap,
+          runSpacing: AppSpacings.elementGap,
+          children: [
+            for (final c in colors)
+              _TvColourSwatch(
+                color: c,
+                selected: c.toARGB32() == _color.toARGB32(),
+                autofocus: c.toARGB32() == widget.initialColor.toARGB32(),
+                onTap: () => _pick(c),
+              ),
+            _TvColourSwatch(
+              color: Theme.of(context).colorScheme.surfaceContainerHighest,
+              selected: false,
+              onTap: () => _pick(generateRandomLightColor()),
+              icon: Tooltip(
+                message: tr('randomColour'),
+                child: const Icon(Icons.casino_outlined, size: 20),
+              ),
+            ),
+          ],
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(),
+          child: Text(tr('cancel')),
+        ),
+        FilledButton(
+          onPressed: () => Navigator.of(context).pop(_color),
+          child: Text(tr('continue')),
+        ),
+      ],
+    );
+  }
+}
+
+class _TvColourSwatch extends StatelessWidget {
+  final Color color;
+  final bool selected;
+  final bool autofocus;
+  final VoidCallback onTap;
+  final Widget? icon;
+
+  const _TvColourSwatch({
+    required this.color,
+    required this.selected,
+    required this.onTap,
+    this.autofocus = false,
+    this.icon,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    return Semantics(
+      button: true,
+      selected: selected,
+      child: TvFocusRing(
+        borderRadius: 24,
+        child: InkWell(
+          autofocus: autofocus,
+          onTap: onTap,
+          customBorder: const CircleBorder(),
+          child: Container(
+            width: 40,
+            height: 40,
+            decoration: BoxDecoration(
+              color: color,
+              shape: BoxShape.circle,
+              border: Border.all(
+                color: selected ? cs.onSurface : cs.outlineVariant,
+                width: selected ? 3 : 1,
+              ),
+            ),
+            child: icon == null
+                ? (selected
+                      ? Icon(
+                          Icons.check,
+                          size: 20,
+                          color:
+                              ThemeData.estimateBrightnessForColor(color) ==
+                                  Brightness.dark
+                              ? Colors.white
+                              : Colors.black,
+                        )
+                      : null)
+                : Center(child: icon),
+          ),
+        ),
+      ),
+    );
   }
 }

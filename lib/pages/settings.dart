@@ -84,6 +84,23 @@ class _SettingsPageState extends State<SettingsPage> {
     SettingsProvider settingsProvider,
     ColorSwatch<Object> obtainiumSwatch,
   ) async {
+    final titleText = tr(
+      'selectX',
+      args: [lowerCaseUnlessLang(tr('colour'), 'de')],
+    );
+    if (settingsProvider.isTV) {
+      final picked = await showTvColourPickerDialog(
+        context,
+        initialColor: settingsProvider.themeColor,
+        title: titleText,
+        extraColors: [obtainiumThemeColor],
+        onColorChanged: (color) {
+          settingsProvider.themeColor = color;
+          setState(() {});
+        },
+      );
+      return picked != null;
+    }
     final Map<ColorSwatch<Object>, String> colorsNameMap =
         <ColorSwatch<Object>, String>{obtainiumSwatch: 'Obtainium'};
     return ColorPicker(
@@ -109,10 +126,7 @@ class _SettingsPageState extends State<SettingsPage> {
         ColorPickerType.custom: tr('standard'),
         ColorPickerType.wheel: tr('custom'),
       },
-      title: Text(
-        tr('selectX', args: [lowerCaseUnlessLang(tr('colour'), 'de')]),
-        style: Theme.of(context).textTheme.titleLarge,
-      ),
+      title: Text(titleText, style: Theme.of(context).textTheme.titleLarge),
       wheelDiameter: 192,
       wheelSquareBorderRadius: 32,
       width: 48,
@@ -296,6 +310,7 @@ class _SettingsPageState extends State<SettingsPage> {
               context,
               icon: Icons.import_export,
               title: tr('importExport'),
+              autofocus: settingsProvider.isTV,
               onTap: () => _pushPage(
                 context,
                 title: tr('importExport'),
@@ -430,12 +445,14 @@ class _SettingsPageState extends State<SettingsPage> {
     required VoidCallback onTap,
     IconData trailingIcon = Icons.chevron_right,
     double? trailingIconSize,
+    bool autofocus = false,
   }) {
     final cs = Theme.of(context).colorScheme;
     return CardTile(
       child: TvFocusRing(
         borderRadius: 12,
         child: ListTile(
+          autofocus: autofocus,
           leading: Icon(icon, color: cs.primary),
           title: Text(title),
           trailing: Icon(
@@ -884,21 +901,27 @@ class _SettingsPageState extends State<SettingsPage> {
               '${ColorTools.nameThatColor(settingsProvider.themeColor)} '
               '(${ColorTools.materialNameAndCode(settingsProvider.themeColor)})',
             ),
-            trailing: ColorIndicator(
-              width: 40,
-              height: 40,
+            trailing: TvFocusRing(
               borderRadius: 20,
-              color: settingsProvider.themeColor,
-              onSelectFocus: false,
-              onSelect: () async {
-                final colorBeforeDialog = settingsProvider.themeColor;
-                if (!(await showColorPickerDialog(
-                  settingsProvider,
-                  obtainiumThemeColor.toSwatch(),
-                ))) {
-                  handleColorPickerCancel(colorBeforeDialog, settingsProvider);
-                }
-              },
+              child: ColorIndicator(
+                width: 40,
+                height: 40,
+                borderRadius: 20,
+                color: settingsProvider.themeColor,
+                onSelectFocus: false,
+                onSelect: () async {
+                  final colorBeforeDialog = settingsProvider.themeColor;
+                  if (!(await showColorPickerDialog(
+                    settingsProvider,
+                    obtainiumThemeColor.toSwatch(),
+                  ))) {
+                    handleColorPickerCancel(
+                      colorBeforeDialog,
+                      settingsProvider,
+                    );
+                  }
+                },
+              ),
             ),
           ),
         ),

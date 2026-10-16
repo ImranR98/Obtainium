@@ -844,6 +844,7 @@ class AddAppPageState extends State<AddAppPage> {
           child: GeneratedForm(
             key: Key('url-$urlInputKey'),
             tileMode: true,
+            autofocusFirstTextField: settingsProvider.isTV,
             items: [
               [
                 GeneratedFormTextField(

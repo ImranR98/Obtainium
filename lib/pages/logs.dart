@@ -178,6 +178,7 @@ class _LogsPageState extends State<LogsPage> {
           children: [
             IconButton(
               onPressed: hasLogs ? _scrollToTop : null,
+              autofocus: isTV && hasLogs,
               icon: const Icon(Icons.keyboard_arrow_up_rounded),
             ),
             IconButton(
