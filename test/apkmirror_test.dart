@@ -212,4 +212,140 @@ void main() {
       );
     });
   });
+
+  group('apkMirrorPackageFromIconUrl size suffixes', () {
+    test('strips the feed icon size suffix', () {
+      expect(
+        apkMirrorPackageFromIconUrl(
+          'https://downloadr2.apkmirror.com/x/65a71d34ecd19_com.android.chrome-384x384.png',
+        ),
+        'com.android.chrome',
+      );
+      expect(
+        apkMirrorPackageFromIconUrl(
+          'https://downloadr2.apkmirror.com/x/67189d60d72a1_com.google.android.youtube-480x640.png',
+        ),
+        'com.google.android.youtube',
+      );
+    });
+
+    test('hash-only sized filenames yield null', () {
+      expect(
+        apkMirrorPackageFromIconUrl(
+          'https://downloadr2.apkmirror.com/x/5b466f2e62102-384x384.png',
+        ),
+        isNull,
+      );
+    });
+  });
+
+  group('apkMirrorPackageFromFeedBody', () {
+    test('extracts the package from the first content image', () {
+      const feed = '''
+<rss><channel><item><content:encoded><![CDATA[
+<p><img src="https://downloadr2.apkmirror.com/x/65a_com.android.chrome-384x384.png"></p>
+]]></content:encoded></item></channel></rss>''';
+      expect(apkMirrorPackageFromFeedBody(feed), 'com.android.chrome');
+    });
+
+    test('returns null for hash-only or imageless feeds', () {
+      expect(
+        apkMirrorPackageFromFeedBody(
+          '<img src="https://downloadr2.apkmirror.com/x/5b466f2e62102-384x384.png">',
+        ),
+        isNull,
+      );
+      expect(
+        apkMirrorPackageFromFeedBody('<item><title>x</title></item>'),
+        isNull,
+      );
+    });
+  });
+
+  group('apkMirrorApiEntryMatchesStandardUrl', () {
+    test('matches canonical listings regardless of trailing slash', () {
+      expect(
+        apkMirrorApiEntryMatchesStandardUrl(
+          '/apk/google-inc/chrome/',
+          'https://www.apkmirror.com/apk/google-inc/chrome',
+        ),
+        isTrue,
+      );
+      expect(
+        apkMirrorApiEntryMatchesStandardUrl(
+          '/apk/google-inc/chrome/',
+          'https://www.apkmirror.com/apk/google-inc/chrome/',
+        ),
+        isTrue,
+      );
+    });
+
+    test('rejects a different listing for the same package', () {
+      expect(
+        apkMirrorApiEntryMatchesStandardUrl(
+          '/apk/spotify-ab/spotify-music-android-wear/',
+          'https://www.apkmirror.com/apk/spotify-ab/spotify-music-podcasts',
+        ),
+        isFalse,
+      );
+    });
+
+    test('rejects null/empty/invalid links', () {
+      expect(
+        apkMirrorApiEntryMatchesStandardUrl(
+          null,
+          'https://www.apkmirror.com/apk/google-inc/chrome',
+        ),
+        isFalse,
+      );
+      expect(
+        apkMirrorApiEntryMatchesStandardUrl(
+          '',
+          'https://www.apkmirror.com/apk/google-inc/chrome',
+        ),
+        isFalse,
+      );
+    });
+  });
+
+  group('apkMirrorApiDate', () {
+    test('parses UTC timestamps', () {
+      expect(
+        apkMirrorApiDate('2026-10-13 21:50:51'),
+        DateTime.utc(2026, 10, 13, 21, 50, 51),
+      );
+    });
+
+    test('handles null/empty/invalid input', () {
+      expect(apkMirrorApiDate(null), isNull);
+      expect(apkMirrorApiDate(''), isNull);
+      expect(apkMirrorApiDate('not a date'), isNull);
+    });
+  });
+
+  group('apkMirrorPlainTextFromHtml', () {
+    test('converts br tags and entities', () {
+      expect(
+        apkMirrorPlainTextFromHtml('<p>Line one<br/>Line two &amp; more</p>'),
+        'Line one\nLine two & more',
+      );
+    });
+
+    test('separates block elements', () {
+      expect(
+        apkMirrorPlainTextFromHtml('<p>First</p><p>Second</p>'),
+        'First\nSecond',
+      );
+      expect(
+        apkMirrorPlainTextFromHtml('<ul><li>A</li><li>B</li></ul>'),
+        'A\nB',
+      );
+    });
+
+    test('returns null for empty content', () {
+      expect(apkMirrorPlainTextFromHtml(null), isNull);
+      expect(apkMirrorPlainTextFromHtml(''), isNull);
+      expect(apkMirrorPlainTextFromHtml('<p>  </p>'), isNull);
+    });
+  });
 }
