@@ -217,6 +217,7 @@
     "githubSourceNote": "使用 API 金鑰可避免 GitHub 速率限制。",
     "githubStarredRepos": "GitHub 已加星號的儲存庫",
     "globalApkFilterRegEx": "Global APK filter regex",
+    "globalVersionExtractionRegEx": "Global version trimming regex",
     "gitlabPATLabel": "GitLab 個人存取權杖",
     "googleVerificationWarningP1": "Google 宣布，自 2026/2027 年起，所有在「認證」Android 裝置上的應用程式，都必須要求開發者將個人身分資料直接提交給 Google。\n\n由於此應用程式的開發者不同意這項要求，屆時 Obtainium 將不再於認證的 Android 裝置上運作。",
     "googleVerificationWarningP2": "請前往 https://keepandroidopen.org/ 取得更多資訊。",

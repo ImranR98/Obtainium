@@ -217,6 +217,7 @@
     "githubSourceNote": "একটি API কী ব্যবহার করে GitHub-এর রেট লিমিট এড়ানো সম্ভব।",
     "githubStarredRepos": "GitHub স্টার করা রিপোজিটরি",
     "globalApkFilterRegEx": "গ্লোবাল APK ফিল্টার RegEx",
+    "globalVersionExtractionRegEx": "Global version trimming regex",
     "gitlabPATLabel": "GitLab পার্সোনাল অ্যাক্সেস টোকেন",
     "googleVerificationWarningP1": "Google ঘোষণা করেছে যে, 2026/2027 সাল থেকে \"সার্টিফাইড\" Android ডিভাইসের সকল অ্যাপের জন্য ডেভেলপারকে সরাসরি Google-এর কাছে ব্যক্তিগত পরিচয়ের বিবরণ জমা দিতে হবে।\n\nযেহেতু এই অ্যাপের ডেভেলপাররা এই শর্তে সম্মত নন, তাই সেই সময়ের পর থেকে সার্টিফাইড Android ডিভাইসে Obtainium আর কাজ করবে না।",
     "googleVerificationWarningP2": "আরও তথ্যের জন্য https://keepandroidopen.org/ দেখুন।",

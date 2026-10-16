@@ -282,11 +282,16 @@ class SourceProvider {
       }
     }
 
+    final settingsProvider = SettingsProvider();
+    await settingsProvider.initializeSettings();
     if (!source.suppressStandardVersionExtraction) {
-      final String? extractedVersion = extractVersion(
-        additionalSettings['versionExtractionRegEx'] as String?,
-        additionalSettings['matchGroupToUse'] as String?,
+      final String? extractedVersion = extractVersionWithGlobalDefault(
+        additionalSettings,
+        settingsProvider,
         apk.version,
+        allowGlobalDefault: !source.excludeCommonSettingKeys.contains(
+          'versionExtractionRegEx',
+        ),
       );
       if (extractedVersion != null) {
         apk = apk.copyWith(version: extractedVersion);
@@ -299,8 +304,6 @@ class SourceProvider {
         version: apk.releaseDate!.microsecondsSinceEpoch.toString(),
       );
     }
-    final settingsProvider = SettingsProvider();
-    await settingsProvider.initializeSettings();
     apk = apk.copyWith(
       apkUrls: filterApks(
         apk.apkUrls,

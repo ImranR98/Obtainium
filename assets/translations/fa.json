@@ -217,6 +217,7 @@
     "githubSourceNote": "با استفاده از کلید API می توان از محدودیت نرخ GitHub جلوگیری کرد.",
     "githubStarredRepos": "مخازن ستاره دار گیتهاب",
     "globalApkFilterRegEx": "Global APK filter regex",
+    "globalVersionExtractionRegEx": "Global version trimming regex",
     "gitlabPATLabel": "رمز دسترسی شخصی GitLab",
     "googleVerificationWarningP1": "گوگل اعلام کرده است که از سال 2026/2027، تمام برنامه های موجود در دستگاه های اندرویدی معتبر نیاز به توسعه دهنده دارند تا جزئیات هویت شخصی را مستقیماً به گوگل ارسال کنند.\n\nاز آنجایی که توسعه دهندگان این برنامه با این نیاز موافق نیستند، به دست آوردنیوم دیگر بر روی دستگاه های اندرویدی گواهی شده پس از آن زمان کار نخواهد کرد.",
     "googleVerificationWarningP2": "به https://Keepandroidopen.org یا برای اطلاعات بیشتر بروید.",

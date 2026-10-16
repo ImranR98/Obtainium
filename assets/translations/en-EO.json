@@ -217,6 +217,7 @@
     "githubSourceNote": "La kvantolimo de GitHub povas esti evitata danke al API-ŝlosilo.",
     "githubStarredRepos": "Stelaj GitHub-deponejoj",
     "globalApkFilterRegEx": "Global APK filter regex",
+    "globalVersionExtractionRegEx": "Global version trimming regex",
     "gitlabPATLabel": "GitLab persona atingoĵetono",
     "googleVerificationWarningP1": "Google has announced that, starting in 2026/2027, all apps on \"certified\" Android devices will require the developer to submit personal identity details directly to Google.\n\nSince the developers of this app do not agree to this requirement, Obtainium will no longer work on certified Android devices after that time.",
     "googleVerificationWarningP2": "Go to https://keepandroidopen.org/ for more information.",
