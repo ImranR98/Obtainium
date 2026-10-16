@@ -1,4 +1,5 @@
 import 'package:material_ui/material_ui.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:integration_test/integration_test.dart';
 import 'package:obtainium/components/app_list_tile.dart';
@@ -35,11 +36,22 @@ void main() {
     // No per-row checkboxes outside selection mode.
     expect(find.byType(Checkbox), findsNothing);
 
-    // The Add app button is pinned: visible without scrolling, and it stays
-    // put while the list scrolls.
+    // The Add app button is pinned: visible without scrolling.
     expect(find.text('Add app'), findsOneWidget);
-    final addRectBefore = tester.getRect(find.text('Add app'));
 
+    // Selection mode shows checkboxes and the Actions button in the footer.
+    // Enter it with the remote before scrolling, while the first tile is
+    // focused and visible.
+    await pumpUntilTrue(tester, () => focusIsInside<AppListTile>());
+    await focusAppBarButton(tester, 'Actions');
+    await pressKey(tester, LogicalKeyboardKey.select);
+    await pumpFor(tester, const Duration(milliseconds: 500));
+    expect(find.byType(Checkbox), findsWidgets);
+    expect(find.textContaining('Actions'), findsOneWidget);
+    expect(find.text('Add app'), findsOneWidget);
+
+    // The pinned footer stays put while the list scrolls.
+    final addRectBefore = tester.getRect(find.text('Add app'));
     final scrollable = tester.state<ScrollableState>(
       find.byType(Scrollable).first,
     );
@@ -58,13 +70,6 @@ void main() {
       lessThan(2),
       reason: 'the pinned footer must not move while scrolling',
     );
-
-    // Selection mode shows checkboxes and the Actions button in the footer.
-    await tester.tap(find.byIcon(Icons.checklist_rounded));
-    await pumpFor(tester, const Duration(milliseconds: 500));
-    expect(find.byType(Checkbox), findsWidgets);
-    expect(find.textContaining('Actions'), findsOneWidget);
-    expect(find.text('Add app'), findsOneWidget);
 
     restoreErrorWidgetBuilder();
   });

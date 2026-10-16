@@ -22,6 +22,11 @@ import 'package:shared_storage/shared_storage.dart' as saf;
 const String obtainiumTempId = 'imranr98_obtainium_github.com';
 const String obtainiumId = 'dev.imranr.obtainium';
 const String obtainiumUrl = 'https://github.com/ImranR98/Obtainium';
+
+/// Sentinel stored as the export directory on devices without a document-tree
+/// picker (typically TVs): exports go to `Downloads/Obtainium/` through
+/// MediaStore instead of a user-picked SAF tree.
+const String kDownloadsExportDir = 'tv-downloads:';
 const Color obtainiumThemeColor = Color(0xFF6438B5);
 
 Locale? tryParseLocale(String? localeString) {
@@ -727,10 +732,13 @@ class SettingsProvider with ChangeNotifier {
     if (uriString == null) {
       return null;
     }
+    if (uriString == kDownloadsExportDir) {
+      return Uri.parse(uriString);
+    }
     final uri = Uri.parse(uriString);
     // The directory may be temporarily unreadable (e.g. a WebDAV mount not
     // yet available right after a reboot). Keep the stored URI so it can be
-    // retried later, and only clear it via pickExportDir.
+    // retried later.
     try {
       if (!(await saf.canRead(uri) ?? false) ||
           !(await saf.canWrite(uri) ?? false)) {
@@ -745,40 +753,29 @@ class SettingsProvider with ChangeNotifier {
     return uri;
   }
 
-  Future<void> pickExportDir({bool remove = false}) async {
+  /// Switches exports to the MediaStore-backed `Downloads/Obtainium/` folder
+  /// for devices without a document-tree picker.
+  Future<void> useDownloadsExportDir() async {
+    await prefs?.setString('exportDir', kDownloadsExportDir);
+    notifyListeners();
+  }
+
+  Future<void> pickExportDir() async {
     final existingSAFPerms = (await saf.persistedUriPermissions()) ?? [];
     final currentOneWayDataSyncDir = await getExportDir();
-    Uri? newOneWayDataSyncDir;
-    if (!remove) {
-      // Some devices (e.g. certain Android TV boxes) have no activity that
-      // handles ACTION_OPEN_DOCUMENT_TREE; check first so the user gets a
-      // clear message instead of a raw platform exception.
-      if ((await saf.canOpenDocumentTree()) != true) {
-        throw ObtainiumError(tr('noFilePickerAvailable'));
-      }
-      try {
-        Uri? picked;
-        try {
-          picked = await DocumentTreeBridge.instance.pickDocumentTree();
-        } on MissingPluginException {
-          picked = await saf.openDocumentTree();
-        } on PlatformException {
-          picked = await saf.openDocumentTree();
-        }
-        newOneWayDataSyncDir = picked;
-      } catch (e) {
-        AppLogger.error(e, message: 'Failed to open document tree');
-        throw ObtainiumError(tr('noFilePickerAvailable'));
-      }
+    final Uri? newOneWayDataSyncDir;
+    try {
+      newOneWayDataSyncDir = await DocumentTreeBridge.instance
+          .pickDocumentTree();
+    } catch (e) {
+      AppLogger.error(e, message: 'Failed to open document tree');
+      throw ObtainiumError(tr('noFilePickerAvailable'));
     }
-    if (currentOneWayDataSyncDir?.path != newOneWayDataSyncDir?.path) {
-      if (newOneWayDataSyncDir == null) {
-        await prefs?.remove('exportDir');
-      } else {
-        unawaited(
-          prefs?.setString('exportDir', newOneWayDataSyncDir.toString()),
-        );
-      }
+    if (newOneWayDataSyncDir == null) {
+      return;
+    }
+    if (currentOneWayDataSyncDir?.path != newOneWayDataSyncDir.path) {
+      unawaited(prefs?.setString('exportDir', newOneWayDataSyncDir.toString()));
       notifyListeners();
     }
     for (var e in existingSAFPerms) {

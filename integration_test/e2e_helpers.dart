@@ -249,6 +249,58 @@ Future<void> pressKey(WidgetTester tester, LogicalKeyboardKey key) async {
   await tester.pump(const Duration(milliseconds: 250));
 }
 
+/// Presses [key] until [condition] holds, failing after [maxPresses] tries.
+/// Useful for reaching a control with the D-pad without counting presses.
+Future<void> pressUntil(
+  WidgetTester tester,
+  LogicalKeyboardKey key,
+  bool Function() condition, {
+  int maxPresses = 12,
+  String? reason,
+}) async {
+  for (var i = 0; i < maxPresses && !condition(); i++) {
+    await pressKey(tester, key);
+  }
+  expect(condition(), isTrue, reason: reason);
+}
+
+/// Focuses a top app-bar button with the remote.
+///
+/// D-pad up presses from the page body land on the bar's first button
+/// (further presses clamp there); right presses then walk along the bar.
+Future<void> focusAppBarButton(WidgetTester tester, String tooltip) async {
+  for (var i = 0; i < 8 && !focusIsOnTooltip(tooltip); i++) {
+    await pressKey(tester, LogicalKeyboardKey.arrowUp);
+  }
+  for (var i = 0; i < 4 && !focusIsOnTooltip(tooltip); i++) {
+    await pressKey(tester, LogicalKeyboardKey.arrowRight);
+  }
+  expect(
+    focusIsOnTooltip(tooltip),
+    isTrue,
+    reason: '$tooltip reachable with the remote',
+  );
+}
+
+/// Whether the focused control contains a [Text] with [text] in its subtree
+/// (buttons, list tiles, and other labelled controls).
+bool focusIsOnText(String text) {
+  final ctx = FocusManager.instance.primaryFocus?.context;
+  if (ctx == null) return false;
+  var found = false;
+  void visit(Element element) {
+    if (found) return;
+    if (element.widget is Text && (element.widget as Text).data == text) {
+      found = true;
+      return;
+    }
+    element.visitChildren(visit);
+  }
+
+  (ctx as Element).visitChildren(visit);
+  return found;
+}
+
 /// Simulates the system/remote BACK button.
 Future<void> pressBack(WidgetTester tester) async {
   await tester.binding.handlePopRoute();

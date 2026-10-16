@@ -106,11 +106,16 @@ class AppsPageState extends State<AppsPage> {
   }
 
   void selectThese(List<App> apps) {
-    if (selectedAppIds.isEmpty) {
+    if (selectedAppIds.isEmpty && apps.isNotEmpty) {
       for (var a in apps) {
         selectedAppIds.add(a.id);
       }
-      setState(() {});
+      if (settingsProvider.isTV) settingsProvider.selectionClick();
+      setState(() {
+        // On TV the selection is only visible in selection mode, so entering
+        // it here keeps "select all" from looking like a no-op.
+        if (settingsProvider.isTV) _selectionMode = true;
+      });
       widget.onSelectionChanged?.call(selectedAppIds.isNotEmpty);
     }
   }
@@ -359,102 +364,104 @@ class AppsPageState extends State<AppsPage> {
       showDragHandle: true,
       builder: (BuildContext ctx) {
         final vals = filter.toFormValuesMap();
-        return SafeArea(
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-            child: SingleChildScrollView(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  Text(
-                    tr('filterApps'),
-                    style: Theme.of(ctx).textTheme.titleLarge,
-                  ),
-                  const SizedBox(height: 16),
-                  GeneratedForm(
-                    tileMode: true,
-                    items: [
-                      [
-                        GeneratedFormTextField(
-                          'appName',
-                          label: tr('appName'),
-                          required: false,
-                          value: vals['appName'],
+        return TvInitialFocus(
+          child: SafeArea(
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+              child: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Text(
+                      tr('filterApps'),
+                      style: Theme.of(ctx).textTheme.titleLarge,
+                    ),
+                    const SizedBox(height: 16),
+                    GeneratedForm(
+                      tileMode: true,
+                      items: [
+                        [
+                          GeneratedFormTextField(
+                            'appName',
+                            label: tr('appName'),
+                            required: false,
+                            value: vals['appName'],
+                          ),
+                        ],
+                        [
+                          GeneratedFormTextField(
+                            'author',
+                            label: tr('author'),
+                            required: false,
+                            value: vals['author'],
+                          ),
+                        ],
+                        [
+                          GeneratedFormTextField(
+                            'appId',
+                            label: tr('appId'),
+                            required: false,
+                            value: vals['appId'],
+                          ),
+                        ],
+                        [
+                          GeneratedFormSwitch(
+                            'upToDateApps',
+                            label: tr('upToDateApps'),
+                            value: vals['upToDateApps'],
+                          ),
+                        ],
+                        [
+                          GeneratedFormSwitch(
+                            'nonInstalledApps',
+                            label: tr('nonInstalledApps'),
+                            value: vals['nonInstalledApps'],
+                          ),
+                        ],
+                        [
+                          GeneratedFormDropdown(
+                            'sourceFilter',
+                            label: tr('appSource'),
+                            value: filter.sourceFilter,
+                            [
+                              MapEntry('', tr('none')),
+                              ...ctx.read<SourceProvider>().sources.map(
+                                (e) => MapEntry(e.sourceIdentifier, e.name),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ],
+                      onValueChanges: (v, valid, isBuilding) {
+                        values = v;
+                      },
+                    ),
+                    const SizedBox(height: 16),
+                    CategorySelector(
+                      selected: filter.categoryFilter,
+                      allowCreate: false,
+                      onChanged: (categories) {
+                        pendingCategories = categories;
+                      },
+                    ),
+                    const SizedBox(height: 24),
+                    Row(
+                      children: [
+                        const Spacer(),
+                        TextButton(
+                          onPressed: () => Navigator.of(ctx).pop(false),
+                          child: Text(tr('cancel')),
+                        ),
+                        const SizedBox(width: AppSpacings.elementGap),
+                        FilledButton(
+                          onPressed: () => Navigator.of(ctx).pop(true),
+                          child: Text(tr('continue')),
                         ),
                       ],
-                      [
-                        GeneratedFormTextField(
-                          'author',
-                          label: tr('author'),
-                          required: false,
-                          value: vals['author'],
-                        ),
-                      ],
-                      [
-                        GeneratedFormTextField(
-                          'appId',
-                          label: tr('appId'),
-                          required: false,
-                          value: vals['appId'],
-                        ),
-                      ],
-                      [
-                        GeneratedFormSwitch(
-                          'upToDateApps',
-                          label: tr('upToDateApps'),
-                          value: vals['upToDateApps'],
-                        ),
-                      ],
-                      [
-                        GeneratedFormSwitch(
-                          'nonInstalledApps',
-                          label: tr('nonInstalledApps'),
-                          value: vals['nonInstalledApps'],
-                        ),
-                      ],
-                      [
-                        GeneratedFormDropdown(
-                          'sourceFilter',
-                          label: tr('appSource'),
-                          value: filter.sourceFilter,
-                          [
-                            MapEntry('', tr('none')),
-                            ...ctx.read<SourceProvider>().sources.map(
-                              (e) => MapEntry(e.sourceIdentifier, e.name),
-                            ),
-                          ],
-                        ),
-                      ],
-                    ],
-                    onValueChanges: (v, valid, isBuilding) {
-                      values = v;
-                    },
-                  ),
-                  const SizedBox(height: 16),
-                  CategorySelector(
-                    selected: filter.categoryFilter,
-                    allowCreate: false,
-                    onChanged: (categories) {
-                      pendingCategories = categories;
-                    },
-                  ),
-                  const SizedBox(height: 24),
-                  Row(
-                    children: [
-                      const Spacer(),
-                      TextButton(
-                        onPressed: () => Navigator.of(ctx).pop(false),
-                        child: Text(tr('cancel')),
-                      ),
-                      const SizedBox(width: AppSpacings.elementGap),
-                      FilledButton(
-                        onPressed: () => Navigator.of(ctx).pop(true),
-                        child: Text(tr('continue')),
-                      ),
-                    ],
-                  ),
-                ],
+                    ),
+                  ],
+                ),
               ),
             ),
           ),
@@ -682,99 +689,104 @@ class AppsPageState extends State<AppsPage> {
           autoPop: true,
         );
 
-        return SafeArea(
-          child: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                optionTile(
-                  icon: Icons.delete_outline,
-                  label: tr('remove'),
-                  onTap: () {
-                    appsProvider.removeAppsWithModal(
-                      context,
-                      selectedApps.toList(),
-                    );
-                  },
-                ),
-                optionTile(
-                  icon: Icons.category_outlined,
-                  label: tr('categorize'),
-                  onTap: launchCategorizeDialogCallback(context, selectedApps),
-                ),
-                optionTile(
-                  icon: isPinned ? Icons.push_pin : Icons.push_pin_outlined,
-                  label: isPinned ? tr('unpinFromTop') : tr('pinToTop'),
-                  onTap: () {
-                    settingsProvider.selectionClick();
-                    pinSelectedApps(selectedApps);
-                  },
-                ),
-                optionTile(
-                  icon: isDisabled
-                      ? Icons.visibility_outlined
-                      : Icons.visibility_off_outlined,
-                  label: isDisabled ? tr('enableApp') : tr('disableApp'),
-                  onTap: () {
-                    settingsProvider.selectionClick();
-                    setSelectedAppsDisabled(selectedApps, !isDisabled);
-                  },
-                ),
-                if (hasObtainActions && !appsProvider.areDownloadsRunning())
+        return TvInitialFocus(
+          child: SafeArea(
+            child: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
                   optionTile(
-                    icon: Icons.download_rounded,
-                    label: tr('installUpdateSelectedApps'),
+                    icon: Icons.delete_outline,
+                    label: tr('remove'),
                     onTap: () {
-                      settingsProvider.heavyImpact();
-                      _showObtainDialog(
+                      appsProvider.removeAppsWithModal(
                         context,
-                        existingUpdateIds,
-                        newInstallIds,
-                        trackOnlyUpdateIds,
+                        selectedApps.toList(),
                       );
                     },
                   ),
-                optionTile(
-                  icon: Icons.share_outlined,
-                  label: tr('shareSelectedAppURLs'),
-                  onTap: () => shareAppURLs(selectedApps),
-                ),
-                optionTile(
-                  icon: Icons.link_outlined,
-                  label: tr('shareAppConfigLinks'),
-                  onTap: () => shareConfigLinks(selectedApps),
-                ),
-                optionTile(
-                  icon: Icons.file_download_outlined,
-                  label: '${tr('share')} - ${tr('obtainiumExport')}',
-                  onTap: () => shareExport(selectedApps),
-                ),
-                optionTile(
-                  icon: Icons.download_outlined,
-                  label: tr(
-                    'downloadX',
-                    args: [lowerCaseIfEnglish(tr('releaseAsset'))],
+                  optionTile(
+                    icon: Icons.category_outlined,
+                    label: tr('categorize'),
+                    onTap: launchCategorizeDialogCallback(
+                      context,
+                      selectedApps,
+                    ),
                   ),
-                  onTap: () {
-                    appsProvider
-                        .downloadAppAssets(
-                          selectedApps.map((e) => e.id).toList(),
+                  optionTile(
+                    icon: isPinned ? Icons.push_pin : Icons.push_pin_outlined,
+                    label: isPinned ? tr('unpinFromTop') : tr('pinToTop'),
+                    onTap: () {
+                      settingsProvider.selectionClick();
+                      pinSelectedApps(selectedApps);
+                    },
+                  ),
+                  optionTile(
+                    icon: isDisabled
+                        ? Icons.visibility_outlined
+                        : Icons.visibility_off_outlined,
+                    label: isDisabled ? tr('enableApp') : tr('disableApp'),
+                    onTap: () {
+                      settingsProvider.selectionClick();
+                      setSelectedAppsDisabled(selectedApps, !isDisabled);
+                    },
+                  ),
+                  if (hasObtainActions && !appsProvider.areDownloadsRunning())
+                    optionTile(
+                      icon: Icons.download_rounded,
+                      label: tr('installUpdateSelectedApps'),
+                      onTap: () {
+                        settingsProvider.heavyImpact();
+                        _showObtainDialog(
                           context,
-                        )
-                        .catchError((e) {
-                          if (context.mounted) showError(e, context);
-                          return <String>[];
-                        });
-                  },
-                ),
-                optionTile(
-                  icon: Icons.done_all,
-                  label: tr('markSelectedAppsUpdated'),
-                  onTap: appsProvider.areDownloadsRunning()
-                      ? null
-                      : () => showMassMarkDialog(context, selectedApps),
-                ),
-              ],
+                          existingUpdateIds,
+                          newInstallIds,
+                          trackOnlyUpdateIds,
+                        );
+                      },
+                    ),
+                  optionTile(
+                    icon: Icons.share_outlined,
+                    label: tr('shareSelectedAppURLs'),
+                    onTap: () => shareAppURLs(selectedApps),
+                  ),
+                  optionTile(
+                    icon: Icons.link_outlined,
+                    label: tr('shareAppConfigLinks'),
+                    onTap: () => shareConfigLinks(selectedApps),
+                  ),
+                  optionTile(
+                    icon: Icons.file_download_outlined,
+                    label: '${tr('share')} - ${tr('obtainiumExport')}',
+                    onTap: () => shareExport(selectedApps),
+                  ),
+                  optionTile(
+                    icon: Icons.download_outlined,
+                    label: tr(
+                      'downloadX',
+                      args: [lowerCaseIfEnglish(tr('releaseAsset'))],
+                    ),
+                    onTap: () {
+                      appsProvider
+                          .downloadAppAssets(
+                            selectedApps.map((e) => e.id).toList(),
+                            context,
+                          )
+                          .catchError((e) {
+                            if (context.mounted) showError(e, context);
+                            return <String>[];
+                          });
+                    },
+                  ),
+                  optionTile(
+                    icon: Icons.done_all,
+                    label: tr('markSelectedAppsUpdated'),
+                    onTap: appsProvider.areDownloadsRunning()
+                        ? null
+                        : () => showMassMarkDialog(context, selectedApps),
+                  ),
+                ],
+              ),
             ),
           ),
         );

@@ -24,6 +24,7 @@ class GeneratedForm extends StatefulWidget {
     required this.onValueChanges,
     this.tileMode = false,
     this.noTilePadding = false,
+    this.autofocusFirstTextField = false,
   });
 
   final List<List<GeneratedFormItem>> items;
@@ -31,6 +32,10 @@ class GeneratedForm extends StatefulWidget {
 
   final bool tileMode;
   final bool noTilePadding;
+
+  /// On TV, focuses the first text field's wrapper when the form is built so
+  /// pages do not open without a focus ring.
+  final bool autofocusFirstTextField;
 
   @override
   State<GeneratedForm> createState() => _GeneratedFormState();
@@ -54,12 +59,14 @@ class TvTextFieldFocus extends StatefulWidget {
   final Widget child;
   final FocusNode textFocusNode;
   final double borderRadius;
+  final bool autofocus;
 
   const TvTextFieldFocus({
     super.key,
     required this.child,
     required this.textFocusNode,
     this.borderRadius = 4,
+    this.autofocus = false,
   });
 
   @override
@@ -74,6 +81,11 @@ class _TvTextFieldFocusState extends State<TvTextFieldFocus> {
   void initState() {
     super.initState();
     widget.textFocusNode.addListener(_onTextFocusChange);
+    if (widget.autofocus) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) _outerFocus.requestFocus();
+      });
+    }
   }
 
   @override
@@ -194,6 +206,15 @@ class _GeneratedFormState extends State<GeneratedForm> {
     widget.onValueChanges(returnValues, valid, isBuilding);
   }
 
+  String? get _firstTextFieldKey {
+    for (final row in widget.items) {
+      for (final item in row) {
+        if (item is GeneratedFormTextField) return item.key;
+      }
+    }
+    return null;
+  }
+
   Widget _buildTextField(GeneratedFormTextField formItem) {
     final fieldKey = formItem.key;
     final formFieldKey = _fieldKeys.putIfAbsent(
@@ -242,7 +263,13 @@ class _GeneratedFormState extends State<GeneratedForm> {
           },
         );
         if (context.read<SettingsProvider>().isTV) {
-          return TvTextFieldFocus(textFocusNode: focusNode, child: textField);
+          return TvTextFieldFocus(
+            textFocusNode: focusNode,
+            autofocus:
+                widget.autofocusFirstTextField &&
+                formItem.key == _firstTextFieldKey,
+            child: textField,
+          );
         }
         return textField;
       },

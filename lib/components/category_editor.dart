@@ -12,26 +12,6 @@ import 'package:obtainium/utils/locale_utils.dart';
 import 'package:obtainium/providers/source_provider.dart';
 import 'package:provider/provider.dart';
 
-/// A small curated palette of pleasant category colours for quick picking.
-const List<Color> kCategoryPalette = [
-  Color(0xFFEF5350),
-  Color(0xFFFF7043),
-  Color(0xFFFFA726),
-  Color(0xFFFFCA28),
-  Color(0xFF9CCC65),
-  Color(0xFF66BB6A),
-  Color(0xFF26A69A),
-  Color(0xFF26C6DA),
-  Color(0xFF29B6F6),
-  Color(0xFF42A5F5),
-  Color(0xFF5C6BC0),
-  Color(0xFF7E57C2),
-  Color(0xFFAB47BC),
-  Color(0xFFEC407A),
-  Color(0xFF8D6E63),
-  Color(0xFF78909C),
-];
-
 /// Fallback swatch colour for a category that has no registered colour.
 const int kDefaultCategoryColor = 0xFFCCCCCC;
 
@@ -178,6 +158,15 @@ class _CategoryEditorSheetState extends State<_CategoryEditorSheet> {
   }
 
   Future<void> _pickCustomColor() async {
+    if (context.read<SettingsProvider>().isTV) {
+      final picked = await showTvColourPickerDialog(
+        context,
+        initialColor: _color,
+        title: tr('selectX', args: [lowerCaseUnlessLang(tr('colour'), 'de')]),
+      );
+      if (picked != null && context.mounted) setState(() => _color = picked);
+      return;
+    }
     var picked = _color;
     final ok = await ColorPicker(
       color: _color,
@@ -262,112 +251,119 @@ class _CategoryEditorSheetState extends State<_CategoryEditorSheet> {
         20 +
         MediaQuery.of(context).viewInsets.bottom +
         MediaQuery.of(context).padding.bottom;
-    return Padding(
-      padding: EdgeInsets.fromLTRB(20, 4, 20, bottomPadding),
-      child: SingleChildScrollView(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Text(
-              _isEditing ? tr('editCategory') : tr('newCategory'),
-              style: textTheme.titleLarge,
-            ),
-            const SizedBox(height: 16),
-            ConnectedCard(
-              child: () {
-                final isTV = context.read<SettingsProvider>().isTV;
-                final field = TextField(
-                  focusNode: _nameFocus,
-                  controller: _nameCtrl,
-                  autofocus: !_isEditing && !isTV,
-                  textCapitalization: TextCapitalization.sentences,
-                  decoration: InputDecoration(labelText: tr('categoryName')),
-                  onSubmitted: (_) {
-                    if (_nameCtrl.text.trim().isNotEmpty) _save();
-                  },
-                );
-                return isTV
-                    ? TvTextFieldFocus(
-                        textFocusNode: _nameFocus,
-                        borderRadius: 16,
-                        child: field,
-                      )
-                    : field;
-              }(),
-            ),
-            const SizedBox(height: AppSpacings.sectionGap),
-            Text(tr('colour'), style: textTheme.titleSmall),
-            const SizedBox(height: AppSpacings.elementGap),
-            Wrap(
-              spacing: AppSpacings.elementGap,
-              runSpacing: AppSpacings.elementGap,
-              children: [
-                for (final c in kCategoryPalette)
+    return TvInitialFocus(
+      child: Padding(
+        padding: EdgeInsets.fromLTRB(20, 4, 20, bottomPadding),
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Text(
+                _isEditing ? tr('editCategory') : tr('newCategory'),
+                style: textTheme.titleLarge,
+              ),
+              const SizedBox(height: 16),
+              ConnectedCard(
+                child: () {
+                  final isTV = context.read<SettingsProvider>().isTV;
+                  final field = TextField(
+                    focusNode: _nameFocus,
+                    controller: _nameCtrl,
+                    autofocus: !_isEditing && !isTV,
+                    textCapitalization: TextCapitalization.sentences,
+                    decoration: InputDecoration(labelText: tr('categoryName')),
+                    onSubmitted: (_) {
+                      if (_nameCtrl.text.trim().isNotEmpty) _save();
+                    },
+                  );
+                  return isTV
+                      ? TvTextFieldFocus(
+                          textFocusNode: _nameFocus,
+                          borderRadius: 16,
+                          child: field,
+                        )
+                      : field;
+                }(),
+              ),
+              const SizedBox(height: AppSpacings.sectionGap),
+              Text(tr('colour'), style: textTheme.titleSmall),
+              const SizedBox(height: AppSpacings.elementGap),
+              Wrap(
+                spacing: AppSpacings.elementGap,
+                runSpacing: AppSpacings.elementGap,
+                children: [
+                  for (final c in kPickerPalette)
+                    _swatch(
+                      color: c,
+                      selected: c.toARGB32() == _color.toARGB32(),
+                      onTap: () => setState(() => _color = c),
+                    ),
                   _swatch(
-                    color: c,
-                    selected: c.toARGB32() == _color.toARGB32(),
-                    onTap: () => setState(() => _color = c),
-                  ),
-                _swatch(
-                  color: Theme.of(context).colorScheme.surfaceContainerHighest,
-                  selected: false,
-                  onTap: () =>
-                      setState(() => _color = generateRandomLightColor()),
-                  icon: Tooltip(
-                    message: tr('randomColour'),
-                    child: const Icon(Icons.casino_outlined, size: 20),
-                  ),
-                ),
-                _swatch(
-                  color: Theme.of(context).colorScheme.surfaceContainerHighest,
-                  selected: false,
-                  onTap: _pickCustomColor,
-                  icon: Tooltip(
-                    message: tr('custom'),
-                    child: const Icon(Icons.colorize_outlined, size: 20),
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: AppSpacings.elementGap),
-            SwitchListTile(
-              contentPadding: EdgeInsets.zero,
-              title: Text(tr('skipUpdateChecks')),
-              value: _excludeFromChecks,
-              onChanged: (value) => setState(() => _excludeFromChecks = value),
-            ),
-            const SizedBox(height: 16),
-            Row(
-              children: [
-                if (_isEditing)
-                  TextButton.icon(
-                    onPressed: _delete,
-                    icon: const Icon(Icons.delete_outline),
-                    label: Text(tr('remove')),
-                    style: TextButton.styleFrom(
-                      foregroundColor: Theme.of(context).colorScheme.error,
+                    color: Theme.of(
+                      context,
+                    ).colorScheme.surfaceContainerHighest,
+                    selected: false,
+                    onTap: () =>
+                        setState(() => _color = generateRandomLightColor()),
+                    icon: Tooltip(
+                      message: tr('randomColour'),
+                      child: const Icon(Icons.casino_outlined, size: 20),
                     ),
                   ),
-                const Spacer(),
-                TextButton(
-                  onPressed: () => Navigator.of(context).pop(),
-                  child: Text(tr('cancel')),
-                ),
-                const SizedBox(width: AppSpacings.elementGap),
-                ValueListenableBuilder<TextEditingValue>(
-                  valueListenable: _nameCtrl,
-                  builder: (context, value, _) {
-                    final canSave = value.text.trim().isNotEmpty;
-                    return FilledButton(
-                      onPressed: canSave ? _save : null,
-                      child: Text(tr('continue')),
-                    );
-                  },
-                ),
-              ],
-            ),
-          ],
+                  _swatch(
+                    color: Theme.of(
+                      context,
+                    ).colorScheme.surfaceContainerHighest,
+                    selected: false,
+                    onTap: _pickCustomColor,
+                    icon: Tooltip(
+                      message: tr('custom'),
+                      child: const Icon(Icons.colorize_outlined, size: 20),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: AppSpacings.elementGap),
+              SwitchListTile(
+                contentPadding: EdgeInsets.zero,
+                title: Text(tr('skipUpdateChecks')),
+                value: _excludeFromChecks,
+                onChanged: (value) =>
+                    setState(() => _excludeFromChecks = value),
+              ),
+              const SizedBox(height: 16),
+              Row(
+                children: [
+                  if (_isEditing)
+                    TextButton.icon(
+                      onPressed: _delete,
+                      icon: const Icon(Icons.delete_outline),
+                      label: Text(tr('remove')),
+                      style: TextButton.styleFrom(
+                        foregroundColor: Theme.of(context).colorScheme.error,
+                      ),
+                    ),
+                  const Spacer(),
+                  TextButton(
+                    onPressed: () => Navigator.of(context).pop(),
+                    child: Text(tr('cancel')),
+                  ),
+                  const SizedBox(width: AppSpacings.elementGap),
+                  ValueListenableBuilder<TextEditingValue>(
+                    valueListenable: _nameCtrl,
+                    builder: (context, value, _) {
+                      final canSave = value.text.trim().isNotEmpty;
+                      return FilledButton(
+                        onPressed: canSave ? _save : null,
+                        child: Text(tr('continue')),
+                      );
+                    },
+                  ),
+                ],
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -387,6 +383,11 @@ class CategorySelector extends StatefulWidget {
   final bool allowCreate;
   final WrapAlignment alignment;
 
+  /// When set, an explicit edit button opens the category manager. TV hosts
+  /// pass this because remote controls cannot trigger the chips' long-press
+  /// editing.
+  final VoidCallback? onManage;
+
   const CategorySelector({
     super.key,
     required this.selected,
@@ -394,6 +395,7 @@ class CategorySelector extends StatefulWidget {
     this.singleSelect = false,
     this.allowCreate = true,
     this.alignment = WrapAlignment.start,
+    this.onManage,
   });
 
   @override
@@ -492,6 +494,7 @@ class _CategorySelectorState extends State<CategorySelector> {
             message: tr('newCategory'),
             child: ActionChip(label: const Text('+'), onPressed: _create),
           ),
+          if (widget.onManage != null) _manageButton(),
         ],
       );
     }
@@ -540,16 +543,45 @@ class _CategorySelectorState extends State<CategorySelector> {
               message: tr('newCategory'),
               child: ActionChip(label: const Text('+'), onPressed: _create),
             ),
+          if (widget.onManage != null) _manageButton(),
         ],
       ),
     );
   }
+
+  Widget _manageButton() => IconButton(
+    icon: const Icon(Icons.edit_outlined),
+    tooltip: tr('editCategory'),
+    onPressed: widget.onManage,
+  );
+}
+
+/// Dialog wrapper around [CategoryManager], used where a host cannot rely on
+/// long-press editing (TV remotes).
+Future<void> showCategoryManagerDialog(BuildContext context) {
+  return showDialog<void>(
+    context: context,
+    builder: (ctx) => AlertDialog(
+      title: Text(tr('categories')),
+      content: const SingleChildScrollView(
+        child: CategoryManager(autofocusFirst: true),
+      ),
+      actions: [
+        FilledButton.tonal(
+          onPressed: () => Navigator.of(ctx).pop(),
+          child: Text(tr('continue')),
+        ),
+      ],
+    ),
+  );
 }
 
 /// Manage-only view of the category registry (used in Settings): every category
 /// is an editable chip (tap to recolor/rename/delete) plus a "+ New" action.
 class CategoryManager extends StatelessWidget {
-  const CategoryManager({super.key});
+  final bool autofocusFirst;
+
+  const CategoryManager({super.key, this.autofocusFirst = false});
 
   @override
   Widget build(BuildContext context) {
@@ -573,6 +605,7 @@ class CategoryManager extends StatelessWidget {
           Tooltip(
             message: tr('newCategory'),
             child: ActionChip(
+              autofocus: autofocusFirst,
               label: const Text('+'),
               onPressed: () => showCategoryEditor(context),
             ),
@@ -587,19 +620,21 @@ class CategoryManager extends StatelessWidget {
         runSpacing: AppSpacings.elementGap,
         crossAxisAlignment: WrapCrossAlignment.center,
         children: [
-          for (final name in names)
+          for (var i = 0; i < names.length; i++)
             ActionChip(
+              autofocus: autofocusFirst && i == 0,
               avatar: CircleAvatar(
-                backgroundColor: Color(categories[name]!),
+                backgroundColor: Color(categories[names[i]]!),
                 radius: 7,
               ),
               label: Text(
-                name,
+                names[i],
                 softWrap: true,
                 maxLines: 3,
                 overflow: TextOverflow.ellipsis,
               ),
-              onPressed: () => showCategoryEditor(context, existingName: name),
+              onPressed: () =>
+                  showCategoryEditor(context, existingName: names[i]),
             ),
           // Inline with the categories so the row doesn't take extra space
           // when the list wraps (see #3221).

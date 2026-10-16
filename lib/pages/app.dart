@@ -378,12 +378,14 @@ class _AppPageState extends State<AppPage> {
                       16,
                       MediaQuery.of(context).padding.bottom,
                     ),
-                    child: GeneratedForm(
-                      tileMode: true,
-                      items: items,
-                      onValueChanges: (v, valid, isBuilding) {
-                        values = v;
-                      },
+                    child: TvInitialFocus(
+                      child: GeneratedForm(
+                        tileMode: true,
+                        items: items,
+                        onValueChanges: (v, valid, isBuilding) {
+                          values = v;
+                        },
+                      ),
                     ),
                   ),
                 ),
@@ -609,6 +611,10 @@ class _AppPageState extends State<AppPage> {
     final trackOnly = app?.app.settings.getBool('trackOnly') == true;
     return FilledButton.icon(
       onPressed: hasAction ? () => _handleInstallOrUpdate(context, app) : null,
+      autofocus:
+          hasAction &&
+          widget.onClose == null &&
+          context.read<SettingsProvider>().isTV,
       icon: Icon(
         installed == null
             ? Icons.download_outlined
@@ -1183,6 +1189,9 @@ class _AppPageState extends State<AppPage> {
         CategorySelector(
           alignment: WrapAlignment.start,
           selected: app?.app.categories.toSet() ?? {},
+          onManage: context.read<SettingsProvider>().isTV
+              ? () => showCategoryManagerDialog(context)
+              : null,
           onChanged: (categories) {
             if (app != null) {
               app.app = app.app.copyWith(categories: categories.toList());
