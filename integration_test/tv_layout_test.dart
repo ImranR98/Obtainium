@@ -2,15 +2,16 @@ import 'package:material_ui/material_ui.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:integration_test/integration_test.dart';
 import 'package:obtainium/components/app_list_tile.dart';
+import 'package:obtainium/components/ui_widgets.dart';
 
 import 'e2e_helpers.dart';
 
-/// TV layout differences: no per-row checkboxes, selection mode adds them,
-/// and the bottom "Add app" button never covers the last app.
+/// TV layout differences: icons are shown, no per-row checkboxes, selection
+/// mode adds them, and the bottom "Add app" button never covers the last app.
 void main() {
   IntegrationTestWidgetsFlutterBinding.ensureInitialized();
 
-  testWidgets('TV layout keeps the add button clear of the app list', (
+  testWidgets('TV layout shows icons and keeps the add button clear', (
     tester,
   ) async {
     if (await skipUnlessTV()) return;
@@ -26,6 +27,9 @@ void main() {
     }
     await launchApp(tester);
     await pumpUntil(tester, find.textContaining('E2E Layout App'));
+
+    // App icons are shown in the TV list (standard density).
+    expect(find.byType(AppIcon), findsWidgets);
 
     // No per-row checkboxes outside selection mode.
     expect(find.byType(Checkbox), findsNothing);

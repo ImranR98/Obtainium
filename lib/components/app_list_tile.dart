@@ -476,14 +476,19 @@ class AppListTile extends StatelessWidget {
                     : const VisualDensity(horizontal: -4, vertical: -4),
                 minVerticalPadding: isDense ? 0 : (isCompact ? 2 : 4),
                 dense: isDense,
-                leading: settingsProvider.isTV || isDense
+                leading: isDense
                     ? null
-                    : AppIconWidget(
-                        appId: _app.id,
-                        installed: appInMemory.installedInfo != null,
-                        appsProvider: appsProvider,
-                        size: isCompact ? 36 : 44,
-                      ),
+                    : () {
+                        final icon = AppIconWidget(
+                          appId: _app.id,
+                          installed: appInMemory.installedInfo != null,
+                          appsProvider: appsProvider,
+                          size: isCompact ? 36 : 44,
+                        );
+                        // Keep TV rows a single focus stop: the icon's own
+                        // InkWell must not become a separate focus target.
+                        return isTV ? ExcludeFocus(child: icon) : icon;
+                      }(),
                 onLongPress: () {
                   settingsProvider.selectionClick();
                   onToggleSelected();
