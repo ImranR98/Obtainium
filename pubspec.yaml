@@ -20,7 +20,7 @@ dependencies:
   http: ^1.6.0
   webview_flutter: ^4.14.1
   dynamic_color: ^2.1.0
-  material_ui: ^1.6.0
+  material_ui: ^1.7.0
   material_color_utilities: ^0.13.0
   html: ^0.15.7
   shared_preferences: ^2.5.6
