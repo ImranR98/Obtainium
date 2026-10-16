@@ -322,7 +322,7 @@ class AppListTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final showChangesFn = getChangeLogFn(context, _app);
-    final hasUpdate = isAppUpdateable(_app, settingsProvider);
+    final hasUpdate = !_app.disabled && isAppUpdateable(_app, settingsProvider);
     final isTV = settingsProvider.isTV;
     final Widget trailingRow = LayoutBuilder(
       builder: (context, constraints) => Row(
@@ -336,7 +336,7 @@ class AppListTile extends StatelessWidget {
               ExcludeFocus(child: _updateButton(context))
             else
               _updateButton(context),
-            const SizedBox(width: 8),
+            const SizedBox(width: AppSpacings.elementGap),
           ],
           if (isTV)
             ExcludeFocus(
@@ -383,7 +383,7 @@ class AppListTile extends StatelessWidget {
               mainAxisSize: MainAxisSize.min,
               children: [
                 Icon(Icons.install_mobile, color: cs.onPrimaryContainer),
-                const SizedBox(width: 8),
+                const SizedBox(width: AppSpacings.elementGap),
                 Text(
                   tr('install'),
                   style: TextStyle(color: cs.onPrimaryContainer),
@@ -403,7 +403,7 @@ class AppListTile extends StatelessWidget {
                   Icons.system_update_alt_rounded,
                   color: cs.onPrimaryContainer,
                 ),
-                const SizedBox(width: 8),
+                const SizedBox(width: AppSpacings.elementGap),
                 Text(
                   tr('update'),
                   style: TextStyle(color: cs.onPrimaryContainer),
@@ -476,14 +476,19 @@ class AppListTile extends StatelessWidget {
                     : const VisualDensity(horizontal: -4, vertical: -4),
                 minVerticalPadding: isDense ? 0 : (isCompact ? 2 : 4),
                 dense: isDense,
-                leading: settingsProvider.isTV || isDense
+                leading: isDense
                     ? null
-                    : AppIconWidget(
-                        appId: _app.id,
-                        installed: appInMemory.installedInfo != null,
-                        appsProvider: appsProvider,
-                        size: isCompact ? 36 : 44,
-                      ),
+                    : () {
+                        final icon = AppIconWidget(
+                          appId: _app.id,
+                          installed: appInMemory.installedInfo != null,
+                          appsProvider: appsProvider,
+                          size: isCompact ? 36 : 44,
+                        );
+                        // Keep TV rows a single focus stop: the icon's own
+                        // InkWell must not become a separate focus target.
+                        return isTV ? ExcludeFocus(child: icon) : icon;
+                      }(),
                 onLongPress: () {
                   settingsProvider.selectionClick();
                   onToggleSelected();
@@ -519,6 +524,9 @@ class AppListTile extends StatelessWidget {
                     : trailingRow,
                 onTap: onTap,
               );
+              final tileChild = _app.disabled
+                  ? Opacity(opacity: 0.5, child: tile)
+                  : tile;
               if (settingsProvider.isTV) {
                 return TvFocusRing(
                   borderRadius:
@@ -535,12 +543,12 @@ class AppListTile extends StatelessWidget {
                             },
                           ),
                         ),
-                      Expanded(child: tile),
+                      Expanded(child: tileChild),
                     ],
                   ),
                 );
               }
-              return tile;
+              return tileChild;
             }(),
           ),
         );
@@ -934,15 +942,20 @@ class AppListBuilder {
     }
 
     if (buryNonInstalled) {
-      final temp = <AppInMemory>[];
+      final tempDisabled = <AppInMemory>[];
+      final tempNotInstalled = <AppInMemory>[];
       apps = apps.where((sa) {
+        if (sa.app.disabled) {
+          tempDisabled.add(sa);
+          return false;
+        }
         if (sa.app.installedVersion == null) {
-          temp.add(sa);
+          tempNotInstalled.add(sa);
           return false;
         }
         return true;
       }).toList();
-      apps = [...apps, ...temp];
+      apps = [...apps, ...tempDisabled, ...tempNotInstalled];
     }
 
     final tempRenamed = <AppInMemory>[];
@@ -980,7 +993,7 @@ class _VersionLabel extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final app = appInMemory.app;
-    final hasUpdate = isAppUpdateable(app, settingsProvider);
+    final hasUpdate = !app.disabled && isAppUpdateable(app, settingsProvider);
     final updateColor = hasUpdate
         ? Theme.of(context).colorScheme.primary
         : Theme.of(context).colorScheme.onSurfaceVariant;
@@ -1066,6 +1079,9 @@ class _VersionLabel extends StatelessWidget {
   }
 
   String installedVersionText(App app) {
+    if (app.disabled) {
+      return tr('disabled');
+    }
     final installed = app.installedVersion;
     final latest = app.latestVersion;
     if (isVersionUpdate(app)) {

@@ -12,6 +12,7 @@ import 'package:obtainium/main.dart';
 
 import 'package:obtainium/providers/apps_provider.dart';
 import 'package:obtainium/core/logging/app_logger.dart';
+import 'package:obtainium/providers/document_tree_bridge.dart';
 import 'package:obtainium/providers/source_provider.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:device_info_plus/device_info_plus.dart';
@@ -58,6 +59,10 @@ enum ActionBannerMode { all, updatesOnly, none }
 
 /// How much vertical space each app row uses in the app list.
 enum AppListDensity { standard, compact, dense }
+
+/// What background work may run when a guard condition (not on Wi-Fi, not
+/// charging) is unmet. When the condition is met the mode is irrelevant.
+enum BgGuardMode { nothing, checksOnly, checksAndUpdates }
 
 class SettingsProvider with ChangeNotifier {
   SharedPreferences? prefs;
@@ -163,6 +168,19 @@ class SettingsProvider with ChangeNotifier {
     installerMode = useShizuku
         ? InstallerMode.shizuku.name
         : InstallerMode.system.name;
+  }
+
+  String get shizukuInstallerMode {
+    final stored = _getString('shizukuInstallerMode');
+    return stored == 'shizuku' || stored == 'dhizuku' ? stored! : 'auto';
+  }
+
+  set shizukuInstallerMode(String mode) {
+    prefs?.setString(
+      'shizukuInstallerMode',
+      mode == 'shizuku' || mode == 'dhizuku' ? mode : 'auto',
+    );
+    notifyListeners();
   }
 
   String? get externalInstallerPackage =>
@@ -485,6 +503,40 @@ class SettingsProvider with ChangeNotifier {
       }
     }
     prefs?.setString('categories', jsonEncode(cats));
+    // Deleted/renamed categories must not leave stale exclusions behind.
+    final excluded = categoriesExcludedFromChecks
+        .where(cats.containsKey)
+        .toSet();
+    prefs?.setString(
+      'categoriesExcludedFromChecks',
+      jsonEncode(excluded.toList()),
+    );
+    notifyListeners();
+  }
+
+  /// Categories whose apps are skipped by automatic update checks (#3375).
+  Set<String> get categoriesExcludedFromChecks {
+    final raw = _getString('categoriesExcludedFromChecks');
+    if (raw == null || raw.isEmpty) return <String>{};
+    try {
+      final decoded = jsonDecode(raw);
+      if (decoded is List) {
+        return decoded.map((e) => e.toString()).toSet();
+      }
+    } catch (e) {
+      AppLogger.error(
+        e,
+        message: 'Corrupted category exclusion data, resetting',
+      );
+    }
+    return <String>{};
+  }
+
+  set categoriesExcludedFromChecks(Set<String> categories) {
+    prefs?.setString(
+      'categoriesExcludedFromChecks',
+      jsonEncode(categories.toList()),
+    );
     notifyListeners();
   }
 
@@ -588,6 +640,15 @@ class SettingsProvider with ChangeNotifier {
     notifyListeners();
   }
 
+  bool get allowAddingAppsWithoutCheck {
+    return _getBool('allowAddingAppsWithoutCheck') ?? false;
+  }
+
+  set allowAddingAppsWithoutCheck(bool value) {
+    prefs?.setBool('allowAddingAppsWithoutCheck', value);
+    notifyListeners();
+  }
+
   bool get enableBackgroundUpdates {
     return _getBool('enableBackgroundUpdates') ?? true;
   }
@@ -606,23 +667,33 @@ class SettingsProvider with ChangeNotifier {
     notifyListeners();
   }
 
-  bool get bgUpdatesOnWiFiOnly {
-    return _getBool('bgUpdatesOnWiFiOnly') ?? false;
+  BgGuardMode _bgGuardMode(String key, String legacyKey) {
+    final stored = _getString(key);
+    if (stored != null && BgGuardMode.values.any((m) => m.name == stored)) {
+      return BgGuardMode.values.byName(stored);
+    }
+    final legacy = _getBool(legacyKey);
+    if (legacy != null) {
+      return legacy ? BgGuardMode.checksOnly : BgGuardMode.checksAndUpdates;
+    }
+    return BgGuardMode.checksAndUpdates;
   }
 
-  set bgUpdatesOnWiFiOnly(bool val) {
-    prefs?.setBool('bgUpdatesOnWiFiOnly', val);
+  void _setBgGuardMode(String key, BgGuardMode mode) {
+    prefs?.setString(key, mode.name);
     notifyListeners();
   }
 
-  bool get bgUpdatesWhileChargingOnly {
-    return _getBool('bgUpdatesWhileChargingOnly') ?? false;
-  }
+  BgGuardMode get bgGuardOnWiFi =>
+      _bgGuardMode('bgGuardOnWiFi', 'bgUpdatesOnWiFiOnly');
 
-  set bgUpdatesWhileChargingOnly(bool val) {
-    prefs?.setBool('bgUpdatesWhileChargingOnly', val);
-    notifyListeners();
-  }
+  set bgGuardOnWiFi(BgGuardMode mode) => _setBgGuardMode('bgGuardOnWiFi', mode);
+
+  BgGuardMode get bgGuardWhileCharging =>
+      _bgGuardMode('bgGuardWhileCharging', 'bgUpdatesWhileChargingOnly');
+
+  set bgGuardWhileCharging(BgGuardMode mode) =>
+      _setBgGuardMode('bgGuardWhileCharging', mode);
 
   bool get highlightTouchTargets {
     return _getBool('highlightTouchTargets') ?? false;
@@ -686,7 +757,15 @@ class SettingsProvider with ChangeNotifier {
         throw ObtainiumError(tr('noFilePickerAvailable'));
       }
       try {
-        newOneWayDataSyncDir = (await saf.openDocumentTree());
+        Uri? picked;
+        try {
+          picked = await DocumentTreeBridge.instance.pickDocumentTree();
+        } on MissingPluginException {
+          picked = await saf.openDocumentTree();
+        } on PlatformException {
+          picked = await saf.openDocumentTree();
+        }
+        newOneWayDataSyncDir = picked;
       } catch (e) {
         AppLogger.error(e, message: 'Failed to open document tree');
         throw ObtainiumError(tr('noFilePickerAvailable'));
