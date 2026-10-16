@@ -213,8 +213,9 @@ Galaxy Store exposes per-app device model (`deviceId`) and CSC (`csc`) settings.
 Empty fields retain the defaults `SM-S948B` and `DBT`. CSC `CHC` automatically
 selects mobile country code `460` and mobile network code `00`; other CSCs retain
 the existing `425` and `01` defaults. CHC matching ignores case and surrounding
-whitespace. Previously stored nonempty `mcc` and `mnc` settings still override
-these defaults independently. They remain strings to preserve leading zeros.
+whitespace. App configs that carry nonempty `mcc` and `mnc` values (for example
+via an imported settings file) still override these defaults independently. They
+remain strings to preserve leading zeros.
 
 For example, Samsung Assistant (`com.samsung.android.app.sreminder`) can be
 queried with device model `SM-S9480` and CSC `CHC` for the China release.
