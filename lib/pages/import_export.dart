@@ -227,6 +227,15 @@ class ImportSection extends StatefulWidget {
 
 class _ImportSectionState extends State<ImportSection> {
   bool importInProgress = false;
+  bool _downloadsSupported = false;
+
+  @override
+  void initState() {
+    super.initState();
+    DocumentTreeBridge.instance.downloadsExportsSupported().then((supported) {
+      if (mounted) setState(() => _downloadsSupported = supported);
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -244,7 +253,7 @@ class _ImportSectionState extends State<ImportSection> {
             onTap: importInProgress ? null : () => _runObtainiumImport(context),
           ),
         ),
-        if (context.read<SettingsProvider>().isTV)
+        if (context.read<SettingsProvider>().isTV && _downloadsSupported)
           ConnectedCard(
             isFirst: true,
             isLast: true,
@@ -540,7 +549,16 @@ class _ExportSectionState extends State<ExportSection> {
   Future<Uri?>? _exportDirFuture;
   String? _lastExportDirKey;
   bool exportInProgress = false;
+  bool _downloadsSupported = false;
   final FocusNode _fileNameFocus = FocusNode();
+
+  @override
+  void initState() {
+    super.initState();
+    DocumentTreeBridge.instance.downloadsExportsSupported().then((supported) {
+      if (mounted) setState(() => _downloadsSupported = supported);
+    });
+  }
 
   @override
   void dispose() {
@@ -630,7 +648,7 @@ class _ExportSectionState extends State<ExportSection> {
                   : () => runObtainiumExport(pickOnly: true),
             ),
           ),
-          if (settingsProvider.isTV)
+          if (settingsProvider.isTV && _downloadsSupported)
             ConnectedCard(
               isFirst: false,
               isLast: false,

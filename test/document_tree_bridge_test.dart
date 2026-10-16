@@ -39,4 +39,13 @@ void main() {
       throwsA(isA<PlatformException>()),
     );
   });
+
+  testWidgets('reports Downloads exports as unsupported off Android', (
+    tester,
+  ) async {
+    expect(
+      await DocumentTreeBridge.instance.downloadsExportsSupported(),
+      isFalse,
+    );
+  });
 }

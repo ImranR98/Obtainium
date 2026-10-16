@@ -1,3 +1,6 @@
+import 'dart:io';
+
+import 'package:device_info_plus/device_info_plus.dart';
 import 'package:flutter/services.dart';
 
 /// One export written by [DocumentTreeBridge.downloadsExports].
@@ -76,5 +79,14 @@ class DocumentTreeBridge {
     return _channel.invokeMethod('deleteDownloadsExport', {
       'uri': uri.toString(),
     });
+  }
+
+  /// Whether the MediaStore Downloads collection exists (Android 10+). The
+  /// picker-less Downloads destination is unavailable without it, so the
+  /// importing/exporting UI must hide that option on older devices.
+  Future<bool> downloadsExportsSupported() async {
+    if (!Platform.isAndroid) return false;
+    final info = await DeviceInfoPlugin().androidInfo;
+    return info.version.sdkInt >= 29;
   }
 }
