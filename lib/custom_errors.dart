@@ -269,6 +269,27 @@ class MultiAppMultiError extends ObtainiumError {
   }) =>
       '$errString [${list2FriendlyString(appIds.map((id) => appIdNames.containsKey(id) == true ? '${appIdNames[id]}${includeIdsWithNames ? ' ($id)' : ''}' : id).toList())}]';
 
+  /// Joins all error groups for a single notification, capping the body and
+  /// summarizing any surplus groups.
+  String notificationErrorString({int maxChars = 1800}) {
+    final entries = idsByErrorString.entries.toList();
+    final buffer = StringBuffer();
+    for (var i = 0; i < entries.length; i++) {
+      final text = errorsAppsString(entries[i].key, entries[i].value);
+      final separator = i == 0 ? '' : '\n\n';
+      if (i > 0 && buffer.length + separator.length + text.length > maxChars) {
+        final remaining = entries.length - i;
+        buffer.write(
+          '\n\n${remaining == 1 ? tr('andOneMoreError') : tr('andNMoreErrors', args: ['$remaining'])}',
+        );
+        break;
+      }
+      buffer.write(separator);
+      buffer.write(text);
+    }
+    return buffer.toString();
+  }
+
   @override
   String toString() => idsByErrorString.entries
       .map((e) => errorsAppsString(e.key, e.value))

@@ -4,7 +4,8 @@ import 'package:device_info_plus/device_info_plus.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:equations/equations.dart';
 import 'package:flex_color_picker/flex_color_picker.dart';
-import 'package:shizuku_apk_installer/shizuku_apk_installer.dart';
+import 'package:shizuku_apk_installer/shizuku_apk_installer.dart'
+    hide InstallerMode;
 import 'package:obtainium/components/category_editor.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:obtainium/components/ui_widgets.dart';
@@ -12,6 +13,7 @@ import 'package:obtainium/components/generated_form_renderer.dart';
 import 'package:obtainium/custom_errors.dart';
 import 'package:obtainium/core/logging/app_logger.dart';
 import 'package:obtainium/installers/root_installer.dart';
+import 'package:obtainium/installers/shizuku_installer.dart';
 import 'package:obtainium/main.dart';
 import 'package:obtainium/pages/import_export.dart';
 import 'package:obtainium/providers/apps_provider.dart';
@@ -116,8 +118,8 @@ class _SettingsPageState extends State<SettingsPage> {
       width: 48,
       height: 48,
       borderRadius: 24,
-      spacing: 8,
-      runSpacing: 8,
+      spacing: AppSpacings.elementGap,
+      runSpacing: AppSpacings.elementGap,
       enableShadesSelection: false,
       customColorSwatchesAndNames: colorsNameMap,
       showMaterialName: true,
@@ -164,7 +166,12 @@ class _SettingsPageState extends State<SettingsPage> {
       _installerCheckSeq++;
       final seq = _installerCheckSeq;
       ShizukuApkInstaller()
-          .checkPermission()
+          .setInstallerMode(
+            ShizukuInstaller.modeForSetting(
+              settingsProvider.shizukuInstallerMode,
+            ),
+          )
+          .then((_) => ShizukuApkInstaller().checkPermission())
           .then((resCode) {
             if (_installerCheckSeq != seq) return;
             settingsProvider.installerMode =
@@ -253,7 +260,7 @@ class _SettingsPageState extends State<SettingsPage> {
         slivers: <Widget>[
           CustomAppBar(title: tr('settings')),
           SliverPadding(
-            padding: const EdgeInsets.fromLTRB(16, 0, 16, 0),
+            padding: AppPaddings.page,
             sliver: SliverToBoxAdapter(
               child: settingsProvider.prefs == null
                   ? const Padding(
@@ -279,7 +286,7 @@ class _SettingsPageState extends State<SettingsPage> {
         .any((e) => e.sourceConfigSettingFormItems.isNotEmpty);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
-      spacing: 20,
+      spacing: AppSpacings.sectionGap,
       children: [
         Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -463,7 +470,7 @@ class _SettingsPageState extends State<SettingsPage> {
               slivers: [
                 CustomAppBar(title: title),
                 SliverPadding(
-                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 0),
+                  padding: AppPaddings.page,
                   sliver: SliverToBoxAdapter(child: childBuilder(ctx)),
                 ),
                 SliverToBoxAdapter(
@@ -496,21 +503,62 @@ class _SettingsPageState extends State<SettingsPage> {
               settingsProvider.enableBackgroundUpdates = value,
           helpWidgets: [
             Text(tr('backgroundUpdateReqsExplanation')),
-            const SizedBox(height: 8),
+            const SizedBox(height: AppSpacings.elementGap),
             Text(tr('backgroundUpdateLimitsExplanation')),
           ],
         ),
         if (settingsProvider.updateInterval != 0) ...[
-          ToggleTile(
-            label: tr('bgUpdatesOnWiFiOnly'),
-            value: settingsProvider.bgUpdatesOnWiFiOnly,
-            onChanged: (value) => settingsProvider.bgUpdatesOnWiFiOnly = value,
+          _fieldTile(
+            context,
+            TvDropdownMenu<BgGuardMode>(
+              expandedInsets: EdgeInsets.zero,
+              label: Text(tr('whenNotOnWiFi')),
+              initialSelection: settingsProvider.bgGuardOnWiFi,
+              dropdownMenuEntries: [
+                DropdownMenuEntry(
+                  value: BgGuardMode.nothing,
+                  label: tr('bgGuardNothing'),
+                ),
+                DropdownMenuEntry(
+                  value: BgGuardMode.checksOnly,
+                  label: tr('bgGuardChecksOnly'),
+                ),
+                DropdownMenuEntry(
+                  value: BgGuardMode.checksAndUpdates,
+                  label: tr('bgGuardChecksAndUpdates'),
+                ),
+              ],
+              onSelected: (value) {
+                if (value != null) settingsProvider.bgGuardOnWiFi = value;
+              },
+            ),
           ),
-          ToggleTile(
-            label: tr('bgUpdatesWhileChargingOnly'),
-            value: settingsProvider.bgUpdatesWhileChargingOnly,
-            onChanged: (value) =>
-                settingsProvider.bgUpdatesWhileChargingOnly = value,
+          _fieldTile(
+            context,
+            TvDropdownMenu<BgGuardMode>(
+              expandedInsets: EdgeInsets.zero,
+              label: Text(tr('whenNotCharging')),
+              initialSelection: settingsProvider.bgGuardWhileCharging,
+              dropdownMenuEntries: [
+                DropdownMenuEntry(
+                  value: BgGuardMode.nothing,
+                  label: tr('bgGuardNothing'),
+                ),
+                DropdownMenuEntry(
+                  value: BgGuardMode.checksOnly,
+                  label: tr('bgGuardChecksOnly'),
+                ),
+                DropdownMenuEntry(
+                  value: BgGuardMode.checksAndUpdates,
+                  label: tr('bgGuardChecksAndUpdates'),
+                ),
+              ],
+              onSelected: (value) {
+                if (value != null) {
+                  settingsProvider.bgGuardWhileCharging = value;
+                }
+              },
+            ),
           ),
           CardTile(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
@@ -544,6 +592,13 @@ class _SettingsPageState extends State<SettingsPage> {
         label: tr('checkUpdateOnDetailPage'),
         value: settingsProvider.checkUpdateOnDetailPage,
         onChanged: (value) => settingsProvider.checkUpdateOnDetailPage = value,
+      ),
+      ToggleTile(
+        label: tr('allowAddingAppsWithoutCheck'),
+        value: settingsProvider.allowAddingAppsWithoutCheck,
+        onChanged: (value) =>
+            settingsProvider.allowAddingAppsWithoutCheck = value,
+        helpWidgets: [Text(tr('allowAddingAppsWithoutCheckHelp'))],
       ),
       ToggleTile(
         label: tr('onlyCheckInstalledOrTrackOnlyApps'),
@@ -662,6 +717,32 @@ class _SettingsPageState extends State<SettingsPage> {
           },
         ),
       ),
+      if (settingsProvider.installerMode == InstallerMode.shizuku.name)
+        _fieldTile(
+          context,
+          TvDropdownMenu<String>(
+            expandedInsets: EdgeInsets.zero,
+            label: Text(tr('shizukuBackend')),
+            initialSelection: settingsProvider.shizukuInstallerMode,
+            dropdownMenuEntries: [
+              DropdownMenuEntry(value: 'auto', label: tr('shizukuBackendAuto')),
+              DropdownMenuEntry(
+                value: 'shizuku',
+                label: tr('shizukuBackendShizuku'),
+              ),
+              DropdownMenuEntry(
+                value: 'dhizuku',
+                label: tr('shizukuBackendDhizuku'),
+              ),
+            ],
+            onSelected: (value) {
+              if (value != null) {
+                settingsProvider.shizukuInstallerMode = value;
+                settingsProvider.selectionClick();
+              }
+            },
+          ),
+        ),
       if (settingsProvider.installerMode == InstallerMode.shizuku.name ||
           settingsProvider.installerMode == InstallerMode.root.name)
         ToggleTile(
@@ -1354,7 +1435,7 @@ class _ExternalInstallerTileState extends State<_ExternalInstallerTile> {
           content: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.stretch,
-            spacing: 8,
+            spacing: AppSpacings.elementGap,
             children: [
               for (var i = 0; i < entries.length; i++)
                 ConnectedCard(

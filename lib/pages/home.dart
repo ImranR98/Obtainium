@@ -13,6 +13,7 @@ import 'package:obtainium/providers/apps_provider.dart';
 import 'package:obtainium/core/logging/app_logger.dart';
 import 'package:obtainium/providers/settings_provider.dart';
 import 'package:obtainium/providers/source_provider.dart';
+import 'package:obtainium/theme.dart';
 import 'package:obtainium/utils/nav_helper.dart';
 import 'package:provider/provider.dart';
 
@@ -104,7 +105,7 @@ class _HomePageState extends State<HomePage> {
         title: Text(tr('welcome')),
         content: Column(
           mainAxisSize: MainAxisSize.min,
-          spacing: 20,
+          spacing: AppSpacings.sectionGap,
           children: [
             Text(tr('documentationLinksNote')),
             const LinkText(
@@ -125,7 +126,7 @@ class _HomePageState extends State<HomePage> {
         scrollable: true,
         content: Column(
           mainAxisSize: MainAxisSize.min,
-          spacing: 20,
+          spacing: AppSpacings.sectionGap,
           children: [
             Text(tr('googleVerificationWarningP1')),
             LinkText(

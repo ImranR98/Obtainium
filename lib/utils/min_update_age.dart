@@ -44,5 +44,6 @@ App applyMinAgeSuppression(App currentApp, App fetchedApp) {
     releaseUrl: currentApp.releaseUrl,
     apkUrls: currentApp.apkUrls,
     otherAssetUrls: currentApp.otherAssetUrls,
+    apkSizeBytes: currentApp.apkSizeBytes,
   );
 }

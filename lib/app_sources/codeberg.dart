@@ -21,6 +21,7 @@ class Codeberg extends AppSource {
     hosts = [_defaultHost];
     canSearch = true;
     includeAdditionalOptsInMainSearch = true;
+    showReleaseDateAsVersionToggle = true;
   }
 
   /// The ForgeJo access token, stored like GitHub's PAT: globally in
