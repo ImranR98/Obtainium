@@ -16,6 +16,7 @@
     "all": "Összes",
     "allowAddingAppsWithoutCheck": "Alkalmazások hozzáadásának felajánlása kiadásellenőrzés nélkül",
     "allowAddingAppsWithoutCheckHelp": "Ha egy alkalmazás kiadásainak ellenőrzése váratlanul meghiúsul a hozzáadás közben, akkor az Obtainium rákérdez, hogy hozzáadja-e az alkalmazást ettől függetlenül. Az alkalmazás a kapcsolat helyreállta után a szokásos módon lesz ellenőrizve és frissítve; a csomagazonosítója az első telepítéskor oldódik fel.","allowInsecure": "Nem biztonságos HTTP-kérések engedélyezése",
+    "allowInsecure": "Nem biztonságos HTTP-kérések engedélyezése",
     "allowedSigningCertHashes": "Várható aláírási tanúsítvány-kivonatok",
     "alreadyUpToDateQuestion": "Már naprakész az alkalmazás?",
     "alwaysUsePhoneLayout": "Telefonos elrendezés használata",
