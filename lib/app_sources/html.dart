@@ -194,12 +194,7 @@ Future<List<MapEntry<String, String>>> grabLinksCommon(
   return links;
 }
 
-/// Extracts a release date from a scraped string using [releaseDateRegEx]
-/// (optionally selecting a match group with [matchGroupString], `$N`-style).
-/// The extracted text is parsed with [dateFormatString] when set (an `intl`
-/// `DateFormat` pattern such as `EEE. MMMM do, yyyy - h:mma`), then falls back
-/// to [DateTime.tryParse]. Returns null when nothing usable is found.
-DateTime? extractHtmlReleaseDate(
+DateTime? _parseHtmlReleaseDateText(
   String? releaseDateRegEx,
   String? matchGroupString,
   String? dateFormatString,
@@ -239,6 +234,95 @@ DateTime? extractHtmlReleaseDate(
     }
   }
   return DateTime.tryParse(normalized);
+}
+
+bool _sameHtmlLink(String a, String b) {
+  final uriA = Uri.tryParse(a);
+  final uriB = Uri.tryParse(b);
+  if (uriA == null || uriB == null) return a == b;
+  return uriA.replace(fragment: '').normalizePath().toString() ==
+      uriB.replace(fragment: '').normalizePath().toString();
+}
+
+DateTime? _extractHtmlReleaseDateFromLink(
+  String? releaseDateRegEx,
+  String? matchGroupString,
+  String? dateFormatString,
+  String pageHtml,
+  String selectedLink,
+  Uri baseUri,
+) {
+  Document document;
+  try {
+    document = parse(pageHtml);
+  } catch (e) {
+    AppLogger.debug('Failed to parse HTML for release date: ${e.toString()}');
+    return null;
+  }
+  for (final anchor in document.querySelectorAll('a')) {
+    final href = anchor.attributes['href']?.trim();
+    if (href == null || href.isEmpty) continue;
+    String resolved;
+    try {
+      resolved = ensureAbsoluteUrl(href, baseUri);
+    } catch (_) {
+      continue;
+    }
+    if (!_sameHtmlLink(resolved, selectedLink)) continue;
+    Element? element = anchor;
+    for (var depth = 0; depth < 4 && element != null; depth++) {
+      final text =
+          '${element.text.trim().replaceAll('\r\n', '\n').replaceAll('\n', '\\n')}\\n';
+      if (text.isNotEmpty) {
+        final date = _parseHtmlReleaseDateText(
+          releaseDateRegEx,
+          matchGroupString,
+          dateFormatString,
+          text,
+        );
+        if (date != null) return date;
+      }
+      element = element.parent;
+    }
+  }
+  return null;
+}
+
+/// Extracts a release date from a scraped string using [releaseDateRegEx]
+/// (optionally selecting a match group with [matchGroupString], `$N`-style).
+/// The extracted text is parsed with [dateFormatString] when set (an `intl`
+/// `DateFormat` pattern such as `EEE. MMMM do, yyyy - h:mma`), then falls back
+/// to [DateTime.tryParse]. When [pageHtml] and [selectedLink] are supplied, the
+/// date is first looked up in the selected link's own HTML block, so pages
+/// with one date per APK do not return another build's date. Returns null when
+/// nothing usable is found.
+DateTime? extractHtmlReleaseDate(
+  String? releaseDateRegEx,
+  String? matchGroupString,
+  String? dateFormatString,
+  String stringToCheck, {
+  String? pageHtml,
+  String? selectedLink,
+  Uri? baseUri,
+}) {
+  if (releaseDateRegEx?.isNotEmpty != true) return null;
+  if (pageHtml != null && selectedLink != null) {
+    final scoped = _extractHtmlReleaseDateFromLink(
+      releaseDateRegEx,
+      matchGroupString,
+      dateFormatString,
+      pageHtml,
+      selectedLink,
+      baseUri ?? Uri.parse(selectedLink),
+    );
+    if (scoped != null) return scoped;
+  }
+  return _parseHtmlReleaseDateText(
+    releaseDateRegEx,
+    matchGroupString,
+    dateFormatString,
+    stringToCheck,
+  );
 }
 
 class HTML extends AppSource {
@@ -354,6 +438,7 @@ class HTML extends AppSource {
         'releaseDateRegEx',
         label: tr('releaseDateRegEx'),
         required: false,
+        hint: r'Last modified: (.*)',
         additionalValidators: [(value) => regExValidator(value)],
       ),
     ],
@@ -485,11 +570,13 @@ class HTML extends AppSource {
       final uri = Uri.parse(currentUrl);
       List<MapEntry<String, String>> links = [];
       String versionExtractionWholePageString = currentUrl;
+      String? pageHtml;
       if (additionalSettings['directAPKLink'] != true) {
         final Response res = await sourceRequest(
           currentUrl,
           additionalSettings,
         );
+        pageHtml = res.body;
         versionExtractionWholePageString = res.body
             .split('\r\n')
             .join('\n')
@@ -556,6 +643,9 @@ class HTML extends AppSource {
         additionalSettings['releaseDateMatchGroup'] as String?,
         additionalSettings['releaseDateDateFormat'] as String?,
         versionExtractionWholePageString,
+        pageHtml: pageHtml,
+        selectedLink: rel,
+        baseUri: uri,
       );
       return APKDetails(
         version,

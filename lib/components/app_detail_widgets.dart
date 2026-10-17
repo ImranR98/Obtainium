@@ -95,12 +95,14 @@ class AppFilePicker extends StatefulWidget {
     this.initVal,
     this.archs,
     this.pickAnyAsset = false,
+    this.apkAbis = const {},
   });
 
   final App app;
   final MapEntry<String, String>? initVal;
   final List<String>? archs;
   final bool pickAnyAsset;
+  final Map<String, List<String>> apkAbis;
 
   @override
   State<AppFilePicker> createState() => _AppFilePickerState();
@@ -108,6 +110,14 @@ class AppFilePicker extends StatefulWidget {
 
 class _AppFilePickerState extends State<AppFilePicker> {
   MapEntry<String, String>? fileUrl;
+
+  String? _abiLabel(String url) {
+    final abis = widget.apkAbis[url];
+    if (abis == null) return null;
+    return abis.isEmpty
+        ? tr('universalApk')
+        : tr('apkAbi', args: [list2FriendlyString(abis)]);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -152,26 +162,30 @@ class _AppFilePickerState extends State<AppFilePicker> {
                       : const SizedBox.shrink(),
                   const SizedBox(height: 16),
                   if (isTV)
-                    ...urlsToSelectFrom.asMap().entries.map(
-                      (entry) => ListTile(
+                    ...urlsToSelectFrom.asMap().entries.map((entry) {
+                      final abiLabel = _abiLabel(entry.value.value);
+                      return ListTile(
                         autofocus: entry.key == 0,
                         leading: Radio<String>(value: entry.value.value),
                         title: Text(entry.value.key),
+                        subtitle: abiLabel == null ? null : Text(abiLabel),
                         selected: fileUrl?.value == entry.value.value,
                         onTap: () {
                           setState(() {
                             fileUrl = entry.value;
                           });
                         },
-                      ),
-                    )
+                      );
+                    })
                   else
-                    ...urlsToSelectFrom.map(
-                      (u) => RadioListTile<String>(
+                    ...urlsToSelectFrom.map((u) {
+                      final abiLabel = _abiLabel(u.value);
+                      return RadioListTile<String>(
                         title: Text(u.key),
+                        subtitle: abiLabel == null ? null : Text(abiLabel),
                         value: u.value,
-                      ),
-                    ),
+                      );
+                    }),
                   if (widget.archs != null) const SizedBox(height: 16),
                   if (widget.archs != null)
                     Text(

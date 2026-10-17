@@ -36,7 +36,34 @@ void main() {
     expect(capped, contains('error number 0'));
     expect(capped, isNot(contains('error number 49')));
     expect(capped, contains('more errors'));
-    expect(capped.length, lessThan(400));
+    expect(capped.length, lessThanOrEqualTo(200));
+  });
+
+  test('the default cap fits Android notification text limits', () {
+    final e = MultiAppMultiError();
+    for (var i = 0; i < 30; i++) {
+      e.add(
+        'com.example.app$i',
+        Exception(
+          'error number $i with a deliberately long explanation that mirrors '
+          'an HTTP failure from a real source and pushes the list over the limit',
+        ),
+      );
+    }
+
+    final capped = e.notificationErrorString();
+    expect(capped, contains('more error'));
+    expect(capped.length, lessThanOrEqualTo(900));
+  });
+
+  test('a single oversized error is truncated without losing the list', () {
+    final e = MultiAppMultiError();
+    e.add('com.example.app0', Exception('x' * 2000));
+
+    final capped = e.notificationErrorString();
+    expect(capped.length, lessThanOrEqualTo(900));
+    expect(capped, endsWith('…'));
+    expect(capped, isNot(contains('and 0 more')));
   });
 
   test('error notification uses an expandable big-text style', () {

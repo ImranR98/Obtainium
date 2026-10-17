@@ -1,10 +1,12 @@
 import 'dart:async';
+import 'dart:convert';
 import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:archive/archive.dart' as archive;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:integration_test/integration_test.dart';
+import 'package:obtainium/custom_errors.dart';
 import 'package:obtainium/providers/apps_provider.dart';
 import 'package:obtainium/providers/source_provider.dart';
 
@@ -26,21 +28,29 @@ void main() {
 
     final server = await HttpServer.bind(InternetAddress.loopbackIPv4, 0);
     server.listen((request) {
+      final response = request.response;
       if (request.uri.path == '/dl') {
-        request.response.statusCode = HttpStatus.found;
-        request.response.headers.set(
+        response.statusCode = HttpStatus.found;
+        response.headers.set(
           'location',
           'http://127.0.0.1:${server.port}/app.zip',
         );
-      } else {
-        request.response.statusCode = HttpStatus.ok;
-        request.response.headers.contentType = ContentType(
+      } else if (request.uri.path == '/app.zip') {
+        response.headers.contentType = ContentType('application', 'zip');
+        response.add(zipBytes);
+      } else if (request.uri.path == '/noapk.zip') {
+        response.headers.contentType = ContentType('application', 'zip');
+        response.add(_zipContaining('readme.txt', utf8.encode('no apk here')));
+      } else if (request.uri.path == '/corrupt.apk') {
+        response.headers.contentType = ContentType(
           'application',
-          'zip',
+          'vnd.android.package-archive',
         );
-        request.response.add(zipBytes);
+        response.add(List<int>.generate(2048, (i) => i % 251));
+      } else {
+        response.statusCode = HttpStatus.notFound;
       }
-      unawaited(request.response.close());
+      unawaited(response.close());
     });
 
     try {
@@ -66,6 +76,28 @@ void main() {
           ? artifact.appId
           : (artifact as DownloadedDir).appId;
       expect(resolvedId, e2eTestPackageId);
+
+      Future<Object> download(String path) async {
+        final url = 'http://127.0.0.1:${server.port}$path';
+        final app = await SourceProvider().getApp(source, url, {
+          'defaultPseudoVersioningMethod': 'APKLinkHash',
+          'allowInsecure': true,
+          'versionDetection': true,
+        });
+        return readProvider<AppsProvider>().downloadApp(app, null);
+      }
+
+      await expectLater(download('/noapk.zip'), throwsA(isA<NoAPKError>()));
+      await expectLater(
+        download('/corrupt.apk'),
+        throwsA(
+          isA<ObtainiumError>().having(
+            (e) => e.message,
+            'message',
+            isNot(contains('unzip_error')),
+          ),
+        ),
+      );
     } finally {
       await server.close(force: true);
     }
