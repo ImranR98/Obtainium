@@ -863,6 +863,60 @@ class SettingsProvider with ChangeNotifier {
     notifyListeners();
   }
 
+  int get brokenCheckStaleReleaseDays {
+    return _getInt('brokenCheckStaleReleaseDays') ?? 180;
+  }
+
+  set brokenCheckStaleReleaseDays(int val) {
+    prefs?.setInt('brokenCheckStaleReleaseDays', val < 0 ? 0 : val);
+    notifyListeners();
+  }
+
+  int get brokenCheckStaleVersionDays {
+    return _getInt('brokenCheckStaleVersionDays') ?? 180;
+  }
+
+  set brokenCheckStaleVersionDays(int val) {
+    prefs?.setInt('brokenCheckStaleVersionDays', val < 0 ? 0 : val);
+    notifyListeners();
+  }
+
+  int get brokenCheckFailedChecksCount {
+    return _getInt('brokenCheckFailedChecksCount') ?? 3;
+  }
+
+  set brokenCheckFailedChecksCount(int val) {
+    prefs?.setInt('brokenCheckFailedChecksCount', val < 0 ? 0 : val);
+    notifyListeners();
+  }
+
+  bool get brokenCheckArchivedEnabled {
+    return _getBool('brokenCheckArchivedEnabled') ?? true;
+  }
+
+  set brokenCheckArchivedEnabled(bool val) {
+    prefs?.setBool('brokenCheckArchivedEnabled', val);
+    notifyListeners();
+  }
+
+  int get brokenCheckFilteredReleasesCount {
+    return _getInt('brokenCheckFilteredReleasesCount') ?? 5;
+  }
+
+  set brokenCheckFilteredReleasesCount(int val) {
+    prefs?.setInt('brokenCheckFilteredReleasesCount', val < 0 ? 0 : val);
+    notifyListeners();
+  }
+
+  bool get showBrokenCheckIndicator {
+    return _getBool('showBrokenCheckIndicator') ?? true;
+  }
+
+  set showBrokenCheckIndicator(bool val) {
+    prefs?.setBool('showBrokenCheckIndicator', val);
+    notifyListeners();
+  }
+
   int get exportSettings {
     return _getInt('exportSettings') ?? 1;
   }

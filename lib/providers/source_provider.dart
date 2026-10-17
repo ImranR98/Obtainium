@@ -356,6 +356,12 @@ class SourceProvider {
           .where((a) => apk.apkUrls.indexWhere((p) => a.key == p.key) < 0)
           .toList(),
       apkSizeBytes: apk.apkSizeBytes,
+      latestVersionChangedAt: currentApp?.latestVersionChangedAt,
+      consecutiveFailedChecks: currentApp?.consecutiveFailedChecks ?? 0,
+      isArchived: apk.isArchived,
+      newerReleasesFilteredOut: apk.newerReleasesFilteredOut,
+      brokenCheckEnabled: currentApp?.brokenCheckEnabled ?? true,
+      brokenCheckDismissedVersion: currentApp?.brokenCheckDismissedVersion,
     );
     return source.postProcessApp(finalApp);
   }

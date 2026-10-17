@@ -7,6 +7,7 @@ import 'package:obtainium/custom_errors.dart';
 import 'package:obtainium/providers/apps_provider.dart';
 import 'package:obtainium/providers/settings_provider.dart';
 import 'package:obtainium/providers/source_provider.dart';
+import 'package:obtainium/utils/broken_check.dart';
 import 'package:obtainium/utils/min_update_age.dart';
 
 /// Update checking and pending-update bookkeeping for [AppsProvider].
@@ -46,6 +47,14 @@ extension AppsProviderUpdates on AppsProvider {
     } else if (newApp.apkUrls.isNotEmpty) {
       newApp = newApp.copyWith(preferredApkIndex: 0);
     }
+    newApp = newApp.copyWith(
+      consecutiveFailedChecks: 0,
+      latestVersionChangedAt:
+          newApp.latestVersion != currentApp.latestVersion ||
+              currentApp.latestVersionChangedAt == null
+          ? DateTime.now()
+          : currentApp.latestVersionChangedAt,
+    );
     return newApp;
   }
 
@@ -238,7 +247,14 @@ extension AppsProviderUpdates on AppsProvider {
             errors.add(appId, e, appName: apps[appId]?.name);
             final app = apps[appId]?.app;
             if (app != null) {
-              failedApps.add(app.copyWith(lastUpdateCheck: DateTime.now()));
+              failedApps.add(
+                app.copyWith(
+                  lastUpdateCheck: DateTime.now(),
+                  consecutiveFailedChecks: shouldCountFailedCheck(e)
+                      ? app.consecutiveFailedChecks + 1
+                      : app.consecutiveFailedChecks,
+                ),
+              );
             }
           }
         }
