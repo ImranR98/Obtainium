@@ -863,6 +863,60 @@ class SettingsProvider with ChangeNotifier {
     notifyListeners();
   }
 
+  int get updateHealthStaleReleaseDays {
+    return _getInt('updateHealthStaleReleaseDays') ?? 180;
+  }
+
+  set updateHealthStaleReleaseDays(int val) {
+    prefs?.setInt('updateHealthStaleReleaseDays', val < 0 ? 0 : val);
+    notifyListeners();
+  }
+
+  int get updateHealthStaleVersionDays {
+    return _getInt('updateHealthStaleVersionDays') ?? 180;
+  }
+
+  set updateHealthStaleVersionDays(int val) {
+    prefs?.setInt('updateHealthStaleVersionDays', val < 0 ? 0 : val);
+    notifyListeners();
+  }
+
+  int get updateHealthFailedChecksCount {
+    return _getInt('updateHealthFailedChecksCount') ?? 5;
+  }
+
+  set updateHealthFailedChecksCount(int val) {
+    prefs?.setInt('updateHealthFailedChecksCount', val < 0 ? 0 : val);
+    notifyListeners();
+  }
+
+  bool get updateHealthArchivedEnabled {
+    return _getBool('updateHealthArchivedEnabled') ?? true;
+  }
+
+  set updateHealthArchivedEnabled(bool val) {
+    prefs?.setBool('updateHealthArchivedEnabled', val);
+    notifyListeners();
+  }
+
+  int get updateHealthFilteredReleasesCount {
+    return _getInt('updateHealthFilteredReleasesCount') ?? 5;
+  }
+
+  set updateHealthFilteredReleasesCount(int val) {
+    prefs?.setInt('updateHealthFilteredReleasesCount', val < 0 ? 0 : val);
+    notifyListeners();
+  }
+
+  bool get showUpdateHealthIndicator {
+    return _getBool('showUpdateHealthIndicator') ?? true;
+  }
+
+  set showUpdateHealthIndicator(bool val) {
+    prefs?.setBool('showUpdateHealthIndicator', val);
+    notifyListeners();
+  }
+
   int get exportSettings {
     return _getInt('exportSettings') ?? 1;
   }

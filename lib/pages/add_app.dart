@@ -671,19 +671,19 @@ class AddAppPageState extends State<AddAppPage> {
   ) => Column(
     crossAxisAlignment: CrossAxisAlignment.stretch,
     children: [
-      const SizedBox(height: 16),
+      const SizedBox(height: AppSpacings.lg),
       Text(
         tr('additionalOptsFor', args: [pickedSource?.name ?? tr('source')]),
-        style: TextStyle(
+        style: Theme.of(context).textTheme.titleMedium?.copyWith(
           color: Theme.of(context).colorScheme.primary,
-          fontWeight: FontWeight.bold,
+          fontWeight: FontWeight.w600,
         ),
       ),
-      const SizedBox(height: 16),
+      const SizedBox(height: AppSpacings.sm),
       _buildSourceSpecificForm(settingsProvider),
-      const SizedBox(height: 12),
+      const SizedBox(height: AppSpacings.md),
       CardTile(
-        padding: const EdgeInsets.all(12),
+        padding: const EdgeInsets.all(AppSpacings.md),
         child: CategorySelector(
           selected: pickedCategories.toSet(),
           alignment: WrapAlignment.start,
@@ -767,7 +767,7 @@ class AddAppPageState extends State<AddAppPage> {
     child: Wrap(
       direction: Axis.horizontal,
       alignment: WrapAlignment.spaceBetween,
-      spacing: 12,
+      spacing: AppSpacings.md,
       children: [
         ActionChip(
           onPressed: () {
@@ -1017,7 +1017,7 @@ class AddAppPageState extends State<AddAppPage> {
 
   Widget _smallSpinner() {
     return const Padding(
-      padding: EdgeInsets.all(12),
+      padding: EdgeInsets.all(AppSpacings.md),
       child: SizedBox(
         width: 20,
         height: 20,

@@ -15,6 +15,7 @@ import 'package:obtainium/utils/format_utils.dart';
 import 'package:obtainium/providers/notifications_provider.dart';
 import 'package:obtainium/providers/settings_provider.dart';
 import 'package:obtainium/providers/source_provider.dart';
+import 'package:obtainium/utils/update_health.dart';
 import 'package:obtainium/utils/nav_helper.dart';
 // AppsFilter and AppListBuilder are defined below in this file.
 import 'package:provider/provider.dart';
@@ -200,6 +201,41 @@ class _AppIconWidgetState extends State<AppIconWidget> {
   }
 }
 
+/// Card-wrapped app row used by the main apps list, reused by other lists of
+/// apps (e.g. Update health) so their spacing matches.
+class AppListRowCard extends StatelessWidget {
+  final Widget child;
+
+  const AppListRowCard({super.key, required this.child});
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: AppPaddings.listOuter,
+      child: Card(clipBehavior: Clip.antiAlias, child: child),
+    );
+  }
+}
+
+/// Density-dependent [ListTile] metrics of app rows, derived from the user's
+/// app-list density setting. Shared so other app lists match the main one.
+class AppTileMetrics {
+  final AppListDensity density;
+
+  const AppTileMetrics(this.density);
+
+  bool get isCompact => density == AppListDensity.compact;
+  bool get isDense => density == AppListDensity.dense;
+  bool get isStandard => density == AppListDensity.standard;
+
+  VisualDensity? get visualDensity =>
+      isStandard ? null : const VisualDensity(horizontal: -4, vertical: -4);
+
+  double get minVerticalPadding => isDense ? 0 : (isCompact ? 2 : 4);
+
+  double get iconSize => isCompact ? 36 : 44;
+}
+
 class AppListTile extends StatelessWidget {
   final AppInMemory appInMemory;
   final SettingsProvider settingsProvider;
@@ -273,7 +309,7 @@ class AppListTile extends StatelessWidget {
         disabledForegroundColor: cs.onSurface.withValues(alpha: 0.38),
         visualDensity: VisualDensity.compact,
         shape: RoundedSuperellipseBorder(
-          borderRadius: BorderRadius.circular(14),
+          borderRadius: BorderRadius.circular(AppRadii.medium),
         ),
       ),
       icon: Icon(trackOnly ? Icons.check_rounded : Icons.download_rounded),
@@ -300,7 +336,7 @@ class AppListTile extends StatelessWidget {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(Icons.info_outline, color: infoColor, size: 14),
+          Icon(Icons.info_outline, color: infoColor, size: AppIconSizes.small),
           const SizedBox(width: 4),
           Flexible(
             child: Text(
@@ -324,6 +360,18 @@ class AppListTile extends StatelessWidget {
     final showChangesFn = getChangeLogFn(context, _app);
     final hasUpdate = !_app.disabled && isAppUpdateable(_app, settingsProvider);
     final isTV = settingsProvider.isTV;
+    final updateHealthConfig = resolveUpdateHealthConfig(
+      _app.additionalSettings,
+      settingsProvider,
+    );
+    final updateHealthReasons = settingsProvider.showUpdateHealthIndicator
+        ? evaluateUpdateHealthReasons(_app, updateHealthConfig)
+        : const <UpdateHealthReason>[];
+    final showUpdateHealthIndicator =
+        updateHealthReasons.isNotEmpty &&
+        !_app.disabled &&
+        !_app.hasPendingRepoRename &&
+        !isUpdateHealthIgnored(_app);
     final Widget trailingRow = LayoutBuilder(
       builder: (context, constraints) => Row(
         mainAxisSize: MainAxisSize.min,
@@ -454,10 +502,7 @@ class AppListTile extends StatelessWidget {
                     ),
             ),
             child: () {
-              final density = settingsProvider.appListDensity;
-              final isCompact = density == AppListDensity.compact;
-              final isDense = density == AppListDensity.dense;
-              final isStandard = density == AppListDensity.standard;
+              final metrics = AppTileMetrics(settingsProvider.appListDensity);
               final tile = ListTile(
                 autofocus: autofocus,
                 shape: borderRadius != null
@@ -471,19 +516,17 @@ class AppListTile extends StatelessWidget {
                 selectedTileColor: Theme.of(context).colorScheme.primary
                     .withValues(alpha: _app.pinned ? 0.2 : 0.1),
                 selected: multiSelected || detailSelected,
-                visualDensity: isStandard
-                    ? null
-                    : const VisualDensity(horizontal: -4, vertical: -4),
-                minVerticalPadding: isDense ? 0 : (isCompact ? 2 : 4),
-                dense: isDense,
-                leading: isDense
+                visualDensity: metrics.visualDensity,
+                minVerticalPadding: metrics.minVerticalPadding,
+                dense: metrics.isDense,
+                leading: metrics.isDense
                     ? null
                     : () {
                         final icon = AppIconWidget(
                           appId: _app.id,
                           installed: appInMemory.installedInfo != null,
                           appsProvider: appsProvider,
-                          size: isCompact ? 36 : 44,
+                          size: metrics.iconSize,
                         );
                         // Keep TV rows a single focus stop: the icon's own
                         // InkWell must not become a separate focus target.
@@ -493,17 +536,43 @@ class AppListTile extends StatelessWidget {
                   settingsProvider.selectionClick();
                   onToggleSelected();
                 },
-                title: Text(
-                  maxLines: 1,
-                  appInMemory.name,
-                  style: TextStyle(
-                    overflow: TextOverflow.ellipsis,
-                    fontWeight: _app.pinned
-                        ? FontWeight.bold
-                        : FontWeight.normal,
-                  ),
+                title: Row(
+                  children: [
+                    Flexible(
+                      child: Text(
+                        maxLines: 1,
+                        appInMemory.name,
+                        style: TextStyle(
+                          overflow: TextOverflow.ellipsis,
+                          fontWeight: _app.pinned
+                              ? FontWeight.bold
+                              : FontWeight.normal,
+                        ),
+                      ),
+                    ),
+                    if (showUpdateHealthIndicator)
+                      Padding(
+                        padding: const EdgeInsets.only(left: 4),
+                        child: Tooltip(
+                          message: updateHealthReasons
+                              .map(
+                                (r) => updateHealthReasonLabel(
+                                  r,
+                                  _app,
+                                  updateHealthConfig,
+                                ),
+                              )
+                              .join('\n'),
+                          child: Icon(
+                            Icons.warning_amber_rounded,
+                            size: AppIconSizes.small,
+                            color: Theme.of(context).colorScheme.error,
+                          ),
+                        ),
+                      ),
+                  ],
                 ),
-                subtitle: isDense
+                subtitle: metrics.isDense
                     ? null
                     : _app.hasPendingRepoRename
                     ? Column(
@@ -629,7 +698,7 @@ class DownloadProgressTrailing extends StatelessWidget {
               mainAxisSize: MainAxisSize.min,
               children: [
                 ClipRRect(
-                  borderRadius: BorderRadius.circular(8),
+                  borderRadius: BorderRadius.circular(AppRadii.xs),
                   child: LinearProgressIndicator(
                     value: installing ? null : progress / 100,
                   ),
@@ -694,12 +763,12 @@ class AppListGroupSection extends StatelessWidget {
     );
 
     return Padding(
-      padding: const EdgeInsets.fromLTRB(12, 4, 12, 4),
+      padding: AppPaddings.listOuter,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         // Small gaps so entries read as distinct positional tiles, matching the
         // connected-tile look used for settings.
-        spacing: 3,
+        spacing: AppSpacings.connectedGap,
         children: [
           segment(
             0,
@@ -1052,7 +1121,7 @@ class _VersionLabel extends StatelessWidget {
         content = DecoratedBox(
           decoration: BoxDecoration(
             color: Theme.of(context).colorScheme.surfaceContainerHighest,
-            borderRadius: BorderRadius.circular(10),
+            borderRadius: BorderRadius.circular(AppRadii.small),
           ),
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 6),
@@ -1061,7 +1130,7 @@ class _VersionLabel extends StatelessWidget {
         );
       }
       content = InkWell(
-        borderRadius: BorderRadius.circular(10),
+        borderRadius: BorderRadius.circular(AppRadii.small),
         onTap: showChangesFn,
         child: content,
       );

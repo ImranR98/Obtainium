@@ -412,12 +412,18 @@ them:
 - `GeneratedFormSwitch` (bool; supports `disabled`)
 - `GeneratedFormDropdown` (`opts`, `disabledOptKeys`)
 - `GeneratedFormSubForm` (nested repeatable groups, e.g. HTML intermediate links)
+- `GeneratedFormHeader` (non-input section label; an optional `id` lets callers
+  scroll a form to that section with `GlobalObjectKey`)
 
 It reports changes via `onValueChanges(values, valid, isBuilding)`. Each
 `GeneratedFormItem` has `ensureType()` (coerce stored value) and `clone()` (deep copy).
 **Form items owned by a source are cloned (`cloneFormItems`) before defaults are
 pre-filled**, because sources are cached/shared and in-place mutation would leak across
-apps. `tileMode: true` renders fields in the connected-tile settings aesthetic.
+apps. `tileMode: true` renders fields in the connected-tile settings aesthetic, with
+tile corners restarting after each header. `AppSource.combinedAppSpecificSettingFormItems`
+groups the per-app dialog (and add-app form) into sections: the source's own section(s),
+*Version detection*, *APK selection*, *Update options*, *App options*, and
+*Update health detection* (see the update-health section above).
 
 ---
 
@@ -469,6 +475,29 @@ Background work is scheduled via **`workmanager`** (Android periodic tasks). The
   persists each chunk with a **single `saveApps()`** call. This is the key fix for the
   pull-to-refresh UI freeze: it caps concurrent network/parse load and cuts rebuilds from
   O(N) to O(N/chunk).
+
+### Update health detection (`utils/update_health.dart`)
+
+Apps that will likely never receive an update are flagged by evaluating local
+signals; there is no separate scheduled job:
+
+- General: `App.releaseDate` age, `App.latestVersionChangedAt` age (set when a
+  check finds a new version), and `App.consecutiveFailedChecks` (incremented in
+  `checkUpdates` for non-transient failures only, reset by any successful fetch).
+- Source-specific: `App.isArchived` (GitHub fetches the repo JSON when the
+  heuristic is enabled for the app, reusing the repo-rename response when
+  available; GitLab reads it from the project call it already makes) and
+  `App.newerReleasesFilteredOut` (counted inside GitHub's release selection).
+
+`resolveUpdateHealthConfig` merges the global `SettingsProvider` values with the
+per-app overrides in `additionalSettings` (`''` = use global, `'off'` =
+disabled, a number = threshold). `evaluateUpdateHealthReasons` is a pure
+function, so the settings page (`pages/update_health.dart`), the app list
+indicator and the app detail link all reflect setting changes immediately.
+`hasUpdateHealthIssues` additionally excludes disabled apps, apps pending a repo
+rename, and ignored apps. The two opt-outs live on `App`:
+`updateHealthEnabled` (permanent) and `updateHealthDismissedVersion` (ignored
+while it equals `latestVersion`).
 
 ### Installation (`apps_provider_install.dart`)
 
@@ -595,6 +624,19 @@ Source credentials (e.g. `github-creds`, `gitlab-creds`) are stored in
 **UI / a11y / i18n**
 - Use the theme; don't hardcode colors/shapes. Pull colors from
   `Theme.of(context).colorScheme`.
+- Layout tokens live in `lib/theme.dart`; use them instead of raw numbers:
+  `AppSpacings` (2/4/8/12/16/24/32), `AppPaddings` (`page`, `cardInner`,
+  `rowHorizontal`, `listOuter`, `sliderTile`, `sectionHeader`,
+  `listSectionHeader`), `AppRadii` (`inline`/`xs`/`small`/`medium`/`fab`/
+  `large`/`xlarge`), and `AppIconSizes`.
+- Section labels use the `SectionHeader` widget (or `sectionHeaderTextStyle`):
+  `titleMedium`, weight 600, `onSurface`, 24px above / 8px below.
+- Rows and form fields use 16px horizontal content padding. Page content uses
+  `AppPaddings.page`; full-bleed app lists use `AppPaddings.listOuter` and
+  `AppListRowCard`; grouped settings use `ConnectedCard`/`CardTile` with
+  `AppSpacings.connectedGap` between segments.
+- Reuse `AppListTile`/`AppListRowCard` for app rows so list density, version
+  labels and update-health indicators stay consistent.
 - All user-facing strings go through `tr()` / `plural()` with a key in **every**
   `assets/translations/*.json` (at minimum `en.json`).
 - Reuse `ConnectedCard`/`SettingsTile`/`positionalTileShape` for grouped tiles instead of

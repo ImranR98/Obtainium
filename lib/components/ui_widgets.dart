@@ -265,7 +265,7 @@ class _TvDropdownMenuState<T> extends State<TvDropdownMenu<T>> {
                       width: 3,
                     )
                   : null,
-              borderRadius: BorderRadius.circular(16),
+              borderRadius: BorderRadius.circular(AppRadii.medium),
             ),
             child: child,
           ),
@@ -407,7 +407,7 @@ class EmptyState extends StatelessWidget {
     final colorScheme = Theme.of(context).colorScheme;
     return Center(
       child: Padding(
-        padding: const EdgeInsets.all(32),
+        padding: const EdgeInsets.all(AppSpacings.xxl),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -555,9 +555,9 @@ class LinkText extends StatelessWidget {
     return Semantics(
       link: true,
       child: TvFocusRing(
-        borderRadius: 4,
+        borderRadius: AppRadii.inline,
         child: InkWell(
-          borderRadius: BorderRadius.circular(4),
+          borderRadius: BorderRadius.circular(AppRadii.inline),
           onTap: () => unawaited(
             launchUrlString(url, mode: LaunchMode.externalApplication),
           ),
@@ -793,7 +793,10 @@ class CardTile extends StatelessWidget {
   const CardTile({
     super.key,
     required this.child,
-    this.padding = const EdgeInsets.symmetric(horizontal: 16, vertical: 0),
+    this.padding = const EdgeInsets.symmetric(
+      horizontal: AppSpacings.lg,
+      vertical: 0,
+    ),
     this.borderRadius,
     this.color,
   });
@@ -809,6 +812,26 @@ class CardTile extends StatelessWidget {
         color: color ?? Theme.of(context).colorScheme.surfaceContainerLow,
         child: Padding(padding: padding, child: child),
       ),
+    );
+  }
+}
+
+/// A labelled section header used to group settings, form rows and lists.
+class SectionHeader extends StatelessWidget {
+  final String label;
+  final EdgeInsetsGeometry padding;
+
+  const SectionHeader(
+    this.label, {
+    super.key,
+    this.padding = AppPaddings.sectionHeader,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: padding,
+      child: Text(label, style: sectionHeaderTextStyle(context)),
     );
   }
 }
@@ -835,9 +858,7 @@ class ToggleTile extends StatelessWidget {
   Widget build(BuildContext context) {
     return TvFocusRing(
       child: ListTile(
-        contentPadding: noPadding
-            ? EdgeInsets.zero
-            : const EdgeInsets.symmetric(horizontal: 20),
+        contentPadding: noPadding ? EdgeInsets.zero : AppPaddings.rowHorizontal,
         title: Text(label),
         subtitle: subtitle,
         trailing: Row(
@@ -859,6 +880,130 @@ class ToggleTile extends StatelessWidget {
           ],
         ),
       ),
+    );
+  }
+}
+
+/// A labelled slider over a fixed list of integer options, with the chosen
+/// value rendered by [labelBuilder]. Mirrors the update-interval/minimum-age
+/// sliders in the settings page and stays its own [StatefulWidget] so dragging
+/// only rebuilds this tile; the value is committed when the drag ends.
+class NumericOptionSliderTile extends StatefulWidget {
+  final String label;
+  final List<int> options;
+  final int value;
+  final ValueChanged<int> onChanged;
+  final String Function(int value) labelBuilder;
+
+  const NumericOptionSliderTile({
+    super.key,
+    required this.label,
+    required this.options,
+    required this.value,
+    required this.onChanged,
+    required this.labelBuilder,
+  });
+
+  @override
+  State<NumericOptionSliderTile> createState() =>
+      _NumericOptionSliderTileState();
+}
+
+class _NumericOptionSliderTileState extends State<NumericOptionSliderTile> {
+  late double sliderVal;
+  bool showLabel = true;
+
+  int get _selected =>
+      widget.options[sliderVal.round().clamp(0, widget.options.length - 1)];
+
+  String get _label => widget.labelBuilder(_selected);
+
+  @override
+  void initState() {
+    super.initState();
+    _syncFromValue();
+  }
+
+  @override
+  void didUpdateWidget(covariant NumericOptionSliderTile oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.value != widget.value ||
+        oldWidget.options.length != widget.options.length) {
+      _syncFromValue();
+    }
+  }
+
+  void _syncFromValue() {
+    final index = widget.options.indexOf(widget.value);
+    sliderVal = (index >= 0 ? index : 0).toDouble();
+  }
+
+  void _commit() => widget.onChanged(_selected);
+
+  @override
+  Widget build(BuildContext context) {
+    final max = (widget.options.length - 1).toDouble();
+    final rawSlider = Slider(
+      value: sliderVal,
+      max: max,
+      divisions: widget.options.length > 1 ? widget.options.length - 1 : null,
+      label: _label,
+      onChanged: (double value) {
+        setState(() {
+          sliderVal = value;
+        });
+      },
+      onChangeStart: (double value) {
+        setState(() {
+          showLabel = false;
+        });
+      },
+      onChangeEnd: (double value) {
+        setState(() {
+          showLabel = true;
+        });
+        _commit();
+      },
+    );
+
+    final Widget slider = context.read<SettingsProvider>().isTV
+        ? Row(
+            children: [
+              IconButton(
+                icon: const Icon(Icons.remove),
+                onPressed: sliderVal <= 0
+                    ? null
+                    : () {
+                        setState(() {
+                          sliderVal = (sliderVal - 1).clamp(0.0, max);
+                        });
+                        _commit();
+                      },
+              ),
+              Expanded(child: Text(_label, textAlign: TextAlign.center)),
+              IconButton(
+                icon: const Icon(Icons.add),
+                onPressed: sliderVal >= max
+                    ? null
+                    : () {
+                        setState(() {
+                          sliderVal = (sliderVal + 1).clamp(0.0, max);
+                        });
+                        _commit();
+                      },
+              ),
+            ],
+          )
+        : rawSlider;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        showLabel
+            ? Text('${widget.label}: $_label')
+            : const SizedBox(height: 20),
+        slider,
+      ],
     );
   }
 }

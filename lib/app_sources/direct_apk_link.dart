@@ -28,10 +28,12 @@ class DirectAPKLink extends AppSource {
   @override
   List<List<GeneratedFormItem>>
   get additionalSourceAppSpecificSettingFormItems => [
+    [GeneratedFormHeader(label: tr('sectionRequestHeaders'))],
     ...html.additionalSourceAppSpecificSettingFormItems.where(
       (element) =>
           element.where((element) => element.key == 'requestHeader').isNotEmpty,
     ),
+    [GeneratedFormHeader(label: tr('sectionVersionOptions'))],
     [
       GeneratedFormDropdown(
         'defaultPseudoVersioningMethod',
@@ -43,6 +45,7 @@ class DirectAPKLink extends AppSource {
         value: 'partialAPKHash',
       ),
     ],
+    [GeneratedFormHeader(label: tr('sectionZipOptions'))],
     [
       GeneratedFormTextField(
         'zippedApkFilterRegEx',

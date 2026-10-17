@@ -18,6 +18,7 @@ class Farsroid extends AppSource {
   @override
   List<List<GeneratedFormItem>>
   get additionalSourceAppSpecificSettingFormItems => [
+    [GeneratedFormHeader(label: tr('sectionReleaseSelection'))],
     [
       GeneratedFormSwitch(
         'useFirstApkOfVersion',

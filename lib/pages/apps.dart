@@ -895,19 +895,15 @@ class AppsPageState extends State<AppsPage> {
     SettingsProvider settingsProvider,
     AppsProvider appsProvider,
   ) {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(12, 4, 12, 4),
-      child: Card(
-        clipBehavior: Clip.antiAlias,
-        child: _buildTile(
-          index,
-          context,
-          listedApps,
-          settingsProvider,
-          appsProvider,
-          autofocus: index == 0,
-          borderRadius: BorderRadius.circular(connectedTileBigRadius),
-        ),
+    return AppListRowCard(
+      child: _buildTile(
+        index,
+        context,
+        listedApps,
+        settingsProvider,
+        appsProvider,
+        autofocus: index == 0,
+        borderRadius: BorderRadius.circular(connectedTileBigRadius),
       ),
     );
   }
@@ -1530,7 +1526,7 @@ class _BulkUpdateDialogState extends State<_BulkUpdateDialog> {
         aim.name,
         maxLines: 1,
         overflow: TextOverflow.ellipsis,
-        style: const TextStyle(fontSize: 14),
+        style: Theme.of(context).textTheme.bodyMedium,
       ),
       subtitle: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -1661,7 +1657,7 @@ class _TVSearchBarState extends State<_TVSearchBar> {
       children: [
         TvTextFieldFocus(
           textFocusNode: _textFocus,
-          borderRadius: 28,
+          borderRadius: AppRadii.xlarge,
           child: TextField(
             focusNode: _textFocus,
             controller: widget.controller,

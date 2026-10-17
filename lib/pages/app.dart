@@ -6,7 +6,7 @@ import 'package:flutter_markdown_plus/flutter_markdown_plus.dart';
 import 'package:markdown/markdown.dart' as md;
 import 'package:obtainium/components/app_list_tile.dart';
 import 'package:obtainium/components/category_editor.dart';
-import 'package:obtainium/components/generated_form_renderer.dart';
+import 'package:obtainium/pages/app_additional_options.dart';
 import 'package:obtainium/components/ui_widgets.dart';
 import 'package:obtainium/components/app_detail_widgets.dart';
 import 'package:obtainium/theme.dart';
@@ -16,7 +16,7 @@ import 'package:obtainium/providers/notifications_provider.dart';
 import 'package:obtainium/core/logging/app_logger.dart';
 import 'package:obtainium/providers/settings_provider.dart';
 import 'package:obtainium/providers/source_provider.dart';
-import 'package:obtainium/custom_errors.dart';
+import 'package:obtainium/utils/update_health.dart';
 import 'package:obtainium/utils/locale_utils.dart';
 import 'package:obtainium/main.dart';
 import 'package:obtainium/utils/nav_helper.dart';
@@ -272,40 +272,16 @@ class _AppPageState extends State<AppPage> {
     return copy;
   }
 
-  Future<void> getUpdate(
-    BuildContext context, {
-    bool resetVersion = false,
-  }) async {
-    try {
-      updating = true;
-      if (mounted) setState(() {});
-      await appsProvider.checkUpdate(appId);
-      if (resetVersion) {
-        final currentAim = appsProvider.apps[appId];
-        if (currentAim != null) {
-          var updatedApp = currentAim.app.copyWith(
-            additionalSettings: Map<String, dynamic>.from(
-              currentAim.app.additionalSettings,
-            )..['versionDetection'] = true,
-          );
-          if (updatedApp.installedVersion != null) {
-            updatedApp = updatedApp.copyWith(
-              installedVersion: updatedApp.latestVersion,
-            );
-          }
-          await appsProvider.saveApps([updatedApp]);
-        }
-      }
-    } catch (err) {
-      if (err is RepositoryRenamedError && context.mounted) {
-        await appsProvider.updatePendingRepoRename(appId, err.newUrl);
-      } else if (context.mounted) {
-        showError(err, context);
-      }
-    } finally {
-      updating = false;
-      if (mounted) setState(() {});
-    }
+  Future<void> getUpdate(BuildContext context, {bool resetVersion = false}) {
+    return refreshAppMetadata(
+      context,
+      appId: appId,
+      resetVersion: resetVersion,
+      onBusyChanged: (busy) {
+        updating = busy;
+        if (mounted) setState(() {});
+      },
+    );
   }
 
   Future<void> showMarkUpdatedDialog(BuildContext context) async {
@@ -330,71 +306,8 @@ class _AppPageState extends State<AppPage> {
   Future<Map<String, dynamic>?> showAdditionalOptionsDialog(
     BuildContext context,
     AppInMemory? app,
-  ) async {
-    final s = source;
-    final items = (s?.combinedAppSpecificSettingFormItems ?? []).map((row) {
-      row = row.map((e) {
-        if (app?.app.additionalSettings[e.key] != null) {
-          e.value = app?.app.additionalSettings[e.key];
-        }
-        return e;
-      }).toList();
-      return row;
-    }).toList();
-
-    Map<String, dynamic> values = {};
-    return Navigator.of(context).push<Map<String, dynamic>>(
-      MaterialPageRoute(
-        traversalEdgeBehavior: traversalEdgeBehaviorFor(context),
-        builder: (ctx) => PopScope<Map<String, dynamic>>(
-          // Leaving the page saves the settings, so there is no Continue button.
-          canPop: false,
-          onPopInvokedWithResult: (didPop, result) {
-            if (didPop) return;
-            // While a text field is being edited, the first BACK only
-            // dismisses the keyboard; it must not also save and leave.
-            if (isEditingTextField()) {
-              FocusManager.instance.primaryFocus?.unfocus();
-              return;
-            }
-            Navigator.of(ctx).pop(values);
-          },
-          child: Scaffold(
-            backgroundColor: Theme.of(context).colorScheme.surface,
-            body: CustomScrollView(
-              slivers: [
-                SliverAppBar(
-                  pinned: true,
-                  automaticallyImplyLeading: true,
-                  title: Text(
-                    tr('additionalOptsFor', args: [app?.name ?? tr('app')]),
-                  ),
-                ),
-                SliverToBoxAdapter(
-                  child: Padding(
-                    padding: EdgeInsets.fromLTRB(
-                      16,
-                      0,
-                      16,
-                      MediaQuery.of(context).padding.bottom,
-                    ),
-                    child: TvInitialFocus(
-                      child: GeneratedForm(
-                        tileMode: true,
-                        items: items,
-                        onValueChanges: (v, valid, isBuilding) {
-                          values = v;
-                        },
-                      ),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
+  ) {
+    return showAdditionalOptionsPage(context, source, app);
   }
 
   void handleAdditionalOptionChanges(
@@ -402,68 +315,19 @@ class _AppPageState extends State<AppPage> {
     BuildContext context,
     AppInMemory? app,
   ) {
-    if (app != null && values != null) {
-      final s = source;
-      final Map<String, dynamic> originalSettings = app.app.additionalSettings;
-      final savedValues = Map<String, dynamic>.from(values);
-      // The additional-options form does not include every stored setting
-      // (e.g. the add-time package ID field and source-config overrides such
-      // as credentials), so carry those over instead of dropping them.
-      originalSettings.forEach((key, value) {
-        savedValues.putIfAbsent(key, () => value);
-      });
-      app.app = app.app.copyWith(additionalSettings: savedValues);
-      if (s?.enforceTrackOnly == true) {
-        app.app = app.app.copyWith(
-          additionalSettings: Map<String, dynamic>.from(
-            app.app.additionalSettings,
-          )..['trackOnly'] = true,
-        );
-        if (context.mounted) {
-          showMessage(tr('appsFromSourceAreTrackOnly'), context);
-        }
-      }
-      final versionDetectionEnabled =
-          app.app.settings.getBool('versionDetection') &&
-          originalSettings['versionDetection'] != true;
-      final releaseDateVersionEnabled =
-          app.app.settings.getBool('releaseDateAsVersion') &&
-          originalSettings['releaseDateAsVersion'] != true;
-      final releaseDateVersionDisabled =
-          !app.app.settings.getBool('releaseDateAsVersion') &&
-          originalSettings['releaseDateAsVersion'] == true;
-      if (releaseDateVersionEnabled) {
-        if (app.app.releaseDate != null) {
-          final bool isUpdated =
-              app.app.installedVersion == app.app.latestVersion;
-          app.app = app.app.copyWith(
-            latestVersion: app.app.releaseDate!.microsecondsSinceEpoch
-                .toString(),
-          );
-          if (isUpdated) {
-            app.app = app.app.copyWith(installedVersion: app.app.latestVersion);
-          }
-        }
-      } else if (releaseDateVersionDisabled) {
-        app.app = app.app.copyWith(
-          installedVersion:
-              app.installedInfo?.versionName ?? app.app.installedVersion,
-        );
-      }
-      if (versionDetectionEnabled) {
-        app.app = app.app.copyWith(
-          additionalSettings:
-              Map<String, dynamic>.from(app.app.additionalSettings)
-                ..['versionDetection'] = true
-                ..['releaseDateAsVersion'] = false,
-        );
-      }
-      appsProvider.saveApps([app.app]).then((_) {
-        if (context.mounted) {
-          getUpdate(context, resetVersion: versionDetectionEnabled);
-        }
-      });
-    }
+    if (app == null || values == null) return;
+    unawaited(
+      applyAdditionalOptionChanges(
+        context,
+        source,
+        app,
+        values,
+        onBusyChanged: (busy) {
+          updating = busy;
+          if (mounted) setState(() {});
+        },
+      ),
+    );
   }
 
   Future<List<String>> installOrUpdate(
@@ -551,7 +415,7 @@ class _AppPageState extends State<AppPage> {
     if (_webViewError != null) {
       return Center(
         child: Padding(
-          padding: const EdgeInsets.all(32),
+          padding: const EdgeInsets.all(AppSpacings.xxl),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
@@ -785,7 +649,7 @@ class _AppPageState extends State<AppPage> {
     final cs = Theme.of(context).colorScheme;
     final tt = Theme.of(context).textTheme;
     return Row(
-      spacing: 12,
+      spacing: AppSpacings.md,
       children: [
         Icon(icon, size: 24, color: cs.onSurfaceVariant),
         Expanded(
@@ -828,7 +692,7 @@ class _AppPageState extends State<AppPage> {
           padding: AppPaddings.page,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
-            spacing: 3,
+            spacing: AppSpacings.connectedGap,
             children: [
               ConnectedCard(
                 isFirst: true,
@@ -852,7 +716,7 @@ class _AppPageState extends State<AppPage> {
                 isFirst: false,
                 isLast: true,
                 child: Row(
-                  spacing: 12,
+                  spacing: AppSpacings.md,
                   children: [
                     Expanded(
                       child: OutlinedButton(
@@ -953,6 +817,19 @@ class _AppPageState extends State<AppPage> {
     final pseudo = app?.app != null && isVersionPseudo(app!.app);
     final apkCount = app?.app.apkUrls.length ?? 0;
     final changeLogFn = app != null ? getChangeLogFn(context, app.app) : null;
+    final appData = app?.app;
+    final UpdateHealthConfig? updateHealthConfig =
+        appData == null || appData.disabled
+        ? null
+        : resolveUpdateHealthConfig(
+            appData.additionalSettings,
+            settingsProvider,
+          );
+    final updateHealthReasons = updateHealthConfig == null
+        ? const <UpdateHealthReason>[]
+        : evaluateUpdateHealthReasons(appData!, updateHealthConfig);
+    final updateHealthIgnored =
+        updateHealthConfig != null && isUpdateHealthIgnored(appData!);
     return [
       _buildSection(
         true,
@@ -973,7 +850,7 @@ class _AppPageState extends State<AppPage> {
               padding: const EdgeInsets.only(top: 4),
               child: InkWell(
                 onTap: changeLogFn,
-                borderRadius: BorderRadius.circular(4),
+                borderRadius: BorderRadius.circular(AppRadii.inline),
                 child: Text(
                   app?.app.releaseDate == null
                       ? tr('changes')
@@ -994,9 +871,42 @@ class _AppPageState extends State<AppPage> {
                 ),
               ),
             ),
+          if (updateHealthReasons.isNotEmpty || updateHealthIgnored)
+            Padding(
+              padding: const EdgeInsets.only(top: 4),
+              child: InkWell(
+                onTap: () => NavHelper.pushUpdateHealthPage(context),
+                borderRadius: BorderRadius.circular(AppRadii.inline),
+                child: Row(
+                  children: [
+                    Icon(
+                      updateHealthIgnored
+                          ? Icons.info_outline
+                          : Icons.warning_amber_rounded,
+                      size: 16,
+                      color: updateHealthIgnored
+                          ? cs.onSurfaceVariant
+                          : cs.error,
+                    ),
+                    const SizedBox(width: 4),
+                    Flexible(
+                      child: Text(
+                        updateHealthIgnored
+                            ? tr('updateHealthIgnoredNote')
+                            : tr('updateHealthViewDetails'),
+                        style: tt.bodyMedium?.copyWith(
+                          color: cs.primary,
+                          decoration: TextDecoration.underline,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
         ],
       ),
-      const SliverToBoxAdapter(child: SizedBox(height: 2)),
+      const SliverToBoxAdapter(child: SizedBox(height: AppSpacings.xs)),
       _buildSection(
         false,
         true,
@@ -1112,7 +1022,7 @@ class _AppPageState extends State<AppPage> {
     if (certs) {
       final a = app!;
       widgets.addAll([
-        const SliverToBoxAdapter(child: SizedBox(height: 2)),
+        const SliverToBoxAdapter(child: SizedBox(height: AppSpacings.xs)),
         _buildSection(
           false,
           !hasAssets,
@@ -1144,7 +1054,7 @@ class _AppPageState extends State<AppPage> {
     }
     if (hasAssets) {
       widgets.addAll([
-        const SliverToBoxAdapter(child: SizedBox(height: 2)),
+        const SliverToBoxAdapter(child: SizedBox(height: AppSpacings.xs)),
         _buildSection(
           false,
           true,

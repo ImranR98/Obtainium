@@ -1,0 +1,331 @@
+import 'dart:async';
+
+import 'package:easy_localization/easy_localization.dart';
+import 'package:material_ui/material_ui.dart';
+import 'package:obtainium/components/app_list_tile.dart';
+import 'package:obtainium/components/ui_widgets.dart';
+import 'package:obtainium/models/app.dart';
+import 'package:obtainium/pages/app_additional_options.dart';
+import 'package:obtainium/providers/apps_provider.dart';
+import 'package:obtainium/providers/settings_provider.dart';
+import 'package:obtainium/theme.dart';
+import 'package:obtainium/utils/update_health.dart';
+import 'package:provider/provider.dart';
+
+enum _IgnoreAction { currentVersion, permanently }
+
+class UpdateHealthPage extends StatelessWidget {
+  const UpdateHealthPage({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    final settingsProvider = context.watch<SettingsProvider>();
+    final appsProvider = context.watch<AppsProvider>();
+    final apps = appsProvider.apps.values.map((e) => e.app).toList();
+    final flagged =
+        apps.where((a) => hasUpdateHealthIssues(a, settingsProvider)).toList()
+          ..sort(_byName);
+    final ignored = apps.where(isUpdateHealthIgnored).toList()..sort(_byName);
+
+    return Scaffold(
+      backgroundColor: Theme.of(context).colorScheme.surface,
+      body: CustomScrollView(
+        slivers: [
+          CustomAppBar(title: tr('updateHealth')),
+          SliverPadding(
+            padding: AppPaddings.page,
+            sliver: SliverToBoxAdapter(
+              child: TvInitialFocus(
+                child: _buildDetectionSettings(settingsProvider),
+              ),
+            ),
+          ),
+          if (flagged.isEmpty && ignored.isEmpty)
+            SliverPadding(
+              padding: AppPaddings.page,
+              sliver: SliverToBoxAdapter(
+                child: Padding(
+                  padding: const EdgeInsets.only(top: AppSpacings.sectionGap),
+                  child: _buildEmptyState(context),
+                ),
+              ),
+            )
+          else ...[
+            if (flagged.isNotEmpty)
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding: const EdgeInsets.only(top: AppSpacings.sectionGap),
+                  child: _buildAppSection(
+                    context,
+                    appsProvider,
+                    settingsProvider,
+                    title: tr('updateHealthDetectedApps'),
+                    apps: flagged,
+                    ignoredSection: false,
+                  ),
+                ),
+              ),
+            if (ignored.isNotEmpty)
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding: const EdgeInsets.only(top: AppSpacings.sectionGap),
+                  child: _buildAppSection(
+                    context,
+                    appsProvider,
+                    settingsProvider,
+                    title: tr('updateHealthIgnoredApps'),
+                    apps: ignored,
+                    ignoredSection: true,
+                  ),
+                ),
+              ),
+          ],
+          SliverToBoxAdapter(
+            child: SizedBox(height: MediaQuery.of(context).padding.bottom),
+          ),
+        ],
+      ),
+    );
+  }
+
+  static int _byName(App a, App b) =>
+      a.finalName.toLowerCase().compareTo(b.finalName.toLowerCase());
+
+  Widget _buildDetectionSettings(SettingsProvider settingsProvider) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      spacing: AppSpacings.connectedGap,
+      children: shapeCardTiles([
+        _sliderTile(
+          label: tr('updateHealthStaleReleaseCheck'),
+          options: updateHealthDayOptions,
+          value: settingsProvider.updateHealthStaleReleaseDays,
+          labelBuilder: updateHealthDaysLabel,
+          onChanged: (value) =>
+              settingsProvider.updateHealthStaleReleaseDays = value,
+        ),
+        _sliderTile(
+          label: tr('updateHealthStaleVersionCheck'),
+          options: updateHealthDayOptions,
+          value: settingsProvider.updateHealthStaleVersionDays,
+          labelBuilder: updateHealthDaysLabel,
+          onChanged: (value) =>
+              settingsProvider.updateHealthStaleVersionDays = value,
+        ),
+        _sliderTile(
+          label: tr('updateHealthFailedChecksCheck'),
+          options: updateHealthFailedChecksOptions,
+          value: settingsProvider.updateHealthFailedChecksCount,
+          labelBuilder: updateHealthFailedChecksLabel,
+          onChanged: (value) =>
+              settingsProvider.updateHealthFailedChecksCount = value,
+        ),
+        ToggleTile(
+          label: tr('updateHealthArchivedCheck'),
+          value: settingsProvider.updateHealthArchivedEnabled,
+          onChanged: (value) =>
+              settingsProvider.updateHealthArchivedEnabled = value,
+        ),
+        _sliderTile(
+          label: tr('updateHealthFilteredReleasesCheck'),
+          options: updateHealthFilteredReleasesOptions,
+          value: settingsProvider.updateHealthFilteredReleasesCount,
+          labelBuilder: updateHealthFilteredReleasesLabel,
+          onChanged: (value) =>
+              settingsProvider.updateHealthFilteredReleasesCount = value,
+        ),
+        ToggleTile(
+          label: tr('showUpdateHealthIndicator'),
+          value: settingsProvider.showUpdateHealthIndicator,
+          onChanged: (value) =>
+              settingsProvider.showUpdateHealthIndicator = value,
+        ),
+      ]),
+    );
+  }
+
+  Widget _sliderTile({
+    required String label,
+    required List<int> options,
+    required int value,
+    required String Function(int) labelBuilder,
+    required ValueChanged<int> onChanged,
+  }) {
+    return CardTile(
+      padding: AppPaddings.sliderTile,
+      child: NumericOptionSliderTile(
+        label: label,
+        options: options,
+        value: value,
+        labelBuilder: labelBuilder,
+        onChanged: onChanged,
+      ),
+    );
+  }
+
+  Widget _buildEmptyState(BuildContext context) {
+    return CardTile(
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: AppSpacings.xl),
+        child: Text(
+          tr('updateHealthNoApps'),
+          textAlign: TextAlign.center,
+          style: Theme.of(context).textTheme.bodyMedium,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildAppSection(
+    BuildContext context,
+    AppsProvider appsProvider,
+    SettingsProvider settingsProvider, {
+    required String title,
+    required List<App> apps,
+    required bool ignoredSection,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      spacing: AppSpacings.connectedGap,
+      children: [
+        SectionHeader(title, padding: AppPaddings.listSectionHeader),
+        ...apps.map(
+          (app) => ignoredSection
+              ? _buildIgnoredTile(context, appsProvider, settingsProvider, app)
+              : _buildFlaggedTile(context, appsProvider, settingsProvider, app),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildFlaggedTile(
+    BuildContext context,
+    AppsProvider appsProvider,
+    SettingsProvider settingsProvider,
+    App app,
+  ) {
+    final config = resolveUpdateHealthConfig(
+      app.additionalSettings,
+      settingsProvider,
+    );
+    final reasons = evaluateUpdateHealthReasons(app, config);
+    final metrics = AppTileMetrics(settingsProvider.appListDensity);
+    return AppListRowCard(
+      child: ListTile(
+        visualDensity: metrics.visualDensity,
+        minVerticalPadding: metrics.minVerticalPadding,
+        dense: metrics.isDense,
+        leading: metrics.isDense
+            ? null
+            : AppIconWidget(
+                appId: app.id,
+                installed: app.installedVersion != null,
+                appsProvider: appsProvider,
+                size: metrics.iconSize,
+              ),
+        title: Text(
+          app.finalName,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+        ),
+        subtitle: Text(
+          reasons
+              .map((r) => updateHealthReasonLabel(r, app, config))
+              .join('\n'),
+        ),
+        isThreeLine: reasons.length > 1,
+        trailing: PopupMenuButton<_IgnoreAction>(
+          tooltip: tr('more'),
+          onSelected: (action) => _ignoreApp(
+            appsProvider,
+            app,
+            action == _IgnoreAction.permanently,
+          ),
+          itemBuilder: (ctx) => [
+            PopupMenuItem(
+              value: _IgnoreAction.currentVersion,
+              child: Text(tr('ignoreForThisVersion')),
+            ),
+            PopupMenuItem(
+              value: _IgnoreAction.permanently,
+              child: Text(tr('ignorePermanently')),
+            ),
+          ],
+        ),
+        onTap: () => unawaited(
+          showAppAdditionalOptions(
+            context,
+            app.id,
+            scrollToSection: updateHealthSectionId,
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildIgnoredTile(
+    BuildContext context,
+    AppsProvider appsProvider,
+    SettingsProvider settingsProvider,
+    App app,
+  ) {
+    final metrics = AppTileMetrics(settingsProvider.appListDensity);
+    return AppListRowCard(
+      child: ListTile(
+        visualDensity: metrics.visualDensity,
+        minVerticalPadding: metrics.minVerticalPadding,
+        dense: metrics.isDense,
+        leading: metrics.isDense
+            ? null
+            : AppIconWidget(
+                appId: app.id,
+                installed: app.installedVersion != null,
+                appsProvider: appsProvider,
+                size: metrics.iconSize,
+              ),
+        title: Text(
+          app.finalName,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+        ),
+        subtitle: Text(
+          app.updateHealthEnabled
+              ? tr('updateHealthIgnoredForVersion')
+              : tr('updateHealthIgnoredPermanently'),
+        ),
+        trailing: IconButton(
+          tooltip: tr('restore'),
+          icon: const Icon(Icons.settings_backup_restore),
+          onPressed: () => appsProvider.saveApps([
+            app.copyWith(
+              updateHealthEnabled: true,
+              updateHealthDismissedVersion: null,
+            ),
+          ]),
+        ),
+        onTap: () => unawaited(
+          showAppAdditionalOptions(
+            context,
+            app.id,
+            scrollToSection: updateHealthSectionId,
+          ),
+        ),
+      ),
+    );
+  }
+
+  Future<void> _ignoreApp(
+    AppsProvider appsProvider,
+    App app,
+    bool permanently,
+  ) {
+    return appsProvider.saveApps([
+      permanently
+          ? app.copyWith(
+              updateHealthEnabled: false,
+              updateHealthDismissedVersion: null,
+            )
+          : app.copyWith(updateHealthDismissedVersion: app.latestVersion),
+    ]);
+  }
+}

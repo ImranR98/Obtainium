@@ -132,7 +132,7 @@ void main() async {
       child: Scaffold(
         body: Center(
           child: Padding(
-            padding: EdgeInsets.all(32),
+            padding: EdgeInsets.all(AppSpacings.xxl),
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [

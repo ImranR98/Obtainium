@@ -280,7 +280,7 @@ class _GeneratedFormState extends State<GeneratedForm> {
         child: Material(
           type: MaterialType.card,
           elevation: 4,
-          borderRadius: BorderRadius.circular(8),
+          borderRadius: BorderRadius.circular(AppRadii.xs),
           child: child,
         ),
       ),
@@ -305,7 +305,7 @@ class _GeneratedFormState extends State<GeneratedForm> {
       return Text(tr('dropdownNoOptsError'));
     }
     return TvFocusRing(
-      borderRadius: 16,
+      borderRadius: AppRadii.medium,
       child: DropdownButtonFormField(
         decoration: _fieldDecoration(
           labelText: tr(formItem.label) + (formItem.required ? ' *' : ''),
@@ -372,7 +372,8 @@ class _GeneratedFormState extends State<GeneratedForm> {
     _subFormGenerations.clear();
     values = {
       for (final row in widget.items)
-        for (final item in row) item.key: item.value,
+        for (final item in row)
+          if (item is! GeneratedFormHeader) item.key: item.value,
     };
     for (final row in widget.items) {
       for (final item in row) {
@@ -585,9 +586,16 @@ class _GeneratedFormState extends State<GeneratedForm> {
     }
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
-      spacing: 3,
+      spacing: AppSpacings.connectedGap,
       children: cards,
     );
+  }
+
+  Widget _buildHeader(GeneratedFormHeader item) {
+    final header = SectionHeader(tr(item.label));
+    return item.id == null
+        ? header
+        : KeyedSubtree(key: GlobalObjectKey(item.id!), child: header);
   }
 
   Widget _buildItem(
@@ -595,6 +603,7 @@ class _GeneratedFormState extends State<GeneratedForm> {
     required bool isFirst,
     required bool isLast,
   }) {
+    if (item is GeneratedFormHeader) return _buildHeader(item);
     if (item is GeneratedFormTextField) return _buildTextField(item);
     if (item is GeneratedFormDropdown) return _buildDropdown(item);
     if (item is GeneratedFormSlider) return _buildSlider(item);
@@ -659,17 +668,20 @@ class _GeneratedFormState extends State<GeneratedForm> {
       bool isSubFormRow(int r) =>
           widget.items[r].isNotEmpty &&
           widget.items[r][0] is GeneratedFormSubForm;
+      bool isHeaderRow(int r) =>
+          widget.items[r].isNotEmpty &&
+          widget.items[r][0] is GeneratedFormHeader;
       final colorScheme = Theme.of(context).colorScheme;
       final n = inputRowWidgets.length;
       final List<Widget> rawTiles = [];
       for (var r = 0; r < n; r++) {
-        if (isSubFormRow(r)) {
+        if (isSubFormRow(r) || isHeaderRow(r)) {
           rawTiles.add(inputRowWidgets[r]);
         } else {
           rawTiles.add(
             ConnectedCard(
-              isFirst: r == 0,
-              isLast: r == n - 1,
+              isFirst: r == 0 || isHeaderRow(r - 1),
+              isLast: r == n - 1 || isHeaderRow(r + 1),
               color: isFieldRow(r)
                   ? colorScheme.surfaceContainerHighest
                   : colorScheme.surfaceContainerLow,
@@ -680,7 +692,7 @@ class _GeneratedFormState extends State<GeneratedForm> {
       }
       return Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
-        spacing: 3,
+        spacing: AppSpacings.connectedGap,
         children: rawTiles,
       );
     }
@@ -724,7 +736,9 @@ class _SliderFormItemState extends State<_SliderFormItem> {
 
   String _optLabel(MapEntry<String, String> opt) {
     final days = int.tryParse(opt.value);
-    return days != null ? plural('day', days) : tr(opt.value);
+    return days != null
+        ? plural(widget.formItem.numericLabelUnitKey, days)
+        : tr(opt.value);
   }
 
   String get _label => _optLabel(opts[_index]);
@@ -797,7 +811,7 @@ class _SliderFormItemState extends State<_SliderFormItem> {
           );
 
     return Padding(
-      padding: const EdgeInsets.fromLTRB(20, 8, 20, 4),
+      padding: AppPaddings.sliderTile,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [

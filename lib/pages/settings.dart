@@ -21,6 +21,7 @@ import 'package:obtainium/providers/external_install_bridge.dart';
 import 'package:obtainium/providers/settings_provider.dart';
 import 'package:obtainium/providers/source_provider.dart';
 import 'package:obtainium/theme.dart';
+import 'package:obtainium/utils/update_health.dart';
 import 'package:obtainium/utils/locale_utils.dart';
 import 'package:obtainium/utils/native_features.dart';
 import 'package:obtainium/utils/nav_helper.dart';
@@ -131,7 +132,7 @@ class _SettingsPageState extends State<SettingsPage> {
       wheelSquareBorderRadius: 32,
       width: 48,
       height: 48,
-      borderRadius: 24,
+      borderRadius: AppRadii.large,
       spacing: AppSpacings.elementGap,
       runSpacing: AppSpacings.elementGap,
       enableShadesSelection: false,
@@ -298,13 +299,20 @@ class _SettingsPageState extends State<SettingsPage> {
         .read<SourceProvider>()
         .sources
         .any((e) => e.sourceConfigSettingFormItems.isNotEmpty);
+    final updateHealthAppCount = context
+        .watch<AppsProvider>()
+        .apps
+        .values
+        .map((e) => e.app)
+        .where((a) => hasUpdateHealthIssues(a, settingsProvider))
+        .length;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       spacing: AppSpacings.sectionGap,
       children: [
         Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
-          spacing: 3,
+          spacing: AppSpacings.connectedGap,
           children: shapeCardTiles([
             _settingsRow(
               context,
@@ -335,6 +343,15 @@ class _SettingsPageState extends State<SettingsPage> {
                     _buildUpdatesSection(ctx, showBgSection, sdk),
               ),
             ),
+            _settingsRow(
+              context,
+              icon: Icons.warning_amber_rounded,
+              title: tr('updateHealth'),
+              subtitle: updateHealthAppCount > 0
+                  ? plural('apps', updateHealthAppCount)
+                  : null,
+              onTap: () => NavHelper.pushUpdateHealthPage(context),
+            ),
             if (hasSourceSpecificSettings)
               _settingsRow(
                 context,
@@ -360,7 +377,7 @@ class _SettingsPageState extends State<SettingsPage> {
         ),
         Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
-          spacing: 3,
+          spacing: AppSpacings.connectedGap,
           children: shapeCardTiles([
             _settingsRow(
               context,
@@ -438,10 +455,18 @@ class _SettingsPageState extends State<SettingsPage> {
     );
   }
 
+  String _themeColourLabel(Color color) {
+    final code = ColorTools.materialNameAndCode(color);
+    return code.startsWith('(')
+        ? '${ColorTools.nameThatColor(color)} $code'
+        : code;
+  }
+
   Widget _settingsRow(
     BuildContext context, {
     required IconData icon,
     required String title,
+    String? subtitle,
     required VoidCallback onTap,
     IconData trailingIcon = Icons.chevron_right,
     double? trailingIconSize,
@@ -449,12 +474,15 @@ class _SettingsPageState extends State<SettingsPage> {
   }) {
     final cs = Theme.of(context).colorScheme;
     return CardTile(
+      padding: EdgeInsets.zero,
       child: TvFocusRing(
-        borderRadius: 12,
+        borderRadius: AppRadii.small,
         child: ListTile(
           autofocus: autofocus,
+          contentPadding: AppPaddings.rowHorizontal,
           leading: Icon(icon, color: cs.primary),
           title: Text(title),
+          subtitle: subtitle == null ? null : Text(subtitle),
           trailing: Icon(
             trailingIcon,
             color: cs.onSurfaceVariant,
@@ -465,7 +493,7 @@ class _SettingsPageState extends State<SettingsPage> {
             onTap();
           },
           shape: RoundedSuperellipseBorder(
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(AppRadii.small),
           ),
         ),
       ),
@@ -511,7 +539,7 @@ class _SettingsPageState extends State<SettingsPage> {
     final settingsProvider = context.read<SettingsProvider>();
     final children = <Widget>[
       const CardTile(
-        padding: EdgeInsets.fromLTRB(16, 8, 16, 8),
+        padding: AppPaddings.sliderTile,
         child: _UpdateIntervalSliderTile(),
       ),
       if (showBgSection) ...[
@@ -676,7 +704,7 @@ class _SettingsPageState extends State<SettingsPage> {
             settingsProvider.skipBulkUpdateConfirmation = value,
       ),
       const CardTile(
-        padding: EdgeInsets.fromLTRB(16, 8, 16, 8),
+        padding: AppPaddings.sliderTile,
         child: _MinimumUpdateAgeSliderTile(),
       ),
       ToggleTile(
@@ -692,7 +720,7 @@ class _SettingsPageState extends State<SettingsPage> {
         subtitle: LinkText(
           text: tr('about'),
           url: 'https://github.com/privacyguides/verified-apps-android',
-          style: const TextStyle(fontSize: 12),
+          style: Theme.of(context).textTheme.bodySmall,
         ),
       ),
       ToggleTile(
@@ -775,7 +803,7 @@ class _SettingsPageState extends State<SettingsPage> {
     ];
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
-      spacing: 3,
+      spacing: AppSpacings.connectedGap,
       children: shapeCardTiles(children),
     );
   }
@@ -899,10 +927,7 @@ class _SettingsPageState extends State<SettingsPage> {
             title: Text(
               tr('selectX', args: [lowerCaseUnlessLang(tr('colour'), 'de')]),
             ),
-            subtitle: Text(
-              '${ColorTools.nameThatColor(settingsProvider.themeColor)} '
-              '(${ColorTools.materialNameAndCode(settingsProvider.themeColor)})',
-            ),
+            subtitle: Text(_themeColourLabel(settingsProvider.themeColor)),
             trailing: TvFocusRing(
               borderRadius: 20,
               child: ColorIndicator(
@@ -1074,11 +1099,14 @@ class _SettingsPageState extends State<SettingsPage> {
         value: settingsProvider.tactileFeedbackEnabled,
         onChanged: (value) => settingsProvider.tactileFeedbackEnabled = value,
       ),
-      const CardTile(padding: EdgeInsets.all(12), child: CategoryManager()),
+      const CardTile(
+        padding: EdgeInsets.all(AppSpacings.md),
+        child: CategoryManager(),
+      ),
     ];
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
-      spacing: 3,
+      spacing: AppSpacings.connectedGap,
       children: shapeCardTiles(children),
     );
   }

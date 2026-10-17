@@ -135,7 +135,7 @@ class _ImportFromURLListPageState extends State<ImportFromURLListPage> {
                     ),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
-                      spacing: 16,
+                      spacing: AppSpacings.lg,
                       children: [
                         ConnectedCard(
                           color: Theme.of(
@@ -157,7 +157,7 @@ class _ImportFromURLListPageState extends State<ImportFromURLListPage> {
                             return context.read<SettingsProvider>().isTV
                                 ? TvTextFieldFocus(
                                     textFocusNode: _urlListFocus,
-                                    borderRadius: 24,
+                                    borderRadius: AppRadii.large,
                                     child: field,
                                   )
                                 : field;
@@ -241,7 +241,7 @@ class _ImportSectionState extends State<ImportSection> {
   Widget build(BuildContext context) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
-      spacing: 12,
+      spacing: AppSpacings.md,
       children: [
         if (importInProgress) const LinearProgressIndicator(),
         ConnectedCard(
@@ -266,7 +266,7 @@ class _ImportSectionState extends State<ImportSection> {
             ),
           ),
         Column(
-          spacing: 2,
+          spacing: AppSpacings.xxs,
           children: () {
             final tiles = <Widget>[
               ActionListTile(
@@ -712,7 +712,7 @@ class _ExportSectionState extends State<ExportSection> {
                 return settingsProvider.isTV
                     ? TvTextFieldFocus(
                         textFocusNode: _fileNameFocus,
-                        borderRadius: 16,
+                        borderRadius: AppRadii.medium,
                         child: field,
                       )
                     : field;
@@ -751,7 +751,7 @@ class _ExportSectionState extends State<ExportSection> {
         }
         return Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
-          spacing: 3,
+          spacing: AppSpacings.connectedGap,
           children: items,
         );
       },
@@ -1051,7 +1051,7 @@ class _SelectionModalState extends State<SelectionModal> {
   Widget _buildTVSelectTile(MapEntry<String, List<String>> entry) {
     final selected = entrySelections[entry.key] ?? false;
     return TvFocusRing(
-      borderRadius: 16,
+      borderRadius: AppRadii.medium,
       child: ListTile(
         leading: ExcludeFocus(
           child: widget.onlyOneSelectionAllowed

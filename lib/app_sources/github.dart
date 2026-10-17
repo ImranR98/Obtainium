@@ -9,6 +9,7 @@ import 'package:obtainium/custom_errors.dart';
 import 'package:obtainium/core/logging/app_logger.dart';
 import 'package:obtainium/providers/settings_provider.dart';
 import 'package:obtainium/providers/source_provider.dart';
+import 'package:obtainium/utils/update_health.dart';
 import 'package:obtainium/utils/min_update_age.dart';
 
 class GitHub extends AppSource {
@@ -67,6 +68,7 @@ class GitHub extends AppSource {
   @override
   List<List<GeneratedFormItem>>
   get additionalSourceAppSpecificSettingFormItems => [
+    [GeneratedFormHeader(label: tr('sectionReleaseOptions'))],
     [
       GeneratedFormSwitch(
         'includePrereleases',
@@ -370,20 +372,21 @@ class GitHub extends AppSource {
   /// from the GitHub API for a repository endpoint definitively indicates that
   /// the repository has been renamed or transferred to a different owner.
   ///
-  /// Throws [RepositoryRenamedError] if a redirect is detected.
-  Future<void> checkForRepositoryRename(
+  /// Throws [RepositoryRenamedError] if a redirect is detected. Returns the
+  /// repository JSON when the request succeeds, so callers can reuse it.
+  Future<Map<String, dynamic>?> checkForRepositoryRename(
     String standardUrl,
     Map<String, dynamic> additionalSettings,
     Map<String, String> sourceConfigSettingValues,
   ) async {
     if (sourceConfigSettingValues['checkRepoRename'] != 'true') {
-      return;
+      return null;
     }
     final uri = Uri.tryParse(standardUrl);
     final host = uri?.host.toLowerCase() ?? '';
     // Guard against non-GitHub URLs
     if (host != hosts[0] && host != 'www.${hosts[0]}') {
-      return;
+      return null;
     }
     final apiUrl = await convertStandardUrlToAPIUrl(
       standardUrl,
@@ -415,6 +418,34 @@ class GitHub extends AppSource {
           throw RepositoryRenamedError(standardUrl, newUrl);
         }
       }
+      return null;
+    }
+    return _decodeRepoInfo(res);
+  }
+
+  static Map<String, dynamic>? _decodeRepoInfo(Response res) {
+    if (res.statusCode != 200) return null;
+    try {
+      final dynamic decoded = jsonDecode(res.body);
+      return decoded is Map<String, dynamic> ? decoded : null;
+    } catch (e) {
+      return null;
+    }
+  }
+
+  Future<Map<String, dynamic>?> _fetchRepoInfoQuietly(
+    String standardUrl,
+    Map<String, dynamic> additionalSettings,
+  ) async {
+    try {
+      final Response res = await _sourceRequestWithAuthFallback(
+        await convertStandardUrlToAPIUrl(standardUrl, additionalSettings),
+        additionalSettings,
+      );
+      return _decodeRepoInfo(res);
+    } catch (e) {
+      AppLogger.info('Failed to fetch repo info: ${e.toString()}');
+      return null;
     }
   }
 
@@ -586,6 +617,7 @@ class GitHub extends AppSource {
     required Map<String, String> sourceConfigSettingValues,
   }) {
     var releaseSkipped = 0;
+    var userFilteredOut = 0;
     final titleRegex = regexFilter != null ? RegExp(regexFilter) : null;
     final notesRegex = regexNotesFilter != null
         ? RegExp(regexNotesFilter)
@@ -614,6 +646,7 @@ class GitHub extends AppSource {
             nameToFilter.trim(),
             invert: invertTitleFilter,
           )) {
+        userFilteredOut++;
         continue;
       }
       if (notesRegex != null &&
@@ -622,6 +655,7 @@ class GitHub extends AppSource {
             ((releases[i]['body'] as String?) ?? '').trim(),
             invert: invertNotesFilter,
           )) {
+        userFilteredOut++;
         continue;
       }
       if (isReleaseTooYoung(
@@ -672,6 +706,7 @@ class GitHub extends AppSource {
           .toList();
 
       if (filteredApks.isEmpty && additionalSettings['trackOnly'] != true) {
+        userFilteredOut++;
         continue;
       }
       final targetRelease = releases[i];
@@ -704,6 +739,7 @@ class GitHub extends AppSource {
         );
       }
       targetRelease['allAssetUrls'] = allAssetUrls;
+      targetRelease['newerReleasesFilteredOut'] = userFilteredOut;
       return targetRelease;
     }
     return null;
@@ -723,11 +759,22 @@ class GitHub extends AppSource {
       additionalSettings,
       settingsProvider,
     );
-    await checkForRepositoryRename(
+    Map<String, dynamic>? repoInfo = await checkForRepositoryRename(
       standardUrl,
       additionalSettings,
       sourceConfigSettingValues,
     );
+    if (repoInfo == null &&
+        !hostChanged &&
+        resolveUpdateHealthConfig(
+          additionalSettings,
+          settingsProvider,
+        ).archivedEnabled) {
+      repoInfo = await _fetchRepoInfoQuietly(standardUrl, additionalSettings);
+    }
+    final bool? isArchived = repoInfo == null
+        ? null
+        : (repoInfo['archived'] == true || repoInfo['disabled'] == true);
     final bool includePrereleases =
         additionalSettings['includePrereleases'] == true;
     final bool fallbackToOlderReleases =
@@ -840,6 +887,9 @@ class GitHub extends AppSource {
         changeLog: changeLog.isEmpty ? null : changeLog,
         allAssetUrls:
             targetRelease['allAssetUrls'] as List<MapEntry<String, String>>,
+        isArchived: isArchived,
+        newerReleasesFilteredOut:
+            targetRelease['newerReleasesFilteredOut'] as int?,
       );
     } else {
       if (onHttpErrorCode != null) {

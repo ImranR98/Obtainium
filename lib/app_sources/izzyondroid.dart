@@ -52,7 +52,7 @@ class IzzyOnDroid extends AppSource {
       if (appId == null) {
         throw NoReleasesError();
       }
-      return fd.getAPKUrlsFromFDroidPackagesAPIResponse(
+      return await fd.getAPKUrlsFromFDroidPackagesAPIResponse(
         await sourceRequest(
           'https://apt.izzysoft.de/fdroid/api/v1/packages/$appId',
           additionalSettings,

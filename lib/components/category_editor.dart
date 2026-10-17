@@ -190,7 +190,7 @@ class _CategoryEditorSheetState extends State<_CategoryEditorSheet> {
       ),
       wheelDiameter: 192,
       wheelSquareBorderRadius: 32,
-      borderRadius: 24,
+      borderRadius: AppRadii.large,
       enableShadesSelection: false,
     ).showPickerDialog(context);
     if (ok && context.mounted) setState(() => _color = picked);
@@ -207,7 +207,7 @@ class _CategoryEditorSheetState extends State<_CategoryEditorSheet> {
       button: true,
       selected: selected,
       child: TvFocusRing(
-        borderRadius: 24,
+        borderRadius: AppRadii.large,
         child: InkWell(
           onTap: onTap,
           customBorder: const CircleBorder(),
@@ -280,7 +280,7 @@ class _CategoryEditorSheetState extends State<_CategoryEditorSheet> {
                   return isTV
                       ? TvTextFieldFocus(
                           textFocusNode: _nameFocus,
-                          borderRadius: 16,
+                          borderRadius: AppRadii.medium,
                           child: field,
                         )
                       : field;
