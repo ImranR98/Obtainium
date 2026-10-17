@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 
+import 'package:device_info_plus/device_info_plus.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:html/parser.dart';
 import 'package:http/http.dart';
@@ -88,7 +89,7 @@ class FDroid extends AppSource {
         throw NoReleasesError();
       }
       final String host = Uri.parse(standardUrl).host;
-      var details = getAPKUrlsFromFDroidPackagesAPIResponse(
+      var details = await getAPKUrlsFromFDroidPackagesAPIResponse(
         await sourceRequest(
           'https://$host/api/v1/packages/$appId',
           additionalSettings,
@@ -97,6 +98,9 @@ class FDroid extends AppSource {
         standardUrl,
         name,
         additionalSettings: additionalSettings,
+        nativecodePageUrl: hostChanged
+            ? null
+            : 'https://$host/en/packages/$appId/',
       );
       if (!hostChanged) {
         try {
@@ -204,13 +208,14 @@ class FDroid extends AppSource {
     }
   }
 
-  APKDetails getAPKUrlsFromFDroidPackagesAPIResponse(
+  Future<APKDetails> getAPKUrlsFromFDroidPackagesAPIResponse(
     Response res,
     String apkUrlPrefix,
     String standardUrl,
     String sourceName, {
     Map<String, dynamic> additionalSettings = const {},
-  }) {
+    String? nativecodePageUrl,
+  }) async {
     final autoSelectHighestVersionCode =
         additionalSettings['autoSelectHighestVersionCode'] == true;
     final trySelectingSuggestedVersionCode =
@@ -284,6 +289,37 @@ class FDroid extends AppSource {
           (element) => element['versionName'] == version,
         );
       }
+      // The F-Droid API does not expose which APK is for which CPU
+      // architecture. When a version has multiple builds, read the nativecode
+      // metadata from the package page and drop incompatible builds. Any
+      // failure here must leave the unfiltered selection in place (#2529).
+      final List<dynamic> sameVersionReleases = releases
+          .where((element) => element['versionName'] == version)
+          .toList();
+      if (nativecodePageUrl != null &&
+          additionalSettings['autoApkFilterByArch'] == true &&
+          sameVersionReleases.length > 1) {
+        try {
+          final nativecodes = await _getNativecodesFromPage(
+            nativecodePageUrl,
+            additionalSettings,
+          );
+          if (nativecodes.isNotEmpty) {
+            final filtered = filterReleasesByNativecode(
+              sameVersionReleases,
+              nativecodes,
+              await getSupportedAbis(),
+            );
+            if (filtered != null && filtered.isNotEmpty) {
+              releaseChoices = filtered;
+            }
+          }
+        } catch (e) {
+          AppLogger.info(
+            'Failed to filter F-Droid APKs by architecture: ${e.toString()}',
+          );
+        }
+      }
       // For the remaining releases, use the toggles to auto-select one if possible
       if (releaseChoices.length > 1) {
         if (autoSelectHighestVersionCode) {
@@ -316,5 +352,102 @@ class FDroid extends AppSource {
     } else {
       throw getObtainiumHttpError(res);
     }
+  }
+
+  /// This device's supported ABIs, in preference order.
+  Future<List<String>> getSupportedAbis() async =>
+      (await DeviceInfoPlugin().androidInfo).supportedAbis;
+
+  Future<Map<int, List<String>>> _getNativecodesFromPage(
+    String url,
+    Map<String, dynamic> additionalSettings,
+  ) async {
+    try {
+      final res = await sourceRequest(url, additionalSettings);
+      if (res.statusCode == 200) {
+        return parseNativecodesFromPackagePage(res.body);
+      }
+      AppLogger.info(
+        'F-Droid nativecode page request failed with HTTP ${res.statusCode}: $url',
+      );
+    } catch (e) {
+      AppLogger.info(
+        'Failed to fetch F-Droid nativecode page ($url): ${e.toString()}',
+      );
+    }
+    return {};
+  }
+
+  /// Parses the versionCode -> nativecode mapping from an F-Droid package page.
+  /// Each version block lists the native architectures of its APK; builds
+  /// without a nativecode note are universal.
+  static Map<int, List<String>> parseNativecodesFromPackagePage(String html) {
+    final nativecodes = <int, List<String>>{};
+    final versionCodeRegEx = RegExp(r'_(\d+)\.apk$');
+    for (final element in parse(html).querySelectorAll('li.package-version')) {
+      int? versionCode;
+      for (final anchor in element.querySelectorAll(
+        '.package-version-download a',
+      )) {
+        final match = versionCodeRegEx.firstMatch(
+          anchor.attributes['href'] ?? '',
+        );
+        if (match != null) {
+          versionCode = int.tryParse(match.group(1)!);
+          break;
+        }
+      }
+      if (versionCode == null) {
+        continue;
+      }
+      final code = element.querySelector('.package-nativecode')?.text.trim();
+      nativecodes[versionCode] = code == null || code.isEmpty
+          ? const []
+          : code
+                .split(',')
+                .map((e) => e.trim())
+                .where((e) => e.isNotEmpty)
+                .toList();
+    }
+    return nativecodes;
+  }
+
+  /// Narrows [releases] to the build that fits this device's [abis], using the
+  /// given versionCode -> nativecode map. The device ABI order is used as the
+  /// preference order, and builds without nativecode are treated as universal.
+  /// Returns null when no nativecode information applies, so the caller can
+  /// keep its unfiltered selection.
+  static List<dynamic>? filterReleasesByNativecode(
+    List<dynamic> releases,
+    Map<int, List<String>> nativecodes,
+    List<String> abis,
+  ) {
+    if (releases.length <= 1 || abis.isEmpty) {
+      return null;
+    }
+    List<String> nativecodeOf(dynamic release) =>
+        nativecodes[release['versionCode']] ?? const [];
+    if (!releases.any((element) => nativecodeOf(element).isNotEmpty)) {
+      return null;
+    }
+    final compatible = releases
+        .where(
+          (element) =>
+              nativecodeOf(element).isEmpty ||
+              nativecodeOf(element).any(abis.contains),
+        )
+        .toList();
+    if (compatible.isEmpty) {
+      return null;
+    }
+    for (final abi in abis) {
+      final abiReleases = compatible
+          .where((element) => nativecodeOf(element).contains(abi))
+          .toList();
+      if (abiReleases.isNotEmpty) {
+        return abiReleases;
+      }
+    }
+    return compatible;
   }
 }
