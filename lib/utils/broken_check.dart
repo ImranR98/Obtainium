@@ -1,5 +1,7 @@
 import 'dart:io';
 
+import 'package:easy_localization/easy_localization.dart';
+import 'package:obtainium/components/generated_form_model.dart';
 import 'package:obtainium/custom_errors.dart';
 import 'package:obtainium/models/app.dart';
 import 'package:obtainium/providers/settings_provider.dart';
@@ -27,6 +29,20 @@ class BrokenCheckConfig {
     this.filteredReleasesCount,
   });
 }
+
+const List<int> brokenCheckDayOptions = [0, 30, 60, 90, 180, 365, 730];
+const List<int> brokenCheckFailedChecksOptions = [0, 1, 2, 3, 5, 8, 10, 15, 20];
+const List<int> brokenCheckFilteredReleasesOptions = [
+  0,
+  1,
+  2,
+  3,
+  5,
+  8,
+  10,
+  15,
+  20,
+];
 
 int? _resolveThreshold(Object? override, int globalValue) {
   if (override is String && override.isNotEmpty) {
@@ -115,7 +131,120 @@ List<BrokenCheckReason> evaluateBrokenCheckReasons(
   return reasons;
 }
 
+bool isAppPossiblyBroken(App app, SettingsProvider settingsProvider) {
+  if (app.disabled || app.hasPendingRepoRename || isBrokenCheckIgnored(app)) {
+    return false;
+  }
+  return evaluateBrokenCheckReasons(
+    app,
+    resolveBrokenCheckConfig(app.additionalSettings, settingsProvider),
+  ).isNotEmpty;
+}
+
+String brokenCheckReasonLabel(
+  BrokenCheckReason reason,
+  App app,
+  BrokenCheckConfig config,
+) {
+  switch (reason) {
+    case BrokenCheckReason.staleRelease:
+      return tr(
+        'possiblyBrokenReasonStaleRelease',
+        args: ['${config.staleReleaseDays}'],
+      );
+    case BrokenCheckReason.staleVersion:
+      return tr(
+        'possiblyBrokenReasonStaleVersion',
+        args: ['${config.staleVersionDays}'],
+      );
+    case BrokenCheckReason.failedChecks:
+      return plural(
+        'possiblyBrokenReasonFailedChecks',
+        app.consecutiveFailedChecks,
+      );
+    case BrokenCheckReason.archived:
+      return tr('possiblyBrokenReasonArchived');
+    case BrokenCheckReason.filteredReleases:
+      return plural(
+        'possiblyBrokenReasonFilteredReleases',
+        app.newerReleasesFilteredOut ?? 0,
+      );
+  }
+}
+
 bool shouldCountFailedCheck(Object error) =>
     error is! RateLimitError &&
     error is! SocketException &&
     error is! HandshakeException;
+
+String brokenCheckDaysLabel(int days) =>
+    days < 1 ? tr('disabled') : plural('day', days);
+String brokenCheckFailedChecksLabel(int count) =>
+    count < 1 ? tr('disabled') : plural('checks', count);
+String brokenCheckFilteredReleasesLabel(int count) =>
+    count < 1 ? tr('disabled') : plural('releases', count);
+
+List<MapEntry<String, String>> _thresholdSliderOptions(List<int> values) {
+  return [
+    const MapEntry('', 'useGlobalDefault'),
+    const MapEntry('off', 'disabled'),
+    ...values
+        .where((v) => v > 0)
+        .map((v) => MapEntry(v.toString(), v.toString())),
+  ];
+}
+
+List<List<GeneratedFormItem>> brokenCheckOverrideFormItems() {
+  return [
+    [
+      GeneratedFormSlider(
+        'brokenCheckStaleRelease',
+        _thresholdSliderOptions(brokenCheckDayOptions),
+        label: tr('possiblyBrokenOverrideStaleRelease'),
+        value: '',
+        required: false,
+      ),
+    ],
+    [
+      GeneratedFormSlider(
+        'brokenCheckStaleVersion',
+        _thresholdSliderOptions(brokenCheckDayOptions),
+        label: tr('possiblyBrokenOverrideStaleVersion'),
+        value: '',
+        required: false,
+      ),
+    ],
+    [
+      GeneratedFormSlider(
+        'brokenCheckFailedChecks',
+        _thresholdSliderOptions(brokenCheckFailedChecksOptions),
+        label: tr('possiblyBrokenOverrideFailedChecks'),
+        value: '',
+        required: false,
+        numericLabelUnitKey: 'checks',
+      ),
+    ],
+    [
+      GeneratedFormDropdown(
+        'brokenCheckArchived',
+        [
+          const MapEntry('', 'useGlobalDefault'),
+          const MapEntry('off', 'disabled'),
+          const MapEntry('on', 'enabled'),
+        ],
+        label: tr('possiblyBrokenOverrideArchived'),
+        required: false,
+      ),
+    ],
+    [
+      GeneratedFormSlider(
+        'brokenCheckFilteredReleases',
+        _thresholdSliderOptions(brokenCheckFilteredReleasesOptions),
+        label: tr('possiblyBrokenOverrideFilteredReleases'),
+        value: '',
+        required: false,
+        numericLabelUnitKey: 'releases',
+      ),
+    ],
+  ];
+}

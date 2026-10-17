@@ -21,6 +21,7 @@ import 'package:obtainium/providers/external_install_bridge.dart';
 import 'package:obtainium/providers/settings_provider.dart';
 import 'package:obtainium/providers/source_provider.dart';
 import 'package:obtainium/theme.dart';
+import 'package:obtainium/utils/broken_check.dart';
 import 'package:obtainium/utils/locale_utils.dart';
 import 'package:obtainium/utils/native_features.dart';
 import 'package:obtainium/utils/nav_helper.dart';
@@ -298,6 +299,13 @@ class _SettingsPageState extends State<SettingsPage> {
         .read<SourceProvider>()
         .sources
         .any((e) => e.sourceConfigSettingFormItems.isNotEmpty);
+    final brokenAppCount = context
+        .watch<AppsProvider>()
+        .apps
+        .values
+        .map((e) => e.app)
+        .where((a) => isAppPossiblyBroken(a, settingsProvider))
+        .length;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       spacing: AppSpacings.sectionGap,
@@ -334,6 +342,15 @@ class _SettingsPageState extends State<SettingsPage> {
                 childBuilder: (ctx) =>
                     _buildUpdatesSection(ctx, showBgSection, sdk),
               ),
+            ),
+            _settingsRow(
+              context,
+              icon: Icons.warning_amber_rounded,
+              title: tr('possiblyBroken'),
+              subtitle: brokenAppCount > 0
+                  ? plural('apps', brokenAppCount)
+                  : null,
+              onTap: () => NavHelper.pushPossiblyBrokenPage(context),
             ),
             if (hasSourceSpecificSettings)
               _settingsRow(
@@ -442,6 +459,7 @@ class _SettingsPageState extends State<SettingsPage> {
     BuildContext context, {
     required IconData icon,
     required String title,
+    String? subtitle,
     required VoidCallback onTap,
     IconData trailingIcon = Icons.chevron_right,
     double? trailingIconSize,
@@ -455,6 +473,7 @@ class _SettingsPageState extends State<SettingsPage> {
           autofocus: autofocus,
           leading: Icon(icon, color: cs.primary),
           title: Text(title),
+          subtitle: subtitle == null ? null : Text(subtitle),
           trailing: Icon(
             trailingIcon,
             color: cs.onSurfaceVariant,

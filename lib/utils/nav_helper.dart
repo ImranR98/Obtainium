@@ -2,6 +2,7 @@ import 'package:material_ui/material_ui.dart';
 import 'package:obtainium/pages/add_app.dart';
 import 'package:obtainium/pages/app.dart';
 import 'package:obtainium/pages/logs.dart';
+import 'package:obtainium/pages/possibly_broken.dart';
 import 'package:obtainium/pages/settings.dart';
 import 'package:obtainium/providers/settings_provider.dart';
 import 'package:provider/provider.dart';
@@ -59,6 +60,15 @@ class NavHelper {
       MaterialPageRoute(
         traversalEdgeBehavior: traversalEdgeBehaviorFor(context),
         builder: (_) => const LogsPage(),
+      ),
+    );
+  }
+
+  static void pushPossiblyBrokenPage(BuildContext context) {
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        traversalEdgeBehavior: traversalEdgeBehaviorFor(context),
+        builder: (_) => const PossiblyBrokenPage(),
       ),
     );
   }

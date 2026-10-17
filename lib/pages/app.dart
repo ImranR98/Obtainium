@@ -17,6 +17,7 @@ import 'package:obtainium/core/logging/app_logger.dart';
 import 'package:obtainium/providers/settings_provider.dart';
 import 'package:obtainium/providers/source_provider.dart';
 import 'package:obtainium/custom_errors.dart';
+import 'package:obtainium/utils/broken_check.dart';
 import 'package:obtainium/utils/locale_utils.dart';
 import 'package:obtainium/main.dart';
 import 'package:obtainium/utils/nav_helper.dart';
@@ -332,15 +333,19 @@ class _AppPageState extends State<AppPage> {
     AppInMemory? app,
   ) async {
     final s = source;
-    final items = (s?.combinedAppSpecificSettingFormItems ?? []).map((row) {
-      row = row.map((e) {
-        if (app?.app.additionalSettings[e.key] != null) {
-          e.value = app?.app.additionalSettings[e.key];
-        }
-        return e;
-      }).toList();
-      return row;
-    }).toList();
+    final items =
+        <List<GeneratedFormItem>>[
+          ...(s?.combinedAppSpecificSettingFormItems ?? []),
+          ...brokenCheckOverrideFormItems(),
+        ].map((row) {
+          row = row.map((e) {
+            if (app?.app.additionalSettings[e.key] != null) {
+              e.value = app?.app.additionalSettings[e.key];
+            }
+            return e;
+          }).toList();
+          return row;
+        }).toList();
 
     Map<String, dynamic> values = {};
     return Navigator.of(context).push<Map<String, dynamic>>(
@@ -953,6 +958,17 @@ class _AppPageState extends State<AppPage> {
     final pseudo = app?.app != null && isVersionPseudo(app!.app);
     final apkCount = app?.app.apkUrls.length ?? 0;
     final changeLogFn = app != null ? getChangeLogFn(context, app.app) : null;
+    final appData = app?.app;
+    final brokenConfig = appData == null
+        ? null
+        : resolveBrokenCheckConfig(
+            appData.additionalSettings,
+            settingsProvider,
+          );
+    final brokenReasons = appData == null || brokenConfig == null
+        ? const <BrokenCheckReason>[]
+        : evaluateBrokenCheckReasons(appData, brokenConfig);
+    final brokenIgnored = appData != null && isBrokenCheckIgnored(appData);
     return [
       _buildSection(
         true,
@@ -991,6 +1007,37 @@ class _AppPageState extends State<AppPage> {
                         ? TextDecoration.underline
                         : null,
                   ),
+                ),
+              ),
+            ),
+          if (brokenReasons.isNotEmpty || brokenIgnored)
+            Padding(
+              padding: const EdgeInsets.only(top: 4),
+              child: InkWell(
+                onTap: () => NavHelper.pushPossiblyBrokenPage(context),
+                borderRadius: BorderRadius.circular(4),
+                child: Row(
+                  children: [
+                    Icon(
+                      brokenIgnored
+                          ? Icons.info_outline
+                          : Icons.warning_amber_rounded,
+                      size: 16,
+                      color: brokenIgnored ? cs.onSurfaceVariant : cs.error,
+                    ),
+                    const SizedBox(width: 4),
+                    Flexible(
+                      child: Text(
+                        brokenIgnored
+                            ? tr('possiblyBrokenIgnoredNote')
+                            : tr('possiblyBrokenViewDetails'),
+                        style: tt.bodyMedium?.copyWith(
+                          color: cs.primary,
+                          decoration: TextDecoration.underline,
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ),

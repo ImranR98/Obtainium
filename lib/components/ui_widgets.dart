@@ -863,6 +863,130 @@ class ToggleTile extends StatelessWidget {
   }
 }
 
+/// A labelled slider over a fixed list of integer options, with the chosen
+/// value rendered by [labelBuilder]. Mirrors the update-interval/minimum-age
+/// sliders in the settings page and stays its own [StatefulWidget] so dragging
+/// only rebuilds this tile; the value is committed when the drag ends.
+class NumericOptionSliderTile extends StatefulWidget {
+  final String label;
+  final List<int> options;
+  final int value;
+  final ValueChanged<int> onChanged;
+  final String Function(int value) labelBuilder;
+
+  const NumericOptionSliderTile({
+    super.key,
+    required this.label,
+    required this.options,
+    required this.value,
+    required this.onChanged,
+    required this.labelBuilder,
+  });
+
+  @override
+  State<NumericOptionSliderTile> createState() =>
+      _NumericOptionSliderTileState();
+}
+
+class _NumericOptionSliderTileState extends State<NumericOptionSliderTile> {
+  late double sliderVal;
+  bool showLabel = true;
+
+  int get _selected =>
+      widget.options[sliderVal.round().clamp(0, widget.options.length - 1)];
+
+  String get _label => widget.labelBuilder(_selected);
+
+  @override
+  void initState() {
+    super.initState();
+    _syncFromValue();
+  }
+
+  @override
+  void didUpdateWidget(covariant NumericOptionSliderTile oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.value != widget.value ||
+        oldWidget.options.length != widget.options.length) {
+      _syncFromValue();
+    }
+  }
+
+  void _syncFromValue() {
+    final index = widget.options.indexOf(widget.value);
+    sliderVal = (index >= 0 ? index : 0).toDouble();
+  }
+
+  void _commit() => widget.onChanged(_selected);
+
+  @override
+  Widget build(BuildContext context) {
+    final max = (widget.options.length - 1).toDouble();
+    final rawSlider = Slider(
+      value: sliderVal,
+      max: max,
+      divisions: widget.options.length > 1 ? widget.options.length - 1 : null,
+      label: _label,
+      onChanged: (double value) {
+        setState(() {
+          sliderVal = value;
+        });
+      },
+      onChangeStart: (double value) {
+        setState(() {
+          showLabel = false;
+        });
+      },
+      onChangeEnd: (double value) {
+        setState(() {
+          showLabel = true;
+        });
+        _commit();
+      },
+    );
+
+    final Widget slider = context.read<SettingsProvider>().isTV
+        ? Row(
+            children: [
+              IconButton(
+                icon: const Icon(Icons.remove),
+                onPressed: sliderVal <= 0
+                    ? null
+                    : () {
+                        setState(() {
+                          sliderVal = (sliderVal - 1).clamp(0.0, max);
+                        });
+                        _commit();
+                      },
+              ),
+              Expanded(child: Text(_label, textAlign: TextAlign.center)),
+              IconButton(
+                icon: const Icon(Icons.add),
+                onPressed: sliderVal >= max
+                    ? null
+                    : () {
+                        setState(() {
+                          sliderVal = (sliderVal + 1).clamp(0.0, max);
+                        });
+                        _commit();
+                      },
+              ),
+            ],
+          )
+        : rawSlider;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        showLabel
+            ? Text('${widget.label}: $_label')
+            : const SizedBox(height: 20),
+        slider,
+      ],
+    );
+  }
+}
+
 class LegacyMaterialBridge extends StatelessWidget {
   final Widget child;
 

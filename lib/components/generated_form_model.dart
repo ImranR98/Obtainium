@@ -137,9 +137,10 @@ List<List<GeneratedFormItem>> cloneFormItems(
 
 class GeneratedFormSlider extends GeneratedFormItem {
   /// Maps each slider stop's value to a label. Labels are either translation
-  /// keys or plain numeric day counts (resolved by the renderer with the
-  /// pluralized "day" string).
+  /// keys or plain numeric counts (resolved by the renderer with the
+  /// pluralized [numericLabelUnitKey] string).
   final List<MapEntry<String, String>>? opts;
+  final String numericLabelUnitKey;
   late bool required;
 
   GeneratedFormSlider(
@@ -148,6 +149,7 @@ class GeneratedFormSlider extends GeneratedFormItem {
     super.label,
     String super.value = '',
     this.required = true,
+    this.numericLabelUnitKey = 'day',
     List<String? Function(String? value)> super.additionalValidators = const [],
   });
 
@@ -164,6 +166,7 @@ class GeneratedFormSlider extends GeneratedFormItem {
       label: label,
       value: value,
       required: required,
+      numericLabelUnitKey: numericLabelUnitKey,
       additionalValidators: List.from(additionalValidators),
     );
   }

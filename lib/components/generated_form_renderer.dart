@@ -724,7 +724,9 @@ class _SliderFormItemState extends State<_SliderFormItem> {
 
   String _optLabel(MapEntry<String, String> opt) {
     final days = int.tryParse(opt.value);
-    return days != null ? plural('day', days) : tr(opt.value);
+    return days != null
+        ? plural(widget.formItem.numericLabelUnitKey, days)
+        : tr(opt.value);
   }
 
   String get _label => _optLabel(opts[_index]);

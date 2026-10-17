@@ -15,6 +15,7 @@ import 'package:obtainium/utils/format_utils.dart';
 import 'package:obtainium/providers/notifications_provider.dart';
 import 'package:obtainium/providers/settings_provider.dart';
 import 'package:obtainium/providers/source_provider.dart';
+import 'package:obtainium/utils/broken_check.dart';
 import 'package:obtainium/utils/nav_helper.dart';
 // AppsFilter and AppListBuilder are defined below in this file.
 import 'package:provider/provider.dart';
@@ -324,6 +325,18 @@ class AppListTile extends StatelessWidget {
     final showChangesFn = getChangeLogFn(context, _app);
     final hasUpdate = !_app.disabled && isAppUpdateable(_app, settingsProvider);
     final isTV = settingsProvider.isTV;
+    final brokenConfig = resolveBrokenCheckConfig(
+      _app.additionalSettings,
+      settingsProvider,
+    );
+    final brokenReasons = settingsProvider.showBrokenCheckIndicator
+        ? evaluateBrokenCheckReasons(_app, brokenConfig)
+        : const <BrokenCheckReason>[];
+    final showBrokenIndicator =
+        brokenReasons.isNotEmpty &&
+        !_app.disabled &&
+        !_app.hasPendingRepoRename &&
+        !isBrokenCheckIgnored(_app);
     final Widget trailingRow = LayoutBuilder(
       builder: (context, constraints) => Row(
         mainAxisSize: MainAxisSize.min,
@@ -493,15 +506,41 @@ class AppListTile extends StatelessWidget {
                   settingsProvider.selectionClick();
                   onToggleSelected();
                 },
-                title: Text(
-                  maxLines: 1,
-                  appInMemory.name,
-                  style: TextStyle(
-                    overflow: TextOverflow.ellipsis,
-                    fontWeight: _app.pinned
-                        ? FontWeight.bold
-                        : FontWeight.normal,
-                  ),
+                title: Row(
+                  children: [
+                    Flexible(
+                      child: Text(
+                        maxLines: 1,
+                        appInMemory.name,
+                        style: TextStyle(
+                          overflow: TextOverflow.ellipsis,
+                          fontWeight: _app.pinned
+                              ? FontWeight.bold
+                              : FontWeight.normal,
+                        ),
+                      ),
+                    ),
+                    if (showBrokenIndicator)
+                      Padding(
+                        padding: const EdgeInsets.only(left: 4),
+                        child: Tooltip(
+                          message: brokenReasons
+                              .map(
+                                (r) => brokenCheckReasonLabel(
+                                  r,
+                                  _app,
+                                  brokenConfig,
+                                ),
+                              )
+                              .join('\n'),
+                          child: Icon(
+                            Icons.warning_amber_rounded,
+                            size: 14,
+                            color: Theme.of(context).colorScheme.error,
+                          ),
+                        ),
+                      ),
+                  ],
                 ),
                 subtitle: isDense
                     ? null

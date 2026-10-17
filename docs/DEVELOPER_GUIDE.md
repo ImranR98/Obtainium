@@ -470,6 +470,29 @@ Background work is scheduled via **`workmanager`** (Android periodic tasks). The
   pull-to-refresh UI freeze: it caps concurrent network/parse load and cuts rebuilds from
   O(N) to O(N/chunk).
 
+### Possibly-broken source detection (`utils/broken_check.dart`)
+
+Apps that will likely never receive an update are flagged by evaluating local
+signals; there is no separate scheduled job:
+
+- General: `App.releaseDate` age, `App.latestVersionChangedAt` age (set when a
+  check finds a new version), and `App.consecutiveFailedChecks` (incremented in
+  `checkUpdates` for non-transient failures only, reset by any successful fetch).
+- Source-specific: `App.isArchived` (GitHub fetches the repo JSON when the
+  heuristic is enabled for the app, reusing the repo-rename response when
+  available; GitLab reads it from the project call it already makes) and
+  `App.newerReleasesFilteredOut` (counted inside GitHub's release selection).
+
+`resolveBrokenCheckConfig` merges the global `SettingsProvider` values with the
+per-app overrides in `additionalSettings` (`''` = use global, `'off'` =
+disabled, a number = threshold). `evaluateBrokenCheckReasons` is a pure
+function, so the settings page (`pages/possibly_broken.dart`), the app list
+indicator and the app detail link all reflect setting changes immediately.
+`isAppPossiblyBroken` additionally excludes disabled apps, apps pending a repo
+rename, and ignored apps. The two opt-outs live on `App`:
+`brokenCheckEnabled` (permanent) and `brokenCheckDismissedVersion` (ignored
+while it equals `latestVersion`).
+
 ### Installation (`apps_provider_install.dart`)
 
 `AppsProviderInstall` extension handles the full pipeline:
