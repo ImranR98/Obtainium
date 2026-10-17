@@ -377,7 +377,7 @@
     "updateHealthReasonStaleVersion": "Not updated in over {} days",
     "updateHealthStaleReleaseCheck": "Flag apps whose latest release is older than",
     "updateHealthStaleVersionCheck": "Flag apps that have not been updated in",
-    "updateHealthViewDetails": "This app config may prevent updates - view details",
+    "updateHealthViewDetails": "This app config may prevent updates",
     "pseudoVersion": "pseudo-version",
     "pseudoVersionInUse": "A pseudo-version is in use",
     "randomColour": "Random colour",
