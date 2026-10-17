@@ -223,6 +223,7 @@
     "githubSourceNote": "يمكن تجنب الحد المسموح لـ GitHub باستخدام مفتاح API.",
     "githubStarredRepos": "مستودعات GitHub المفضلة",
     "globalApkFilterRegEx": "Global APK filter regex",
+    "globalVersionExtractionRegEx": "Global version trimming regex",
     "gitlabPATLabel": "رمز الوصول الشخصي لـ GitLab",
     "googleVerificationWarningP1": "(جوجل) أعلن أنه، بدءاً من عام 2026/2027، كل التطبيقات على أجهزة (أندرويد) مصدقة ستطلب من المطور تقديم تفاصيل الهوية الشخصية مباشرة إلى (غوغل).\n\nوبما أن مطوري هذا التطبيق لا يوافقون على هذا الشرط، فإن Obtainium لن يعمل بعد ذلك الوقت على أجهزة أندرويدية معتمدة.",
     "googleVerificationWarningP2": "تفضل بزيارة الموقع https://keepandroidopen.org/ للحصول على مزيد من المعلومات.",

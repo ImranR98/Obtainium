@@ -228,6 +228,7 @@
     "githubSourceNote": "Limit požadavků služby GitHub lze obejít pomocí klíče API.",
     "githubStarredRepos": "Repozitáře na GitHubu označené hvězdičkou",
     "globalApkFilterRegEx": "Global APK filter regex",
+    "globalVersionExtractionRegEx": "Global version trimming regex",
     "gitlabPATLabel": "Osobní přístupový token GitLab",
     "googleVerificationWarningP1": "Společnost Google oznámila, že počínaje rokem 2026 / 2027 budou všechny aplikace na \"certifikovaných\" zařízeních pro Android vyžadovat, aby vývojář předložil osobní údaje o identitě přímo společnosti Google.\n\nVzhledem k tomu, vývojáři této aplikace nesouhlasí s tímto požadavkem, Obstainium již nebude pracovat na certifikovaných Android zařízení po této době.",
     "googleVerificationWarningP2": "Další informace získáte na adrese https: / / keepandroidopen.org.",

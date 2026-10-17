@@ -70,6 +70,31 @@ String? extractVersion(
   return version;
 }
 
+String? extractVersionWithGlobalDefault(
+  Map<String, dynamic> additionalSettings,
+  SettingsProvider settingsProvider,
+  String stringToCheck, {
+  bool allowGlobalDefault = true,
+}) {
+  final regEx = additionalSettings['versionExtractionRegEx'] as String?;
+  if (regEx?.isNotEmpty == true || !allowGlobalDefault) {
+    return extractVersion(
+      regEx,
+      additionalSettings['matchGroupToUse'] as String?,
+      stringToCheck,
+    );
+  }
+  try {
+    return extractVersion(
+      settingsProvider.globalVersionExtractionRegEx,
+      settingsProvider.globalMatchGroupToUse,
+      stringToCheck,
+    );
+  } on NoVersionError {
+    return null;
+  }
+}
+
 /// Replaces `$N` references in a string with the corresponding regex match
 /// groups. A `\` before a reference keeps it literal.
 String? _replaceMatchGroupsInString(

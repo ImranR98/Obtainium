@@ -223,6 +223,7 @@
     "githubSourceNote": "GitHub-hastighetsbegränsning kan undvikas med en API-nyckel.",
     "githubStarredRepos": "GitHub Stjärnmärkta Förråd",
     "globalApkFilterRegEx": "Global APK filter regex",
+    "globalVersionExtractionRegEx": "Global version trimming regex",
     "gitlabPATLabel": "Personligt åtkomsttoken för GitLab",
     "googleVerificationWarningP1": "Google har meddelat att alla appar på \"certifierade\" Android-enheter kommer att kräva att utvecklaren skickar personuppgifter direkt till Google.\n\nEftersom utvecklarna av denna app inte samtycker till detta krav kommer Obtainium inte längre att arbeta med certifierade Android-enheter efter den tiden.",
     "googleVerificationWarningP2": "Gå till https://keepandroidopen.org/ för mer information.",

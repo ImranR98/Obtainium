@@ -223,6 +223,7 @@
     "githubSourceNote": "Лімітування швидкості GitHub можна уникнути, використовуючи ключ API.",
     "githubStarredRepos": "Відзначені репозиторії GitHub",
     "globalApkFilterRegEx": "Global APK filter regex",
+    "globalVersionExtractionRegEx": "Global version trimming regex",
     "gitlabPATLabel": "Особистий токен GitLab (Увімкнення пошуку та краще виявлення APK)",
     "googleVerificationWarningP1": "Google оголосила, що, починаючи з 2026/2027, всі додатки на \"сертифікованих\" пристроях Android будуть вимагати розробника, щоб подати особисті дані в Інтернеті безпосередньо на Google.\n\nОскільки розробники цієї програми не погоджуються з цією вимогою, Obtainium більше не працюватиме на сертифікованих пристроях Android після цього часу.",
     "googleVerificationWarningP2": "Перейти на https://keepandroidopen.org/ для отримання додаткової інформації.",

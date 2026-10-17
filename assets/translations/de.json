@@ -223,6 +223,7 @@
     "githubSourceNote": "Die GitHub-Ratenbegrenzung kann mit einem API-Schlüssel umgangen werden.",
     "githubStarredRepos": "Mit Stern markierte GitHub Repos",
     "globalApkFilterRegEx": "Global APK filter regex",
+    "globalVersionExtractionRegEx": "Global version trimming regex",
     "gitlabPATLabel": "Persönlicher Zugangstoken für GitLab",
     "googleVerificationWarningP1": "Google hat bekannt gegeben, dass, ab 2026/2027, alle Apps auf \"zertifizierten\" Android-Geräten den Entwickler benötigen, um persönliche Identitätsdetails direkt an Google einzureichen.\n\nDa die Entwickler dieser App dieser Anforderung nicht zustimmen, Obtainium wird nicht mehr auf zertifizierten Android-Geräten nach dieser Zeit arbeiten.",
     "googleVerificationWarningP2": "Weitere Informationen finden Sie unter https://keepandroidopen.org/.",
