@@ -32,6 +32,7 @@
     },
     "app": "برنامه",
     "appAlreadyAdded": "برنامه قبلاً اضافه شده است",
+    "appDisabledNoUpdateCheck": "App is disabled, so update checks are skipped",
     "appHasMoreThanOnePackage": "{} بیش از یک بسته دارد:",
     "appId": "شناسه برنامه",
     "appIdMismatch": "شناسه بسته دانلود شده با شناسه برنامه موجود مطابقت ندارد",

@@ -601,9 +601,7 @@ class _AppPageState extends State<AppPage> {
               : () => toggleAppDisabled(app),
           tooltip: app.app.disabled ? tr('enableApp') : tr('disableApp'),
           icon: Icon(
-            app.app.disabled
-                ? Icons.visibility_outlined
-                : Icons.visibility_off_outlined,
+            app.app.disabled ? Icons.play_arrow_rounded : Icons.block_outlined,
           ),
         ),
       IconButton(
@@ -1278,6 +1276,10 @@ class _AppPageState extends State<AppPage> {
                   child: RefreshIndicator(
                     onRefresh: () async {
                       if (app != null) {
+                        if (app.app.disabled) {
+                          showMessage(tr('appDisabledNoUpdateCheck'), context);
+                          return;
+                        }
                         await getUpdate(context);
                       }
                     },

@@ -44,7 +44,7 @@ void main() {
   });
 
   group('AppListBuilder.reorder with disabled apps', () {
-    test('keeps disabled apps between installed and not-installed', () {
+    test('moves disabled apps to the bottom when burying is off', () {
       final installed = _aim(_app(id: 'a', installedVersion: '2.0.0'));
       final disabledInstalled = _aim(
         _app(id: 'b', installedVersion: '2.0.0', disabled: true),
@@ -55,20 +55,51 @@ void main() {
       final reordered = AppListBuilder.reorder(
         [notInstalled, disabledNotInstalled, installed, disabledInstalled],
         false,
-        true,
+        false,
         {},
       );
-      expect(reordered.map((e) => e.app.id).toList(), ['a', 'd', 'b', 'c']);
+      expect(reordered.map((e) => e.app.id).toList(), ['c', 'a', 'd', 'b']);
     });
 
-    test('does not reorder disabled apps when burying is off', () {
-      final installed = _aim(_app(id: 'a', installedVersion: '2.0.0'));
-      final disabledInstalled = _aim(
-        _app(id: 'b', installedVersion: '2.0.0', disabled: true),
+    test(
+      'keeps disabled apps below installed and not-installed when burying',
+      () {
+        final installed = _aim(_app(id: 'a', installedVersion: '2.0.0'));
+        final disabledInstalled = _aim(
+          _app(id: 'b', installedVersion: '2.0.0', disabled: true),
+        );
+        final notInstalled = _aim(_app(id: 'c'));
+        final disabledNotInstalled = _aim(_app(id: 'd', disabled: true));
+
+        final reordered = AppListBuilder.reorder(
+          [notInstalled, disabledNotInstalled, installed, disabledInstalled],
+          false,
+          true,
+          {},
+        );
+        expect(reordered.map((e) => e.app.id).toList(), ['a', 'c', 'b', 'd']);
+      },
+    );
+
+    test('keeps pinned disabled apps at the bottom', () {
+      final pinned = _aim(
+        _app(id: 'a', installedVersion: '2.0.0', pinned: true),
       );
-      final original = [disabledInstalled, installed];
-      final reordered = AppListBuilder.reorder(original, false, false, {});
-      expect(reordered.map((e) => e.app.id).toList(), ['b', 'a']);
+      final disabledPinned = _aim(
+        _app(id: 'b', installedVersion: '2.0.0', pinned: true, disabled: true),
+      );
+      final unpinned = _aim(_app(id: 'c', installedVersion: '2.0.0'));
+      final disabled = _aim(
+        _app(id: 'd', installedVersion: '2.0.0', disabled: true),
+      );
+
+      final reordered = AppListBuilder.reorder(
+        [disabled, disabledPinned, unpinned, pinned],
+        false,
+        false,
+        {},
+      );
+      expect(reordered.map((e) => e.app.id).toList(), ['a', 'c', 'd', 'b']);
     });
   });
 }

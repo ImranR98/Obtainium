@@ -32,6 +32,7 @@
     },
     "app": "ആപ്പ്",
     "appAlreadyAdded": "ആപ്പ് ഇതിനകം കൂട്ടിച്ചേർത്തിട്ടുണ്ട്",
+    "appDisabledNoUpdateCheck": "App is disabled, so update checks are skipped",
     "appHasMoreThanOnePackage": "{}-ന് ഒന്നിൽ കൂടുതൽ പാക്കേജുകൾ ഉണ്ട്:",
     "appId": "ആപ്പ് ഐഡി",
     "appIdMismatch": "ഡൗൺലോഡ് ചെയ്ത പാക്കേജ് ഐഡി നിലവിലുള്ള ആപ്പ് ഐഡിയുമായി ചേരുന്നില്ല",

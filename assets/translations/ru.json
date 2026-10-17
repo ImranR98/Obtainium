@@ -33,6 +33,7 @@
     },
     "app": "Приложение",
     "appAlreadyAdded": "Приложение уже добавлено",
+    "appDisabledNoUpdateCheck": "App is disabled, so update checks are skipped",
     "appHasMoreThanOnePackage": "{} имеет более одного пакета:",
     "appId": "ID приложения",
     "appIdMismatch": "ID загруженного пакета не совпадает с существующим ID приложения",

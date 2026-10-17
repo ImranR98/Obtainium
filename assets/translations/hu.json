@@ -32,6 +32,7 @@
     },
     "app": "Alkalmazás",
     "appAlreadyAdded": "Már hozzá van adva az Obtainiumhoz az alkalmazás",
+    "appDisabledNoUpdateCheck": "App is disabled, so update checks are skipped",
     "appHasMoreThanOnePackage": "A(z) {} egynél több csomaggal rendelkezik:",
     "appId": "Alkalmazás-azonosító",
     "appIdMismatch": "A letöltött csomagazonosító nem egyezik a meglévő alkalmazás azonosítójával",

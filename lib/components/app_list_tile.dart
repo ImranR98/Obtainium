@@ -1011,27 +1011,25 @@ class AppListBuilder {
     }
 
     if (buryNonInstalled) {
-      final tempDisabled = <AppInMemory>[];
-      final tempNotInstalled = <AppInMemory>[];
+      final temp = <AppInMemory>[];
       apps = apps.where((sa) {
-        if (sa.app.disabled) {
-          tempDisabled.add(sa);
-          return false;
-        }
         if (sa.app.installedVersion == null) {
-          tempNotInstalled.add(sa);
+          temp.add(sa);
           return false;
         }
         return true;
       }).toList();
-      apps = [...apps, ...tempDisabled, ...tempNotInstalled];
+      apps = [...apps, ...temp];
     }
 
     final tempRenamed = <AppInMemory>[];
     final tempPinned = <AppInMemory>[];
     final tempNotPinned = <AppInMemory>[];
+    final tempDisabled = <AppInMemory>[];
     for (var a in apps) {
-      if (a.app.hasPendingRepoRename) {
+      if (a.app.disabled) {
+        tempDisabled.add(a);
+      } else if (a.app.hasPendingRepoRename) {
         tempRenamed.add(a);
       } else if (a.app.pinned) {
         tempPinned.add(a);
@@ -1039,7 +1037,7 @@ class AppListBuilder {
         tempNotPinned.add(a);
       }
     }
-    apps = [...tempRenamed, ...tempPinned, ...tempNotPinned];
+    apps = [...tempRenamed, ...tempPinned, ...tempNotPinned, ...tempDisabled];
 
     return apps;
   }

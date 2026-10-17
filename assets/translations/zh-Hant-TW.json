@@ -32,6 +32,7 @@
     },
     "app": "應用程式",
     "appAlreadyAdded": "應用程式已加入",
+    "appDisabledNoUpdateCheck": "App is disabled, so update checks are skipped",
     "appHasMoreThanOnePackage": "{} 有多個套件：",
     "appId": "應用程式識別碼",
     "appIdMismatch": "下載的套件識別碼與現有應用程式識別碼不符",

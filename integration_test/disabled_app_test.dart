@@ -42,6 +42,11 @@ void main() {
     final disabledTile = find.widgetWithText(AppListTile, 'E2E Disabled App');
     final enabledTile = find.widgetWithText(AppListTile, 'E2E Enabled App');
     expect(disabledTile, findsOneWidget);
+    expect(
+      tester.getTopLeft(disabledTile).dy,
+      greaterThan(tester.getTopLeft(enabledTile).dy),
+      reason: 'disabled apps sort to the bottom of the list',
+    );
 
     // Disabled apps are excluded from automatic and manual update checks.
     final appsProvider = readProvider<AppsProvider>();
