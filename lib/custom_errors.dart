@@ -269,25 +269,37 @@ class MultiAppMultiError extends ObtainiumError {
   }) =>
       '$errString [${list2FriendlyString(appIds.map((id) => appIdNames.containsKey(id) == true ? '${appIdNames[id]}${includeIdsWithNames ? ' ($id)' : ''}' : id).toList())}]';
 
-  /// Joins all error groups for a single notification, capping the body and
-  /// summarizing any surplus groups.
-  String notificationErrorString({int maxChars = 1800}) {
+  String _notificationErrorSummary(int remaining) => remaining <= 0
+      ? ''
+      : '\n\n${remaining == 1 ? tr('andOneMoreError') : plural('andNMoreErrors', remaining)}';
+
+  /// Joins all error groups for a single notification, capping the body below
+  /// Android's notification text limit and summarizing any surplus groups.
+  String notificationErrorString({int maxChars = 900}) {
     final entries = idsByErrorString.entries.toList();
-    final buffer = StringBuffer();
-    for (var i = 0; i < entries.length; i++) {
-      final text = errorsAppsString(entries[i].key, entries[i].value);
-      final separator = i == 0 ? '' : '\n\n';
-      if (i > 0 && buffer.length + separator.length + text.length > maxChars) {
-        final remaining = entries.length - i;
-        buffer.write(
-          '\n\n${remaining == 1 ? tr('andOneMoreError') : plural('andNMoreErrors', remaining)}',
-        );
-        break;
-      }
-      buffer.write(separator);
-      buffer.write(text);
+    if (entries.isEmpty) return '';
+    final groupTexts = entries
+        .map((entry) => errorsAppsString(entry.key, entry.value))
+        .toList();
+    final full = groupTexts.join('\n\n');
+    if (full.length <= maxChars) return full;
+
+    const summaryReserve = 80;
+    final contentBudget = maxChars - summaryReserve;
+    var included = '';
+    var includedGroups = 0;
+    for (final text in groupTexts) {
+      final candidate = included.isEmpty ? text : '$included\n\n$text';
+      if (candidate.length > contentBudget) break;
+      included = candidate;
+      includedGroups++;
     }
-    return buffer.toString();
+    if (includedGroups == 0) {
+      final cutoff = (contentBudget - 1).clamp(0, groupTexts.first.length);
+      included = '${groupTexts.first.substring(0, cutoff).trimRight()}…';
+      return '$included${_notificationErrorSummary(groupTexts.length - 1)}';
+    }
+    return '$included${_notificationErrorSummary(groupTexts.length - includedGroups)}';
   }
 
   @override
