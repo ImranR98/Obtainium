@@ -138,8 +138,8 @@ class App {
   final int consecutiveFailedChecks;
   final bool? isArchived;
   final int? newerReleasesFilteredOut;
-  final bool brokenCheckEnabled;
-  final String? brokenCheckDismissedVersion;
+  final bool updateHealthEnabled;
+  final String? updateHealthDismissedVersion;
 
   const App({
     required this.id,
@@ -167,8 +167,8 @@ class App {
     this.consecutiveFailedChecks = 0,
     this.isArchived,
     this.newerReleasesFilteredOut,
-    this.brokenCheckEnabled = true,
-    this.brokenCheckDismissedVersion,
+    this.updateHealthEnabled = true,
+    this.updateHealthDismissedVersion,
   });
 
   @override
@@ -226,8 +226,8 @@ class App {
     int? consecutiveFailedChecks,
     Object? isArchived = _sentinel,
     Object? newerReleasesFilteredOut = _sentinel,
-    bool? brokenCheckEnabled,
-    Object? brokenCheckDismissedVersion = _sentinel,
+    bool? updateHealthEnabled,
+    Object? updateHealthDismissedVersion = _sentinel,
   }) {
     return App(
       id: id ?? this.id,
@@ -280,10 +280,10 @@ class App {
       newerReleasesFilteredOut: newerReleasesFilteredOut == _sentinel
           ? this.newerReleasesFilteredOut
           : newerReleasesFilteredOut as int?,
-      brokenCheckEnabled: brokenCheckEnabled ?? this.brokenCheckEnabled,
-      brokenCheckDismissedVersion: brokenCheckDismissedVersion == _sentinel
-          ? this.brokenCheckDismissedVersion
-          : brokenCheckDismissedVersion as String?,
+      updateHealthEnabled: updateHealthEnabled ?? this.updateHealthEnabled,
+      updateHealthDismissedVersion: updateHealthDismissedVersion == _sentinel
+          ? this.updateHealthDismissedVersion
+          : updateHealthDismissedVersion as String?,
     );
   }
 
@@ -341,9 +341,9 @@ class App {
         consecutiveFailedChecks: json['consecutiveFailedChecks'] ?? 0,
         isArchived: json['isArchived'] as bool?,
         newerReleasesFilteredOut: json['newerReleasesFilteredOut'] as int?,
-        brokenCheckEnabled: json['brokenCheckEnabled'] ?? true,
-        brokenCheckDismissedVersion:
-            json['brokenCheckDismissedVersion'] as String?,
+        updateHealthEnabled: json['updateHealthEnabled'] ?? true,
+        updateHealthDismissedVersion:
+            json['updateHealthDismissedVersion'] as String?,
       );
     } on TypeError catch (e) {
       AppLogger.error(
@@ -381,8 +381,8 @@ class App {
     'consecutiveFailedChecks': consecutiveFailedChecks,
     'isArchived': isArchived,
     'newerReleasesFilteredOut': newerReleasesFilteredOut,
-    'brokenCheckEnabled': brokenCheckEnabled,
-    'brokenCheckDismissedVersion': brokenCheckDismissedVersion,
+    'updateHealthEnabled': updateHealthEnabled,
+    'updateHealthDismissedVersion': updateHealthDismissedVersion,
   };
 }
 

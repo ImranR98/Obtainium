@@ -21,7 +21,7 @@ import 'package:obtainium/providers/external_install_bridge.dart';
 import 'package:obtainium/providers/settings_provider.dart';
 import 'package:obtainium/providers/source_provider.dart';
 import 'package:obtainium/theme.dart';
-import 'package:obtainium/utils/broken_check.dart';
+import 'package:obtainium/utils/update_health.dart';
 import 'package:obtainium/utils/locale_utils.dart';
 import 'package:obtainium/utils/native_features.dart';
 import 'package:obtainium/utils/nav_helper.dart';
@@ -299,12 +299,12 @@ class _SettingsPageState extends State<SettingsPage> {
         .read<SourceProvider>()
         .sources
         .any((e) => e.sourceConfigSettingFormItems.isNotEmpty);
-    final brokenAppCount = context
+    final updateHealthAppCount = context
         .watch<AppsProvider>()
         .apps
         .values
         .map((e) => e.app)
-        .where((a) => isAppPossiblyBroken(a, settingsProvider))
+        .where((a) => hasUpdateHealthIssues(a, settingsProvider))
         .length;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -346,11 +346,11 @@ class _SettingsPageState extends State<SettingsPage> {
             _settingsRow(
               context,
               icon: Icons.warning_amber_rounded,
-              title: tr('possiblyBroken'),
-              subtitle: brokenAppCount > 0
-                  ? plural('apps', brokenAppCount)
+              title: tr('updateHealth'),
+              subtitle: updateHealthAppCount > 0
+                  ? plural('apps', updateHealthAppCount)
                   : null,
-              onTap: () => NavHelper.pushPossiblyBrokenPage(context),
+              onTap: () => NavHelper.pushUpdateHealthPage(context),
             ),
             if (hasSourceSpecificSettings)
               _settingsRow(

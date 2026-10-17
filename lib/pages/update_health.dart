@@ -6,14 +6,14 @@ import 'package:obtainium/models/app.dart';
 import 'package:obtainium/providers/apps_provider.dart';
 import 'package:obtainium/providers/settings_provider.dart';
 import 'package:obtainium/theme.dart';
-import 'package:obtainium/utils/broken_check.dart';
+import 'package:obtainium/utils/update_health.dart';
 import 'package:obtainium/utils/nav_helper.dart';
 import 'package:provider/provider.dart';
 
 enum _IgnoreAction { currentVersion, permanently }
 
-class PossiblyBrokenPage extends StatelessWidget {
-  const PossiblyBrokenPage({super.key});
+class UpdateHealthPage extends StatelessWidget {
+  const UpdateHealthPage({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -21,15 +21,15 @@ class PossiblyBrokenPage extends StatelessWidget {
     final appsProvider = context.watch<AppsProvider>();
     final apps = appsProvider.apps.values.map((e) => e.app).toList();
     final flagged =
-        apps.where((a) => isAppPossiblyBroken(a, settingsProvider)).toList()
+        apps.where((a) => hasUpdateHealthIssues(a, settingsProvider)).toList()
           ..sort(_byName);
-    final ignored = apps.where(isBrokenCheckIgnored).toList()..sort(_byName);
+    final ignored = apps.where(isUpdateHealthIgnored).toList()..sort(_byName);
 
     return Scaffold(
       backgroundColor: Theme.of(context).colorScheme.surface,
       body: CustomScrollView(
         slivers: [
-          CustomAppBar(title: tr('possiblyBroken')),
+          CustomAppBar(title: tr('updateHealth')),
           SliverPadding(
             padding: AppPaddings.page,
             sliver: SliverToBoxAdapter(
@@ -57,7 +57,7 @@ class PossiblyBrokenPage extends StatelessWidget {
                     context,
                     appsProvider,
                     settingsProvider,
-                    title: tr('possiblyBrokenDetectedApps'),
+                    title: tr('updateHealthDetectedApps'),
                     apps: flagged,
                     ignoredSection: false,
                   ),
@@ -71,7 +71,7 @@ class PossiblyBrokenPage extends StatelessWidget {
                     context,
                     appsProvider,
                     settingsProvider,
-                    title: tr('possiblyBrokenIgnoredApps'),
+                    title: tr('updateHealthIgnoredApps'),
                     apps: ignored,
                     ignoredSection: true,
                   ),
@@ -95,48 +95,48 @@ class PossiblyBrokenPage extends StatelessWidget {
       spacing: 3,
       children: shapeCardTiles([
         _sliderTile(
-          label: tr('possiblyBrokenStaleReleaseCheck'),
-          options: brokenCheckDayOptions,
-          value: settingsProvider.brokenCheckStaleReleaseDays,
-          labelBuilder: brokenCheckDaysLabel,
+          label: tr('updateHealthStaleReleaseCheck'),
+          options: updateHealthDayOptions,
+          value: settingsProvider.updateHealthStaleReleaseDays,
+          labelBuilder: updateHealthDaysLabel,
           onChanged: (value) =>
-              settingsProvider.brokenCheckStaleReleaseDays = value,
+              settingsProvider.updateHealthStaleReleaseDays = value,
         ),
         _sliderTile(
-          label: tr('possiblyBrokenStaleVersionCheck'),
-          options: brokenCheckDayOptions,
-          value: settingsProvider.brokenCheckStaleVersionDays,
-          labelBuilder: brokenCheckDaysLabel,
+          label: tr('updateHealthStaleVersionCheck'),
+          options: updateHealthDayOptions,
+          value: settingsProvider.updateHealthStaleVersionDays,
+          labelBuilder: updateHealthDaysLabel,
           onChanged: (value) =>
-              settingsProvider.brokenCheckStaleVersionDays = value,
+              settingsProvider.updateHealthStaleVersionDays = value,
         ),
         _sliderTile(
-          label: tr('possiblyBrokenFailedChecksCheck'),
-          options: brokenCheckFailedChecksOptions,
-          value: settingsProvider.brokenCheckFailedChecksCount,
-          labelBuilder: brokenCheckFailedChecksLabel,
+          label: tr('updateHealthFailedChecksCheck'),
+          options: updateHealthFailedChecksOptions,
+          value: settingsProvider.updateHealthFailedChecksCount,
+          labelBuilder: updateHealthFailedChecksLabel,
           onChanged: (value) =>
-              settingsProvider.brokenCheckFailedChecksCount = value,
+              settingsProvider.updateHealthFailedChecksCount = value,
         ),
         ToggleTile(
-          label: tr('possiblyBrokenArchivedCheck'),
-          value: settingsProvider.brokenCheckArchivedEnabled,
+          label: tr('updateHealthArchivedCheck'),
+          value: settingsProvider.updateHealthArchivedEnabled,
           onChanged: (value) =>
-              settingsProvider.brokenCheckArchivedEnabled = value,
+              settingsProvider.updateHealthArchivedEnabled = value,
         ),
         _sliderTile(
-          label: tr('possiblyBrokenFilteredReleasesCheck'),
-          options: brokenCheckFilteredReleasesOptions,
-          value: settingsProvider.brokenCheckFilteredReleasesCount,
-          labelBuilder: brokenCheckFilteredReleasesLabel,
+          label: tr('updateHealthFilteredReleasesCheck'),
+          options: updateHealthFilteredReleasesOptions,
+          value: settingsProvider.updateHealthFilteredReleasesCount,
+          labelBuilder: updateHealthFilteredReleasesLabel,
           onChanged: (value) =>
-              settingsProvider.brokenCheckFilteredReleasesCount = value,
+              settingsProvider.updateHealthFilteredReleasesCount = value,
         ),
         ToggleTile(
-          label: tr('showBrokenCheckIndicator'),
-          value: settingsProvider.showBrokenCheckIndicator,
+          label: tr('showUpdateHealthIndicator'),
+          value: settingsProvider.showUpdateHealthIndicator,
           onChanged: (value) =>
-              settingsProvider.showBrokenCheckIndicator = value,
+              settingsProvider.showUpdateHealthIndicator = value,
         ),
       ]),
     );
@@ -166,7 +166,7 @@ class PossiblyBrokenPage extends StatelessWidget {
       child: Padding(
         padding: const EdgeInsets.symmetric(vertical: 24),
         child: Text(
-          tr('possiblyBrokenNoApps'),
+          tr('updateHealthNoApps'),
           textAlign: TextAlign.center,
           style: Theme.of(context).textTheme.bodyMedium,
         ),
@@ -205,11 +205,11 @@ class PossiblyBrokenPage extends StatelessWidget {
     SettingsProvider settingsProvider,
     App app,
   ) {
-    final config = resolveBrokenCheckConfig(
+    final config = resolveUpdateHealthConfig(
       app.additionalSettings,
       settingsProvider,
     );
-    final reasons = evaluateBrokenCheckReasons(app, config);
+    final reasons = evaluateUpdateHealthReasons(app, config);
     final metrics = AppTileMetrics(settingsProvider.appListDensity);
     return AppListRowCard(
       child: ListTile(
@@ -230,7 +230,9 @@ class PossiblyBrokenPage extends StatelessWidget {
           overflow: TextOverflow.ellipsis,
         ),
         subtitle: Text(
-          reasons.map((r) => brokenCheckReasonLabel(r, app, config)).join('\n'),
+          reasons
+              .map((r) => updateHealthReasonLabel(r, app, config))
+              .join('\n'),
         ),
         isThreeLine: reasons.length > 1,
         trailing: PopupMenuButton<_IgnoreAction>(
@@ -282,17 +284,17 @@ class PossiblyBrokenPage extends StatelessWidget {
           overflow: TextOverflow.ellipsis,
         ),
         subtitle: Text(
-          app.brokenCheckEnabled
-              ? tr('possiblyBrokenIgnoredForVersion')
-              : tr('possiblyBrokenIgnoredPermanently'),
+          app.updateHealthEnabled
+              ? tr('updateHealthIgnoredForVersion')
+              : tr('updateHealthIgnoredPermanently'),
         ),
         trailing: IconButton(
           tooltip: tr('restore'),
           icon: const Icon(Icons.settings_backup_restore),
           onPressed: () => appsProvider.saveApps([
             app.copyWith(
-              brokenCheckEnabled: true,
-              brokenCheckDismissedVersion: null,
+              updateHealthEnabled: true,
+              updateHealthDismissedVersion: null,
             ),
           ]),
         ),
@@ -309,10 +311,10 @@ class PossiblyBrokenPage extends StatelessWidget {
     return appsProvider.saveApps([
       permanently
           ? app.copyWith(
-              brokenCheckEnabled: false,
-              brokenCheckDismissedVersion: null,
+              updateHealthEnabled: false,
+              updateHealthDismissedVersion: null,
             )
-          : app.copyWith(brokenCheckDismissedVersion: app.latestVersion),
+          : app.copyWith(updateHealthDismissedVersion: app.latestVersion),
     ]);
   }
 }

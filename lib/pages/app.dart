@@ -17,7 +17,7 @@ import 'package:obtainium/core/logging/app_logger.dart';
 import 'package:obtainium/providers/settings_provider.dart';
 import 'package:obtainium/providers/source_provider.dart';
 import 'package:obtainium/custom_errors.dart';
-import 'package:obtainium/utils/broken_check.dart';
+import 'package:obtainium/utils/update_health.dart';
 import 'package:obtainium/utils/locale_utils.dart';
 import 'package:obtainium/main.dart';
 import 'package:obtainium/utils/nav_helper.dart';
@@ -336,7 +336,7 @@ class _AppPageState extends State<AppPage> {
     final items =
         <List<GeneratedFormItem>>[
           ...(s?.combinedAppSpecificSettingFormItems ?? []),
-          ...brokenCheckOverrideFormItems(),
+          ...updateHealthOverrideFormItems(),
         ].map((row) {
           row = row.map((e) {
             if (app?.app.additionalSettings[e.key] != null) {
@@ -959,16 +959,17 @@ class _AppPageState extends State<AppPage> {
     final apkCount = app?.app.apkUrls.length ?? 0;
     final changeLogFn = app != null ? getChangeLogFn(context, app.app) : null;
     final appData = app?.app;
-    final brokenConfig = appData == null
+    final updateHealthConfig = appData == null
         ? null
-        : resolveBrokenCheckConfig(
+        : resolveUpdateHealthConfig(
             appData.additionalSettings,
             settingsProvider,
           );
-    final brokenReasons = appData == null || brokenConfig == null
-        ? const <BrokenCheckReason>[]
-        : evaluateBrokenCheckReasons(appData, brokenConfig);
-    final brokenIgnored = appData != null && isBrokenCheckIgnored(appData);
+    final updateHealthReasons = appData == null || updateHealthConfig == null
+        ? const <UpdateHealthReason>[]
+        : evaluateUpdateHealthReasons(appData, updateHealthConfig);
+    final updateHealthIgnored =
+        appData != null && isUpdateHealthIgnored(appData);
     return [
       _buildSection(
         true,
@@ -1010,27 +1011,29 @@ class _AppPageState extends State<AppPage> {
                 ),
               ),
             ),
-          if (brokenReasons.isNotEmpty || brokenIgnored)
+          if (updateHealthReasons.isNotEmpty || updateHealthIgnored)
             Padding(
               padding: const EdgeInsets.only(top: 4),
               child: InkWell(
-                onTap: () => NavHelper.pushPossiblyBrokenPage(context),
+                onTap: () => NavHelper.pushUpdateHealthPage(context),
                 borderRadius: BorderRadius.circular(4),
                 child: Row(
                   children: [
                     Icon(
-                      brokenIgnored
+                      updateHealthIgnored
                           ? Icons.info_outline
                           : Icons.warning_amber_rounded,
                       size: 16,
-                      color: brokenIgnored ? cs.onSurfaceVariant : cs.error,
+                      color: updateHealthIgnored
+                          ? cs.onSurfaceVariant
+                          : cs.error,
                     ),
                     const SizedBox(width: 4),
                     Flexible(
                       child: Text(
-                        brokenIgnored
-                            ? tr('possiblyBrokenIgnoredNote')
-                            : tr('possiblyBrokenViewDetails'),
+                        updateHealthIgnored
+                            ? tr('updateHealthIgnoredNote')
+                            : tr('updateHealthViewDetails'),
                         style: tt.bodyMedium?.copyWith(
                           color: cs.primary,
                           decoration: TextDecoration.underline,

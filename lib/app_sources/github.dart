@@ -9,7 +9,7 @@ import 'package:obtainium/custom_errors.dart';
 import 'package:obtainium/core/logging/app_logger.dart';
 import 'package:obtainium/providers/settings_provider.dart';
 import 'package:obtainium/providers/source_provider.dart';
-import 'package:obtainium/utils/broken_check.dart';
+import 'package:obtainium/utils/update_health.dart';
 import 'package:obtainium/utils/min_update_age.dart';
 
 class GitHub extends AppSource {
@@ -766,7 +766,7 @@ class GitHub extends AppSource {
     );
     if (repoInfo == null &&
         !hostChanged &&
-        resolveBrokenCheckConfig(
+        resolveUpdateHealthConfig(
           additionalSettings,
           settingsProvider,
         ).archivedEnabled) {

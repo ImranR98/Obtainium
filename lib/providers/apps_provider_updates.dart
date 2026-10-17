@@ -7,7 +7,7 @@ import 'package:obtainium/custom_errors.dart';
 import 'package:obtainium/providers/apps_provider.dart';
 import 'package:obtainium/providers/settings_provider.dart';
 import 'package:obtainium/providers/source_provider.dart';
-import 'package:obtainium/utils/broken_check.dart';
+import 'package:obtainium/utils/update_health.dart';
 import 'package:obtainium/utils/min_update_age.dart';
 
 /// Update checking and pending-update bookkeeping for [AppsProvider].

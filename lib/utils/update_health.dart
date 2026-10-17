@@ -6,7 +6,7 @@ import 'package:obtainium/custom_errors.dart';
 import 'package:obtainium/models/app.dart';
 import 'package:obtainium/providers/settings_provider.dart';
 
-enum BrokenCheckReason {
+enum UpdateHealthReason {
   staleRelease,
   staleVersion,
   failedChecks,
@@ -14,14 +14,14 @@ enum BrokenCheckReason {
   filteredReleases,
 }
 
-class BrokenCheckConfig {
+class UpdateHealthConfig {
   final int? staleReleaseDays;
   final int? staleVersionDays;
   final int? failedChecksCount;
   final bool archivedEnabled;
   final int? filteredReleasesCount;
 
-  const BrokenCheckConfig({
+  const UpdateHealthConfig({
     this.staleReleaseDays,
     this.staleVersionDays,
     this.failedChecksCount,
@@ -30,9 +30,19 @@ class BrokenCheckConfig {
   });
 }
 
-const List<int> brokenCheckDayOptions = [0, 30, 60, 90, 180, 365, 730];
-const List<int> brokenCheckFailedChecksOptions = [0, 1, 2, 3, 5, 8, 10, 15, 20];
-const List<int> brokenCheckFilteredReleasesOptions = [
+const List<int> updateHealthDayOptions = [0, 30, 60, 90, 180, 365, 730];
+const List<int> updateHealthFailedChecksOptions = [
+  0,
+  1,
+  2,
+  3,
+  5,
+  8,
+  10,
+  15,
+  20,
+];
+const List<int> updateHealthFilteredReleasesOptions = [
   0,
   1,
   2,
@@ -59,114 +69,114 @@ bool _resolveArchived(Object? override, bool globalEnabled) {
   return globalEnabled;
 }
 
-BrokenCheckConfig resolveBrokenCheckConfig(
+UpdateHealthConfig resolveUpdateHealthConfig(
   Map<String, dynamic> additionalSettings,
   SettingsProvider settingsProvider,
 ) {
-  return BrokenCheckConfig(
+  return UpdateHealthConfig(
     staleReleaseDays: _resolveThreshold(
-      additionalSettings['brokenCheckStaleRelease'],
-      settingsProvider.brokenCheckStaleReleaseDays,
+      additionalSettings['updateHealthStaleRelease'],
+      settingsProvider.updateHealthStaleReleaseDays,
     ),
     staleVersionDays: _resolveThreshold(
-      additionalSettings['brokenCheckStaleVersion'],
-      settingsProvider.brokenCheckStaleVersionDays,
+      additionalSettings['updateHealthStaleVersion'],
+      settingsProvider.updateHealthStaleVersionDays,
     ),
     failedChecksCount: _resolveThreshold(
-      additionalSettings['brokenCheckFailedChecks'],
-      settingsProvider.brokenCheckFailedChecksCount,
+      additionalSettings['updateHealthFailedChecks'],
+      settingsProvider.updateHealthFailedChecksCount,
     ),
     archivedEnabled: _resolveArchived(
-      additionalSettings['brokenCheckArchived'],
-      settingsProvider.brokenCheckArchivedEnabled,
+      additionalSettings['updateHealthArchived'],
+      settingsProvider.updateHealthArchivedEnabled,
     ),
     filteredReleasesCount: _resolveThreshold(
-      additionalSettings['brokenCheckFilteredReleases'],
-      settingsProvider.brokenCheckFilteredReleasesCount,
+      additionalSettings['updateHealthFilteredReleases'],
+      settingsProvider.updateHealthFilteredReleasesCount,
     ),
   );
 }
 
-bool isBrokenCheckIgnored(App app) =>
-    !app.brokenCheckEnabled ||
-    (app.brokenCheckDismissedVersion != null &&
-        app.brokenCheckDismissedVersion == app.latestVersion);
+bool isUpdateHealthIgnored(App app) =>
+    !app.updateHealthEnabled ||
+    (app.updateHealthDismissedVersion != null &&
+        app.updateHealthDismissedVersion == app.latestVersion);
 
-List<BrokenCheckReason> evaluateBrokenCheckReasons(
+List<UpdateHealthReason> evaluateUpdateHealthReasons(
   App app,
-  BrokenCheckConfig config, {
+  UpdateHealthConfig config, {
   DateTime? now,
 }) {
   final currentTime = now ?? DateTime.now();
-  final reasons = <BrokenCheckReason>[];
+  final reasons = <UpdateHealthReason>[];
   final staleReleaseDays = config.staleReleaseDays;
   final releaseDate = app.releaseDate;
   if (staleReleaseDays != null &&
       releaseDate != null &&
       currentTime.difference(releaseDate).inDays >= staleReleaseDays) {
-    reasons.add(BrokenCheckReason.staleRelease);
+    reasons.add(UpdateHealthReason.staleRelease);
   }
   final staleVersionDays = config.staleVersionDays;
   final versionChangedAt = app.latestVersionChangedAt;
   if (staleVersionDays != null &&
       versionChangedAt != null &&
       currentTime.difference(versionChangedAt).inDays >= staleVersionDays) {
-    reasons.add(BrokenCheckReason.staleVersion);
+    reasons.add(UpdateHealthReason.staleVersion);
   }
   final failedChecksCount = config.failedChecksCount;
   if (failedChecksCount != null &&
       app.consecutiveFailedChecks >= failedChecksCount) {
-    reasons.add(BrokenCheckReason.failedChecks);
+    reasons.add(UpdateHealthReason.failedChecks);
   }
   if (config.archivedEnabled && app.isArchived == true) {
-    reasons.add(BrokenCheckReason.archived);
+    reasons.add(UpdateHealthReason.archived);
   }
   final filteredReleasesCount = config.filteredReleasesCount;
   final filteredOut = app.newerReleasesFilteredOut;
   if (filteredReleasesCount != null &&
       filteredOut != null &&
       filteredOut >= filteredReleasesCount) {
-    reasons.add(BrokenCheckReason.filteredReleases);
+    reasons.add(UpdateHealthReason.filteredReleases);
   }
   return reasons;
 }
 
-bool isAppPossiblyBroken(App app, SettingsProvider settingsProvider) {
-  if (app.disabled || app.hasPendingRepoRename || isBrokenCheckIgnored(app)) {
+bool hasUpdateHealthIssues(App app, SettingsProvider settingsProvider) {
+  if (app.disabled || app.hasPendingRepoRename || isUpdateHealthIgnored(app)) {
     return false;
   }
-  return evaluateBrokenCheckReasons(
+  return evaluateUpdateHealthReasons(
     app,
-    resolveBrokenCheckConfig(app.additionalSettings, settingsProvider),
+    resolveUpdateHealthConfig(app.additionalSettings, settingsProvider),
   ).isNotEmpty;
 }
 
-String brokenCheckReasonLabel(
-  BrokenCheckReason reason,
+String updateHealthReasonLabel(
+  UpdateHealthReason reason,
   App app,
-  BrokenCheckConfig config,
+  UpdateHealthConfig config,
 ) {
   switch (reason) {
-    case BrokenCheckReason.staleRelease:
+    case UpdateHealthReason.staleRelease:
       return tr(
-        'possiblyBrokenReasonStaleRelease',
+        'updateHealthReasonStaleRelease',
         args: ['${config.staleReleaseDays}'],
       );
-    case BrokenCheckReason.staleVersion:
+    case UpdateHealthReason.staleVersion:
       return tr(
-        'possiblyBrokenReasonStaleVersion',
+        'updateHealthReasonStaleVersion',
         args: ['${config.staleVersionDays}'],
       );
-    case BrokenCheckReason.failedChecks:
+    case UpdateHealthReason.failedChecks:
       return plural(
-        'possiblyBrokenReasonFailedChecks',
+        'updateHealthReasonFailedChecks',
         app.consecutiveFailedChecks,
       );
-    case BrokenCheckReason.archived:
-      return tr('possiblyBrokenReasonArchived');
-    case BrokenCheckReason.filteredReleases:
+    case UpdateHealthReason.archived:
+      return tr('updateHealthReasonArchived');
+    case UpdateHealthReason.filteredReleases:
       return plural(
-        'possiblyBrokenReasonFilteredReleases',
+        'updateHealthReasonFilteredReleases',
         app.newerReleasesFilteredOut ?? 0,
       );
   }
@@ -177,11 +187,11 @@ bool shouldCountFailedCheck(Object error) =>
     error is! SocketException &&
     error is! HandshakeException;
 
-String brokenCheckDaysLabel(int days) =>
+String updateHealthDaysLabel(int days) =>
     days < 1 ? tr('disabled') : plural('day', days);
-String brokenCheckFailedChecksLabel(int count) =>
+String updateHealthFailedChecksLabel(int count) =>
     count < 1 ? tr('disabled') : plural('checks', count);
-String brokenCheckFilteredReleasesLabel(int count) =>
+String updateHealthFilteredReleasesLabel(int count) =>
     count < 1 ? tr('disabled') : plural('releases', count);
 
 List<MapEntry<String, String>> _thresholdSliderOptions(List<int> values) {
@@ -194,31 +204,31 @@ List<MapEntry<String, String>> _thresholdSliderOptions(List<int> values) {
   ];
 }
 
-List<List<GeneratedFormItem>> brokenCheckOverrideFormItems() {
+List<List<GeneratedFormItem>> updateHealthOverrideFormItems() {
   return [
     [
       GeneratedFormSlider(
-        'brokenCheckStaleRelease',
-        _thresholdSliderOptions(brokenCheckDayOptions),
-        label: tr('possiblyBrokenOverrideStaleRelease'),
+        'updateHealthStaleRelease',
+        _thresholdSliderOptions(updateHealthDayOptions),
+        label: tr('updateHealthOverrideStaleRelease'),
         value: '',
         required: false,
       ),
     ],
     [
       GeneratedFormSlider(
-        'brokenCheckStaleVersion',
-        _thresholdSliderOptions(brokenCheckDayOptions),
-        label: tr('possiblyBrokenOverrideStaleVersion'),
+        'updateHealthStaleVersion',
+        _thresholdSliderOptions(updateHealthDayOptions),
+        label: tr('updateHealthOverrideStaleVersion'),
         value: '',
         required: false,
       ),
     ],
     [
       GeneratedFormSlider(
-        'brokenCheckFailedChecks',
-        _thresholdSliderOptions(brokenCheckFailedChecksOptions),
-        label: tr('possiblyBrokenOverrideFailedChecks'),
+        'updateHealthFailedChecks',
+        _thresholdSliderOptions(updateHealthFailedChecksOptions),
+        label: tr('updateHealthOverrideFailedChecks'),
         value: '',
         required: false,
         numericLabelUnitKey: 'checks',
@@ -226,21 +236,21 @@ List<List<GeneratedFormItem>> brokenCheckOverrideFormItems() {
     ],
     [
       GeneratedFormDropdown(
-        'brokenCheckArchived',
+        'updateHealthArchived',
         [
           const MapEntry('', 'useGlobalDefault'),
           const MapEntry('off', 'disabled'),
           const MapEntry('on', 'enabled'),
         ],
-        label: tr('possiblyBrokenOverrideArchived'),
+        label: tr('updateHealthOverrideArchived'),
         required: false,
       ),
     ],
     [
       GeneratedFormSlider(
-        'brokenCheckFilteredReleases',
-        _thresholdSliderOptions(brokenCheckFilteredReleasesOptions),
-        label: tr('possiblyBrokenOverrideFilteredReleases'),
+        'updateHealthFilteredReleases',
+        _thresholdSliderOptions(updateHealthFilteredReleasesOptions),
+        label: tr('updateHealthOverrideFilteredReleases'),
         value: '',
         required: false,
         numericLabelUnitKey: 'releases',

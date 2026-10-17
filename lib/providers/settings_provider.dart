@@ -863,57 +863,57 @@ class SettingsProvider with ChangeNotifier {
     notifyListeners();
   }
 
-  int get brokenCheckStaleReleaseDays {
-    return _getInt('brokenCheckStaleReleaseDays') ?? 180;
+  int get updateHealthStaleReleaseDays {
+    return _getInt('updateHealthStaleReleaseDays') ?? 180;
   }
 
-  set brokenCheckStaleReleaseDays(int val) {
-    prefs?.setInt('brokenCheckStaleReleaseDays', val < 0 ? 0 : val);
+  set updateHealthStaleReleaseDays(int val) {
+    prefs?.setInt('updateHealthStaleReleaseDays', val < 0 ? 0 : val);
     notifyListeners();
   }
 
-  int get brokenCheckStaleVersionDays {
-    return _getInt('brokenCheckStaleVersionDays') ?? 180;
+  int get updateHealthStaleVersionDays {
+    return _getInt('updateHealthStaleVersionDays') ?? 180;
   }
 
-  set brokenCheckStaleVersionDays(int val) {
-    prefs?.setInt('brokenCheckStaleVersionDays', val < 0 ? 0 : val);
+  set updateHealthStaleVersionDays(int val) {
+    prefs?.setInt('updateHealthStaleVersionDays', val < 0 ? 0 : val);
     notifyListeners();
   }
 
-  int get brokenCheckFailedChecksCount {
-    return _getInt('brokenCheckFailedChecksCount') ?? 3;
+  int get updateHealthFailedChecksCount {
+    return _getInt('updateHealthFailedChecksCount') ?? 3;
   }
 
-  set brokenCheckFailedChecksCount(int val) {
-    prefs?.setInt('brokenCheckFailedChecksCount', val < 0 ? 0 : val);
+  set updateHealthFailedChecksCount(int val) {
+    prefs?.setInt('updateHealthFailedChecksCount', val < 0 ? 0 : val);
     notifyListeners();
   }
 
-  bool get brokenCheckArchivedEnabled {
-    return _getBool('brokenCheckArchivedEnabled') ?? true;
+  bool get updateHealthArchivedEnabled {
+    return _getBool('updateHealthArchivedEnabled') ?? true;
   }
 
-  set brokenCheckArchivedEnabled(bool val) {
-    prefs?.setBool('brokenCheckArchivedEnabled', val);
+  set updateHealthArchivedEnabled(bool val) {
+    prefs?.setBool('updateHealthArchivedEnabled', val);
     notifyListeners();
   }
 
-  int get brokenCheckFilteredReleasesCount {
-    return _getInt('brokenCheckFilteredReleasesCount') ?? 5;
+  int get updateHealthFilteredReleasesCount {
+    return _getInt('updateHealthFilteredReleasesCount') ?? 5;
   }
 
-  set brokenCheckFilteredReleasesCount(int val) {
-    prefs?.setInt('brokenCheckFilteredReleasesCount', val < 0 ? 0 : val);
+  set updateHealthFilteredReleasesCount(int val) {
+    prefs?.setInt('updateHealthFilteredReleasesCount', val < 0 ? 0 : val);
     notifyListeners();
   }
 
-  bool get showBrokenCheckIndicator {
-    return _getBool('showBrokenCheckIndicator') ?? true;
+  bool get showUpdateHealthIndicator {
+    return _getBool('showUpdateHealthIndicator') ?? true;
   }
 
-  set showBrokenCheckIndicator(bool val) {
-    prefs?.setBool('showBrokenCheckIndicator', val);
+  set showUpdateHealthIndicator(bool val) {
+    prefs?.setBool('showUpdateHealthIndicator', val);
     notifyListeners();
   }
 

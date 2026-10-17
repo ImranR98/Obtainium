@@ -360,8 +360,8 @@ class SourceProvider {
       consecutiveFailedChecks: currentApp?.consecutiveFailedChecks ?? 0,
       isArchived: apk.isArchived,
       newerReleasesFilteredOut: apk.newerReleasesFilteredOut,
-      brokenCheckEnabled: currentApp?.brokenCheckEnabled ?? true,
-      brokenCheckDismissedVersion: currentApp?.brokenCheckDismissedVersion,
+      updateHealthEnabled: currentApp?.updateHealthEnabled ?? true,
+      updateHealthDismissedVersion: currentApp?.updateHealthDismissedVersion,
     );
     return source.postProcessApp(finalApp);
   }

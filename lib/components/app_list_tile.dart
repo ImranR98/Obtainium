@@ -15,7 +15,7 @@ import 'package:obtainium/utils/format_utils.dart';
 import 'package:obtainium/providers/notifications_provider.dart';
 import 'package:obtainium/providers/settings_provider.dart';
 import 'package:obtainium/providers/source_provider.dart';
-import 'package:obtainium/utils/broken_check.dart';
+import 'package:obtainium/utils/update_health.dart';
 import 'package:obtainium/utils/nav_helper.dart';
 // AppsFilter and AppListBuilder are defined below in this file.
 import 'package:provider/provider.dart';
@@ -202,7 +202,7 @@ class _AppIconWidgetState extends State<AppIconWidget> {
 }
 
 /// Card-wrapped app row used by the main apps list, reused by other lists of
-/// apps (e.g. Possibly broken) so their spacing matches.
+/// apps (e.g. Update health) so their spacing matches.
 class AppListRowCard extends StatelessWidget {
   final Widget child;
 
@@ -360,18 +360,18 @@ class AppListTile extends StatelessWidget {
     final showChangesFn = getChangeLogFn(context, _app);
     final hasUpdate = !_app.disabled && isAppUpdateable(_app, settingsProvider);
     final isTV = settingsProvider.isTV;
-    final brokenConfig = resolveBrokenCheckConfig(
+    final updateHealthConfig = resolveUpdateHealthConfig(
       _app.additionalSettings,
       settingsProvider,
     );
-    final brokenReasons = settingsProvider.showBrokenCheckIndicator
-        ? evaluateBrokenCheckReasons(_app, brokenConfig)
-        : const <BrokenCheckReason>[];
-    final showBrokenIndicator =
-        brokenReasons.isNotEmpty &&
+    final updateHealthReasons = settingsProvider.showUpdateHealthIndicator
+        ? evaluateUpdateHealthReasons(_app, updateHealthConfig)
+        : const <UpdateHealthReason>[];
+    final showUpdateHealthIndicator =
+        updateHealthReasons.isNotEmpty &&
         !_app.disabled &&
         !_app.hasPendingRepoRename &&
-        !isBrokenCheckIgnored(_app);
+        !isUpdateHealthIgnored(_app);
     final Widget trailingRow = LayoutBuilder(
       builder: (context, constraints) => Row(
         mainAxisSize: MainAxisSize.min,
@@ -550,16 +550,16 @@ class AppListTile extends StatelessWidget {
                         ),
                       ),
                     ),
-                    if (showBrokenIndicator)
+                    if (showUpdateHealthIndicator)
                       Padding(
                         padding: const EdgeInsets.only(left: 4),
                         child: Tooltip(
-                          message: brokenReasons
+                          message: updateHealthReasons
                               .map(
-                                (r) => brokenCheckReasonLabel(
+                                (r) => updateHealthReasonLabel(
                                   r,
                                   _app,
-                                  brokenConfig,
+                                  updateHealthConfig,
                                 ),
                               )
                               .join('\n'),
