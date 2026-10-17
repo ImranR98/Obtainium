@@ -12,6 +12,25 @@ import 'package:obtainium/providers/source_provider.dart';
 import 'package:obtainium/utils/update_health.dart';
 import 'package:obtainium/utils/min_update_age.dart';
 
+DateTime? newestAssetDateFromRelease(dynamic release) {
+  if (release is! Map) return null;
+  final allAssets = release['assets'] as List<dynamic>?;
+  final filteredAssets = release['filteredAssets'] as List<dynamic>?;
+  final assets = filteredAssets?.isNotEmpty == true
+      ? filteredAssets
+      : allAssets;
+  final dates = assets
+      ?.map((asset) {
+        final updated = asset?['updated_at'] ?? asset?['created_at'];
+        return updated is String ? DateTime.tryParse(updated) : null;
+      })
+      .whereType<DateTime>()
+      .toList();
+  if (dates == null || dates.isEmpty) return null;
+  dates.sort((a, b) => b.compareTo(a));
+  return dates.first;
+}
+
 class GitHub extends AppSource {
   static const int _fallbackCacheSeconds = 3600;
 
@@ -485,22 +504,8 @@ class GitHub extends AppSource {
     return null;
   }
 
-  DateTime? _getNewestAssetDateFromRelease(dynamic rel) {
-    final allAssets = rel['assets'] as List<dynamic>?;
-    final filteredAssets = rel['filteredAssets'] as List<dynamic>?;
-    final t = (filteredAssets ?? allAssets)
-        ?.map((e) {
-          final updated = e?['updated_at'] ?? e?['created_at'];
-          return updated is String ? DateTime.tryParse(updated) : null;
-        })
-        .where((e) => e != null)
-        .toList();
-    t?.sort((a, b) => b!.compareTo(a!));
-    if (t?.isNotEmpty == true) {
-      return t!.first;
-    }
-    return null;
-  }
+  DateTime? _getNewestAssetDateFromRelease(dynamic rel) =>
+      newestAssetDateFromRelease(rel);
 
   DateTime? _getReleaseDateFromRelease(dynamic rel, bool useAssetDate) =>
       !useAssetDate
