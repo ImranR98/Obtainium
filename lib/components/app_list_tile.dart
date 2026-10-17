@@ -201,6 +201,41 @@ class _AppIconWidgetState extends State<AppIconWidget> {
   }
 }
 
+/// Card-wrapped app row used by the main apps list, reused by other lists of
+/// apps (e.g. Possibly broken) so their spacing matches.
+class AppListRowCard extends StatelessWidget {
+  final Widget child;
+
+  const AppListRowCard({super.key, required this.child});
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(12, 4, 12, 4),
+      child: Card(clipBehavior: Clip.antiAlias, child: child),
+    );
+  }
+}
+
+/// Density-dependent [ListTile] metrics of app rows, derived from the user's
+/// app-list density setting. Shared so other app lists match the main one.
+class AppTileMetrics {
+  final AppListDensity density;
+
+  const AppTileMetrics(this.density);
+
+  bool get isCompact => density == AppListDensity.compact;
+  bool get isDense => density == AppListDensity.dense;
+  bool get isStandard => density == AppListDensity.standard;
+
+  VisualDensity? get visualDensity =>
+      isStandard ? null : const VisualDensity(horizontal: -4, vertical: -4);
+
+  double get minVerticalPadding => isDense ? 0 : (isCompact ? 2 : 4);
+
+  double get iconSize => isCompact ? 36 : 44;
+}
+
 class AppListTile extends StatelessWidget {
   final AppInMemory appInMemory;
   final SettingsProvider settingsProvider;
@@ -467,10 +502,7 @@ class AppListTile extends StatelessWidget {
                     ),
             ),
             child: () {
-              final density = settingsProvider.appListDensity;
-              final isCompact = density == AppListDensity.compact;
-              final isDense = density == AppListDensity.dense;
-              final isStandard = density == AppListDensity.standard;
+              final metrics = AppTileMetrics(settingsProvider.appListDensity);
               final tile = ListTile(
                 autofocus: autofocus,
                 shape: borderRadius != null
@@ -484,19 +516,17 @@ class AppListTile extends StatelessWidget {
                 selectedTileColor: Theme.of(context).colorScheme.primary
                     .withValues(alpha: _app.pinned ? 0.2 : 0.1),
                 selected: multiSelected || detailSelected,
-                visualDensity: isStandard
-                    ? null
-                    : const VisualDensity(horizontal: -4, vertical: -4),
-                minVerticalPadding: isDense ? 0 : (isCompact ? 2 : 4),
-                dense: isDense,
-                leading: isDense
+                visualDensity: metrics.visualDensity,
+                minVerticalPadding: metrics.minVerticalPadding,
+                dense: metrics.isDense,
+                leading: metrics.isDense
                     ? null
                     : () {
                         final icon = AppIconWidget(
                           appId: _app.id,
                           installed: appInMemory.installedInfo != null,
                           appsProvider: appsProvider,
-                          size: isCompact ? 36 : 44,
+                          size: metrics.iconSize,
                         );
                         // Keep TV rows a single focus stop: the icon's own
                         // InkWell must not become a separate focus target.
@@ -542,7 +572,7 @@ class AppListTile extends StatelessWidget {
                       ),
                   ],
                 ),
-                subtitle: isDense
+                subtitle: metrics.isDense
                     ? null
                     : _app.hasPendingRepoRename
                     ? Column(

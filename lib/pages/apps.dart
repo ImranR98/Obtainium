@@ -895,19 +895,15 @@ class AppsPageState extends State<AppsPage> {
     SettingsProvider settingsProvider,
     AppsProvider appsProvider,
   ) {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(12, 4, 12, 4),
-      child: Card(
-        clipBehavior: Clip.antiAlias,
-        child: _buildTile(
-          index,
-          context,
-          listedApps,
-          settingsProvider,
-          appsProvider,
-          autofocus: index == 0,
-          borderRadius: BorderRadius.circular(connectedTileBigRadius),
-        ),
+    return AppListRowCard(
+      child: _buildTile(
+        index,
+        context,
+        listedApps,
+        settingsProvider,
+        appsProvider,
+        autofocus: index == 0,
+        borderRadius: BorderRadius.circular(connectedTileBigRadius),
       ),
     );
   }

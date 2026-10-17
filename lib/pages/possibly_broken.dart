@@ -34,38 +34,50 @@ class PossiblyBrokenPage extends StatelessWidget {
             padding: AppPaddings.page,
             sliver: SliverToBoxAdapter(
               child: TvInitialFocus(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  spacing: AppSpacings.sectionGap,
-                  children: [
-                    _buildDetectionSettings(settingsProvider),
-                    if (flagged.isEmpty && ignored.isEmpty)
-                      _buildEmptyState(context)
-                    else ...[
-                      if (flagged.isNotEmpty)
-                        _buildAppSection(
-                          context,
-                          appsProvider,
-                          settingsProvider,
-                          title: tr('possiblyBrokenDetectedApps'),
-                          apps: flagged,
-                          ignoredSection: false,
-                        ),
-                      if (ignored.isNotEmpty)
-                        _buildAppSection(
-                          context,
-                          appsProvider,
-                          settingsProvider,
-                          title: tr('possiblyBrokenIgnoredApps'),
-                          apps: ignored,
-                          ignoredSection: true,
-                        ),
-                    ],
-                  ],
-                ),
+                child: _buildDetectionSettings(settingsProvider),
               ),
             ),
           ),
+          if (flagged.isEmpty && ignored.isEmpty)
+            SliverPadding(
+              padding: AppPaddings.page,
+              sliver: SliverToBoxAdapter(
+                child: Padding(
+                  padding: const EdgeInsets.only(top: AppSpacings.sectionGap),
+                  child: _buildEmptyState(context),
+                ),
+              ),
+            )
+          else ...[
+            if (flagged.isNotEmpty)
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding: const EdgeInsets.only(top: AppSpacings.sectionGap),
+                  child: _buildAppSection(
+                    context,
+                    appsProvider,
+                    settingsProvider,
+                    title: tr('possiblyBrokenDetectedApps'),
+                    apps: flagged,
+                    ignoredSection: false,
+                  ),
+                ),
+              ),
+            if (ignored.isNotEmpty)
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding: const EdgeInsets.only(top: AppSpacings.sectionGap),
+                  child: _buildAppSection(
+                    context,
+                    appsProvider,
+                    settingsProvider,
+                    title: tr('possiblyBrokenIgnoredApps'),
+                    apps: ignored,
+                    ignoredSection: true,
+                  ),
+                ),
+              ),
+          ],
           SliverToBoxAdapter(
             child: SizedBox(height: MediaQuery.of(context).padding.bottom),
           ),
@@ -175,22 +187,13 @@ class PossiblyBrokenPage extends StatelessWidget {
       spacing: 3,
       children: [
         Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 4),
+          padding: const EdgeInsets.fromLTRB(28, 0, 28, 0),
           child: Text(title, style: Theme.of(context).textTheme.labelMedium),
         ),
-        ...shapeCardTiles(
-          apps
-              .map(
-                (app) => ignoredSection
-                    ? _buildIgnoredTile(context, appsProvider, app)
-                    : _buildFlaggedTile(
-                        context,
-                        appsProvider,
-                        settingsProvider,
-                        app,
-                      ),
-              )
-              .toList(),
+        ...apps.map(
+          (app) => ignoredSection
+              ? _buildIgnoredTile(context, appsProvider, settingsProvider, app)
+              : _buildFlaggedTile(context, appsProvider, settingsProvider, app),
         ),
       ],
     );
@@ -207,13 +210,20 @@ class PossiblyBrokenPage extends StatelessWidget {
       settingsProvider,
     );
     final reasons = evaluateBrokenCheckReasons(app, config);
-    return CardTile(
+    final metrics = AppTileMetrics(settingsProvider.appListDensity);
+    return AppListRowCard(
       child: ListTile(
-        leading: AppIconWidget(
-          appId: app.id,
-          installed: app.installedVersion != null,
-          appsProvider: appsProvider,
-        ),
+        visualDensity: metrics.visualDensity,
+        minVerticalPadding: metrics.minVerticalPadding,
+        dense: metrics.isDense,
+        leading: metrics.isDense
+            ? null
+            : AppIconWidget(
+                appId: app.id,
+                installed: app.installedVersion != null,
+                appsProvider: appsProvider,
+                size: metrics.iconSize,
+              ),
         title: Text(
           app.finalName,
           maxLines: 1,
@@ -249,15 +259,23 @@ class PossiblyBrokenPage extends StatelessWidget {
   Widget _buildIgnoredTile(
     BuildContext context,
     AppsProvider appsProvider,
+    SettingsProvider settingsProvider,
     App app,
   ) {
-    return CardTile(
+    final metrics = AppTileMetrics(settingsProvider.appListDensity);
+    return AppListRowCard(
       child: ListTile(
-        leading: AppIconWidget(
-          appId: app.id,
-          installed: app.installedVersion != null,
-          appsProvider: appsProvider,
-        ),
+        visualDensity: metrics.visualDensity,
+        minVerticalPadding: metrics.minVerticalPadding,
+        dense: metrics.isDense,
+        leading: metrics.isDense
+            ? null
+            : AppIconWidget(
+                appId: app.id,
+                installed: app.installedVersion != null,
+                appsProvider: appsProvider,
+                size: metrics.iconSize,
+              ),
         title: Text(
           app.finalName,
           maxLines: 1,
