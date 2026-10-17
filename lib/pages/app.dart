@@ -959,17 +959,18 @@ class _AppPageState extends State<AppPage> {
     final apkCount = app?.app.apkUrls.length ?? 0;
     final changeLogFn = app != null ? getChangeLogFn(context, app.app) : null;
     final appData = app?.app;
-    final updateHealthConfig = appData == null
+    final UpdateHealthConfig? updateHealthConfig =
+        appData == null || appData.disabled
         ? null
         : resolveUpdateHealthConfig(
             appData.additionalSettings,
             settingsProvider,
           );
-    final updateHealthReasons = appData == null || updateHealthConfig == null
+    final updateHealthReasons = updateHealthConfig == null
         ? const <UpdateHealthReason>[]
-        : evaluateUpdateHealthReasons(appData, updateHealthConfig);
+        : evaluateUpdateHealthReasons(appData!, updateHealthConfig);
     final updateHealthIgnored =
-        appData != null && isUpdateHealthIgnored(appData);
+        updateHealthConfig != null && isUpdateHealthIgnored(appData!);
     return [
       _buildSection(
         true,

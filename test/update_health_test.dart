@@ -55,7 +55,7 @@ void main() {
     test('are all enabled with the compact thresholds', () {
       expect(settings.updateHealthStaleReleaseDays, 180);
       expect(settings.updateHealthStaleVersionDays, 180);
-      expect(settings.updateHealthFailedChecksCount, 3);
+      expect(settings.updateHealthFailedChecksCount, 5);
       expect(settings.updateHealthArchivedEnabled, isTrue);
       expect(settings.updateHealthFilteredReleasesCount, 5);
       expect(settings.showUpdateHealthIndicator, isTrue);
@@ -65,7 +65,7 @@ void main() {
       final config = resolveUpdateHealthConfig(const {}, settings);
       expect(config.staleReleaseDays, 180);
       expect(config.staleVersionDays, 180);
-      expect(config.failedChecksCount, 3);
+      expect(config.failedChecksCount, 5);
       expect(config.archivedEnabled, isTrue);
       expect(config.filteredReleasesCount, 5);
     });

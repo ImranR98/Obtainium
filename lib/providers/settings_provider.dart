@@ -882,7 +882,7 @@ class SettingsProvider with ChangeNotifier {
   }
 
   int get updateHealthFailedChecksCount {
-    return _getInt('updateHealthFailedChecksCount') ?? 3;
+    return _getInt('updateHealthFailedChecksCount') ?? 5;
   }
 
   set updateHealthFailedChecksCount(int val) {

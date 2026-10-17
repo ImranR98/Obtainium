@@ -629,7 +629,6 @@ class GitHub extends AppSource {
       if (!fallbackToOlderReleases && i > releaseSkipped) break;
       if (!includePrereleases && releases[i]['prerelease'] == true) {
         releaseSkipped++;
-        userFilteredOut++;
         continue;
       }
       if (releases[i]['draft'] == true) {
