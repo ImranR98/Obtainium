@@ -675,6 +675,7 @@ class SamsungGalaxyStore extends AppSource {
   @override
   List<List<GeneratedFormItem>>
   get additionalSourceAppSpecificSettingFormItems => [
+    [GeneratedFormHeader(label: tr('sectionDeviceOptions'))],
     [
       GeneratedFormTextField(
         'deviceId',

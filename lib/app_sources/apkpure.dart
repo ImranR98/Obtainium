@@ -25,6 +25,7 @@ class APKPure extends AppSource {
   @override
   List<List<GeneratedFormItem>>
   get additionalSourceAppSpecificSettingFormItems => [
+    [GeneratedFormHeader(label: tr('sectionReleaseSelection'))],
     AppSource.fallbackToOlderReleasesFormItem,
     [
       GeneratedFormSwitch(

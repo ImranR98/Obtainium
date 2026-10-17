@@ -204,6 +204,8 @@ List<MapEntry<String, String>> _thresholdSliderOptions(List<int> values) {
   ];
 }
 
+const String updateHealthSectionId = 'updateHealthSection';
+
 List<List<GeneratedFormItem>> updateHealthOverrideFormItems() {
   return [
     [

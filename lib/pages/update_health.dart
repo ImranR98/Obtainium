@@ -1,13 +1,15 @@
+import 'dart:async';
+
 import 'package:easy_localization/easy_localization.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:obtainium/components/app_list_tile.dart';
 import 'package:obtainium/components/ui_widgets.dart';
 import 'package:obtainium/models/app.dart';
+import 'package:obtainium/pages/app_additional_options.dart';
 import 'package:obtainium/providers/apps_provider.dart';
 import 'package:obtainium/providers/settings_provider.dart';
 import 'package:obtainium/theme.dart';
 import 'package:obtainium/utils/update_health.dart';
-import 'package:obtainium/utils/nav_helper.dart';
 import 'package:provider/provider.dart';
 
 enum _IgnoreAction { currentVersion, permanently }
@@ -253,7 +255,13 @@ class UpdateHealthPage extends StatelessWidget {
             ),
           ],
         ),
-        onTap: () => NavHelper.pushAppPage(context, app.id),
+        onTap: () => unawaited(
+          showAppAdditionalOptions(
+            context,
+            app.id,
+            scrollToSection: updateHealthSectionId,
+          ),
+        ),
       ),
     );
   }
@@ -298,7 +306,13 @@ class UpdateHealthPage extends StatelessWidget {
             ),
           ]),
         ),
-        onTap: () => NavHelper.pushAppPage(context, app.id),
+        onTap: () => unawaited(
+          showAppAdditionalOptions(
+            context,
+            app.id,
+            scrollToSection: updateHealthSectionId,
+          ),
+        ),
       ),
     );
   }

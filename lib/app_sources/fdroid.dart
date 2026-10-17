@@ -29,6 +29,7 @@ class FDroid extends AppSource {
   @override
   List<List<GeneratedFormItem>>
   get additionalSourceAppSpecificSettingFormItems => [
+    [GeneratedFormHeader(label: tr('sectionVersionSelection'))],
     [
       GeneratedFormTextField(
         'filterVersionsByRegEx',

@@ -68,6 +68,7 @@ class GitHub extends AppSource {
   @override
   List<List<GeneratedFormItem>>
   get additionalSourceAppSpecificSettingFormItems => [
+    [GeneratedFormHeader(label: tr('sectionReleaseOptions'))],
     [
       GeneratedFormSwitch(
         'includePrereleases',

@@ -372,7 +372,8 @@ class _GeneratedFormState extends State<GeneratedForm> {
     _subFormGenerations.clear();
     values = {
       for (final row in widget.items)
-        for (final item in row) item.key: item.value,
+        for (final item in row)
+          if (item is! GeneratedFormHeader) item.key: item.value,
     };
     for (final row in widget.items) {
       for (final item in row) {
@@ -590,11 +591,28 @@ class _GeneratedFormState extends State<GeneratedForm> {
     );
   }
 
+  Widget _buildHeader(GeneratedFormHeader item) {
+    final theme = Theme.of(context);
+    final Widget label = Padding(
+      padding: const EdgeInsets.fromLTRB(4, 12, 4, 0),
+      child: Text(
+        tr(item.label),
+        style: theme.textTheme.labelLarge?.copyWith(
+          color: theme.colorScheme.primary,
+        ),
+      ),
+    );
+    return item.id == null
+        ? label
+        : KeyedSubtree(key: GlobalObjectKey(item.id!), child: label);
+  }
+
   Widget _buildItem(
     GeneratedFormItem item, {
     required bool isFirst,
     required bool isLast,
   }) {
+    if (item is GeneratedFormHeader) return _buildHeader(item);
     if (item is GeneratedFormTextField) return _buildTextField(item);
     if (item is GeneratedFormDropdown) return _buildDropdown(item);
     if (item is GeneratedFormSlider) return _buildSlider(item);
@@ -659,17 +677,20 @@ class _GeneratedFormState extends State<GeneratedForm> {
       bool isSubFormRow(int r) =>
           widget.items[r].isNotEmpty &&
           widget.items[r][0] is GeneratedFormSubForm;
+      bool isHeaderRow(int r) =>
+          widget.items[r].isNotEmpty &&
+          widget.items[r][0] is GeneratedFormHeader;
       final colorScheme = Theme.of(context).colorScheme;
       final n = inputRowWidgets.length;
       final List<Widget> rawTiles = [];
       for (var r = 0; r < n; r++) {
-        if (isSubFormRow(r)) {
+        if (isSubFormRow(r) || isHeaderRow(r)) {
           rawTiles.add(inputRowWidgets[r]);
         } else {
           rawTiles.add(
             ConnectedCard(
-              isFirst: r == 0,
-              isLast: r == n - 1,
+              isFirst: r == 0 || isHeaderRow(r - 1),
+              isLast: r == n - 1 || isHeaderRow(r + 1),
               color: isFieldRow(r)
                   ? colorScheme.surfaceContainerHighest
                   : colorScheme.surfaceContainerLow,

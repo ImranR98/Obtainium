@@ -14,6 +14,7 @@ import 'package:obtainium/services/host_request_gate.dart';
 import 'package:obtainium/services/http_service.dart';
 import 'package:obtainium/services/version_service.dart';
 import 'package:obtainium/utils/signing_cert_utils.dart';
+import 'package:obtainium/utils/update_health.dart';
 import 'package:obtainium/utils/string_utils.dart';
 import 'package:obtainium/utils/url_utils.dart';
 
@@ -248,8 +249,7 @@ abstract class AppSource {
   ];
 
   /// Some additional data may be needed for Apps regardless of Source
-  List<List<GeneratedFormItem>> get _commonAppSettingFormItems => [
-    [GeneratedFormSwitch('trackOnly', label: tr('trackOnly'))],
+  List<List<GeneratedFormItem>> get _versionAppSettingFormItems => [
     [
       GeneratedFormTextField(
         'versionExtractionRegEx',
@@ -280,6 +280,9 @@ abstract class AppSource {
         value: false,
       ),
     ],
+  ];
+
+  List<List<GeneratedFormItem>> get _apkAppSettingFormItems => [
     [
       GeneratedFormTextField(
         'apkFilterRegEx',
@@ -306,6 +309,9 @@ abstract class AppSource {
         value: true,
       ),
     ],
+  ];
+
+  List<List<GeneratedFormItem>> get _updateAppSettingFormItems => [
     [
       GeneratedFormSlider(
         'minimumUpdateAgeDays',
@@ -319,6 +325,28 @@ abstract class AppSource {
         required: false,
       ),
     ],
+    [
+      GeneratedFormSwitch(
+        'exemptFromBackgroundUpdates',
+        label: tr('exemptFromBackgroundUpdates'),
+      ),
+    ],
+    [
+      GeneratedFormSwitch(
+        'skipUpdateNotifications',
+        label: tr('skipUpdateNotifications'),
+      ),
+    ],
+    [
+      GeneratedFormSwitch(
+        'refreshBeforeDownload',
+        label: tr('refreshBeforeDownload'),
+      ),
+    ],
+  ];
+
+  List<List<GeneratedFormItem>> get _appAppSettingFormItems => [
+    [GeneratedFormSwitch('trackOnly', label: tr('trackOnly'))],
     [GeneratedFormTextField('appName', label: tr('appName'), required: false)],
     [GeneratedFormTextField('appAuthor', label: tr('author'), required: false)],
     [
@@ -349,44 +377,37 @@ abstract class AppSource {
         ],
       ),
     ],
-    [
-      GeneratedFormSwitch(
-        'exemptFromBackgroundUpdates',
-        label: tr('exemptFromBackgroundUpdates'),
-      ),
-    ],
-    [
-      GeneratedFormSwitch(
-        'skipUpdateNotifications',
-        label: tr('skipUpdateNotifications'),
-      ),
-    ],
     [GeneratedFormTextField('about', label: tr('about'), required: false)],
-    [
-      GeneratedFormSwitch(
-        'refreshBeforeDownload',
-        label: tr('refreshBeforeDownload'),
-      ),
-    ],
   ];
 
+  List<List<GeneratedFormItem>> _filterExcludedKeys(
+    List<List<GeneratedFormItem>> items,
+  ) => items
+      .map(
+        (e) => e
+            .where((ee) => !excludeCommonSettingKeys.contains(ee.key))
+            .toList(),
+      )
+      .where((e) => e.isNotEmpty)
+      .toList();
+
   /// Combines per-source form items with the common app-setting form items,
-  /// interspersing conditional items (zip/tarball options, version toggles) and
-  /// filtering out excluded keys. Cloned so that callers cannot mutate the
-  /// shared source-owned form items. Rebuilt on every access so that labels
+  /// grouped into labelled sections and with conditional items (zip/tarball
+  /// options, version toggles) included. Cloned so that callers cannot mutate
+  /// the shared source-owned form items. Rebuilt on every access so that labels
   /// pick up the current locale via tr().
   List<List<GeneratedFormItem>> get combinedAppSpecificSettingFormItems {
-    var agnosticItems = cloneFormItems(_commonAppSettingFormItems);
+    var versionItems = cloneFormItems(_versionAppSettingFormItems);
 
-    final versionDetectionIdx = agnosticItems.indexWhere(
+    final versionDetectionIdx = versionItems.indexWhere(
       (row) => row.any((item) => item.key == 'versionDetection'),
     );
     if (showReleaseDateAsVersionToggle &&
         versionDetectionIdx >= 0 &&
-        !agnosticItems.any(
+        !versionItems.any(
           (row) => row.any((item) => item.key == 'releaseDateAsVersion'),
         )) {
-      agnosticItems.insert(versionDetectionIdx + 1, [
+      versionItems.insert(versionDetectionIdx + 1, [
         GeneratedFormSwitch(
           'releaseDateAsVersion',
           label: '${tr('releaseDateAsVersion')} (${tr('pseudoVersion')})',
@@ -394,19 +415,13 @@ abstract class AppSource {
         ),
       ]);
     }
+    versionItems = _filterExcludedKeys(versionItems);
 
-    agnosticItems = agnosticItems
-        .map(
-          (e) => e
-              .where((ee) => !excludeCommonSettingKeys.contains(ee.key))
-              .toList(),
-        )
-        .where((e) => e.isNotEmpty)
-        .toList();
-
-    final moreConditionalItems = <List<GeneratedFormItem>>[];
+    final apkItems = _filterExcludedKeys(
+      cloneFormItems(_apkAppSettingFormItems),
+    );
     if (allowIncludeZips) {
-      moreConditionalItems.addAll([
+      apkItems.addAll([
         [
           GeneratedFormSwitch(
             'includeZips',
@@ -428,9 +443,8 @@ abstract class AppSource {
         ],
       ]);
     }
-
     if (allowIncludeTarballs) {
-      moreConditionalItems.addAll([
+      apkItems.addAll([
         [
           GeneratedFormSwitch(
             'includeTarballs',
@@ -453,8 +467,15 @@ abstract class AppSource {
       ]);
     }
 
+    final updateItems = _filterExcludedKeys(
+      cloneFormItems(_updateAppSettingFormItems),
+    );
+    final appItems = _filterExcludedKeys(
+      cloneFormItems(_appAppSettingFormItems),
+    );
+
     if (versionDetectionDisallowed) {
-      for (var item in agnosticItems.expand((row) => row)) {
+      for (var item in versionItems.expand((row) => row)) {
         if (item.key == 'versionDetection' ||
             item.key == 'useVersionCodeAsOSVersion') {
           (item as GeneratedFormSwitch).disabled = true;
@@ -468,8 +489,29 @@ abstract class AppSource {
       // can't mutate the source-owned items. Sources are now cached/shared, so
       // an in-place edit here would otherwise leak across apps.
       ...cloneFormItems(additionalSourceAppSpecificSettingFormItems),
-      ...agnosticItems,
-      ...moreConditionalItems,
+      if (versionItems.isNotEmpty) ...[
+        [GeneratedFormHeader(label: tr('sectionVersionDetection'))],
+        ...versionItems,
+      ],
+      if (apkItems.isNotEmpty) ...[
+        [GeneratedFormHeader(label: tr('sectionApkSelection'))],
+        ...apkItems,
+      ],
+      if (updateItems.isNotEmpty) ...[
+        [GeneratedFormHeader(label: tr('sectionUpdateOptions'))],
+        ...updateItems,
+      ],
+      if (appItems.isNotEmpty) ...[
+        [GeneratedFormHeader(label: tr('sectionAppOptions'))],
+        ...appItems,
+      ],
+      [
+        GeneratedFormHeader(
+          id: updateHealthSectionId,
+          label: tr('sectionUpdateHealthDetection'),
+        ),
+      ],
+      ...updateHealthOverrideFormItems(),
     ];
   }
 

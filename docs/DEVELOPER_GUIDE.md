@@ -412,12 +412,18 @@ them:
 - `GeneratedFormSwitch` (bool; supports `disabled`)
 - `GeneratedFormDropdown` (`opts`, `disabledOptKeys`)
 - `GeneratedFormSubForm` (nested repeatable groups, e.g. HTML intermediate links)
+- `GeneratedFormHeader` (non-input section label; an optional `id` lets callers
+  scroll a form to that section with `GlobalObjectKey`)
 
 It reports changes via `onValueChanges(values, valid, isBuilding)`. Each
 `GeneratedFormItem` has `ensureType()` (coerce stored value) and `clone()` (deep copy).
 **Form items owned by a source are cloned (`cloneFormItems`) before defaults are
 pre-filled**, because sources are cached/shared and in-place mutation would leak across
-apps. `tileMode: true` renders fields in the connected-tile settings aesthetic.
+apps. `tileMode: true` renders fields in the connected-tile settings aesthetic, with
+tile corners restarting after each header. `AppSource.combinedAppSpecificSettingFormItems`
+groups the per-app dialog (and add-app form) into sections: the source's own section(s),
+*Version detection*, *APK selection*, *Update options*, *App options*, and
+*Update health detection* (see the update-health section above).
 
 ---
 

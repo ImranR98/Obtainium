@@ -199,12 +199,27 @@ class GeneratedFormSubForm extends GeneratedFormItem {
   }
 }
 
+/// A non-input section label rendered between form rows. [id] can be used to
+/// scroll a form to the section (via [GlobalObjectKey]).
+class GeneratedFormHeader extends GeneratedFormItem {
+  final String? id;
+
+  GeneratedFormHeader({this.id, required super.label}) : super('');
+
+  @override
+  dynamic ensureType(val) => val;
+
+  @override
+  GeneratedFormHeader clone() => GeneratedFormHeader(id: id, label: label);
+}
+
 Map<String, dynamic> getDefaultValuesFromFormItems(
   List<List<GeneratedFormItem>> items,
 ) {
   final entries = <MapEntry<String, dynamic>>[];
   for (final row in items) {
     for (final el in row) {
+      if (el is GeneratedFormHeader) continue;
       if (el is GeneratedFormSwitch) {
         entries.add(MapEntry(el.key, el.value ?? false));
       } else if (el is GeneratedFormSubForm) {

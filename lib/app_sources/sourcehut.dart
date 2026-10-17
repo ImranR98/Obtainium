@@ -1,8 +1,8 @@
 import 'dart:async';
 import 'package:html/parser.dart';
 import 'package:http/http.dart';
-import 'package:intl/intl.dart';
 import 'package:obtainium/custom_errors.dart';
+import 'package:easy_localization/easy_localization.dart';
 import 'package:obtainium/components/generated_form_model.dart';
 import 'package:obtainium/core/logging/app_logger.dart';
 import 'package:obtainium/providers/source_provider.dart';
@@ -19,6 +19,7 @@ class SourceHut extends AppSource {
   @override
   List<List<GeneratedFormItem>>
   get additionalSourceAppSpecificSettingFormItems => [
+    [GeneratedFormHeader(label: tr('sectionReleaseSelection'))],
     AppSource.fallbackToOlderReleasesFormItem,
   ];
 

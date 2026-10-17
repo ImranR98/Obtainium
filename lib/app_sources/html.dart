@@ -325,6 +325,7 @@ class HTML extends AppSource {
   @override
   List<List<GeneratedFormItem>>
   get additionalSourceAppSpecificSettingFormItems => [
+    [GeneratedFormHeader(label: tr('sectionLinkOptions'))],
     [
       GeneratedFormSubForm('intermediateLink', [
         ..._intermediateFormItems,
@@ -333,7 +334,21 @@ class HTML extends AppSource {
     ],
     _finalStepFormitems[0],
     ..._commonFormItems,
+    [GeneratedFormHeader(label: tr('sectionVersionOptions'))],
     ..._finalStepFormitems.sublist(1),
+    [
+      GeneratedFormDropdown(
+        'defaultPseudoVersioningMethod',
+        [
+          MapEntry('partialAPKHash', tr('partialAPKHash')),
+          MapEntry('APKLinkHash', tr('APKLinkHash')),
+          const MapEntry('ETag', 'ETag'),
+        ],
+        label: tr('defaultPseudoVersioningMethod'),
+        value: 'partialAPKHash',
+      ),
+    ],
+    [GeneratedFormHeader(label: tr('releaseDate'))],
     [
       GeneratedFormTextField(
         'releaseDateRegEx',
@@ -358,6 +373,7 @@ class HTML extends AppSource {
         hint: 'EEE. MMMM d, yyyy - h:mma',
       ),
     ],
+    [GeneratedFormHeader(label: tr('sectionRequestHeaders'))],
     [
       GeneratedFormSubForm(
         'requestHeader',
@@ -392,18 +408,7 @@ class HTML extends AppSource {
         ],
       ),
     ],
-    [
-      GeneratedFormDropdown(
-        'defaultPseudoVersioningMethod',
-        [
-          MapEntry('partialAPKHash', tr('partialAPKHash')),
-          MapEntry('APKLinkHash', tr('APKLinkHash')),
-          const MapEntry('ETag', 'ETag'),
-        ],
-        label: tr('defaultPseudoVersioningMethod'),
-        value: 'partialAPKHash',
-      ),
-    ],
+    [GeneratedFormHeader(label: tr('sectionZipOptions'))],
     [
       GeneratedFormTextField(
         'zippedApkFilterRegEx',
