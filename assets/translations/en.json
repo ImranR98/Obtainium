@@ -377,7 +377,7 @@
     "possiblyBrokenReasonStaleVersion": "No new version found in over {} days",
     "possiblyBrokenStaleReleaseCheck": "Flag apps whose latest release is older than",
     "possiblyBrokenStaleVersionCheck": "Flag apps with no new version for",
-    "possiblyBrokenViewDetails": "This source may be broken - view details",
+    "possiblyBrokenViewDetails": "This app config may be broken - view details",
     "pseudoVersion": "pseudo-version",
     "pseudoVersionInUse": "A pseudo-version is in use",
     "randomColour": "Random colour",
