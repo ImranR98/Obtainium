@@ -32,6 +32,7 @@
     },
     "app": "застосунок",
     "appAlreadyAdded": "Застосунок вже додано",
+    "appDisabledNoUpdateCheck": "App is disabled, so update checks are skipped",
     "appHasMoreThanOnePackage": "{} має більше одного пакету:",
     "appId": "Ідентифікатор застосунку",
     "appIdMismatch": "Ідентифікатор пакета, завантажений, не відповідає ідентифікатору існуючого застосунку",

@@ -32,6 +32,7 @@
     },
     "app": "アプリ",
     "appAlreadyAdded": "アプリはすでに追加されています",
+    "appDisabledNoUpdateCheck": "App is disabled, so update checks are skipped",
     "appHasMoreThanOnePackage": "{}には複数のパッケージが存在します:",
     "appId": "アプリID",
     "appIdMismatch": "ダウンロードしたパッケージのIDが既存のアプリIDと一致しません",

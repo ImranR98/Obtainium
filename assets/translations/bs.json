@@ -32,6 +32,7 @@
     },
     "app": "Aplikacija. ",
     "appAlreadyAdded": "Aplikacija je već dodana",
+    "appDisabledNoUpdateCheck": "App is disabled, so update checks are skipped",
     "appHasMoreThanOnePackage": "{} ima više od jednog paketa:",
     "appId": "ID aplikacije",
     "appIdMismatch": "ID preuzetog paketa se ne podudara s postojećim ID-om aplikacije",

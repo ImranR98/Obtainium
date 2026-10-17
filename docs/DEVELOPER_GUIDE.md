@@ -112,7 +112,7 @@ narrowly** to avoid rebuild amplification:
 (`List<MapEntry<name, url>>`), `preferredApkIndex`, `additionalSettings`
 (`Map<String, dynamic>` — per-app source options), `categories`, `pinned`,
 `disabled` (skips all update checks and background installs while keeping the
-entry in the list), `overrideSource`, `pendingRepoRenameUrl`, and `allowIdChange`.
+entry in the list, sorted to the bottom), `overrideSource`, `pendingRepoRenameUrl`, and `allowIdChange`.
 
 - `App.toJson()` / `App.fromJson()` serialize to/from disk.
 - `App.fromJson()` runs **`appJSONCompatibilityModifiers()`** — a chain of idempotent

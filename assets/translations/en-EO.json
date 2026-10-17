@@ -32,6 +32,7 @@
     },
     "app": "Apo",
     "appAlreadyAdded": "Jam aldonita apo",
+    "appDisabledNoUpdateCheck": "App is disabled, so update checks are skipped",
     "appHasMoreThanOnePackage": "{} havas pli ol unu pakaĵon:",
     "appId": "Identigilo de la apo",
     "appIdMismatch": "La identigilo de la elŝutita pakaĵo ne konformas al la identigilo de la ekzistanta apo",

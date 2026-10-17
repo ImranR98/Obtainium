@@ -32,6 +32,7 @@
     },
     "app": "앱",
     "appAlreadyAdded": "앱이 이미 추가되었습니다",
+    "appDisabledNoUpdateCheck": "App is disabled, so update checks are skipped",
     "appHasMoreThanOnePackage": "{}에는 둘 이상의 패키지가 있습니다:",
     "appId": "앱 ID",
     "appIdMismatch": "다운로드된 패키지 ID가 기존 앱 ID와 일치하지 않습니다",

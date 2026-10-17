@@ -723,8 +723,8 @@ class AppsPageState extends State<AppsPage> {
                   ),
                   optionTile(
                     icon: isDisabled
-                        ? Icons.visibility_outlined
-                        : Icons.visibility_off_outlined,
+                        ? Icons.play_arrow_rounded
+                        : Icons.block_outlined,
                     label: isDisabled ? tr('enableApp') : tr('disableApp'),
                     onTap: () {
                       settingsProvider.selectionClick();

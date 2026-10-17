@@ -32,6 +32,7 @@
     },
     "app": "Aplicação",
     "appAlreadyAdded": "Aplicação já adicionada",
+    "appDisabledNoUpdateCheck": "App is disabled, so update checks are skipped",
     "appHasMoreThanOnePackage": "{} tem mais de um pacote:",
     "appId": "ID da aplicação",
     "appIdMismatch": "O ID do pacote descarregado não é igual ao ID da aplicação instalada",

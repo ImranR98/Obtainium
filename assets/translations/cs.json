@@ -32,6 +32,7 @@
     },
     "app": "Aplikace",
     "appAlreadyAdded": "Aplikace již přidána",
+    "appDisabledNoUpdateCheck": "App is disabled, so update checks are skipped",
     "appHasMoreThanOnePackage": "{} má více než jeden balíček:",
     "appId": "ID aplikace",
     "appIdMismatch": "ID staženého balíčku neodpovídá ID existující aplikace",

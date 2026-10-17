@@ -32,6 +32,7 @@
     },
     "app": "التطبيق",
     "appAlreadyAdded": "التطبيق مُضاف بالفعل",
+    "appDisabledNoUpdateCheck": "App is disabled, so update checks are skipped",
     "appHasMoreThanOnePackage": "{} يحتوي على أكثر من حزمة:",
     "appId": "معرّف التطبيق",
     "appIdMismatch": "معرّف الحزمة المحملة لا يتطابق مع معرّف التطبيق الحالي",

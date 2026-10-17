@@ -32,6 +32,7 @@
     },
     "app": "অ্যাপ",
     "appAlreadyAdded": "অ্যাপটি ইতিমধ্যে যোগ করা হয়েছে",
+    "appDisabledNoUpdateCheck": "App is disabled, so update checks are skipped",
     "appHasMoreThanOnePackage": "{}-এর একাধিক প্যাকেজ রয়েছে:",
     "appId": "অ্যাপ ID",
     "appIdMismatch": "ডাউনলোড করা প্যাকেজ ID বর্তমান অ্যাপ ID-এর সাথে মিলছে না",

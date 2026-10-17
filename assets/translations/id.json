@@ -32,6 +32,7 @@
     },
     "app": "Aplikasi",
     "appAlreadyAdded": "Aplikasi sudah ditambahkan",
+    "appDisabledNoUpdateCheck": "App is disabled, so update checks are skipped",
     "appHasMoreThanOnePackage": "{} memiliki lebih dari satu paket:",
     "appId": "ID aplikasi",
     "appIdMismatch": "ID paket yang diunduh tidak sama dengan ID aplikasi yang ada",
