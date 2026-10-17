@@ -1,6 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
 import 'package:obtainium/app_sources/fdroid.dart';
+import 'package:obtainium/models/app.dart';
 
 const _appId = 'org.proninyaroslav.libretorrent';
 const _apiUrl = 'https://f-droid.org/api/v1/packages/$_appId';
@@ -21,13 +22,19 @@ const _apiResponse =
 }
 ''';
 
-String _versionBlock(String versionName, int versionCode, String? nativecode) =>
+String _versionBlock(
+  String versionName,
+  int versionCode,
+  String? nativecode, {
+  String? addedOn,
+}) =>
     '''
 <li class="package-version">
   <div class="package-version-header">
     <a name="$versionName"></a>
     <a name="$versionCode"></a>
     <b>Version $versionName</b> ($versionCode)
+    ${addedOn == null ? '' : 'Added on $addedOn'}
   </div>
   ${nativecode == null ? '' : '<p class="package-version-nativecode"><code class="package-nativecode">$nativecode</code></p>'}
   <p class="package-version-download">
@@ -103,6 +110,16 @@ void main() {
       expect(nativecodes, {1234: <String>[]});
     });
 
+    test('parses the Added on date for each version code', () {
+      final metadata = FDroid.parsePackagePageMetadata(
+        _versionBlock('1.0', 1234, 'arm64-v8a', addedOn: 'Oct 12, 2026'),
+      );
+      expect(metadata.nativecodes, {
+        1234: ['arm64-v8a'],
+      });
+      expect(metadata.addedOn, {1234: DateTime(2026, 10, 12)});
+    });
+
     test('ignores blocks without a downloadable APK', () {
       expect(
         FDroid.parseNativecodesFromPackagePage(
@@ -168,7 +185,7 @@ void main() {
       });
       expect(details.apkUrls, hasLength(1));
       expect(details.apkUrls.single.value, endsWith('${_appId}_9000354.apk'));
-      expect(source.requestedUrls, isNot(contains(_pageUrl)));
+      expect(source.requestedUrls, contains(_pageUrl));
     });
 
     test(
@@ -230,8 +247,8 @@ ${_versionBlock('4.1.1', 9000353, null)}
       expect(details.apkUrls.single.value, endsWith('${_appId}_9000354.apk'));
     });
 
-    test('does not fetch the page when a version has a single APK', () async {
-      final singleResponse =
+    test('fetches the page for a date even with a single APK', () async {
+      const singleResponse =
           '''
 {
   "packageName": "$_appId",
@@ -241,8 +258,14 @@ ${_versionBlock('4.1.1', 9000353, null)}
   ]
 }
 ''';
+      final singlePage = _versionBlock(
+        '4.1.1',
+        9000354,
+        'x86_64',
+        addedOn: 'Oct 12, 2026',
+      );
       final source = _TestFDroid(
-        {_apiUrl: singleResponse, _pageUrl: _page},
+        {_apiUrl: singleResponse, _pageUrl: singlePage},
         ['arm64-v8a'],
       );
       final details = await source.getLatestAPKDetails(
@@ -250,7 +273,53 @@ ${_versionBlock('4.1.1', 9000353, null)}
         _defaultSettings,
       );
       expect(details.apkUrls, hasLength(1));
-      expect(source.requestedUrls, isNot(contains(_pageUrl)));
+      expect(source.requestedUrls, contains(_pageUrl));
+      expect(details.releaseDate, DateTime(2026, 10, 12));
+    });
+
+    test(
+      'supports page metadata when the official host was overridden',
+      () async {
+        final source = _TestFDroid(
+          {_apiUrl: _apiResponse, _pageUrl: _page},
+          ['arm64-v8a'],
+        );
+        source.hostChanged = true;
+        source.hostIdenticalDespiteAnyChange = true;
+        final details = await source.getLatestAPKDetails(
+          _standardUrl,
+          _defaultSettings,
+        );
+        expect(source.requestedUrls, contains(_pageUrl));
+        expect(details.apkUrls, hasLength(1));
+      },
+    );
+
+    test('exposes per-APK ABIs for the picker', () async {
+      final source = _TestFDroid(
+        {_apiUrl: _apiResponse, _pageUrl: _page},
+        ['arm64-v8a'],
+      );
+      const app = App(
+        id: _appId,
+        url: _standardUrl,
+        author: 'F-Droid',
+        name: 'LibreTorrent',
+        latestVersion: '4.1.1',
+        apkUrls: [
+          MapEntry('arm64', 'https://f-droid.org/repo/${_appId}_9000352.apk'),
+          MapEntry(
+            'universal',
+            'https://f-droid.org/repo/${_appId}_9000354.apk',
+          ),
+        ],
+        preferredApkIndex: 0,
+        additionalSettings: {},
+      );
+      expect(await source.getApkAbisByUrl(app), {
+        'https://f-droid.org/repo/${_appId}_9000352.apk': ['arm64-v8a'],
+        'https://f-droid.org/repo/${_appId}_9000354.apk': ['x86_64'],
+      });
     });
   });
 

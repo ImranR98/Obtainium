@@ -12,8 +12,20 @@ import 'package:obtainium/core/logging/app_logger.dart';
 import 'package:obtainium/custom_errors.dart';
 import 'package:obtainium/providers/source_provider.dart';
 
+class FDroidPageMetadata {
+  final Map<int, List<String>> nativecodes;
+  final Map<int, DateTime> addedOn;
+
+  const FDroidPageMetadata({
+    this.nativecodes = const {},
+    this.addedOn = const {},
+  });
+}
+
 class FDroid extends AppSource {
   static const _maxChangeLogCodeUnits = 2048;
+  static const _pageCacheDuration = Duration(minutes: 10);
+  final Map<String, ({FDroidPageMetadata data, DateTime at})> _pageCache = {};
   static const String _fdroidDataBaseUrl =
       'https://gitlab.com/fdroid/fdroiddata/-/raw/master/metadata';
   @override
@@ -90,6 +102,7 @@ class FDroid extends AppSource {
         throw NoReleasesError();
       }
       final String host = Uri.parse(standardUrl).host;
+      final isOfficialHost = !hostChanged || hostIdenticalDespiteAnyChange;
       var details = await getAPKUrlsFromFDroidPackagesAPIResponse(
         await sourceRequest(
           'https://$host/api/v1/packages/$appId',
@@ -99,11 +112,11 @@ class FDroid extends AppSource {
         standardUrl,
         name,
         additionalSettings: additionalSettings,
-        nativecodePageUrl: hostChanged
-            ? null
-            : 'https://$host/en/packages/$appId/',
+        nativecodePageUrl: isOfficialHost
+            ? 'https://$host/en/packages/$appId/'
+            : null,
       );
-      if (!hostChanged) {
+      if (isOfficialHost) {
         try {
           final res = await sourceRequest(
             '$_fdroidDataBaseUrl/$appId.yml',
@@ -290,30 +303,31 @@ class FDroid extends AppSource {
           (element) => element['versionName'] == version,
         );
       }
-      // The F-Droid API does not expose which APK is for which CPU
-      // architecture. When a version has multiple builds, read the nativecode
-      // metadata from the package page and drop incompatible builds. Any
-      // failure here must leave the unfiltered selection in place (#2529).
+      // The F-Droid API exposes neither per-APK architectures nor release
+      // dates. Read them from the package page. Any failure leaves the
+      // unfiltered selection and undated result in place (#2529, #779).
       final List<dynamic> sameVersionReleases = releases
           .where((element) => element['versionName'] == version)
           .toList();
-      if (nativecodePageUrl != null &&
+      FDroidPageMetadata? pageMetadata;
+      if (nativecodePageUrl != null) {
+        pageMetadata = await _getPageMetadata(
+          nativecodePageUrl,
+          additionalSettings,
+        );
+      }
+      if (pageMetadata != null &&
           additionalSettings['autoApkFilterByArch'] == true &&
-          sameVersionReleases.length > 1) {
+          sameVersionReleases.length > 1 &&
+          pageMetadata.nativecodes.isNotEmpty) {
         try {
-          final nativecodes = await _getNativecodesFromPage(
-            nativecodePageUrl,
-            additionalSettings,
+          final filtered = filterReleasesByNativecode(
+            sameVersionReleases,
+            pageMetadata.nativecodes,
+            await getSupportedAbis(),
           );
-          if (nativecodes.isNotEmpty) {
-            final filtered = filterReleasesByNativecode(
-              sameVersionReleases,
-              nativecodes,
-              await getSupportedAbis(),
-            );
-            if (filtered != null && filtered.isNotEmpty) {
-              releaseChoices = filtered;
-            }
+          if (filtered != null && filtered.isNotEmpty) {
+            releaseChoices = filtered;
           }
         } catch (e) {
           AppLogger.info(
@@ -345,10 +359,24 @@ class FDroid extends AppSource {
       final List<String> apkUrls = releaseChoices
           .map((e) => '${apkUrlPrefix}_${e['versionCode']}.apk')
           .toList();
+      DateTime? releaseDate;
+      if (pageMetadata != null) {
+        final selectedCode = releaseChoices.first['versionCode'];
+        if (selectedCode is int) {
+          releaseDate = pageMetadata.addedOn[selectedCode];
+        }
+        if (releaseDate == null) {
+          final versionCode = sameVersionReleases.first['versionCode'];
+          if (versionCode is int) {
+            releaseDate = pageMetadata.addedOn[versionCode];
+          }
+        }
+      }
       return APKDetails(
         version,
         getApkUrlsFromUrls(apkUrls.toSet().toList()),
         AppNames(sourceName, Uri.parse(standardUrl).pathSegments.last),
+        releaseDate: releaseDate,
       );
     } else {
       throw getObtainiumHttpError(res);
@@ -359,32 +387,66 @@ class FDroid extends AppSource {
   Future<List<String>> getSupportedAbis() async =>
       (await DeviceInfoPlugin().androidInfo).supportedAbis;
 
-  Future<Map<int, List<String>>> _getNativecodesFromPage(
+  Future<FDroidPageMetadata?> _getPageMetadata(
     String url,
     Map<String, dynamic> additionalSettings,
   ) async {
+    final cached = _pageCache[url];
+    if (cached != null &&
+        DateTime.now().difference(cached.at) < _pageCacheDuration) {
+      return cached.data;
+    }
     try {
       final res = await sourceRequest(url, additionalSettings);
       if (res.statusCode == 200) {
-        return parseNativecodesFromPackagePage(res.body);
+        final metadata = parsePackagePageMetadata(res.body);
+        _pageCache[url] = (data: metadata, at: DateTime.now());
+        return metadata;
       }
       AppLogger.info(
-        'F-Droid nativecode page request failed with HTTP ${res.statusCode}: $url',
+        'F-Droid package page request failed with HTTP ${res.statusCode}: $url',
       );
     } catch (e) {
       AppLogger.info(
-        'Failed to fetch F-Droid nativecode page ($url): ${e.toString()}',
+        'Failed to fetch F-Droid package page ($url): ${e.toString()}',
       );
     }
-    return {};
+    return null;
   }
 
-  /// Parses the versionCode -> nativecode mapping from an F-Droid package page.
-  /// Each version block lists the native architectures of its APK; builds
-  /// without a nativecode note are universal.
-  static Map<int, List<String>> parseNativecodesFromPackagePage(String html) {
+  static int? _versionCodeFromApkUrl(String url) =>
+      int.tryParse(RegExp(r'_(\d+)\.apk$').firstMatch(url)?.group(1) ?? '');
+
+  @override
+  Future<Map<String, List<String>>> getApkAbisByUrl(App app) async {
+    if (hostChanged && !hostIdenticalDespiteAnyChange) return const {};
+    final appId = await tryInferringAppId(app.url);
+    if (appId == null) return const {};
+    final host = Uri.parse(app.url).host;
+    final metadata = await _getPageMetadata(
+      'https://$host/en/packages/$appId/',
+      app.additionalSettings,
+    );
+    if (metadata == null) return const {};
+    final abis = <String, List<String>>{};
+    for (final apk in app.apkUrls) {
+      final versionCode = _versionCodeFromApkUrl(apk.value);
+      if (versionCode != null &&
+          metadata.nativecodes.containsKey(versionCode)) {
+        abis[apk.value] = metadata.nativecodes[versionCode]!;
+      }
+    }
+    return abis;
+  }
+
+  /// Parses the nativecode and "Added on" metadata from an F-Droid package
+  /// page. Each version block lists the native architectures of its APK;
+  /// builds without a nativecode note are universal.
+  static FDroidPageMetadata parsePackagePageMetadata(String html) {
     final nativecodes = <int, List<String>>{};
+    final addedOn = <int, DateTime>{};
     final versionCodeRegEx = RegExp(r'_(\d+)\.apk$');
+    final addedOnRegEx = RegExp(r'Added on\s+(.+)');
     for (final element in parse(html).querySelectorAll('li.package-version')) {
       int? versionCode;
       for (final anchor in element.querySelectorAll(
@@ -409,9 +471,37 @@ class FDroid extends AppSource {
                 .map((e) => e.trim())
                 .where((e) => e.isNotEmpty)
                 .toList();
+      final header = element.querySelector('.package-version-header')?.text;
+      final rawDate = addedOnRegEx.firstMatch(header ?? '')?.group(1);
+      final date = parseAddedOnDate(rawDate);
+      if (date != null) {
+        addedOn[versionCode] = date;
+      }
     }
-    return nativecodes;
+    return FDroidPageMetadata(nativecodes: nativecodes, addedOn: addedOn);
   }
+
+  static DateTime? parseAddedOnDate(String? raw) {
+    if (raw == null) return null;
+    final cleaned = raw.replaceAll(RegExp(r'\s+'), ' ').trim();
+    if (cleaned.isEmpty) return null;
+    for (final pattern in [
+      'MMM d, yyyy',
+      'MMM dd, yyyy',
+      'd MMM yyyy',
+      'yyyy-MM-dd',
+    ]) {
+      final parsed = DateFormat(pattern, 'en_US').tryParse(cleaned);
+      if (parsed != null) return parsed;
+    }
+    return DateTime.tryParse(cleaned);
+  }
+
+  static Map<int, List<String>> parseNativecodesFromPackagePage(String html) =>
+      parsePackagePageMetadata(html).nativecodes;
+
+  static Map<int, DateTime> parseAddedOnDatesFromPackagePage(String html) =>
+      parsePackagePageMetadata(html).addedOn;
 
   /// Narrows [releases] to the build that fits this device's [abis], using the
   /// given versionCode -> nativecode map. The device ABI order is used as the

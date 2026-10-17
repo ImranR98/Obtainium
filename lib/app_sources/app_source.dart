@@ -74,6 +74,8 @@ abstract class AppSource {
     return null;
   }
 
+  Future<Map<String, List<String>>> getApkAbisByUrl(App app) async => const {};
+
   AppSource() {
     name = runtimeType.toString();
   }

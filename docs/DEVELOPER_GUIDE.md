@@ -279,6 +279,31 @@ their retry timing and stop the fallback chain. During optional discovery or
 store details, a rate limit preserves the already authorized APK and stops
 further detail requests.
 
+### Source-specific notes: F-Droid page metadata
+
+The F-Droid API does not expose per-APK ABIs or release dates. For the official
+host (and an explicit override of it), `FDroid` reads the `/en/packages/<id>/`
+page once per check, cached in memory for ten minutes, and uses:
+
+- `package-nativecode` to filter builds by the device ABI and to label rows in
+  the APK picker (`getApkAbisByUrl`);
+- `Added on <date>` to populate `releaseDate`, including when the app has only
+  one APK.
+
+Page failures are non-fatal: the source keeps the API selection and leaves the
+date/ABI labels unset. Custom F-Droid-compatible hosts are not scraped; the
+existing `FDroidRepo` index metadata remains the source of truth there.
+
+### Source-specific notes: HTML release dates
+
+HTML release-date extraction runs the configured regex against the selected
+APK link's own HTML block first (anchor, then up to three ancestors). This keeps
+pages that list one “Last modified” date per APK from returning another build's
+date. If the selected block has no match, it falls back to the whole-page string
+used by version extraction. Parsing is English (`en_US`) with ordinal/AM-PM
+normalization and a `DateTime.tryParse` fallback; direct APK links have no page
+and therefore no scraped date.
+
 ### Source-specific notes: APKMirror
 
 APKMirror is track-only and keeps regular-page traffic to a minimum:
