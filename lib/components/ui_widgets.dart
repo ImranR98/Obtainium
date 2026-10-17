@@ -265,7 +265,7 @@ class _TvDropdownMenuState<T> extends State<TvDropdownMenu<T>> {
                       width: 3,
                     )
                   : null,
-              borderRadius: BorderRadius.circular(16),
+              borderRadius: BorderRadius.circular(AppRadii.medium),
             ),
             child: child,
           ),
@@ -407,7 +407,7 @@ class EmptyState extends StatelessWidget {
     final colorScheme = Theme.of(context).colorScheme;
     return Center(
       child: Padding(
-        padding: const EdgeInsets.all(32),
+        padding: const EdgeInsets.all(AppSpacings.xxl),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -555,9 +555,9 @@ class LinkText extends StatelessWidget {
     return Semantics(
       link: true,
       child: TvFocusRing(
-        borderRadius: 4,
+        borderRadius: AppRadii.inline,
         child: InkWell(
-          borderRadius: BorderRadius.circular(4),
+          borderRadius: BorderRadius.circular(AppRadii.inline),
           onTap: () => unawaited(
             launchUrlString(url, mode: LaunchMode.externalApplication),
           ),
@@ -793,7 +793,10 @@ class CardTile extends StatelessWidget {
   const CardTile({
     super.key,
     required this.child,
-    this.padding = const EdgeInsets.symmetric(horizontal: 16, vertical: 0),
+    this.padding = const EdgeInsets.symmetric(
+      horizontal: AppSpacings.lg,
+      vertical: 0,
+    ),
     this.borderRadius,
     this.color,
   });
@@ -809,6 +812,26 @@ class CardTile extends StatelessWidget {
         color: color ?? Theme.of(context).colorScheme.surfaceContainerLow,
         child: Padding(padding: padding, child: child),
       ),
+    );
+  }
+}
+
+/// A labelled section header used to group settings, form rows and lists.
+class SectionHeader extends StatelessWidget {
+  final String label;
+  final EdgeInsetsGeometry padding;
+
+  const SectionHeader(
+    this.label, {
+    super.key,
+    this.padding = AppPaddings.sectionHeader,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: padding,
+      child: Text(label, style: sectionHeaderTextStyle(context)),
     );
   }
 }
@@ -835,9 +858,7 @@ class ToggleTile extends StatelessWidget {
   Widget build(BuildContext context) {
     return TvFocusRing(
       child: ListTile(
-        contentPadding: noPadding
-            ? EdgeInsets.zero
-            : const EdgeInsets.symmetric(horizontal: 20),
+        contentPadding: noPadding ? EdgeInsets.zero : AppPaddings.rowHorizontal,
         title: Text(label),
         subtitle: subtitle,
         trailing: Row(

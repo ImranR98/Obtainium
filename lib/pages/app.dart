@@ -415,7 +415,7 @@ class _AppPageState extends State<AppPage> {
     if (_webViewError != null) {
       return Center(
         child: Padding(
-          padding: const EdgeInsets.all(32),
+          padding: const EdgeInsets.all(AppSpacings.xxl),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
@@ -649,7 +649,7 @@ class _AppPageState extends State<AppPage> {
     final cs = Theme.of(context).colorScheme;
     final tt = Theme.of(context).textTheme;
     return Row(
-      spacing: 12,
+      spacing: AppSpacings.md,
       children: [
         Icon(icon, size: 24, color: cs.onSurfaceVariant),
         Expanded(
@@ -692,7 +692,7 @@ class _AppPageState extends State<AppPage> {
           padding: AppPaddings.page,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
-            spacing: 3,
+            spacing: AppSpacings.connectedGap,
             children: [
               ConnectedCard(
                 isFirst: true,
@@ -716,7 +716,7 @@ class _AppPageState extends State<AppPage> {
                 isFirst: false,
                 isLast: true,
                 child: Row(
-                  spacing: 12,
+                  spacing: AppSpacings.md,
                   children: [
                     Expanded(
                       child: OutlinedButton(
@@ -850,7 +850,7 @@ class _AppPageState extends State<AppPage> {
               padding: const EdgeInsets.only(top: 4),
               child: InkWell(
                 onTap: changeLogFn,
-                borderRadius: BorderRadius.circular(4),
+                borderRadius: BorderRadius.circular(AppRadii.inline),
                 child: Text(
                   app?.app.releaseDate == null
                       ? tr('changes')
@@ -876,7 +876,7 @@ class _AppPageState extends State<AppPage> {
               padding: const EdgeInsets.only(top: 4),
               child: InkWell(
                 onTap: () => NavHelper.pushUpdateHealthPage(context),
-                borderRadius: BorderRadius.circular(4),
+                borderRadius: BorderRadius.circular(AppRadii.inline),
                 child: Row(
                   children: [
                     Icon(
@@ -906,7 +906,7 @@ class _AppPageState extends State<AppPage> {
             ),
         ],
       ),
-      const SliverToBoxAdapter(child: SizedBox(height: 2)),
+      const SliverToBoxAdapter(child: SizedBox(height: AppSpacings.xs)),
       _buildSection(
         false,
         true,
@@ -1022,7 +1022,7 @@ class _AppPageState extends State<AppPage> {
     if (certs) {
       final a = app!;
       widgets.addAll([
-        const SliverToBoxAdapter(child: SizedBox(height: 2)),
+        const SliverToBoxAdapter(child: SizedBox(height: AppSpacings.xs)),
         _buildSection(
           false,
           !hasAssets,
@@ -1054,7 +1054,7 @@ class _AppPageState extends State<AppPage> {
     }
     if (hasAssets) {
       widgets.addAll([
-        const SliverToBoxAdapter(child: SizedBox(height: 2)),
+        const SliverToBoxAdapter(child: SizedBox(height: AppSpacings.xs)),
         _buildSection(
           false,
           true,

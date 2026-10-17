@@ -362,7 +362,7 @@ class _HomePageState extends State<HomePage> {
     // Use the same extended (icon + label) FABs on every layout, so the
     // tablet/two-pane UI matches mobile.
     final actionsFab = TvFocusRing(
-      borderRadius: 16,
+      borderRadius: AppRadii.medium,
       child: FloatingActionButton.extended(
         heroTag: null,
         onPressed: onActionsPressed,

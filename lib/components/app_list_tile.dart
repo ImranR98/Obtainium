@@ -211,7 +211,7 @@ class AppListRowCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(12, 4, 12, 4),
+      padding: AppPaddings.listOuter,
       child: Card(clipBehavior: Clip.antiAlias, child: child),
     );
   }
@@ -309,7 +309,7 @@ class AppListTile extends StatelessWidget {
         disabledForegroundColor: cs.onSurface.withValues(alpha: 0.38),
         visualDensity: VisualDensity.compact,
         shape: RoundedSuperellipseBorder(
-          borderRadius: BorderRadius.circular(14),
+          borderRadius: BorderRadius.circular(AppRadii.medium),
         ),
       ),
       icon: Icon(trackOnly ? Icons.check_rounded : Icons.download_rounded),
@@ -336,7 +336,7 @@ class AppListTile extends StatelessWidget {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(Icons.info_outline, color: infoColor, size: 14),
+          Icon(Icons.info_outline, color: infoColor, size: AppIconSizes.small),
           const SizedBox(width: 4),
           Flexible(
             child: Text(
@@ -565,7 +565,7 @@ class AppListTile extends StatelessWidget {
                               .join('\n'),
                           child: Icon(
                             Icons.warning_amber_rounded,
-                            size: 14,
+                            size: AppIconSizes.small,
                             color: Theme.of(context).colorScheme.error,
                           ),
                         ),
@@ -698,7 +698,7 @@ class DownloadProgressTrailing extends StatelessWidget {
               mainAxisSize: MainAxisSize.min,
               children: [
                 ClipRRect(
-                  borderRadius: BorderRadius.circular(8),
+                  borderRadius: BorderRadius.circular(AppRadii.xs),
                   child: LinearProgressIndicator(
                     value: installing ? null : progress / 100,
                   ),
@@ -763,12 +763,12 @@ class AppListGroupSection extends StatelessWidget {
     );
 
     return Padding(
-      padding: const EdgeInsets.fromLTRB(12, 4, 12, 4),
+      padding: AppPaddings.listOuter,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         // Small gaps so entries read as distinct positional tiles, matching the
         // connected-tile look used for settings.
-        spacing: 3,
+        spacing: AppSpacings.connectedGap,
         children: [
           segment(
             0,
@@ -1121,7 +1121,7 @@ class _VersionLabel extends StatelessWidget {
         content = DecoratedBox(
           decoration: BoxDecoration(
             color: Theme.of(context).colorScheme.surfaceContainerHighest,
-            borderRadius: BorderRadius.circular(10),
+            borderRadius: BorderRadius.circular(AppRadii.small),
           ),
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 6),
@@ -1130,7 +1130,7 @@ class _VersionLabel extends StatelessWidget {
         );
       }
       content = InkWell(
-        borderRadius: BorderRadius.circular(10),
+        borderRadius: BorderRadius.circular(AppRadii.small),
         onTap: showChangesFn,
         child: content,
       );

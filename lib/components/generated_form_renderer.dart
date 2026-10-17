@@ -280,7 +280,7 @@ class _GeneratedFormState extends State<GeneratedForm> {
         child: Material(
           type: MaterialType.card,
           elevation: 4,
-          borderRadius: BorderRadius.circular(8),
+          borderRadius: BorderRadius.circular(AppRadii.xs),
           child: child,
         ),
       ),
@@ -305,7 +305,7 @@ class _GeneratedFormState extends State<GeneratedForm> {
       return Text(tr('dropdownNoOptsError'));
     }
     return TvFocusRing(
-      borderRadius: 16,
+      borderRadius: AppRadii.medium,
       child: DropdownButtonFormField(
         decoration: _fieldDecoration(
           labelText: tr(formItem.label) + (formItem.required ? ' *' : ''),
@@ -586,25 +586,16 @@ class _GeneratedFormState extends State<GeneratedForm> {
     }
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
-      spacing: 3,
+      spacing: AppSpacings.connectedGap,
       children: cards,
     );
   }
 
   Widget _buildHeader(GeneratedFormHeader item) {
-    final theme = Theme.of(context);
-    final Widget label = Padding(
-      padding: const EdgeInsets.fromLTRB(4, 12, 4, 0),
-      child: Text(
-        tr(item.label),
-        style: theme.textTheme.labelLarge?.copyWith(
-          color: theme.colorScheme.primary,
-        ),
-      ),
-    );
+    final header = SectionHeader(tr(item.label));
     return item.id == null
-        ? label
-        : KeyedSubtree(key: GlobalObjectKey(item.id!), child: label);
+        ? header
+        : KeyedSubtree(key: GlobalObjectKey(item.id!), child: header);
   }
 
   Widget _buildItem(
@@ -701,7 +692,7 @@ class _GeneratedFormState extends State<GeneratedForm> {
       }
       return Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
-        spacing: 3,
+        spacing: AppSpacings.connectedGap,
         children: rawTiles,
       );
     }
@@ -820,7 +811,7 @@ class _SliderFormItemState extends State<_SliderFormItem> {
           );
 
     return Padding(
-      padding: const EdgeInsets.fromLTRB(20, 8, 20, 4),
+      padding: AppPaddings.sliderTile,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [

@@ -624,6 +624,19 @@ Source credentials (e.g. `github-creds`, `gitlab-creds`) are stored in
 **UI / a11y / i18n**
 - Use the theme; don't hardcode colors/shapes. Pull colors from
   `Theme.of(context).colorScheme`.
+- Layout tokens live in `lib/theme.dart`; use them instead of raw numbers:
+  `AppSpacings` (2/4/8/12/16/24/32), `AppPaddings` (`page`, `cardInner`,
+  `rowHorizontal`, `listOuter`, `sliderTile`, `sectionHeader`,
+  `listSectionHeader`), `AppRadii` (`inline`/`xs`/`small`/`medium`/`fab`/
+  `large`/`xlarge`), and `AppIconSizes`.
+- Section labels use the `SectionHeader` widget (or `sectionHeaderTextStyle`):
+  `titleMedium`, weight 600, `onSurface`, 24px above / 8px below.
+- Rows and form fields use 16px horizontal content padding. Page content uses
+  `AppPaddings.page`; full-bleed app lists use `AppPaddings.listOuter` and
+  `AppListRowCard`; grouped settings use `ConnectedCard`/`CardTile` with
+  `AppSpacings.connectedGap` between segments.
+- Reuse `AppListTile`/`AppListRowCard` for app rows so list density, version
+  labels and update-health indicators stay consistent.
 - All user-facing strings go through `tr()` / `plural()` with a key in **every**
   `assets/translations/*.json` (at minimum `en.json`).
 - Reuse `ConnectedCard`/`SettingsTile`/`positionalTileShape` for grouped tiles instead of

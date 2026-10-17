@@ -94,7 +94,7 @@ class UpdateHealthPage extends StatelessWidget {
   Widget _buildDetectionSettings(SettingsProvider settingsProvider) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
-      spacing: 3,
+      spacing: AppSpacings.connectedGap,
       children: shapeCardTiles([
         _sliderTile(
           label: tr('updateHealthStaleReleaseCheck'),
@@ -152,7 +152,7 @@ class UpdateHealthPage extends StatelessWidget {
     required ValueChanged<int> onChanged,
   }) {
     return CardTile(
-      padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
+      padding: AppPaddings.sliderTile,
       child: NumericOptionSliderTile(
         label: label,
         options: options,
@@ -166,7 +166,7 @@ class UpdateHealthPage extends StatelessWidget {
   Widget _buildEmptyState(BuildContext context) {
     return CardTile(
       child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 24),
+        padding: const EdgeInsets.symmetric(vertical: AppSpacings.xl),
         child: Text(
           tr('updateHealthNoApps'),
           textAlign: TextAlign.center,
@@ -186,12 +186,9 @@ class UpdateHealthPage extends StatelessWidget {
   }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
-      spacing: 3,
+      spacing: AppSpacings.connectedGap,
       children: [
-        Padding(
-          padding: const EdgeInsets.fromLTRB(28, 0, 28, 0),
-          child: Text(title, style: Theme.of(context).textTheme.labelMedium),
-        ),
+        SectionHeader(title, padding: AppPaddings.listSectionHeader),
         ...apps.map(
           (app) => ignoredSection
               ? _buildIgnoredTile(context, appsProvider, settingsProvider, app)
