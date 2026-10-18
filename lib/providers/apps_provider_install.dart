@@ -1173,6 +1173,10 @@ extension AppsProviderInstall on AppsProvider {
     NotificationsProvider? notificationsProvider,
   ) async {
     try {
+      await getInstaller().ensurePermission();
+      final BuildContext? installContext = context?.mounted == true
+          ? context
+          : null;
       await _installDownloadedApp(
         res.id,
         res.willBeSilent,
@@ -1180,7 +1184,8 @@ extension AppsProviderInstall on AppsProvider {
         res.downloadedDir,
         installedIds,
         errors,
-        context,
+        // ignore: use_build_context_synchronously
+        installContext,
         notificationsProvider,
       );
     } catch (e) {
@@ -1740,7 +1745,6 @@ extension AppsProviderInstall on AppsProvider {
       if (!isBg) settingsProvider.lightImpact();
       willBeSilent = await canInstallSilently(apps[id]!.app);
       final installer = getInstaller();
-      await installer.ensurePermission();
       // Only the stock installer surfaces a system install prompt that pulls the
       // user away; wait for them to return before proceeding.
       if (!willBeSilent &&
