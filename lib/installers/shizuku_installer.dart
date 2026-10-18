@@ -6,6 +6,13 @@ import 'package:obtainium/installers/installer.dart';
 import 'package:obtainium/providers/source_provider.dart';
 import 'package:shizuku_apk_installer/shizuku_apk_installer.dart';
 
+/// How many times to re-check a transiently unavailable Shizuku/Dhizuku binder
+/// before reporting that the service is not running.
+const int _permissionCheckAttempts = 4;
+
+/// Delay between transient binder availability checks.
+const Duration _permissionCheckRetryDelay = Duration(milliseconds: 500);
+
 /// Installs via the Shizuku/Dhizuku/Sui binder API for elevated installs with
 /// no user-facing permission dialog. Supports silent installs.
 class ShizukuInstaller extends Installer {
@@ -39,8 +46,17 @@ class ShizukuInstaller extends Installer {
 
   @override
   Future<void> ensurePermission() async {
-    await _applyBackend();
-    switch ((await ShizukuApkInstaller().checkPermission())) {
+    String? result;
+    for (var attempt = 0; attempt < _permissionCheckAttempts; attempt++) {
+      await _applyBackend();
+      result = await ShizukuApkInstaller().checkPermission();
+      if (result != 'services_not_found' ||
+          attempt == _permissionCheckAttempts - 1) {
+        break;
+      }
+      await Future<void>.delayed(_permissionCheckRetryDelay);
+    }
+    switch (result) {
       case 'granted_owner':
       case 'granted_root':
       case 'granted_adb':
