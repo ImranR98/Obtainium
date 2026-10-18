@@ -715,6 +715,43 @@ class SamsungGalaxyStore extends AppSource {
   ];
 
   @override
+  List<List<GeneratedFormItem>> get combinedAppSpecificSettingFormItems {
+    final items = super.combinedAppSpecificSettingFormItems;
+    final rowIndex = items.indexWhere(
+      (row) => row.any(
+        (item) =>
+            item is GeneratedFormSwitch &&
+            item.key == 'shizukuPretendToBeGooglePlay',
+      ),
+    );
+    if (rowIndex == -1) return items;
+    final row = items[rowIndex];
+    final googlePlay =
+        row.firstWhere((item) => item.key == 'shizukuPretendToBeGooglePlay')
+            as GeneratedFormSwitch;
+    row[row.indexOf(googlePlay)] = GeneratedFormSwitch(
+      googlePlay.key,
+      label: googlePlay.label,
+      value: googlePlay.value,
+      disabled: googlePlay.disabled,
+      additionalValidators: List.from(googlePlay.additionalValidators),
+      mutuallyExclusiveWith: [
+        ...googlePlay.mutuallyExclusiveWith,
+        'shizukuPretendToBeGalaxyStore',
+      ],
+    );
+    items.insert(rowIndex + 1, [
+      GeneratedFormSwitch(
+        'shizukuPretendToBeGalaxyStore',
+        label: tr('shizukuPretendToBeGalaxyStore'),
+        value: false,
+        mutuallyExclusiveWith: ['shizukuPretendToBeGooglePlay'],
+      ),
+    ]);
+    return items;
+  }
+
+  @override
   Future<APKDetails> getLatestAPKDetails(
     String standardUrl,
     Map<String, dynamic> additionalSettings,

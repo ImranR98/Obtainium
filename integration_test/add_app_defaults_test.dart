@@ -3,6 +3,7 @@ import 'package:integration_test/integration_test.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:obtainium/pages/add_app.dart';
 import 'package:obtainium/providers/settings_provider.dart';
+import 'package:obtainium/components/ui_widgets.dart';
 
 import 'e2e_helpers.dart';
 
@@ -47,6 +48,30 @@ void main() {
     await pumpFor(tester, const Duration(milliseconds: 500));
 
     expect(state.additionalSettings['includePrereleases'], isTrue);
+    expect(state.additionalSettings['shizukuPretendToBeGooglePlay'], isTrue);
+
+    state.changeUserInput(
+      'https://galaxystore.samsung.com/detail/com.example.app',
+      true,
+      false,
+    );
+    await pumpFor(tester, const Duration(milliseconds: 500));
+    expect(state.additionalSettings['shizukuPretendToBeGooglePlay'], isTrue);
+    expect(state.additionalSettings['shizukuPretendToBeGalaxyStore'], isFalse);
+    final galaxySwitch = find.byWidgetPredicate(
+      (widget) =>
+          widget is ToggleTile &&
+          widget.label.contains('Set Samsung Galaxy Store'),
+    );
+    await tester.ensureVisible(galaxySwitch);
+    await tester.tap(galaxySwitch);
+    await pumpFor(tester, const Duration(milliseconds: 500));
+    expect(state.additionalSettings['shizukuPretendToBeGalaxyStore'], isTrue);
+    expect(state.additionalSettings['shizukuPretendToBeGooglePlay'], isFalse);
+    expect(settings.shizukuPretendToBeGooglePlay, isTrue);
+    await tester.tap(galaxySwitch);
+    await pumpFor(tester, const Duration(milliseconds: 500));
+    expect(state.additionalSettings['shizukuPretendToBeGalaxyStore'], isFalse);
     expect(state.additionalSettings['shizukuPretendToBeGooglePlay'], isTrue);
 
     restoreErrorWidgetBuilder();

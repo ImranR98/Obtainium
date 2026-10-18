@@ -5,6 +5,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart';
 import 'package:obtainium/app_sources/samsunggalaxystore.dart';
+import 'package:obtainium/app_sources/tencent.dart';
 import 'package:obtainium/components/generated_form_model.dart';
 import 'package:obtainium/custom_errors.dart';
 import 'package:xml/xml.dart';
@@ -331,6 +332,49 @@ void main() {
     expect(keys, containsAll(['deviceId', 'csc']));
     expect(keys, isNot(contains('mcc')));
     expect(keys, isNot(contains('mnc')));
+  });
+
+  test('Galaxy Store spoofing is a separate Samsung-only app option', () {
+    final source = SamsungGalaxyStore();
+    final fields = source.combinedAppSpecificSettingFormItems
+        .expand((row) => row)
+        .toList();
+    final googlePlay =
+        fields.singleWhere(
+              (field) => field.key == 'shizukuPretendToBeGooglePlay',
+            )
+            as GeneratedFormSwitch;
+    final galaxyStore =
+        fields.singleWhere(
+              (field) => field.key == 'shizukuPretendToBeGalaxyStore',
+            )
+            as GeneratedFormSwitch;
+    expect(fields.indexOf(galaxyStore), fields.indexOf(googlePlay) + 1);
+    expect(googlePlay.value, isFalse);
+    expect(galaxyStore.value, isFalse);
+    expect(googlePlay.mutuallyExclusiveWith, ['shizukuPretendToBeGalaxyStore']);
+    expect(galaxyStore.mutuallyExclusiveWith, ['shizukuPretendToBeGooglePlay']);
+
+    galaxyStore.value = true;
+    final freshFields = source.combinedAppSpecificSettingFormItems.expand(
+      (row) => row,
+    );
+    expect(
+      freshFields.singleWhere((field) => field.key == galaxyStore.key).value,
+      isFalse,
+    );
+    final otherFields = Tencent().combinedAppSpecificSettingFormItems.expand(
+      (row) => row,
+    );
+    expect(
+      otherFields.map((field) => field.key),
+      isNot(contains(galaxyStore.key)),
+    );
+    final otherGooglePlay =
+        otherFields.singleWhere((field) => field.key == googlePlay.key)
+            as GeneratedFormSwitch;
+    expect(otherGooglePlay.value, isFalse);
+    expect(otherGooglePlay.mutuallyExclusiveWith, isEmpty);
   });
 
   test(

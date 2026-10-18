@@ -1620,9 +1620,12 @@ extension AppsProviderInstall on AppsProvider {
       // workaround (its install await never returns in the background).
       final bool needBGWorkaround =
           willBeSilent && context == null && installerModeKey == 'stock';
-      final bool shizukuPretendToBeGooglePlay =
-          settingsProvider.shizukuPretendToBeGooglePlay ||
-          appEntry.app.settings.getBool('shizukuPretendToBeGooglePlay');
+      final installOptions = {
+        'installerPackageName': installerPackageNameForApp(
+          appEntry.app,
+          googlePlayDefault: settingsProvider.shizukuPretendToBeGooglePlay,
+        ),
+      };
       if (downloadedFile != null) {
         if (needBGWorkaround) {
           sayInstalled = await _awaitBackgroundInstall(
@@ -1632,9 +1635,7 @@ extension AppsProviderInstall on AppsProvider {
               downloadedFile,
               null,
               needsBGWorkaround: true,
-              installOptions: {
-                'shizukuPretendToBeGooglePlay': shizukuPretendToBeGooglePlay,
-              },
+              installOptions: installOptions,
             ),
             failureLogPrefix: 'Background install threw for $id',
           );
@@ -1647,9 +1648,7 @@ extension AppsProviderInstall on AppsProvider {
             downloadedFile,
             // ignore: use_build_context_synchronously
             installContext,
-            installOptions: {
-              'shizukuPretendToBeGooglePlay': shizukuPretendToBeGooglePlay,
-            },
+            installOptions: installOptions,
           );
         }
       } else {
@@ -1657,7 +1656,12 @@ extension AppsProviderInstall on AppsProvider {
           sayInstalled = await _awaitBackgroundInstall(
             id,
             appEntry,
-            () => installApkDir(downloadedDir!, null, needsBGWorkaround: true),
+            () => installApkDir(
+              downloadedDir!,
+              null,
+              needsBGWorkaround: true,
+              installOptions: installOptions,
+            ),
             failureLogPrefix: 'Background install directory threw for $id',
           );
         } else {
@@ -1669,9 +1673,7 @@ extension AppsProviderInstall on AppsProvider {
             downloadedDir!,
             // ignore: use_build_context_synchronously
             installContext,
-            installOptions: {
-              'shizukuPretendToBeGooglePlay': shizukuPretendToBeGooglePlay,
-            },
+            installOptions: installOptions,
           );
         }
       }

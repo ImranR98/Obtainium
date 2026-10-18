@@ -464,6 +464,8 @@
     "shizukuBinderNotFound": "Shizuku در حال اجرا نیست",
     "shizukuOld": "نسخه قدیمی Shizuku (<11) - آن را به روز کنید",
     "shizukuOldAndroidWithADB": "Shizuku در Android < 8.1 با ADB اجرا می شود - اندروید را به روز کنید یا به جای آن از Sui استفاده کنید",
+    "shizukuPretendToBeGalaxyStore": "Set Samsung Galaxy Store as the installation source (if Shizuku or Root is used; overrides the global Google Play setting)",
+    "galaxyStoreInstallSourceRequiresShizuku": "Setting Samsung Galaxy Store as the installation source requires Shizuku or Root. Dhizuku is not supported.",
     "shizukuPretendToBeGooglePlay": "Google Play را به عنوان منبع نصب تنظیم کنید (در صورت استفاده از Shizuku یا Root)",
     "installMethod": "Installation method",
     "installMethodSystem": "System",

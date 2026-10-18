@@ -471,6 +471,8 @@
     "shizukuBinderNotFound": "Shizuku neběží",
     "shizukuOld": "Stará verze Shizuku (<11) - aktualizujte ji",
     "shizukuOldAndroidWithADB": "Shizuku běží na Androidu < 8.1 s ADB - aktualizujte Android nebo místo toho použijte Sui",
+    "shizukuPretendToBeGalaxyStore": "Set Samsung Galaxy Store as the installation source (if Shizuku or Root is used; overrides the global Google Play setting)",
+    "galaxyStoreInstallSourceRequiresShizuku": "Setting Samsung Galaxy Store as the installation source requires Shizuku or Root. Dhizuku is not supported.",
     "shizukuPretendToBeGooglePlay": "Nastavit Google Play jako zdroj instalace (pokud se používá Shizuku nebo Root)",
     "installMethod": "Installation method",
     "installMethodSystem": "System",

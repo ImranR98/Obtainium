@@ -464,6 +464,8 @@
     "shizukuBinderNotFound": "Dhizuku বা Shizuku সার্ভিস চালু নেই",
     "shizukuOld": "Shizuku-এর পুরোনো ভার্সন (<11) - এটি আপডেট করুন",
     "shizukuOldAndroidWithADB": "ADB সহ Android < 8.1-এ Shizuku চলছে - Android আপডেট করুন অথবা এর পরিবর্তে Dhizuku বা Sui ব্যবহার করুন",
+    "shizukuPretendToBeGalaxyStore": "Set Samsung Galaxy Store as the installation source (if Shizuku or Root is used; overrides the global Google Play setting)",
+    "galaxyStoreInstallSourceRequiresShizuku": "Setting Samsung Galaxy Store as the installation source requires Shizuku or Root. Dhizuku is not supported.",
     "shizukuPretendToBeGooglePlay": "ইনস্টলেশন সোর্স হিসেবে Google Play সেট করুন (যদি Shizuku বা Root ব্যবহার করা হয়)",
     "installMethod": "ইনস্টলেশন পদ্ধতি",
     "installMethodSystem": "সিস্টেম",

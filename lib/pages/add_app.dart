@@ -5,6 +5,7 @@ import 'package:material_ui/material_ui.dart';
 import 'package:obtainium/components/ui_widgets.dart';
 import 'package:obtainium/components/generated_form_renderer.dart';
 import 'package:obtainium/components/category_editor.dart';
+import 'package:obtainium/app_sources/samsunggalaxystore.dart';
 import 'package:obtainium/custom_errors.dart';
 import 'package:obtainium/pages/app.dart';
 import 'package:obtainium/pages/import_export.dart';
@@ -634,7 +635,10 @@ class AddAppPageState extends State<AddAppPage> {
             item.value = true;
           }
           if (item.key == 'shizukuPretendToBeGooglePlay' &&
-              settingsProvider.shizukuPretendToBeGooglePlay) {
+              settingsProvider.shizukuPretendToBeGooglePlay &&
+              !(s is SamsungGalaxyStore &&
+                  additionalSettings['shizukuPretendToBeGalaxyStore'] ==
+                      true)) {
             item.value = true;
           }
         }
