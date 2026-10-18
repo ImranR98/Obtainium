@@ -956,29 +956,32 @@ class AppsPageState extends State<AppsPage> {
     BuildContext context,
     List<AppInMemory> listedApps,
   ) {
-    return selectedAppIds.isEmpty
-        ? TextButton.icon(
-            style: const ButtonStyle(visualDensity: VisualDensity.compact),
-            onPressed: () {
-              selectThese(listedApps.map((e) => e.app).toList());
-            },
-            icon: Icon(
-              Icons.select_all_outlined,
-              color: Theme.of(context).colorScheme.primary,
-            ),
-            label: Text(listedApps.length.toString()),
-          )
-        : TextButton.icon(
-            style: const ButtonStyle(visualDensity: VisualDensity.compact),
-            onPressed: () {
-              clearSelected();
-            },
-            icon: Icon(
-              Icons.deselect_outlined,
-              color: Theme.of(context).colorScheme.primary,
-            ),
-            label: Text(selectedAppIds.length.toString()),
-          );
+    final selecting = selectedAppIds.isEmpty;
+    final count = selecting ? listedApps.length : selectedAppIds.length;
+    void toggle() {
+      if (selecting) {
+        selectThese(listedApps.map((e) => e.app).toList());
+      } else {
+        clearSelected();
+      }
+    }
+
+    return Semantics(
+      container: true,
+      button: true,
+      label: '${selecting ? tr('selectAll') : tr('deselectAll')} ($count)',
+      excludeSemantics: true,
+      onTap: toggle,
+      child: TextButton.icon(
+        style: const ButtonStyle(visualDensity: VisualDensity.compact),
+        onPressed: toggle,
+        icon: Icon(
+          selecting ? Icons.select_all_outlined : Icons.deselect_outlined,
+          color: Theme.of(context).colorScheme.primary,
+        ),
+        label: Text(count.toString()),
+      ),
+    );
   }
 
   Widget _getDisplayedList(

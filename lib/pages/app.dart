@@ -748,20 +748,16 @@ class _AppPageState extends State<AppPage> {
   Widget _buildAppIcon(AppInMemory? app) {
     final icon = AppIcon(bytes: app?.icon, size: 56, radius: 14);
     if (app == null || app.installedInfo == null) return icon;
-    return Semantics(
-      button: true,
-      label: app.name,
-      child: TvFocusRing(
-        borderRadius: 14,
-        child: InkWell(
-          borderRadius: BorderRadius.circular(14),
-          onTap: () {
-            settingsProvider.lightImpact();
-            packageManager.openApp(app.app.id);
-          },
-          child: icon,
-        ),
-      ),
+    void openApp() {
+      settingsProvider.lightImpact();
+      packageManager.openApp(app.app.id);
+    }
+
+    return AppIconAction(
+      semanticLabel: tr('openApp', args: [app.name]),
+      onTap: openApp,
+      borderRadius: 14,
+      child: icon,
     );
   }
 

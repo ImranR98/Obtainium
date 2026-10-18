@@ -490,9 +490,16 @@ class _CategorySelectorState extends State<CategorySelector> {
         spacing: AppSpacings.elementGap,
         runSpacing: AppSpacings.elementGap,
         children: [
-          Tooltip(
-            message: tr('newCategory'),
-            child: ActionChip(label: const Text('+'), onPressed: _create),
+          Semantics(
+            container: true,
+            button: true,
+            label: tr('newCategory'),
+            excludeSemantics: true,
+            onTap: _create,
+            child: Tooltip(
+              message: tr('newCategory'),
+              child: ActionChip(label: const Text('+'), onPressed: _create),
+            ),
           ),
           if (widget.onManage != null) _manageButton(),
         ],
@@ -602,12 +609,19 @@ class CategoryManager extends StatelessWidget {
             ).textTheme.bodyMedium?.copyWith(color: cs.onSurfaceVariant),
           ),
           const Spacer(),
-          Tooltip(
-            message: tr('newCategory'),
-            child: ActionChip(
-              autofocus: autofocusFirst,
-              label: const Text('+'),
-              onPressed: () => showCategoryEditor(context),
+          Semantics(
+            container: true,
+            button: true,
+            label: tr('newCategory'),
+            excludeSemantics: true,
+            onTap: () => showCategoryEditor(context),
+            child: Tooltip(
+              message: tr('newCategory'),
+              child: ActionChip(
+                autofocus: autofocusFirst,
+                label: const Text('+'),
+                onPressed: () => showCategoryEditor(context),
+              ),
             ),
           ),
         ],
@@ -638,11 +652,18 @@ class CategoryManager extends StatelessWidget {
             ),
           // Inline with the categories so the row doesn't take extra space
           // when the list wraps (see #3221).
-          Tooltip(
-            message: tr('newCategory'),
-            child: ActionChip(
-              label: const Text('+'),
-              onPressed: () => showCategoryEditor(context),
+          Semantics(
+            container: true,
+            button: true,
+            label: tr('newCategory'),
+            excludeSemantics: true,
+            onTap: () => showCategoryEditor(context),
+            child: Tooltip(
+              message: tr('newCategory'),
+              child: ActionChip(
+                label: const Text('+'),
+                onPressed: () => showCategoryEditor(context),
+              ),
             ),
           ),
         ],
