@@ -45,6 +45,7 @@ class SamsungGalaxyStore extends AppSource {
     'productID',
     'productId',
     'productName',
+    'sellerName',
     'version',
     'versionName',
     'versionCode',
@@ -90,6 +91,23 @@ class SamsungGalaxyStore extends AppSource {
             date.day == day
         ? date
         : null;
+  }
+
+  AppNames _storeNames(
+    Map<String, String> fields,
+    String packageName, {
+    AppNames? fallback,
+  }) {
+    final author = fields['sellerName']?.trim() ?? '';
+    final product = fields['productName']?.trim() ?? '';
+    return AppNames(
+      author.isNotEmpty ? author : (fallback?.author ?? name),
+      fallback != null && fallback.name != packageName
+          ? fallback.name
+          : product.isNotEmpty
+          ? product
+          : packageName,
+    );
   }
 
   Map<String, String> _xmlFields(
@@ -376,6 +394,7 @@ class SamsungGalaxyStore extends AppSource {
     APKDetails result,
     String packageName,
     String productId,
+    String version,
     int versionCode,
     int size,
     Map<String, String> device,
@@ -386,7 +405,7 @@ class SamsungGalaxyStore extends AppSource {
     bool matches(Map<String, String> fields) =>
         fields['GUID'] == packageName &&
         fields['productID'] == productId &&
-        fields['version'] == result.version &&
+        fields['version'] == version &&
         int.tryParse(fields['versionCode'] ?? '') == versionCode &&
         int.tryParse(fields['realContentsSize'] ?? '') == size;
     final params = {
@@ -415,6 +434,9 @@ class SamsungGalaxyStore extends AppSource {
         endpoint: endpoint,
       );
       if (!matches(main)) return result;
+      result = result.copyWith(
+        names: _storeNames(main, packageName, fallback: result.names),
+      );
       final overview = await _odsRequest(
         'guidProductDetailExOverview',
         '2291',
@@ -430,7 +452,7 @@ class SamsungGalaxyStore extends AppSource {
         settings,
         endpoint: endpoint,
       );
-      if (overview['version'] != result.version ||
+      if (overview['version'] != version ||
           int.tryParse(overview['realContentsSize'] ?? '') != size ||
           (overview.containsKey('GUID') && overview['GUID'] != packageName) ||
           (overview.containsKey('productID') &&
@@ -611,17 +633,15 @@ class SamsungGalaxyStore extends AppSource {
     );
     return _withStoreDetails(
       APKDetails(
-        version,
+        settings['useVersionCodeAsOSVersion'] == true
+            ? versionCode.toString()
+            : version,
         [MapEntry('$packageName.apk', apkUrl.toString())],
-        AppNames(
-          name,
-          metadata['productName']?.trim().isNotEmpty == true
-              ? metadata['productName']!
-              : packageName,
-        ),
+        _storeNames(metadata, packageName),
       ),
       packageName,
       productId,
+      version,
       versionCode,
       size,
       device,
@@ -784,14 +804,11 @@ class SamsungGalaxyStore extends AppSource {
     }
     final apkUrl = _downloadUri(fields['downloadURI'] ?? '');
     final result = APKDetails(
-      version,
+      additionalSettings['useVersionCodeAsOSVersion'] == true
+          ? versionCode.toString()
+          : version,
       [MapEntry('$packageName.apk', apkUrl.toString())],
-      AppNames(
-        name,
-        fields['productName']?.isNotEmpty == true
-            ? fields['productName']!
-            : packageName,
-      ),
+      _storeNames(fields, packageName),
     );
     final identity = _newIdentity();
     final String endpoint;
@@ -804,6 +821,7 @@ class SamsungGalaxyStore extends AppSource {
       result,
       packageName,
       productId,
+      version,
       versionCode,
       size,
       device,

@@ -259,6 +259,11 @@ fails before authorization. Full APKs, including universal `32n64` packages, are
 accepted; delta URLs are unused. ODS POST redirects are disabled and headers do
 not affect APK transfers.
 
+The publisher comes from a nonblank `sellerName` in validated download metadata
+or identity-bound main details. Missing later details retain the confirmed
+publisher and name. The existing version-code option changes the returned
+version while detail matching continues to use the original store version name.
+
 Optional store dates and publisher notes use same-endpoint main (`2290`),
 overview (`2291`), and main (`2290`) requests. Both main responses must match the
 selected package, product, version, version code, and full size; overview must
@@ -270,14 +275,23 @@ remain unique scalar values. The validated overview `lastUpdateDate` populates
 changed, malformed, or unavailable details leave these fields unset and preserve
 the authorized APK.
 
-The source remains per-app: it does not add cross-app update batches or new
-settings. Anonymous ODS requests reuse one generated identity throughout the
+The source remains per-app and does not add cross-app update batches.
+Anonymous ODS requests reuse one generated identity throughout the
 operation and do not require account credentials. Stub and ODS requests have
 40-second deadlines. A stub timeout can use the same-profile ODS fallback;
 ODS timeouts do not trigger restore or mirror authorization. Rate limits retain
 their retry timing and stop the fallback chain. During optional discovery or
 store details, a rate limit preserves the already authorized APK and stops
 further detail requests.
+
+### Source-specific notes: Tencent release dates
+
+The existing simple-page download remains authoritative. An optional detail-page
+request reads `__NEXT_DATA__` only from the main `GameDetail` card and accepts a
+unique package record matching the selected version, MD5, and size. Its Unix
+seconds populate the UTC `releaseDate`. A different 64-bit APK URL or missing
+legacy fingerprint skips this request. A 15-second deadline, oversized response,
+invalid metadata, or transport failure leaves the original APK result intact.
 
 ### Source-specific notes: F-Droid page metadata
 

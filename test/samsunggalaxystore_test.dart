@@ -386,6 +386,127 @@ void main() {
     expect(result.releaseDate, isNull);
   });
 
+  test(
+    'validated download metadata supplies the publisher without extra requests',
+    () async {
+      for (final seller in [' Samsung Electronics Co., Ltd. ', '', '   ']) {
+        final expected = seller.trim().isEmpty
+            ? 'Samsung Galaxy Store'
+            : seller.trim();
+        final stub = _OdsGalaxyStore([
+          _stubResponse({'sellerName': seller}),
+        ]);
+        final stubResult = await stub.getLatestAPKDetails(url, {});
+        expect(stubResult.names.author, expected);
+        expect(stubResult.names.name, 'Samsung Assistant');
+        expect(stub.coreRequests.length, 1);
+
+        final ods = _OdsGalaxyStore([
+          Response('Unavailable', 503),
+          _ods({..._metadata, 'sellerName': seller}),
+          _ods(_grant),
+        ]);
+        final odsResult = await ods.getLatestAPKDetails(url, _china);
+        expect(odsResult.names.author, expected);
+        expect(odsResult.names.name, _metadata['productName']);
+        expect(ods.coreRequests.length, 3);
+      }
+    },
+  );
+
+  test(
+    'bound main details retain names when later optional details fail',
+    () async {
+      for (final failureStage in ['overview', 'after']) {
+        final source = _OdsGalaxyStore([
+          _stubResponse({'productName': ''}),
+          _ods({..._metadata, 'sellerName': 'Publisher from main'}),
+          if (failureStage == 'overview')
+            Response('Unavailable', 503)
+          else ...[
+            _ods(_overview),
+            _ods({..._metadata, 'version': 'other release'}),
+          ],
+        ], explicitDetails: true);
+        final result = await source.getLatestAPKDetails(url, {});
+        expect(result.names.author, 'Publisher from main');
+        expect(result.names.name, _metadata['productName']);
+        expect(result.releaseDate, isNull);
+        expect(result.changeLog, isNull);
+        expect(
+          result.apkUrls.single.value,
+          'https://apps.samsungapps.com/app_20260923000000.apk',
+        );
+      }
+    },
+  );
+
+  test('unbound details never replace validated download names', () async {
+    for (final details in [
+      _ods({
+        ..._metadata,
+        'GUID': 'com.other.app',
+        'sellerName': 'Other publisher',
+      }),
+      _ods({
+        ..._metadata,
+        'version': 'other release',
+        'sellerName': 'Other publisher',
+      }),
+      _ods({..._metadata, 'sellerName': '   ', 'productName': '   '}),
+      Response('Unavailable', 503),
+    ]) {
+      final source = _OdsGalaxyStore([
+        _stubResponse({'sellerName': 'Original publisher'}),
+        details,
+        _ods(_overview),
+        _ods(_metadata),
+      ], explicitDetails: true);
+      final result = await source.getLatestAPKDetails(url, {});
+      expect(result.names.author, 'Original publisher');
+      expect(result.names.name, 'Samsung Assistant');
+    }
+  });
+
+  test(
+    'version-code detection preserves version-bound optional release details',
+    () async {
+      for (final enabled in [false, true]) {
+        for (final useStub in [false, true]) {
+          final source = _OdsGalaxyStore([
+            if (useStub)
+              _stubResponse()
+            else ...[
+              Response('Unavailable', 503),
+              _ods(_metadata),
+              _ods(_grant),
+            ],
+            _ods(_metadata),
+            _ods(_overview),
+            _ods(_metadata),
+          ], explicitDetails: true);
+          final result = await source.getLatestAPKDetails(url, {
+            ..._china,
+            'useVersionCodeAsOSVersion': enabled,
+          });
+          expect(result.version, enabled ? '940207000' : '9.4.02.7');
+          expect(result.releaseDate, DateTime(2026, 8, 25));
+          expect(result.changeLog, _overview['updateDescription']);
+        }
+        final linked = _OdsGalaxyStore([
+          Response('Unavailable', 503),
+          _ods(_linkedMetadata),
+          _ods(_linkedGrant),
+        ]);
+        final linkedResult = await linked.getLatestAPKDetails(_linkedUrl, {
+          ..._china,
+          'useVersionCodeAsOSVersion': enabled,
+        });
+        expect(linkedResult.version, enabled ? '103' : '4.6.32');
+      }
+    },
+  );
+
   test('publisher notes preserve their original outer whitespace', () async {
     const notes = '\n  Publisher notes.\n Keep every line.  \n';
     final result = await _withDetails(
