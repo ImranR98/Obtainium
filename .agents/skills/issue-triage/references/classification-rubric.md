@@ -69,6 +69,11 @@ diagnostic questions are specific; imitate them:
 
 Post the reviewed questions and add `needs follow up`; keep the issue open.
 
+Re-check the `needs follow up` queue on every run. If the requester or another commenter
+supplied relevant information after the last maintainer/LLM comment, re-classify the issue
+from that evidence. If no relevant response has arrived for 8 weeks, suggest closing it as
+stale (`not planned`) rather than leaving it parked indefinitely.
+
 ## Valid
 
 Then decide autonomous vs human:
