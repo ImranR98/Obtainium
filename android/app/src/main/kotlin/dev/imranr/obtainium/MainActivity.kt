@@ -55,6 +55,13 @@ class MainActivity : FlutterActivity() {
         const val CANCEL_GRACE_MS = 30_000L
 
         /**
+         * After the installer explicitly reports a cancellation, only wait a
+         * short time for a last-moment package broadcast before clearing the
+         * installing state.
+         */
+        const val CANCEL_RESULT_GRACE_MS = 5_000L
+
+        /**
          * Extra set by installers that support [Intent.EXTRA_RETURN_RESULT] on
          * failure; holds a PackageManager INSTALL_FAILED_* code. The constant
          * is hidden, so the raw key is used.
@@ -97,10 +104,10 @@ class MainActivity : FlutterActivity() {
             complete(installed = false, errorCode = null)
         }
 
-        fun scheduleCancelGrace() {
+        fun scheduleCancelGrace(delayMs: Long = CANCEL_GRACE_MS) {
             if (responded || graceScheduled) return
             graceScheduled = true
-            installHandler.postDelayed(graceRunnable, CANCEL_GRACE_MS)
+            installHandler.postDelayed(graceRunnable, delayMs)
         }
 
         /** Drops a pending grace: the user went back to the installer. */
@@ -335,10 +342,12 @@ class MainActivity : FlutterActivity() {
                     // RESULT_CANCELED is also what installers that do not
                     // implement EXTRA_RETURN_RESULT produce on finish, and
                     // singleInstance installers (e.g. InstallerX-Revived)
-                    // return it immediately. Only treat it as "the installer
-                    // is gone" once it actually took focus; otherwise wait for
-                    // the package broadcast or the hard timeout.
-                    else -> if (watcher.focusLost) watcher.scheduleCancelGrace()
+                    // return it immediately. Use a short grace for an explicit
+                    // cancel result; the longer grace remains for focus-only
+                    // returns.
+                    else -> watcher.scheduleCancelGrace(
+                        delayMs = CANCEL_RESULT_GRACE_MS,
+                    )
                 }
             }
             return

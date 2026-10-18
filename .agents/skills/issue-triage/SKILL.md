@@ -1,21 +1,28 @@
 ---
 name: issue-triage
-description: Triage and resolve Obtainium GitHub issues labeled "to check" — classify duplicates/invalid/valid, decide autonomous vs human, score importance, close approved duplicates/invalids, then fix autonomous issues with emulator-verified commits. Use when asked to work the "to check" queue, triage Obtainium issues, review the issue backlog, or run the issue triage workflow.
+description: Triage Obtainium GitHub issues labeled "to check" and re-check open issues labeled "needs follow up" — classify duplicates/invalid/valid, decide autonomous vs human, score importance, close approved duplicates/invalids, then fix autonomous issues with emulator-verified commits. Use when asked to work the "to check" or "needs follow up" queues, triage Obtainium issues, review the issue backlog, or run the issue triage workflow.
 compatibility: Requires `gh` authenticated for the repository, the Flutter toolchain (see AGENTS.md), and an Android emulator/device for verification. Read AGENTS.md at the repo root first; its hard rules and commit conventions apply throughout.
 ---
 
 # Obtainium Issue Triage
 
 Work through the open GitHub issues labeled `to check` (the label is auto-applied to new
-issues and means "not reviewed yet"). The flow:
+issues and means "not reviewed yet") **and re-check the open issues labeled
+`needs follow up`**. The flow:
 
-1. Fetch the queue and classify every issue.
+1. Fetch both queues and classify every issue.
 2. Score valid issues, and tag each as fixable autonomously or needing a human decision.
 3. Present issues one at a time (summary, assessment, comment, labels, close action) for the
    user's review and corrections.
-4. Close approved duplicates/invalid issues with a reviewed comment; apply approved labels.
+4. Close approved duplicates/invalid/stale issues with a reviewed comment; apply approved
+   labels.
 5. Fix the approved autonomous issues in importance order, one verified commit each.
 6. Report what changed and what remains.
+
+The `needs follow up` queue is a re-check, not a fresh triage: include an issue when the
+requester or a community member with relevant information replied after the last maintainer
+(or LLM) comment. If there has been no relevant response for **8 weeks**, suggest closing
+the issue (usually as `not planned`) instead of leaving it parked indefinitely.
 
 **Before starting, read `AGENTS.md` at the repo root.** The hard rules (no plagiarism, no
 version bumps, translation handling, staging, commit style, environment discovery,
@@ -38,12 +45,22 @@ skill: **never close an issue that was fixed** — the maintainer closes those a
 
 ```bash
 REPO=$(gh repo view --json nameWithOwner -q .nameWithOwner)
-gh issue list --repo "$REPO" --label "to check" --state open --limit 100 \
-  --json number,title,body,labels,createdAt,updatedAt,comments,reactionGroups
+for LABEL in "to check" "needs follow up"; do
+  gh issue list --repo "$REPO" --label "$LABEL" --state open --limit 100 \
+    --json number,title,body,labels,createdAt,updatedAt,comments,reactionGroups
+done
 ```
 
-`scripts/list-to-check.sh` prints a compact one-line-per-issue view first. Always re-fetch:
-the queue changes between runs.
+`scripts/list-to-check.sh` prints a compact one-line-per-issue view; pass the label as the
+second argument (`scripts/list-to-check.sh "" "needs follow up"`) to list the follow-up
+queue. Always re-fetch: both queues change between runs.
+
+For every `needs follow up` issue, determine whether the requester or another commenter
+provided relevant information **after** the last maintainer/LLM comment. If so, include it
+in the batch and re-evaluate it from the new evidence. If the last activity is more than
+8 weeks old and nobody has supplied the requested information, mark it **suggest close
+(stale)** with the date of the last relevant comment; do not keep it in the queue just
+because it is old.
 
 Work in batches of roughly 8–10 issues. Read issue bodies selectively and never paste huge
 logs wholesale into context (`gh issue view <n> --comments`; long bodies can be filtered
@@ -66,9 +83,13 @@ diagnosis, and the maintainer often agrees with them. Then pick one category:
 - **Invalid / not applicable** — expected behavior or an available setting (say which),
   unsupported platform/ROM, external cause or blocker, violates the Android app model, or
   already fixed. Cite the concrete constraint or setting in the closing comment.
-- **Needs follow up** — not enough information to act. Draft a short, specific comment asking
-  for exactly what is missing (exact error text, repro rate, device/OS/build, logs). Keep it
-  open and add the `needs follow up` label after approval.
+- **Needs follow up** — not enough information to act. If the issue already carries the
+  label, first use any new response to re-classify it. If there is still no usable
+  information and the last relevant comment is under 8 weeks old, draft a short, specific
+  comment asking for exactly what is missing (exact error text, repro rate, device/OS/build,
+  logs); keep it open and keep the `needs follow up` label. If 8 weeks have passed with no
+  relevant response, classify it as **suggest close (stale)** and propose a `not planned`
+  close.
 - **Valid** — a real bug or a reasonable enhancement. Then decide:
   - **Autonomous**: localized code fix; deterministic behavior; testable (unit test and/or an
     e2e suite); no UX/product decision needed; no external account or special hardware;
@@ -117,8 +138,9 @@ a single full-batch table. For each issue show:
    priority/parking labels where justified. **Never add the `duplicate` label** — it is
    unused; duplicates are closed with the duplicate reason instead. `info/idea` and `blocked`
    are parking labels; `wontfix` is effectively unused.
-5. **Proposed close** — `not planned`, `duplicate of #N`, `needs follow up` (stays open), or
-   keep open for a code fix/decision.
+5. **Proposed close** — `not planned`, `duplicate of #N`, `needs follow up` (stays open),
+   **suggest close (stale)** when 8 weeks have passed without a relevant response, or keep
+   open for a code fix/decision.
 
 Then **stop and wait** for *approve / skip / approve-with-edits* before presenting the next
 issue. Apply edits, re-present the changed issue if asked, and record each decision in the
@@ -138,6 +160,8 @@ Only after approval, per issue:
 - Invalid: same command with `--reason "not planned"` and the reviewed one-line rationale.
 - Needs follow up: `gh issue comment` the reviewed questions, then
   `gh issue edit <n> --add-label "needs follow up"`; keep it open.
+- Stale needs follow up: after approval, close with `--reason "not planned"` and a short
+  reviewed comment naming the missing information and the 8-week window.
 - Valid: `gh issue edit <n> --remove-label "to check" --add-label ...` with the approved
   labels only.
 - Never close fixed issues, and do not post fix/release comments — the maintainer does that
@@ -187,7 +211,8 @@ Finish with a concise report:
 - Issues closed (number + reason) and labels applied.
 - Commits per fixed issue (hash, subject), noting they will ship in the next release.
 - Issues moved to human/needs-follow-up, with why.
-- Remaining `to check` queue size and suggested next steps.
+- Remaining `to check` and `needs follow up` queue sizes, plus any **suggest close (stale)**
+   candidates and suggested next steps.
 
 ## Gotchas
 
@@ -196,6 +221,9 @@ Finish with a concise report:
   of the job.
 - Subjective style change requests (wording, punctuation, capitalization debates) are often
   pushed back on; do not churn user-facing strings without approval (translations cost).
-- Missing-info closures are rare in this repo's history; prefer `needs follow up`.
+- Missing-info closures are rare in this repo's history; prefer `needs follow up`, but
+  suggest closing once 8 weeks have passed without a relevant response.
+- `needs follow up` is not a permanent parking lot: re-check it on every run and act on new
+  responses.
 - A single logical change can legitimately close several issues; the maintainer bundles when
   appropriate. This skill still commits one fix per issue unless the user says otherwise.

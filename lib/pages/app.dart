@@ -24,6 +24,22 @@ import 'package:webview_flutter/webview_flutter.dart';
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher_string.dart';
 
+/// Whether opening the detail page should resolve the selected APK's size.
+///
+/// The probe makes network requests, so it must follow the same
+/// "check for updates on opening an app detail page" setting as the update
+/// check itself.
+bool shouldProbeDownloadSize({
+  required bool checkUpdateOnDetailPage,
+  required bool hasDownload,
+  required bool updating,
+  required bool areDownloadsRunning,
+}) =>
+    checkUpdateOnDetailPage &&
+    !hasDownload &&
+    !updating &&
+    !areDownloadsRunning;
+
 class AppPage extends StatefulWidget {
   const AppPage({
     super.key,
@@ -748,20 +764,16 @@ class _AppPageState extends State<AppPage> {
   Widget _buildAppIcon(AppInMemory? app) {
     final icon = AppIcon(bytes: app?.icon, size: 56, radius: 14);
     if (app == null || app.installedInfo == null) return icon;
-    return Semantics(
-      button: true,
-      label: app.name,
-      child: TvFocusRing(
-        borderRadius: 14,
-        child: InkWell(
-          borderRadius: BorderRadius.circular(14),
-          onTap: () {
-            settingsProvider.lightImpact();
-            packageManager.openApp(app.app.id);
-          },
-          child: icon,
-        ),
-      ),
+    void openApp() {
+      settingsProvider.lightImpact();
+      packageManager.openApp(app.app.id);
+    }
+
+    return AppIconAction(
+      semanticLabel: tr('openApp', args: [app.name]),
+      onTap: openApp,
+      borderRadius: 14,
+      child: icon,
     );
   }
 
@@ -1220,9 +1232,12 @@ class _AppPageState extends State<AppPage> {
       context.select<AppsProvider, AppInMemory?>((p) => p.apps[widget.appId]),
     );
     if (app != null &&
-        app.downloadProgress == null &&
-        !updating &&
-        !areDownloadsRunning) {
+        shouldProbeDownloadSize(
+          checkUpdateOnDetailPage: settingsProvider.checkUpdateOnDetailPage,
+          hasDownload: app.downloadProgress != null,
+          updating: updating,
+          areDownloadsRunning: areDownloadsRunning,
+        )) {
       // Probe from a post-frame callback: build must stay side-effect free, and
       // the key guard inside makes repeat scheduling a cheap no-op.
       WidgetsBinding.instance.addPostFrameCallback((_) {

@@ -95,7 +95,15 @@ class ApkFilterService {
             .where((element) => abiRegex.hasMatch(element.key))
             .toList();
         if (urls2.isNotEmpty && urls2.length < apkUrls.length) {
-          apkUrls = urls2;
+          // Universal APKs are compatible with every ABI, so keep them as an
+          // alternative instead of hiding them. Put them first so the
+          // ABI-specific match stays last and remains the default selection.
+          final universal = apkUrls.where(
+            (element) =>
+                element.key.toLowerCase().contains('universal') &&
+                !urls2.any((match) => match.value == element.value),
+          );
+          apkUrls = [...universal, ...urls2];
           break;
         }
       }

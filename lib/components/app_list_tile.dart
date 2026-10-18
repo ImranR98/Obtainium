@@ -162,40 +162,31 @@ class _AppIconWidgetState extends State<AppIconWidget> {
   @override
   Widget build(BuildContext context) {
     final name = widget.appsProvider.apps[widget.appId]?.name ?? '';
-    return Semantics(
-      label: name,
-      button: true,
+    final labelName = name.isEmpty ? tr('app') : name;
+    void openDetails() {
+      NavHelper.pushAppPage(
+        context,
+        widget.appId,
+        showOppositeOfPreferredView: true,
+      );
+    }
+
+    return AppIconAction(
+      semanticLabel: widget.installed
+          ? tr('openApp', args: [labelName])
+          : labelName,
+      enabled: widget.installed,
       onTap: widget.installed
           ? () => packageManager.openApp(widget.appId)
           : null,
-      onLongPress: () {
-        NavHelper.pushAppPage(
-          context,
-          widget.appId,
-          showOppositeOfPreferredView: true,
-        );
-      },
-      child: InkWell(
-        child: FutureBuilder(
-          future: _iconFuture,
-          builder: (ctx, val) => AppIcon(
-            bytes: widget.appsProvider.apps[widget.appId]?.icon,
-            size: widget.size,
-            dimmed: !widget.installed,
-          ),
+      onLongPress: openDetails,
+      child: FutureBuilder(
+        future: _iconFuture,
+        builder: (ctx, val) => AppIcon(
+          bytes: widget.appsProvider.apps[widget.appId]?.icon,
+          size: widget.size,
+          dimmed: !widget.installed,
         ),
-        onDoubleTap: () {
-          if (widget.installed) {
-            packageManager.openApp(widget.appId);
-          }
-        },
-        onLongPress: () {
-          NavHelper.pushAppPage(
-            context,
-            widget.appId,
-            showOppositeOfPreferredView: true,
-          );
-        },
       ),
     );
   }
@@ -468,6 +459,7 @@ class AppListTile extends StatelessWidget {
       valueListenable: appInMemory.downloadProgressNotifier,
       builder: (context, downloadProgress, child) {
         final tileChild = Semantics(
+          label: appInMemory.name,
           customSemanticsActions: <CustomSemanticsAction, VoidCallback>{
             if (canInstall || canUpdate)
               CustomSemanticsAction(
