@@ -459,6 +459,7 @@ class AppListTile extends StatelessWidget {
       valueListenable: appInMemory.downloadProgressNotifier,
       builder: (context, downloadProgress, child) {
         final tileChild = Semantics(
+          label: appInMemory.name,
           customSemanticsActions: <CustomSemanticsAction, VoidCallback>{
             if (canInstall || canUpdate)
               CustomSemanticsAction(
