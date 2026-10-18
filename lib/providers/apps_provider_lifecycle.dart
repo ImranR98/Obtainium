@@ -49,6 +49,23 @@ bool isIconCacheUsable({
   return cacheModified.millisecondsSinceEpoch >= packageLastUpdateTime;
 }
 
+/// Whether install-status reconciliation should turn version detection off.
+///
+/// When the user opts into using the app's versionCode as the OS-detected
+/// version, the tracked version and the OS value are intentionally different
+/// formats; disabling version detection in that mode makes the per-app toggle
+/// appear to reset. Leave the user's choice intact in that case.
+bool shouldDisableVersionDetection({
+  required bool installed,
+  required bool versionDetectionIsStandard,
+  required bool useVersionCodeAsOSVersion,
+  required bool versionDetectionPossible,
+}) =>
+    installed &&
+    versionDetectionIsStandard &&
+    !useVersionCodeAsOSVersion &&
+    !versionDetectionPossible;
+
 extension AppsProviderLifecycle on AppsProvider {
   bool _getNaiveStandardVersionDetection(App app, {AppSource? source}) {
     final resolved =
@@ -172,11 +189,17 @@ extension AppsProviderLifecycle on AppsProvider {
       modded = true;
     }
     // 4. Disable version detection if versions are not standardizable.
-    if (installedInfo != null &&
-        versionDetectionIsStandard &&
-        !isVersionDetectionPossible(
-          AppInMemory(app, null, installedInfo, null),
-        )) {
+    final versionDetectionPossible =
+        installedInfo != null &&
+        isVersionDetectionPossible(AppInMemory(app, null, installedInfo, null));
+    if (shouldDisableVersionDetection(
+      installed: installedInfo != null,
+      versionDetectionIsStandard: versionDetectionIsStandard,
+      useVersionCodeAsOSVersion: app.settings.getBool(
+        'useVersionCodeAsOSVersion',
+      ),
+      versionDetectionPossible: versionDetectionPossible,
+    )) {
       app = app.copyWith(
         additionalSettings: Map<String, dynamic>.from(app.additionalSettings)
           ..['versionDetection'] = false,
