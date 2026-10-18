@@ -102,6 +102,7 @@ class AddAppPageState extends State<AddAppPage> {
     bool isBuilding, {
     bool updateUrlInput = false,
     String? overrideSource,
+    Map<String, dynamic> appSettings = const {},
   }) {
     if (!isBuilding) {
       userInput = input;
@@ -141,13 +142,17 @@ class AddAppPageState extends State<AddAppPage> {
             pickedSource!.runOnAddAppInputChange(userInput),
           );
         }
-        additionalSettingsValid =
-            source == null ||
-            _requiredFormFieldsFilled(source, additionalSettings);
         inferAppIdIfOptional = true;
-      } else if (valid && !updateUrlInput && _prevValid) {
+      } else if (valid &&
+          !updateUrlInput &&
+          _prevValid &&
+          appSettings.isEmpty) {
         return;
       }
+      if (source != null) additionalSettings.addAll(appSettings);
+      additionalSettingsValid =
+          source == null ||
+          _requiredFormFieldsFilled(source, additionalSettings);
       _prevValid = valid;
       _updateSourceNote();
       if (mounted) setState(() {});
@@ -382,10 +387,17 @@ class AddAppPageState extends State<AddAppPage> {
     settingsProvider.lightImpact();
     searching = true;
     setState(() {});
-    final sourceStrings = <String, List<String>>{};
-    sourceProvider.sources.where((e) => e.canSearch).forEach((s) {
-      sourceStrings[s.name] = [s.name];
-    });
+    final options = sourceProvider.sources
+        .where((source) => source.canSearch)
+        .expand(
+          (source) => source.searchProfiles.map(
+            (profile) => (source: source, profile: profile),
+          ),
+        )
+        .toList();
+    final sourceStrings = {
+      for (final option in options) option.profile.id: [option.profile.name],
+    };
     try {
       final searchSources =
           await showDialog<List<String>?>(
@@ -406,122 +418,173 @@ class AddAppPageState extends State<AddAppPage> {
         settingsProvider.searchDeselected = sourceStrings.keys
             .where((s) => !searchSources.contains(s))
             .toList();
-        final List<MapEntry<String, Map<String, List<String>>>?>
+        final List<
+          ({
+            String source,
+            SourceSearchProfile profile,
+            Map<String, List<String>> entries,
+          })?
+        >
         results = (await Future.wait(
-          sourceProvider.sources.where((e) => searchSources.contains(e.name)).map(
-            (e) async {
-              try {
-                Map<String, dynamic>? querySettings = {};
-                if (e.includeAdditionalOptsInMainSearch) {
-                  querySettings = await showDialog<Map<String, dynamic>?>(
-                    context: context,
-                    builder: (BuildContext ctx) {
-                      String currentUrl = e.hosts.isNotEmpty ? e.hosts[0] : '';
-                      String currentHost = _searchUrlHost(currentUrl);
-                      List<GeneratedFormItem> sourceItems = e
-                          .searchQuerySettingItemsForUrl(
-                            currentUrl,
-                            settingsProvider: settingsProvider,
-                          );
-                      return StatefulBuilder(
-                        builder:
-                            (BuildContext ctx, StateSetter setDialogState) {
-                              return GeneratedFormModal(
-                                title: tr('searchX', args: [e.name]),
-                                items: [
-                                  ...sourceItems.map((item) => [item]),
-                                  [
-                                    GeneratedFormTextField(
-                                      'url',
-                                      label: e.hosts.isNotEmpty
-                                          ? tr('overrideSource')
-                                          : plural('url', 1).substring(2),
-                                      autoCompleteOptions: [
-                                        ...(e.hosts.isNotEmpty
-                                            ? [e.hosts[0]]
-                                            : []),
-                                        ...appsProvider.apps.values
-                                            .where(
-                                              (a) =>
-                                                  sourceProvider
-                                                      .getSource(
-                                                        a.app.url,
-                                                        overrideSource: a
-                                                            .app
-                                                            .overrideSource,
-                                                      )
-                                                      .sourceIdentifier ==
-                                                  e.sourceIdentifier,
-                                            )
-                                            .map((a) {
-                                              final uri = Uri.parse(a.app.url);
-                                              return '${uri.origin}${uri.path}';
-                                            }),
-                                      ],
-                                      value: currentUrl,
-                                      required: true,
-                                    ),
-                                  ],
-                                ],
-                                onValueChanges: (values, valid, isBuilding) {
-                                  if (isBuilding) return;
-                                  final newUrl = values['url'] as String? ?? '';
-                                  currentUrl = newUrl;
-                                  final newHost = _searchUrlHost(newUrl);
-                                  if (newHost != currentHost) {
-                                    currentHost = newHost;
-                                    setDialogState(() {
-                                      sourceItems = e
-                                          .searchQuerySettingItemsForUrl(
-                                            newUrl,
-                                            settingsProvider: settingsProvider,
-                                          );
-                                    });
-                                  }
-                                },
-                              );
-                            },
-                      );
-                    },
+          options
+              .where((option) => searchSources.contains(option.profile.id))
+              .map((option) async {
+                final e = option.source;
+                try {
+                  Map<String, dynamic>? querySettings = Map.from(
+                    option.profile.querySettings,
                   );
-                  if (querySettings == null) {
-                    return null;
+                  if (e.includeAdditionalOptsInMainSearch) {
+                    querySettings = await showDialog<Map<String, dynamic>?>(
+                      context: context,
+                      builder: (BuildContext ctx) {
+                        String currentUrl = e.hosts.isNotEmpty
+                            ? e.hosts[0]
+                            : '';
+                        String currentHost = _searchUrlHost(currentUrl);
+                        List<GeneratedFormItem> sourceItems = e
+                            .searchQuerySettingItemsForUrl(
+                              currentUrl,
+                              settingsProvider: settingsProvider,
+                            );
+                        return StatefulBuilder(
+                          builder:
+                              (BuildContext ctx, StateSetter setDialogState) {
+                                return GeneratedFormModal(
+                                  title: tr('searchX', args: [e.name]),
+                                  items: [
+                                    ...sourceItems.map((item) => [item]),
+                                    [
+                                      GeneratedFormTextField(
+                                        'url',
+                                        label: e.hosts.isNotEmpty
+                                            ? tr('overrideSource')
+                                            : plural('url', 1).substring(2),
+                                        autoCompleteOptions: [
+                                          ...(e.hosts.isNotEmpty
+                                              ? [e.hosts[0]]
+                                              : []),
+                                          ...appsProvider.apps.values
+                                              .where(
+                                                (a) =>
+                                                    sourceProvider
+                                                        .getSource(
+                                                          a.app.url,
+                                                          overrideSource: a
+                                                              .app
+                                                              .overrideSource,
+                                                        )
+                                                        .sourceIdentifier ==
+                                                    e.sourceIdentifier,
+                                              )
+                                              .map((a) {
+                                                final uri = Uri.parse(
+                                                  a.app.url,
+                                                );
+                                                return '${uri.origin}${uri.path}';
+                                              }),
+                                        ],
+                                        value: currentUrl,
+                                        required: true,
+                                      ),
+                                    ],
+                                  ],
+                                  onValueChanges: (values, valid, isBuilding) {
+                                    if (isBuilding) return;
+                                    final newUrl =
+                                        values['url'] as String? ?? '';
+                                    currentUrl = newUrl;
+                                    final newHost = _searchUrlHost(newUrl);
+                                    if (newHost != currentHost) {
+                                      currentHost = newHost;
+                                      setDialogState(() {
+                                        sourceItems = e
+                                            .searchQuerySettingItemsForUrl(
+                                              newUrl,
+                                              settingsProvider:
+                                                  settingsProvider,
+                                            );
+                                      });
+                                    }
+                                  },
+                                );
+                              },
+                        );
+                      },
+                    );
+                    if (querySettings == null) {
+                      return null;
+                    }
+                    querySettings = {
+                      ...option.profile.querySettings,
+                      ...querySettings,
+                    };
                   }
+                  return (
+                    source: e.sourceIdentifier,
+                    profile: option.profile,
+                    entries: await e.search(
+                      searchQuery,
+                      querySettings: querySettings,
+                    ),
+                  );
+                } catch (err) {
+                  final errorToShow = err is ObtainiumError
+                      ? ObtainiumError(
+                          err.message,
+                          code: err.code,
+                          unexpected: true,
+                          stack: err.stack,
+                          data: err.data,
+                        )
+                      : err;
+                  if (context.mounted) showError(errorToShow, context);
+                  return null;
                 }
-                return MapEntry(
-                  e.sourceIdentifier,
-                  await e.search(searchQuery, querySettings: querySettings),
-                );
-              } catch (err) {
-                final errorToShow = err is ObtainiumError
-                    ? ObtainiumError(
-                        err.message,
-                        code: err.code,
-                        unexpected: true,
-                        stack: err.stack,
-                        data: err.data,
-                      )
-                    : err;
-                if (context.mounted) showError(errorToShow, context);
-                return null;
-              }
-            },
-          ),
+              }),
         )).where((a) => a != null).toList();
 
         if (!context.mounted) return;
 
-        final Map<String, MapEntry<String, List<String>>> res = {};
+        final res =
+            <
+              String,
+              ({
+                String source,
+                String url,
+                List<String> description,
+                Map<String, dynamic> appSettings,
+              })
+            >{};
         var si = 0;
         var done = false;
         while (!done) {
           done = true;
           for (var r in results) {
-            final sourceName = r!.key;
-            if (r.value.length > si) {
+            if (r!.entries.length > si) {
               done = false;
-              final singleRes = r.value.entries.elementAt(si);
-              res[singleRes.key] = MapEntry(sourceName, singleRes.value);
+              final singleRes = r.entries.entries.elementAt(si);
+              final description = List<String>.from(singleRes.value);
+              if (options
+                      .where(
+                        (option) => option.source.sourceIdentifier == r.source,
+                      )
+                      .length >
+                  1) {
+                if (description.isEmpty) description.add(singleRes.key);
+                final author = description.length > 1 ? description[1] : '';
+                if (description.length < 2) description.add('');
+                description[1] = [
+                  r.profile.name,
+                  author,
+                ].where((part) => part.isNotEmpty).join(' · ');
+              }
+              res[res.length.toString()] = (
+                source: r.source,
+                url: singleRes.key,
+                description: description,
+                appSettings: r.profile.appSettings,
+              );
             }
           }
           si++;
@@ -530,24 +593,26 @@ class AddAppPageState extends State<AddAppPage> {
           throw ObtainiumError(tr('noResults'));
         }
         if (!context.mounted) return;
-        final List<String>? selectedUrls = await showDialog<List<String>?>(
+        final List<String>? selectedIds = await showDialog<List<String>?>(
           context: context,
           builder: (BuildContext ctx) {
             return SelectionModal(
-              entries: res.map((k, v) => MapEntry(k, v.value)),
+              entries: res.map((k, v) => MapEntry(k, v.description)),
+              entryUrls: res.map((k, v) => MapEntry(k, v.url)),
               selectedByDefault: false,
               onlyOneSelectionAllowed: true,
             );
           },
         );
-        if (selectedUrls != null && selectedUrls.isNotEmpty) {
-          final sourceName = res[selectedUrls[0]]?.key;
+        if (selectedIds != null && selectedIds.isNotEmpty) {
+          final selected = res[selectedIds[0]]!;
           changeUserInput(
-            selectedUrls[0],
+            selected.url,
             true,
             false,
             updateUrlInput: true,
-            overrideSource: sourceName,
+            overrideSource: selected.source,
+            appSettings: selected.appSettings,
           );
         }
       }

@@ -30,7 +30,24 @@ class SamsungGalaxyStore extends AppSource {
     inferAppIdFromUrlPath = false;
     showReleaseDateAsVersionToggle = true;
     changeLogIfAnyIsMarkDown = false;
+    canSearch = true;
   }
+
+  @override
+  List<SourceSearchProfile> get searchProfiles => [
+    SourceSearchProfile(
+      id: 'SamsungGalaxyStore/global',
+      name: tr('samsungGalaxyStoreGlobal'),
+      querySettings: const {'deviceId': 'SM-S948B', 'csc': 'DBT'},
+      appSettings: const {'deviceId': 'SM-S948B', 'csc': 'DBT'},
+    ),
+    SourceSearchProfile(
+      id: 'SamsungGalaxyStore/china',
+      name: tr('samsungGalaxyStoreChina'),
+      querySettings: const {'deviceId': 'SM-S9480', 'csc': 'CHC'},
+      appSettings: const {'deviceId': 'SM-S9480', 'csc': 'CHC'},
+    ),
+  ];
 
   static const _chinaEndpoint = 'https://cn-ms.galaxyappstore.com/ods.as';
   static const _globalEndpoint = 'https://us-odc.samsungapps.com/ods.as';
@@ -110,12 +127,7 @@ class SamsungGalaxyStore extends AppSource {
     );
   }
 
-  Map<String, String> _xmlFields(
-    Response response,
-    String rootName, {
-    String? requestId,
-  }) {
-    final fields = <String, String>{};
+  XmlElement _xmlRoot(Response response, String rootName) {
     try {
       if (response.bodyBytes.isEmpty || response.bodyBytes.length > 2000000) {
         throw const FormatException();
@@ -126,23 +138,57 @@ class SamsungGalaxyStore extends AppSource {
           document.children.any((node) => node is XmlDoctype)) {
         throw const FormatException();
       }
+      return root;
+    } on FormatException {
+      throw ObtainiumError(tr('unexpectedStoreApiResponse'), unexpected: true);
+    }
+  }
+
+  XmlElement _odsResponse(Response response, String? requestId) {
+    try {
+      final root = _xmlRoot(response, 'SamsungProtocol');
+      final responses = root.findElements('response').toList();
+      if (responses.length != 1) throw const FormatException();
+      final protocol = responses.single;
+      if (protocol.getAttribute('id') != requestId) {
+        throw const FormatException();
+      }
+      final errors = protocol.findElements('errorInfo').toList();
+      if (errors.length != 1) throw const FormatException();
+      final strings = errors.single.findElements('errorString').toList();
+      if (strings.length != 1 || strings.single.childElements.isNotEmpty) {
+        throw const FormatException();
+      }
+      return protocol;
+    } on FormatException {
+      throw ObtainiumError(tr('unexpectedStoreApiResponse'), unexpected: true);
+    }
+  }
+
+  Map<String, String> _odsStatus(XmlElement protocol) {
+    final error = protocol
+        .findElements('errorInfo')
+        .single
+        .findElements('errorString')
+        .single;
+    return {
+      'returnCode': protocol.getAttribute('returnCode') ?? '',
+      'errorCode': error.getAttribute('errorCode') ?? '',
+      'errorString': error.innerText.trim(),
+    };
+  }
+
+  Map<String, String> _xmlFields(
+    Response response,
+    String rootName, {
+    String? requestId,
+  }) {
+    final fields = <String, String>{};
+    try {
       Iterable<XmlElement> values;
       if (rootName == 'SamsungProtocol') {
-        final responses = root.findElements('response').toList();
-        if (responses.length != 1) throw const FormatException();
-        final protocol = responses.single;
-        if (protocol.getAttribute('id') != requestId) {
-          throw const FormatException();
-        }
-        fields['returnCode'] = protocol.getAttribute('returnCode') ?? '';
-        final errors = protocol.findElements('errorInfo').toList();
-        if (errors.length != 1) throw const FormatException();
-        final strings = errors.single.findElements('errorString').toList();
-        if (strings.length != 1 || strings.single.childElements.isNotEmpty) {
-          throw const FormatException();
-        }
-        fields['errorCode'] = strings.single.getAttribute('errorCode') ?? '';
-        fields['errorString'] = strings.single.innerText.trim();
+        final protocol = _odsResponse(response, requestId);
+        fields.addAll(_odsStatus(protocol));
         final lists = protocol.findElements('list').toList();
         if (lists.length > 1) throw const FormatException();
         if (lists.isNotEmpty &&
@@ -158,20 +204,27 @@ class SamsungGalaxyStore extends AppSource {
         // Complex extList branches contain unrelated repeated display components.
         values = lists.isEmpty ? const [] : lists.single.findElements('value');
       } else {
-        values = root.childElements;
+        values = _xmlRoot(response, rootName).childElements;
       }
-      for (final node in values) {
-        if (node.childElements.isNotEmpty) throw const FormatException();
-        final key = node.getAttribute('name') ?? node.name.local;
-        if (fields.containsKey(key)) throw const FormatException();
-        fields[key] = key == 'updateDescription'
-            ? node.innerText
-            : node.innerText.trim();
-      }
-      return fields;
+      return _xmlValues(values, fields);
     } on FormatException {
       throw ObtainiumError(tr('unexpectedStoreApiResponse'), unexpected: true);
     }
+  }
+
+  Map<String, String> _xmlValues(
+    Iterable<XmlElement> values,
+    Map<String, String> fields,
+  ) {
+    for (final node in values) {
+      if (node.childElements.isNotEmpty) throw const FormatException();
+      final key = node.getAttribute('name') ?? node.name.local;
+      if (fields.containsKey(key)) throw const FormatException();
+      fields[key] = key == 'updateDescription'
+          ? node.innerText
+          : node.innerText.trim();
+    }
+    return fields;
   }
 
   Uri _downloadUri(String raw, {bool forLinkedProduct = false}) {
@@ -301,6 +354,33 @@ class SamsungGalaxyStore extends AppSource {
     Map<String, dynamic> settings, {
     String endpoint = _chinaEndpoint,
   }) async {
+    final response = await _odsHttpRequest(
+      method,
+      requestId,
+      params,
+      device,
+      identity,
+      settings,
+      endpoint: endpoint,
+    );
+    final fields = _xmlFields(
+      response,
+      'SamsungProtocol',
+      requestId: requestId,
+    );
+    _validateOdsStatus(fields);
+    return fields;
+  }
+
+  Future<Response> _odsHttpRequest(
+    String method,
+    String requestId,
+    Map<String, String> params,
+    Map<String, String> device,
+    String identity,
+    Map<String, dynamic> settings, {
+    required String endpoint,
+  }) async {
     final response = await sourceRequest(
       '$endpoint?reqId=$requestId&ot=01&ct=B',
       settings,
@@ -316,11 +396,10 @@ class SamsungGalaxyStore extends AppSource {
       if (error is RateLimitError) throw error;
       throw _OdsRejected(error.message);
     }
-    final fields = _xmlFields(
-      response,
-      'SamsungProtocol',
-      requestId: requestId,
-    );
+    return response;
+  }
+
+  void _validateOdsStatus(Map<String, String> fields) {
     if (!RegExp(r'^-?\d{1,19}$').hasMatch(fields['errorCode'] ?? '') ||
         !RegExp(r'^\d{1,19}$').hasMatch(fields['returnCode'] ?? '')) {
       throw ObtainiumError(tr('unexpectedStoreApiResponse'), unexpected: true);
@@ -337,7 +416,6 @@ class SamsungGalaxyStore extends AppSource {
     ].contains((fields['errorString'] ?? '').toLowerCase())) {
       throw ObtainiumError(tr('unexpectedStoreApiResponse'), unexpected: true);
     }
-    return fields;
   }
 
   Future<String> _discoverEndpoint(
@@ -751,6 +829,99 @@ class SamsungGalaxyStore extends AppSource {
     return items;
   }
 
+  Future<Map<String, String>> _deviceSettings(
+    Map<String, dynamic> additionalSettings,
+  ) async {
+    final deviceId =
+        additionalSettings['deviceId']?.toString().isNotEmpty == true
+        ? additionalSettings['deviceId'].toString()
+        : 'SM-S948B';
+    final csc = additionalSettings['csc']?.toString().isNotEmpty == true
+        ? additionalSettings['csc'].toString()
+        : 'DBT';
+    final isChina = csc.trim().toUpperCase() == 'CHC';
+    final mcc = additionalSettings['mcc']?.toString().trim() ?? '';
+    final mnc = additionalSettings['mnc']?.toString().trim() ?? '';
+    return {
+      'deviceId': deviceId,
+      'csc': isChina ? 'CHC' : csc,
+      'sdkVer': await _getSdkVersion(),
+      'mcc': mcc.isEmpty ? (isChina ? '460' : '425') : mcc,
+      'mnc': mnc.isEmpty ? (isChina ? '00' : '01') : mnc,
+    };
+  }
+
+  @override
+  Future<Map<String, List<String>>> search(
+    String query, {
+    Map<String, dynamic> querySettings = const {},
+  }) async {
+    if (query.trim().isEmpty) return {};
+    final device = await _deviceSettings(querySettings);
+    final identity = _newIdentity();
+    final endpoint = await _discoverEndpoint(device, identity, querySettings);
+    final response = await _odsHttpRequest(
+      'searchProductListEx2Notc',
+      '2040',
+      {
+        'keyword': query.trim(),
+        'imgWidth': '135',
+        'imgHeight': '135',
+        'alignOrder': 'bestMatch',
+        'startNum': '1',
+        'endNum': '20',
+        'contentType': 'all',
+        'storeContentType': 'Apps',
+        'status': '0',
+        'qlDomainCode': 'sa',
+        'qlDeviceType': 'phone',
+        'qlInputMethod': '',
+        'imei': identity,
+        'stduk': identity,
+        'extuk': identity,
+        'runestoneYn': 'N',
+      },
+      device,
+      identity,
+      querySettings,
+      endpoint: endpoint,
+    );
+    final protocol = _odsResponse(response, '2040');
+    _validateOdsStatus(_odsStatus(protocol));
+    final results = <String, List<String>>{};
+    try {
+      for (final list in protocol.findElements('list')) {
+        if (list.childElements.any(
+          (node) =>
+              node.name.local != 'value' &&
+              _criticalFields.contains(
+                node.getAttribute('name') ?? node.name.local,
+              ),
+        )) {
+          throw const FormatException();
+        }
+        final fields = _xmlValues(list.findElements('value'), {});
+        final package = fields['GUID'] ?? '';
+        if (!RegExp(
+              r'^[A-Za-z][A-Za-z0-9_]*(\.[A-Za-z][A-Za-z0-9_]*)+$',
+            ).hasMatch(package) ||
+            fields['playStoreProductYN']?.toUpperCase() == 'Y' ||
+            fields['installable']?.toUpperCase() == 'N' ||
+            fields['installableYN']?.toUpperCase() == 'N') {
+          continue;
+        }
+        final names = _storeNames(fields, package);
+        results.putIfAbsent(
+          'https://apps.galaxyappstore.com/detail/$package',
+          () => [names.name, names.author],
+        );
+      }
+    } on FormatException {
+      throw ObtainiumError(tr('unexpectedStoreApiResponse'), unexpected: true);
+    }
+    return results;
+  }
+
   @override
   Future<APKDetails> getLatestAPKDetails(
     String standardUrl,
@@ -763,26 +934,7 @@ class SamsungGalaxyStore extends AppSource {
     } else {
       packageName = uri.pathSegments.where((s) => s.isNotEmpty).last;
     }
-    final deviceId =
-        additionalSettings['deviceId']?.toString().isNotEmpty == true
-        ? additionalSettings['deviceId'].toString()
-        : 'SM-S948B';
-    final csc = additionalSettings['csc']?.toString().isNotEmpty == true
-        ? additionalSettings['csc'].toString()
-        : 'DBT';
-    final isChina = csc.trim().toUpperCase() == 'CHC';
-    final mcc = additionalSettings['mcc']?.toString().trim() ?? '';
-    final mnc = additionalSettings['mnc']?.toString().trim() ?? '';
-
-    final sdkVer = await _getSdkVersion();
-
-    final device = {
-      'deviceId': deviceId,
-      'csc': isChina ? 'CHC' : csc,
-      'sdkVer': sdkVer,
-      'mcc': mcc.isEmpty ? (isChina ? '460' : '425') : mcc,
-      'mnc': mnc.isEmpty ? (isChina ? '00' : '01') : mnc,
-    };
+    final device = await _deviceSettings(additionalSettings);
     try {
       return await _getStubDetails(
         standardUrl,

@@ -190,6 +190,13 @@ Override the contract methods you need:
 | `changeLogPageFromStandardUrl(url)` | URL of the human-readable changelog/releases page. Set `changeLogPageIsStandardUrl = true` in the constructor instead of overriding this if the changelog page is the same as the standard URL. |
 | `postProcessApp(app)` | Transform the `App` object after all other processing (e.g. F-Droid repos update the URL with an `appId` query param). |
 
+`searchProfiles` defaults to one option using the source's existing name and
+selection preference. A source can expose separate profiles with independent
+IDs, names, query settings, and app settings. Only the explicitly declared app
+settings follow a selected result; query-only values, including credentials,
+are not copied. Search results retain separate selection IDs and real links so
+the same URL can appear under multiple profiles without losing its settings.
+
 ### Helpers you should reuse (don't reinvent)
 
 - **`standardizeUrlWithRegex(url, subdomainPrefix:, pathPattern:)`** — the common
@@ -221,6 +228,13 @@ remain strings to preserve leading zeros.
 For example, Samsung Assistant (`com.samsung.android.app.sreminder`) can be
 queried with device model `SM-S9480` and CSC `CHC` for the China release.
 Availability still depends on the requested app, device, and Android SDK version.
+
+Search exposes separate Global and China profiles. Global uses the existing
+`SM-S948B/DBT/425/01` profile and endpoint discovery; it is not a fixed US catalog.
+China uses `SM-S9480/CHC/460/00`. Each search requests only the first `2040`
+result batch (1–20), without fetching details or download authorization for
+every result. Selecting a result carries its device model and CSC into the app
+settings used by subsequent queries and updates.
 
 After a failed stub request, ODS uses the same configured device and network
 parameters. `CHC` with MCC `460` selects the China service; other configurations

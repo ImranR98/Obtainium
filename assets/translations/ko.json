@@ -424,6 +424,8 @@
     "reverseSort": "정렬 반전",
     "runBgCheckNow": "지금 백그라운드 업데이트 확인 실행",
     "rustoreAggregatedAppNoApk": "RuStore lists this app from an external source and does not host its APK",
+    "samsungGalaxyStoreGlobal": "Samsung Galaxy Store (Global)",
+    "samsungGalaxyStoreChina": "Samsung Galaxy Store (China)",
     "samsungGalaxyStoreApiError": "Samsung Galaxy Store API error",
     "samsungGalaxyStoreLoginRequired": "This Galaxy Store app requires a Samsung account and cannot be downloaded anonymously.",
     "search": "검색",

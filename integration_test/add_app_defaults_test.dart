@@ -74,6 +74,20 @@ void main() {
     expect(state.additionalSettings['shizukuPretendToBeGalaxyStore'], isFalse);
     expect(state.additionalSettings['shizukuPretendToBeGooglePlay'], isTrue);
 
+    for (final profile in state.pickedSource!.searchProfiles) {
+      state.changeUserInput(
+        state.userInput,
+        true,
+        false,
+        overrideSource: state.pickedSource!.sourceIdentifier,
+        appSettings: profile.appSettings,
+      );
+      await pumpFor(tester, const Duration(milliseconds: 500));
+      for (final setting in profile.appSettings.entries) {
+        expect(state.additionalSettings[setting.key], setting.value);
+      }
+    }
+
     restoreErrorWidgetBuilder();
   });
 }
