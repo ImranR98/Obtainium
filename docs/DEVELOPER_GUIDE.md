@@ -229,8 +229,9 @@ For example, Samsung Assistant (`com.samsung.android.app.sreminder`) can be
 queried with device model `SM-S9480` and CSC `CHC` for the China release.
 Availability still depends on the requested app, device, and Android SDK version.
 
-Search exposes separate Global and China profiles. Global uses the existing
-`SM-S948B/DBT/425/01` profile and endpoint discovery; it is not a fixed US catalog.
+Search exposes `Samsung Galaxy Store` and `Samsung Galaxy Store (CN)`. The
+international option uses the existing `SM-S948B/DBT/425/01` profile and endpoint
+discovery; it is not a fixed US catalog.
 China uses `SM-S9480/CHC/460/00`. Each search requests only the first `2040`
 result batch (1–20), without fetching details or download authorization for
 every result. Selecting a result carries its device model and CSC into the app

@@ -37,13 +37,13 @@ class SamsungGalaxyStore extends AppSource {
   List<SourceSearchProfile> get searchProfiles => [
     SourceSearchProfile(
       id: 'SamsungGalaxyStore/global',
-      name: tr('samsungGalaxyStoreGlobal'),
+      name: name,
       querySettings: const {'deviceId': 'SM-S948B', 'csc': 'DBT'},
       appSettings: const {'deviceId': 'SM-S948B', 'csc': 'DBT'},
     ),
     SourceSearchProfile(
       id: 'SamsungGalaxyStore/china',
-      name: tr('samsungGalaxyStoreChina'),
+      name: tr('samsungGalaxyStoreCN'),
       querySettings: const {'deviceId': 'SM-S9480', 'csc': 'CHC'},
       appSettings: const {'deviceId': 'SM-S9480', 'csc': 'CHC'},
     ),

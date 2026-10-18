@@ -189,8 +189,8 @@ void main() {
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 400));
 
-      final global = tr('samsungGalaxyStoreGlobal');
-      final china = tr('samsungGalaxyStoreChina');
+      final global = SamsungGalaxyStore().name;
+      final china = tr('samsungGalaxyStoreCN');
       expect(find.text(global), findsOneWidget);
       expect(find.text(china), findsOneWidget);
       expect(
