@@ -144,6 +144,7 @@
     "coolApk": "CoolApk",
     "copiedToClipboard": "ক্লিপবোর্ডে কপি করা হয়েছে",
     "copyToClipboard": "ক্লিপবোর্ডে কপি করুন",
+    "paste": "Paste",
     "couldNotExtractArchive": "Could not extract the downloaded archive",
     "couldNotGetIdFromApk": "APK থেকে ID পাওয়া যায়নি",
     "crowdsourcedConfigsLabel": "ক্রাউডসোর্সড অ্যাপ কনফিগারেশন (নিজ দায়িত্বে ব্যবহার করুন)",

@@ -150,6 +150,7 @@
     "coolApk": "CoolApk",
     "copiedToClipboard": "Скопировано в буфер обмена",
     "copyToClipboard": "Скопировать в буфер обмена",
+    "paste": "Paste",
     "couldNotExtractArchive": "Не удалось распаковать загруженный архив",
     "couldNotGetIdFromApk": "Не удалось получить ID из APK",
     "crowdsourcedConfigsLabel": "Конфигурации приложений, созданные пользователями (используйте на свой страх и риск)",

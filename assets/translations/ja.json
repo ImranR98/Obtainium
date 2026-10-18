@@ -144,6 +144,7 @@
     "coolApk": "CoolApk",
     "copiedToClipboard": "クリップボードにコピーしました",
     "copyToClipboard": "クリップボードにコピー",
+    "paste": "Paste",
     "couldNotExtractArchive": "ダウンロードしたアーカイブを展開できませんでした",
     "couldNotGetIdFromApk": "APKからIDを取得できませんでした",
     "crowdsourcedConfigsLabel": "クラウドソーシングによるアプリの設定（利用は自己責任で）",
