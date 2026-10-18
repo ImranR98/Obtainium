@@ -49,6 +49,41 @@ bool isIconCacheUsable({
   return cacheModified.millisecondsSinceEpoch >= packageLastUpdateTime;
 }
 
+/// Uses [bulk] when it contains [key], otherwise confirms with [lookup].
+///
+/// The bulk package list can be incomplete (for example when the platform
+/// transaction is truncated), so a missing entry alone is not proof that an
+/// app was uninstalled. A per-app lookup distinguishes the two cases.
+Future<T?> resolveBulkOrLookup<T>(
+  String key,
+  Map<String, T> bulk, {
+  required Future<T?> Function(String key) lookup,
+}) async => bulk[key] ?? await lookup(key);
+
+/// Whether load-time reconciliation should clear a recorded installed version.
+///
+/// A background load must not erase an explicit "Mark as updated" when the
+/// package list is temporarily incomplete; the foreground load can confirm an
+/// actual uninstall.
+bool shouldClearInstalledVersion({
+  required bool installedInfoMissing,
+  required bool trackOnly,
+  required bool isBackground,
+  required bool versionDetectionIsStandard,
+  required String? installedVersion,
+  required String latestVersion,
+}) {
+  if (!installedInfoMissing || installedVersion == null || trackOnly) {
+    return false;
+  }
+  if (isBackground &&
+      !versionDetectionIsStandard &&
+      installedVersion == latestVersion) {
+    return false;
+  }
+  return true;
+}
+
 extension AppsProviderLifecycle on AppsProvider {
   bool _getNaiveStandardVersionDetection(App app, {AppSource? source}) {
     final resolved =
@@ -150,7 +185,14 @@ extension AppsProviderLifecycle on AppsProvider {
       installedInfo,
     );
     // 1. Compare reported vs. real installed versions where one is null.
-    if (installedInfo == null && app.installedVersion != null && !trackOnly) {
+    if (shouldClearInstalledVersion(
+      installedInfoMissing: installedInfo == null,
+      trackOnly: trackOnly,
+      isBackground: isBg,
+      versionDetectionIsStandard: versionDetectionIsStandard,
+      installedVersion: app.installedVersion,
+      latestVersion: app.latestVersion,
+    )) {
       app = app.copyWith(installedVersion: null);
       modded = true;
     } else if (realInstalledVersion != null && app.installedVersion == null) {
@@ -248,7 +290,16 @@ extension AppsProviderLifecycle on AppsProvider {
                   );
                   final sourceType = src.sourceIdentifier;
                   // If the app is installed, grab its OS data and reconcile install statuses
-                  final PackageInfo? installedInfo = installedAppsMap[app.id];
+                  final bool wantsInstalledInfo =
+                      !app.settings.getBool('trackOnly') &&
+                      app.installedVersion != null;
+                  final PackageInfo? installedInfo = wantsInstalledInfo
+                      ? await resolveBulkOrLookup(
+                          app.id,
+                          installedAppsMap,
+                          lookup: getInstalledInfo,
+                        )
+                      : installedAppsMap[app.id];
                   // Reconcile differences between the installed and recorded install info
                   final moddedApp = reconcileInstallStatus(app, installedInfo);
                   if (moddedApp != null) {
