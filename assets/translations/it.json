@@ -144,6 +144,7 @@
     "coolApk": "CoolApk",
     "copiedToClipboard": "Copiato negli appunti",
     "copyToClipboard": "Copy to clipboard",
+    "paste": "Paste",
     "couldNotExtractArchive": "Could not extract the downloaded archive",
     "couldNotGetIdFromApk": "Could not get ID from APK",
     "crowdsourcedConfigsLabel": "Configurazioni di app in crowdsourcing (uso a proprio rischio)",

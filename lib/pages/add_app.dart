@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:easy_localization/easy_localization.dart';
+import 'package:flutter/services.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:obtainium/components/ui_widgets.dart';
 import 'package:obtainium/components/generated_form_renderer.dart';
@@ -93,6 +94,23 @@ class AddAppPageState extends State<AddAppPage> {
       changeUserInput(input, false, false, updateUrlInput: true);
       showError(e, context);
     }
+  }
+
+  Future<void> pasteUrl() async {
+    final data = await Clipboard.getData(Clipboard.kTextPlain);
+    final text = data?.text?.trim();
+    if (text == null || text.isEmpty || !mounted) {
+      return;
+    }
+    var valid = true;
+    try {
+      sourceProvider
+          .getSource(text, overrideSource: pickedSourceOverride)
+          .standardizeUrl(text);
+    } catch (_) {
+      valid = false;
+    }
+    changeUserInput(text, valid, false, updateUrlInput: true);
   }
 
   void changeUserInput(
@@ -881,6 +899,12 @@ class AddAppPageState extends State<AddAppPage> {
               changeUserInput(values['appSourceURL']!, valid, isBuilding);
             },
           ),
+        ),
+        IconButton(
+          icon: const Icon(Icons.content_paste_rounded),
+          visualDensity: VisualDensity.compact,
+          tooltip: tr('paste'),
+          onPressed: doingSomething ? null : pasteUrl,
         ),
         const SizedBox(width: AppSpacings.elementGap),
         gettingAppInfo

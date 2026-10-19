@@ -144,6 +144,7 @@
     "coolApk": "CoolAPK",
     "copiedToClipboard": "Podaci kopirani u međuspremnik",
     "copyToClipboard": "Kopiraj u međuspremnik",
+    "paste": "Paste",
     "couldNotExtractArchive": "Could not extract the downloaded archive",
     "couldNotGetIdFromApk": "Nije moguće dobiti ID iz APK-a",
     "crowdsourcedConfigsLabel": "Konfiguracije aplikacije obezbeđene pomoću velikog broja ljudi (crowdsourcing) (koristite na svoju odgovornost)",
