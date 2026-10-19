@@ -82,7 +82,7 @@
     "autoSelectHighestVersionCode": "Legmagasabb verziókódú APK-fájl automatikus kiválasztása",
     "backgroundUpdateLimitsExplanation": "A háttérben történő telepítés sikeressége csak az Obtainium megnyitásakor állapítható meg.",
     "backgroundUpdateReqsExplanation": "Előfordulhat, hogy nem minden alkalmazásnál lehetséges a háttérbeli frissítés.",
-    "badDownload": "Nem lehetett elemezni az APK-t (inkompatibilis vagy részleges letöltés)",
+    "badDownload": "Nem lehetett elemezni az APK-t (inkompatibilitás vagy részleges letöltés miatt)",
     "batteryOptimizationNote": "Megjegyzés: A háttérfrissítések megbízhatóbban működhetnek, ha kikapcsolja a rendszer akkumulátor-optimalizálását az Obtainium számára.",
     "beforeNewInstallsShareToAppVerifier": "Új alkalmazások megosztása a „Verified Appsszal” (ha elérhető)",
     "bgCheckFoundUpdatesWillNotifyIfNeeded": {
@@ -531,7 +531,7 @@
     "universalApk": "Univerzális",
     "unknown": "Ismeretlen",
     "unpinFromTop": "Kitűzés megszüntetése",
-    "uptodownDownloadError": "Nem lehetett feloldani a letöltést az uptodownról",
+    "uptodownDownloadError": "Nem lehetett feloldani a letöltést az Uptodownról",
     "uptodownInvalidAuthResponse": "Érvénytelen Uptodown hitelesítési válasz",
     "uptodownSearchError": "Nem sikerült keresni az Uptodown alkalmazásáruházban",
     "upToDateApps": "Naprakész alkalmazások",
