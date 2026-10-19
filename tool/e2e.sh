@@ -96,6 +96,7 @@ PHONE_SUITES=(
   track_only_actions_test.dart
   disabled_app_test.dart
   add_without_check_test.dart
+  paste_url_test.dart
 )
 TV_SUITES=(
   tv_navigation_test.dart
