@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:easy_localization/easy_localization.dart';
+import 'package:material_3p/material.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter_markdown_plus/flutter_markdown_plus.dart';
 import 'package:markdown/markdown.dart' as md;
@@ -1289,7 +1290,7 @@ class _AppPageState extends State<AppPage> {
           : Column(
               children: [
                 Expanded(
-                  child: RefreshIndicator(
+                  child: CustomPullToRefresh(
                     onRefresh: () async {
                       if (app != null) {
                         if (app.app.disabled) {
@@ -1299,10 +1300,26 @@ class _AppPageState extends State<AppPage> {
                         await getUpdate(context);
                       }
                     },
-                    child: CustomScrollView(
+                    builder: (context, controller) => CustomScrollView(
+                      physics: AlwaysScrollableScrollPhysics(
+                        parent: controller.createScrollPhysics(),
+                      ),
                       slivers: [
                         const SliverToBoxAdapter(
                           child: SizedBox(height: AppSpacings.sm),
+                        ),
+                        SliverToBoxAdapter(
+                          child: PullToRefreshDefaultLayout(
+                            controller: controller,
+                            child: Center(
+                              child: PullToRefreshFadeTransition(
+                                controller: controller,
+                                child: PullToRefreshLoadingIndicator(
+                                  controller: controller,
+                                ),
+                              ),
+                            ),
+                          ),
                         ),
                         _buildHeaderSection(app),
                         ..._buildRepoRenameSection(app, appsProvider),

@@ -1,6 +1,8 @@
 import 'dart:async';
 
 import 'package:easy_localization/easy_localization.dart';
+import 'package:flutter/physics.dart';
+import 'package:material_3p/material.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter/services.dart';
 import 'package:obtainium/theme.dart';
@@ -1250,4 +1252,216 @@ class _TvColourSwatch extends StatelessWidget {
       ),
     );
   }
+}
+
+PreferredSizeWidget buildBottomPullToRefresh({
+  required BuildContext context,
+  required CustomPullToRefreshController controller,
+  double maxHeight = PullToRefreshController.defaultThreshold,
+  required Widget child,
+}) {
+  final isRefreshing = controller.isRefreshing;
+  final verticalOffset = controller.verticalOffset;
+  final layoutHeight = controller.layoutHeight;
+  return PreferredSize(
+    preferredSize: Size(.infinity, layoutHeight),
+    child: SizedBox(
+      height: layoutHeight,
+      child: OverflowBox(
+        alignment: Alignment.topCenter,
+        minHeight: verticalOffset,
+        maxHeight: verticalOffset,
+        child: OverflowBox(
+          alignment: Alignment.center,
+          minHeight: 0.0,
+          maxHeight: maxHeight,
+          child: Visibility(
+            visible: isRefreshing || verticalOffset > 0.0,
+            child: child,
+          ),
+        ),
+      ),
+    ),
+  );
+}
+
+class CustomPullToRefreshController extends PullToRefreshSpringController {
+  CustomPullToRefreshController({
+    super.onRefresh,
+    super.enabled,
+    super.threshold,
+    super.isRefreshing,
+    required super.vsync,
+    super.spring,
+    super.debugLabel,
+  });
+
+  Simulation? _simulation;
+
+  double get _velocity {
+    if (_simulation case final simulation? when isAnimating) {
+      return simulation.dx(
+        lastElapsedDuration.inMicroseconds / Duration.microsecondsPerSecond,
+      );
+    }
+    return 0.0;
+  }
+
+  double _layoutFraction = 0.0;
+
+  double get layoutFraction => _layoutFraction;
+
+  double get layoutHeight => layoutFraction * threshold;
+
+  Simulation _createSimulation(double targetValue) => SpringSimulation(
+    spring,
+    _layoutFraction,
+    targetValue,
+    _velocity,
+    snapToEnd: true,
+  );
+
+  @override
+  void tick() {
+    super.tick();
+    if (_simulation case final simulation?) {
+      _layoutFraction = simulation.x(lastElapsedInSeconds);
+      if (simulation.isDone(lastElapsedInSeconds)) {
+        _simulation = null;
+      }
+    }
+  }
+
+  @override
+  void animateToThreshold() {
+    final simulation = _createSimulation(0.0);
+    super.animateToThreshold();
+    _simulation = simulation;
+    _layoutFraction = simulation.x(0.0);
+  }
+
+  @override
+  void animateToHidden() {
+    final simulation = _createSimulation(0.0);
+    super.animateToHidden();
+    _simulation = simulation;
+    _layoutFraction = simulation.x(0.0);
+  }
+
+  @override
+  void snapTo(double targetValue) {
+    super.snapTo(targetValue);
+    if (!isRefreshing) {
+      _simulation = null;
+      _layoutFraction = targetValue;
+    }
+  }
+
+  @mustCallSuper
+  @override
+  void stop({bool canceled = true}) {
+    super.stop(canceled: canceled);
+    _simulation = null;
+  }
+}
+
+typedef CustomPullToRefreshBuilder =
+    Widget Function(
+      BuildContext context,
+      CustomPullToRefreshController controller,
+    );
+
+class CustomPullToRefresh extends StatefulWidget {
+  const CustomPullToRefresh({
+    super.key,
+    required this.onRefresh,
+    this.enabled = true,
+    this.spring,
+    this.threshold = PullToRefreshController.defaultThreshold,
+    required this.builder,
+  });
+
+  final RefreshCallback onRefresh;
+
+  final bool enabled;
+
+  final SpringDescription? spring;
+
+  final double threshold;
+
+  final CustomPullToRefreshBuilder builder;
+
+  @override
+  CustomPullToRefreshState createState() => CustomPullToRefreshState();
+}
+
+class CustomPullToRefreshState extends State<CustomPullToRefresh>
+    with SingleTickerProviderStateMixin {
+  late CustomPullToRefreshController _controller;
+
+  Future<void>? _refreshFuture;
+
+  void _onRefresh() {
+    if (!mounted) return;
+
+    final completer = Completer<void>();
+    _refreshFuture = completer.future;
+
+    _controller.isRefreshing = true;
+
+    unawaited(
+      widget.onRefresh().whenComplete(() {
+        if (!mounted) return;
+
+        _controller.isRefreshing = false;
+
+        if (!completer.isCompleted) {
+          completer.complete();
+        }
+
+        _refreshFuture = null;
+      }),
+    );
+  }
+
+  Future<void> show() {
+    if (!mounted) return Future.value();
+    if (_refreshFuture case final refreshFuture?) {
+      return refreshFuture;
+    }
+    _onRefresh();
+    return _refreshFuture ?? Future.value();
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = CustomPullToRefreshController(
+      onRefresh: _onRefresh,
+      enabled: widget.enabled,
+      threshold: widget.threshold,
+      vsync: this,
+      spring: widget.spring ?? PullToRefreshSpringController.defaultSpring,
+    );
+  }
+
+  @override
+  void didUpdateWidget(covariant CustomPullToRefresh oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.spring != oldWidget.spring) {
+      _controller.spring =
+          widget.spring ?? PullToRefreshSpringController.defaultSpring;
+    }
+    _controller.enabled = widget.enabled;
+    _controller.threshold = widget.threshold;
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) => widget.builder(context, _controller);
 }
