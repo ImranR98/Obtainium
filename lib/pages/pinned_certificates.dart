@@ -50,54 +50,35 @@ class _CertificatePinningPageState extends State<CertificatePinningPage> {
               );
           return CustomScrollView(
             slivers: [
-              CustomAppBar(title: tr('certificatePinning')),
+              CustomAppBar(
+                title: tr('certificatePinning'),
+                actions: [
+                  IconButton(
+                    icon: const Icon(Icons.help_outline),
+                    tooltip: tr('about'),
+                    onPressed: () => showCertificatePinningHelp(context),
+                  ),
+                ],
+              ),
               SliverPadding(
                 padding: AppPaddings.page,
                 sliver: SliverToBoxAdapter(
                   child: TvInitialFocus(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
-                      spacing: AppSpacings.sectionGap,
                       children: [
-                        _explanationCard(context),
-                        ToggleTile(
-                          label: tr('enableCertificatePinning'),
-                          value: pinning,
-                          onChanged: (value) =>
-                              settingsProvider.enableCertificatePinning = value,
-                          helpWidgets: [
-                            Text(tr('certificatePinningExclusiveHelp')),
-                            const SizedBox(height: AppSpacings.elementGap),
-                            Text(tr('certificatePinningAdditiveHelp')),
-                          ],
+                        _pinningGroup(
+                          context,
+                          settingsProvider,
+                          pinning,
+                          anyPins,
                         ),
-                        CardTile(
-                          child: ListTile(
-                            leading: Icon(
-                              pinning ? Icons.lock_outline : Icons.lock_open,
-                              color: Theme.of(context).colorScheme.primary,
-                            ),
-                            title: Text(
-                              tr(
-                                pinning
-                                    ? 'pinningCurrentlyEnabled'
-                                    : 'pinningCurrentlyDisabled',
-                              ),
-                            ),
-                            subtitle: Text(
-                              tr(
-                                pinning
-                                    ? (anyPins
-                                          ? 'pinningAppliesToConfiguredHosts'
-                                          : 'pinningEnabledNoHosts')
-                                    : 'pinningDisabledUsesAndroidStore',
-                              ),
-                            ),
-                          ),
-                        ),
-                        if (store.loadError != null)
+                        if (store.loadError != null) ...[
+                          const SizedBox(height: AppSpacings.md),
                           CardTile(
+                            padding: EdgeInsets.zero,
                             child: ListTile(
+                              contentPadding: AppPaddings.rowHorizontal,
                               leading: Icon(
                                 Icons.error_outline,
                                 color: Theme.of(context).colorScheme.error,
@@ -106,104 +87,42 @@ class _CertificatePinningPageState extends State<CertificatePinningPage> {
                               subtitle: Text(store.loadError.toString()),
                             ),
                           ),
-                        SectionHeader(tr('yourPinSets')),
-                        if (userSets.isEmpty)
-                          CardTile(
-                            child: ListTile(
-                              title: Text(tr('noUserPinSets')),
-                              subtitle: Text(tr('noUserPinSetsDescription')),
-                            ),
-                          )
-                        else
-                          Column(
-                            crossAxisAlignment: CrossAxisAlignment.stretch,
-                            spacing: AppSpacings.connectedGap,
-                            children: shapeCardTiles([
-                              for (final set in userSets)
-                                CardTile(
-                                  padding: EdgeInsets.zero,
-                                  child: TvFocusRing(
-                                    borderRadius: AppRadii.small,
-                                    child: ListTile(
-                                      contentPadding: AppPaddings.rowHorizontal,
-                                      title: Text(set.displayLabel),
-                                      subtitle: Text(
-                                        [
-                                          set.hosts
-                                              .map((host) => host.display)
-                                              .join(', '),
-                                          plural(
-                                            'certificateHash',
-                                            set.certificates.length,
-                                          ).toLowerCase(),
-                                        ].join(' · '),
-                                      ),
-                                      trailing: const Icon(Icons.chevron_right),
-                                      shape: RoundedSuperellipseBorder(
-                                        borderRadius: BorderRadius.circular(
-                                          AppRadii.small,
-                                        ),
-                                      ),
-                                      onTap: () {
-                                        settingsProvider.selectionClick();
-                                        _openEditor(context, set);
-                                      },
-                                    ),
-                                  ),
-                                ),
-                            ]),
-                          ),
-                        CardTile(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 16,
-                            vertical: 16,
-                          ),
-                          child: SizedBox(
-                            width: double.infinity,
-                            child: FilledButton.tonalIcon(
-                              onPressed: () => _openEditor(context, null),
-                              icon: const Icon(Icons.add),
-                              label: Text(tr('addPinSet')),
-                            ),
-                          ),
+                        ],
+                        const SizedBox(height: AppSpacings.sectionGap),
+                        _sectionHeader(tr('yourPinSets')),
+                        const SizedBox(height: AppSpacings.sm),
+                        _userSetsSection(context, settingsProvider, userSets),
+                        const SizedBox(height: AppSpacings.sectionGap),
+                        _sectionHeader(tr('builtInPinSets')),
+                        const SizedBox(height: AppSpacings.xs),
+                        Text(
+                          tr('builtInPinSetsDescription'),
+                          style: Theme.of(context).textTheme.bodySmall
+                              ?.copyWith(
+                                color: Theme.of(
+                                  context,
+                                ).colorScheme.onSurfaceVariant,
+                              ),
                         ),
-                        SectionHeader(tr('builtInPinSets')),
-                        CardTile(
-                          child: ListTile(
-                            title: Text(tr('builtInPinSetsDescription')),
-                          ),
-                        ),
+                        const SizedBox(height: AppSpacings.md),
                         Column(
                           crossAxisAlignment: CrossAxisAlignment.stretch,
-                          spacing: AppSpacings.connectedGap,
+                          spacing: AppSpacings.md,
                           children: [
-                            for (var i = 0; i < builtInPinnedHosts.length; i++)
+                            for (final builtIn in builtInPinnedHosts)
                               _BuiltInPinCard(
                                 key: ValueKey(
-                                  'builtin-${builtInPinnedHosts[i].host}-${store.revision}',
+                                  'builtin-${builtIn.host}-${store.revision}',
                                 ),
-                                host: builtInPinnedHosts[i],
+                                host: builtIn,
                                 pinningEnabled: pinning,
-                                isFirst: i == 0,
-                                isLast: i == builtInPinnedHosts.length - 1,
                               ),
                           ],
                         ),
-                        if (store.hasBuiltInOverrides)
-                          CardTile(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 16,
-                              vertical: 16,
-                            ),
-                            child: SizedBox(
-                              width: double.infinity,
-                              child: OutlinedButton.icon(
-                                onPressed: () => _restoreAllBuiltIn(context),
-                                icon: const Icon(Icons.restore),
-                                label: Text(tr('restoreAllBuiltInPins')),
-                              ),
-                            ),
-                          ),
+                        if (store.hasBuiltInOverrides) ...[
+                          const SizedBox(height: AppSpacings.sm),
+                          _restoreAllCard(context),
+                        ],
                       ],
                     ),
                   ),
@@ -219,22 +138,165 @@ class _CertificatePinningPageState extends State<CertificatePinningPage> {
     );
   }
 
-  Widget _explanationCard(BuildContext context) => CardTile(
-    padding: const EdgeInsets.all(AppSpacings.lg),
-    child: Column(
+  Widget _pinningGroup(
+    BuildContext context,
+    SettingsProvider settingsProvider,
+    bool pinning,
+    bool anyPins,
+  ) {
+    final colorScheme = Theme.of(context).colorScheme;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      spacing: AppSpacings.connectedGap,
+      children: [
+        ConnectedCard(
+          isFirst: true,
+          isLast: false,
+          child: ToggleTile(
+            label: tr('enableCertificatePinning'),
+            value: pinning,
+            onChanged: hapticSwitchOnChanged(
+              context,
+              (value) => settingsProvider.enableCertificatePinning = value,
+            ),
+          ),
+        ),
+        ConnectedCard(
+          isFirst: false,
+          isLast: true,
+          child: ListTile(
+            contentPadding: AppPaddings.rowHorizontal,
+            leading: Icon(
+              pinning ? Icons.lock_outline : Icons.lock_open,
+              color: colorScheme.primary,
+            ),
+            title: Text(
+              tr(
+                pinning
+                    ? 'pinningCurrentlyEnabled'
+                    : 'pinningCurrentlyDisabled',
+              ),
+            ),
+            subtitle: Text(
+              tr(
+                pinning
+                    ? (anyPins
+                          ? 'pinningAppliesToConfiguredHosts'
+                          : 'pinningEnabledNoHosts')
+                    : 'pinningDisabledUsesAndroidStore',
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _userSetsSection(
+    BuildContext context,
+    SettingsProvider settingsProvider,
+    List<UserPinSet> userSets,
+  ) {
+    final colorScheme = Theme.of(context).colorScheme;
+    return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       spacing: AppSpacings.md,
       children: [
-        Text(
-          tr('certificatePinning'),
-          style: Theme.of(context).textTheme.titleMedium,
+        if (userSets.isEmpty)
+          CardTile(
+            padding: EdgeInsets.zero,
+            child: ListTile(
+              contentPadding: AppPaddings.rowHorizontal,
+              title: Text(tr('noUserPinSets')),
+              subtitle: Text(tr('noUserPinSetsDescription')),
+            ),
+          )
+        else
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            spacing: AppSpacings.md,
+            children: [
+              for (final set in userSets)
+                _userSetCard(context, settingsProvider, set),
+            ],
+          ),
+        CardTile(
+          padding: EdgeInsets.zero,
+          child: TvFocusRing(
+            borderRadius: AppRadii.small,
+            child: ListTile(
+              contentPadding: AppPaddings.rowHorizontal,
+              leading: Icon(Icons.add, color: colorScheme.primary),
+              title: Text(tr('addPinSet')),
+              shape: RoundedSuperellipseBorder(
+                borderRadius: BorderRadius.circular(AppRadii.small),
+              ),
+              onTap: () {
+                settingsProvider.selectionClick();
+                _openEditor(context, null);
+              },
+            ),
+          ),
         ),
-        Text(tr('certificatePinningExclusiveHelp')),
-        Text(tr('certificatePinningAdditiveHelp')),
-        Text(tr('certificatePinningRedirectHelp')),
       ],
-    ),
-  );
+    );
+  }
+
+  Widget _userSetCard(
+    BuildContext context,
+    SettingsProvider settingsProvider,
+    UserPinSet set,
+  ) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final hostLabels = set.hosts.map((host) => host.display).join(', ');
+    final hasLabel = set.label.trim().isNotEmpty;
+    final subtitle = [
+      if (hasLabel) hostLabels,
+      plural('certificateHash', set.certificates.length).toLowerCase(),
+    ].join(' · ');
+    return CardTile(
+      padding: EdgeInsets.zero,
+      child: TvFocusRing(
+        borderRadius: AppRadii.small,
+        child: ListTile(
+          contentPadding: AppPaddings.rowHorizontal,
+          leading: Icon(Icons.lock_outline, color: colorScheme.primary),
+          title: Text(hasLabel ? set.displayLabel : hostLabels),
+          subtitle: Text(subtitle),
+          trailing: const Icon(Icons.chevron_right),
+          shape: RoundedSuperellipseBorder(
+            borderRadius: BorderRadius.circular(AppRadii.small),
+          ),
+          onTap: () {
+            settingsProvider.selectionClick();
+            _openEditor(context, set);
+          },
+        ),
+      ),
+    );
+  }
+
+  Widget _sectionHeader(String label) =>
+      SectionHeader(label, padding: EdgeInsets.zero);
+
+  Widget _restoreAllCard(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    return CardTile(
+      padding: EdgeInsets.zero,
+      child: TvFocusRing(
+        borderRadius: AppRadii.small,
+        child: ListTile(
+          contentPadding: AppPaddings.rowHorizontal,
+          leading: Icon(Icons.restore, color: colorScheme.primary),
+          title: Text(tr('restoreAllBuiltInPins')),
+          shape: RoundedSuperellipseBorder(
+            borderRadius: BorderRadius.circular(AppRadii.small),
+          ),
+          onTap: () => _restoreAllBuiltIn(context),
+        ),
+      ),
+    );
+  }
 
   Future<void> _openEditor(BuildContext context, UserPinSet? set) async {
     await Navigator.of(context).push(
@@ -261,18 +323,43 @@ class _CertificatePinningPageState extends State<CertificatePinningPage> {
   }
 }
 
+Future<void> showCertificatePinningHelp(BuildContext context) {
+  return showDialog<void>(
+    context: context,
+    builder: (ctx) => AlertDialog(
+      title: Text(tr('certificatePinning')),
+      content: SingleChildScrollView(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          spacing: AppSpacings.md,
+          children: [
+            Text(tr('certificatePinningExclusiveHelp')),
+            Text(tr('certificatePinningAdditiveHelp')),
+            Text(tr('certificatePinningRedirectHelp')),
+            Text(tr('pinSetBuiltInOverrideHelp')),
+          ],
+        ),
+      ),
+      actions: [
+        TextButton(
+          autofocus: ctx.read<SettingsProvider>().isTV,
+          onPressed: () => Navigator.of(ctx).pop(),
+          child: Text(tr('ok')),
+        ),
+      ],
+    ),
+  );
+}
+
 class _BuiltInPinCard extends StatelessWidget {
   final BuiltInPinnedHost host;
   final bool pinningEnabled;
-  final bool isFirst;
-  final bool isLast;
 
   const _BuiltInPinCard({
     super.key,
     required this.host,
     required this.pinningEnabled,
-    required this.isFirst,
-    required this.isLast,
   });
 
   @override
@@ -282,91 +369,111 @@ class _BuiltInPinCard extends StatelessWidget {
     final enabledCerts = store.enabledBuiltInCertificates(host);
     final overrides = store.overlappingUserSets(host.host);
     final overridden = overrides.isNotEmpty;
-    return ConnectedCard(
-      isFirst: isFirst,
-      isLast: isLast,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
+    final colorScheme = Theme.of(context).colorScheme;
+    final rows = <Widget>[
+      ListTile(
+        contentPadding: AppPaddings.rowHorizontal,
+        title: Text(host.host),
+        subtitle: Text(
+          host.includeSubdomains
+              ? tr('hostAndSubdomains', args: [host.host])
+              : tr('hostOnly', args: [host.host]),
+        ),
+        trailing: IconButton(
+          tooltip: enabled ? tr('removeBuiltInPin') : tr('restoreBuiltInPin'),
+          icon: Icon(enabled ? Icons.delete_outline : Icons.restore),
+          onPressed: () =>
+              enabled ? _removeHost(context) : _restoreHost(context),
+        ),
+      ),
+    ];
+
+    if (!enabled) {
+      rows.add(
+        ListTile(
+          contentPadding: AppPaddings.rowHorizontal,
+          leading: Icon(
+            Icons.info_outline,
+            color: colorScheme.onSurfaceVariant,
+          ),
+          title: Text(tr('builtInPinRemoved')),
+          subtitle: Text(tr('builtInPinRemovedDescription')),
+        ),
+      );
+    } else {
+      if (overridden) {
+        rows.add(
           ListTile(
             contentPadding: AppPaddings.rowHorizontal,
-            title: Row(
-              children: [
-                Flexible(child: Text(host.host)),
-                const SizedBox(width: AppSpacings.sm),
-                Chip(
-                  label: Text(tr('builtIn')),
-                  visualDensity: VisualDensity.compact,
-                ),
-              ],
-            ),
-            subtitle: Text(
-              host.includeSubdomains
-                  ? tr('hostAndSubdomains', args: [host.host])
-                  : tr('hostOnly', args: [host.host]),
-            ),
-            trailing: IconButton(
-              tooltip: enabled
-                  ? tr('removeBuiltInPin')
-                  : tr('restoreBuiltInPin'),
-              icon: Icon(enabled ? Icons.delete_outline : Icons.restore),
-              onPressed: () =>
-                  enabled ? _removeHost(context) : _restoreHost(context),
-            ),
-          ),
-          if (!enabled)
-            ListTile(
-              contentPadding: AppPaddings.rowHorizontal,
-              leading: Icon(
-                Icons.info_outline,
-                color: Theme.of(context).colorScheme.onSurfaceVariant,
+            leading: const Icon(Icons.priority_high),
+            title: Text(
+              tr(
+                'builtInPinOverridden',
+                args: [overrides.map((set) => set.displayLabel).join(', ')],
               ),
-              title: Text(tr('builtInPinRemoved')),
-              subtitle: Text(tr('builtInPinRemovedDescription')),
-            )
-          else ...[
-            if (overridden)
-              ListTile(
-                contentPadding: AppPaddings.rowHorizontal,
-                leading: const Icon(Icons.priority_high),
-                title: Text(
-                  tr(
-                    'builtInPinOverridden',
-                    args: [overrides.map((set) => set.displayLabel).join(', ')],
+            ),
+            subtitle: Text(tr('builtInPinOverriddenDescription')),
+          ),
+        );
+      }
+      for (final certificate in host.certificates) {
+        rows.add(
+          _BuiltInCertificateTile(
+            host: host,
+            certificate: certificate,
+            enabled: store.builtInCertEnabled(host.host, certificate),
+            lastEnabled:
+                enabledCerts.length == 1 &&
+                enabledCerts.first.sha256 == certificate.sha256,
+          ),
+        );
+      }
+      rows.add(
+        Padding(
+          padding: const EdgeInsets.fromLTRB(
+            AppSpacings.lg,
+            AppSpacings.md,
+            AppSpacings.lg,
+            AppSpacings.md,
+          ),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Icon(
+                pinningEnabled
+                    ? Icons.verified_user_outlined
+                    : Icons.lock_open_outlined,
+                size: 20,
+                color: colorScheme.onSurfaceVariant,
+              ),
+              const SizedBox(width: AppSpacings.sm),
+              Expanded(
+                child: Text(
+                  pinningEnabled
+                      ? tr('builtInPinActive')
+                      : tr('pinningCurrentlyDisabled'),
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: colorScheme.onSurfaceVariant,
                   ),
                 ),
-                subtitle: Text(tr('builtInPinOverriddenDescription')),
               ),
-            for (final certificate in host.certificates)
-              _BuiltInCertificateTile(
-                host: host,
-                certificate: certificate,
-                enabled: store.builtInCertEnabled(host.host, certificate),
-                lastEnabled:
-                    enabledCerts.length == 1 &&
-                    enabledCerts.first.sha256 == certificate.sha256,
-              ),
-          ],
-          Padding(
-            padding: AppPaddings.rowHorizontal,
-            child: Row(
-              children: [
-                Expanded(
-                  child: Text(
-                    enabled
-                        ? (pinningEnabled
-                              ? tr('builtInPinActive')
-                              : tr('pinningCurrentlyDisabled'))
-                        : tr('builtInPinInactive'),
-                    style: Theme.of(context).textTheme.bodySmall,
-                  ),
-                ),
-              ],
-            ),
+            ],
           ),
-          const SizedBox(height: AppSpacings.sm),
-        ],
-      ),
+        ),
+      );
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      spacing: AppSpacings.connectedGap,
+      children: [
+        for (var i = 0; i < rows.length; i++)
+          ConnectedCard(
+            isFirst: i == 0,
+            isLast: i == rows.length - 1,
+            child: rows[i],
+          ),
+      ],
     );
   }
 

@@ -66,12 +66,20 @@ class _PinSetEditorPageState extends State<PinSetEditorPage> {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
     return Scaffold(
-      backgroundColor: Theme.of(context).colorScheme.surface,
+      backgroundColor: colorScheme.surface,
       body: CustomScrollView(
         slivers: [
           CustomAppBar(
             title: widget.existing == null ? tr('addPinSet') : tr('editPinSet'),
+            actions: [
+              IconButton(
+                icon: const Icon(Icons.help_outline),
+                tooltip: tr('about'),
+                onPressed: () => showCertificatePinningHelp(context),
+              ),
+            ],
           ),
           SliverPadding(
             padding: AppPaddings.page,
@@ -79,13 +87,11 @@ class _PinSetEditorPageState extends State<PinSetEditorPage> {
               child: TvInitialFocus(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
-                  spacing: AppSpacings.sectionGap,
                   children: [
-                    _explanationCard(context),
+                    _introCard(context),
+                    const SizedBox(height: AppSpacings.lg),
                     ConnectedCard(
-                      color: Theme.of(
-                        context,
-                      ).colorScheme.surfaceContainerHighest,
+                      color: colorScheme.surfaceContainerHighest,
                       child: _tvTextFieldFocus(
                         context,
                         _labelFocusNode,
@@ -99,24 +105,15 @@ class _PinSetEditorPageState extends State<PinSetEditorPage> {
                         ),
                       ),
                     ),
-                    SectionHeader(tr('pinSetHosts')),
+                    const SizedBox(height: AppSpacings.xl),
+                    _sectionHeader(tr('pinSetHosts')),
+                    const SizedBox(height: AppSpacings.sm),
                     _hostInputs(context),
-                    Align(
-                      alignment: Alignment.centerLeft,
-                      child: TextButton.icon(
-                        onPressed: _addHost,
-                        icon: const Icon(Icons.add),
-                        label: Text(tr('addHost')),
-                      ),
-                    ),
-                    SectionHeader(tr('pinSetCertificates')),
+                    const SizedBox(height: AppSpacings.xl),
+                    _sectionHeader(tr('pinSetCertificates')),
+                    const SizedBox(height: AppSpacings.sm),
                     if (_certificates.isEmpty)
-                      CardTile(
-                        child: ListTile(
-                          title: Text(tr('noPinnedCertificates')),
-                          subtitle: Text(tr('noPinnedCertificatesDescription')),
-                        ),
-                      )
+                      _emptyCertificatesCard(context)
                     else
                       Column(
                         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -126,22 +123,9 @@ class _PinSetEditorPageState extends State<PinSetEditorPage> {
                             _certificateCard(context, i),
                         ]),
                       ),
-                    Wrap(
-                      spacing: AppSpacings.md,
-                      runSpacing: AppSpacings.sm,
-                      children: [
-                        OutlinedButton.icon(
-                          onPressed: _pickCertificates,
-                          icon: const Icon(Icons.upload_file),
-                          label: Text(tr('uploadCertificate')),
-                        ),
-                        OutlinedButton.icon(
-                          onPressed: _pasteCertificate,
-                          icon: const Icon(Icons.content_paste),
-                          label: Text(tr('pastePem')),
-                        ),
-                      ],
-                    ),
+                    const SizedBox(height: AppSpacings.md),
+                    _certificateActions(context),
+                    const SizedBox(height: AppSpacings.xl),
                     FilledButton.icon(
                       onPressed: _saving ? null : _save,
                       icon: _saving
@@ -153,15 +137,17 @@ class _PinSetEditorPageState extends State<PinSetEditorPage> {
                           : const Icon(Icons.save),
                       label: Text(tr('save')),
                     ),
-                    if (widget.existing != null)
+                    if (widget.existing != null) ...[
+                      const SizedBox(height: AppSpacings.md),
                       OutlinedButton.icon(
                         onPressed: _saving ? null : _delete,
                         icon: const Icon(Icons.delete_outline),
                         label: Text(tr('deletePinSet')),
                         style: OutlinedButton.styleFrom(
-                          foregroundColor: Theme.of(context).colorScheme.error,
+                          foregroundColor: colorScheme.error,
                         ),
                       ),
+                    ],
                   ],
                 ),
               ),
@@ -175,17 +161,50 @@ class _PinSetEditorPageState extends State<PinSetEditorPage> {
     );
   }
 
-  Widget _explanationCard(BuildContext context) => CardTile(
-    padding: const EdgeInsets.all(AppSpacings.lg),
-    child: Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      spacing: AppSpacings.md,
-      children: [
-        Text(tr('certificatePinningExclusiveHelp')),
-        Text(tr('certificatePinningAdditiveHelp')),
-        Text(tr('pinSetBuiltInOverrideHelp')),
-      ],
+  Widget _introCard(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    return CardTile(
+      padding: EdgeInsets.zero,
+      child: ListTile(
+        contentPadding: AppPaddings.rowHorizontal,
+        leading: Icon(Icons.lock_outline, color: colorScheme.primary),
+        title: Text(tr('pinSetIntroTitle')),
+        subtitle: Text(tr('pinSetIntroDescription')),
+      ),
+    );
+  }
+
+  Widget _sectionHeader(String label) =>
+      SectionHeader(label, padding: EdgeInsets.zero);
+
+  Widget _emptyCertificatesCard(BuildContext context) => CardTile(
+    padding: EdgeInsets.zero,
+    child: ListTile(
+      contentPadding: AppPaddings.rowHorizontal,
+      leading: Icon(
+        Icons.verified_user_outlined,
+        color: Theme.of(context).colorScheme.onSurfaceVariant,
+      ),
+      title: Text(tr('noPinnedCertificates')),
+      subtitle: Text(tr('noPinnedCertificatesDescription')),
     ),
+  );
+
+  Widget _certificateActions(BuildContext context) => Wrap(
+    spacing: AppSpacings.md,
+    runSpacing: AppSpacings.sm,
+    children: [
+      FilledButton.tonalIcon(
+        onPressed: _pickCertificates,
+        icon: const Icon(Icons.upload_file),
+        label: Text(tr('uploadCertificate')),
+      ),
+      OutlinedButton.icon(
+        onPressed: _pasteCertificate,
+        icon: const Icon(Icons.content_paste),
+        label: Text(tr('pastePem')),
+      ),
+    ],
   );
 
   Widget _tvTextFieldFocus(
@@ -199,61 +218,76 @@ class _PinSetEditorPageState extends State<PinSetEditorPage> {
 
   Widget _hostInputs(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
-    final rows = <Widget>[];
-    for (var i = 0; i < _hosts.length; i++) {
-      final host = _hosts[i];
-      rows.add(
-        ConnectedCard(
-          isFirst: i == 0,
-          isLast: false,
-          color: colorScheme.surfaceContainerHighest,
-          child: Row(
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      spacing: AppSpacings.md,
+      children: [
+        for (var i = 0; i < _hosts.length; i++)
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            spacing: AppSpacings.connectedGap,
             children: [
-              Expanded(
-                child: _tvTextFieldFocus(
-                  context,
-                  host.focusNode,
-                  TextField(
-                    controller: host.controller,
-                    focusNode: host.focusNode,
-                    decoration: InputDecoration(
-                      labelText: tr('host'),
-                      hintText: tr('hostHint'),
+              ConnectedCard(
+                isFirst: true,
+                isLast: false,
+                color: colorScheme.surfaceContainerHighest,
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: _tvTextFieldFocus(
+                        context,
+                        _hosts[i].focusNode,
+                        TextField(
+                          controller: _hosts[i].controller,
+                          focusNode: _hosts[i].focusNode,
+                          decoration: InputDecoration(
+                            labelText: tr('host'),
+                            hintText: tr('hostHint'),
+                          ),
+                        ),
+                      ),
                     ),
+                    IconButton(
+                      tooltip: tr('remove'),
+                      onPressed: () => _removeHost(i),
+                      icon: const Icon(Icons.delete_outline),
+                    ),
+                  ],
+                ),
+              ),
+              ConnectedCard(
+                isFirst: false,
+                isLast: true,
+                color: colorScheme.surfaceContainerLow,
+                child: ToggleTile(
+                  label: tr('includeSubdomains'),
+                  subtitle: Text(tr('includeSubdomainsHelp')),
+                  value: _hosts[i].includeSubdomains,
+                  onChanged: hapticSwitchOnChanged(
+                    context,
+                    (value) =>
+                        setState(() => _hosts[i].includeSubdomains = value),
                   ),
                 ),
               ),
-              IconButton(
-                tooltip: tr('remove'),
-                onPressed: () => _removeHost(i),
-                icon: const Icon(Icons.delete_outline),
-              ),
             ],
           ),
-        ),
-      );
-      rows.add(
-        ConnectedCard(
-          isFirst: false,
-          isLast: i == _hosts.length - 1,
-          color: colorScheme.surfaceContainerLow,
-          child: ToggleTile(
-            label: tr('includeSubdomains'),
-            subtitle: Text(tr('includeSubdomainsHelp')),
-            value: host.includeSubdomains,
-            noPadding: true,
-            onChanged: hapticSwitchOnChanged(
-              context,
-              (value) => setState(() => host.includeSubdomains = value),
+        CardTile(
+          padding: EdgeInsets.zero,
+          child: TvFocusRing(
+            borderRadius: AppRadii.small,
+            child: ListTile(
+              contentPadding: AppPaddings.rowHorizontal,
+              leading: Icon(Icons.add, color: colorScheme.primary),
+              title: Text(tr('addHost')),
+              shape: RoundedSuperellipseBorder(
+                borderRadius: BorderRadius.circular(AppRadii.small),
+              ),
+              onTap: _addHost,
             ),
           ),
         ),
-      );
-    }
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      spacing: AppSpacings.connectedGap,
-      children: rows,
+      ],
     );
   }
 
