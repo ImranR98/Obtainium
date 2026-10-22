@@ -44,6 +44,14 @@ packages:
       url: "https://github.com/ImranR98/android_system_font"
     source: git
     version: "1.1.0"
+  androidx_graphics_shapes:
+    dependency: transitive
+    description:
+      name: androidx_graphics_shapes
+      sha256: "36d7f1728af5c91a5c6c84fa9d189b691675cc07dcc6c6f79cb32c38b7ec880d"
+      url: "https://pub.dev"
+    source: hosted
+    version: "2.0.0"
   animations:
     dependency: "direct main"
     description:
@@ -703,6 +711,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "3.0.2"
+  libmonet:
+    dependency: transitive
+    description:
+      name: libmonet
+      sha256: cb64e8f6d193390e5b59f416b0c9bde444e9c3560b13e5f20cffb585ca2166a1
+      url: "https://pub.dev"
+    source: hosted
+    version: "2.0.0-dev.23"
   lints:
     dependency: transitive
     description:
@@ -743,6 +759,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "0.12.20"
+  material_3p:
+    dependency: "direct main"
+    description:
+      name: material_3p
+      sha256: "7d7439d363aad089488589f634270703e5f271b02143a71b39fcba43d41c0d92"
+      url: "https://pub.dev"
+    source: hosted
+    version: "0.6.2"
   material_color_utilities:
     dependency: "direct main"
     description:
@@ -751,6 +775,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "0.13.0"
+  material_symbols_icons:
+    dependency: transitive
+    description:
+      name: material_symbols_icons
+      sha256: bd513edc2bc9b034108d5518c48cf5cebbb67d0653728cc452368cb27ca80bb0
+      url: "https://pub.dev"
+    source: hosted
+    version: "4.2960.0"
   material_ui:
     dependency: "direct main"
     description:
