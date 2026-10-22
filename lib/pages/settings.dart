@@ -4,6 +4,7 @@ import 'package:device_info_plus/device_info_plus.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:equations/equations.dart';
 import 'package:flex_color_picker/flex_color_picker.dart';
+import 'package:material_3p/material.dart';
 import 'package:shizuku_apk_installer/shizuku_apk_installer.dart'
     hide InstallerMode;
 import 'package:obtainium/components/category_editor.dart';
@@ -303,7 +304,9 @@ class _SettingsPageState extends State<SettingsPage> {
               child: settingsProvider.prefs == null
                   ? const Padding(
                       padding: EdgeInsets.symmetric(vertical: 48),
-                      child: Center(child: CircularProgressIndicator()),
+                      child: Center(
+                        child: IndeterminateLoadingIndicator(contained: true),
+                      ),
                     )
                   : _buildLandingList(context, sdk, showBgSection),
             ),
@@ -662,10 +665,13 @@ class _SettingsPageState extends State<SettingsPage> {
               child: FilledButton.tonal(
                 onPressed: _isRunningBgCheck ? null : _triggerManualBgCheck,
                 child: _isRunningBgCheck
-                    ? const SizedBox(
-                        width: 20,
-                        height: 20,
-                        child: CircularProgressIndicator(strokeWidth: 2),
+                    ? SizedBox.square(
+                        dimension: 20 * (48 / 38),
+                        child: IndeterminateLoadingIndicator(
+                          activeIndicatorColor: Theme.of(
+                            context,
+                          ).colorScheme.onSecondaryContainer,
+                        ),
                       )
                     : Text(tr('runBgCheckNow')),
               ),
@@ -1664,7 +1670,7 @@ class _ExternalInstallerTileState extends State<_ExternalInstallerTile> {
             leading: SizedBox(
               width: 24,
               height: 24,
-              child: CircularProgressIndicator(),
+              child: IndeterminateLoadingIndicator(),
             ),
           );
         }
