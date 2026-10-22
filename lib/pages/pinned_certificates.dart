@@ -373,7 +373,10 @@ class _BuiltInPinCard extends StatelessWidget {
     final rows = <Widget>[
       ListTile(
         contentPadding: AppPaddings.rowHorizontal,
-        title: Text(host.host),
+        title: Text(
+          host.host,
+          style: const TextStyle(fontWeight: FontWeight.bold),
+        ),
         subtitle: Text(
           host.includeSubdomains
               ? tr('hostAndSubdomains', args: [host.host])

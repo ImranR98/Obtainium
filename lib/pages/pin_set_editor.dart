@@ -125,7 +125,7 @@ class _PinSetEditorPageState extends State<PinSetEditorPage> {
                       ),
                     const SizedBox(height: AppSpacings.md),
                     _certificateActions(context),
-                    const SizedBox(height: AppSpacings.xl),
+                    const SizedBox(height: AppSpacings.md),
                     FilledButton.icon(
                       onPressed: _saving ? null : _save,
                       icon: _saving
@@ -190,19 +190,28 @@ class _PinSetEditorPageState extends State<PinSetEditorPage> {
     ),
   );
 
-  Widget _certificateActions(BuildContext context) => Wrap(
+  Widget _certificateActions(BuildContext context) => Row(
     spacing: AppSpacings.md,
-    runSpacing: AppSpacings.sm,
     children: [
-      FilledButton.tonalIcon(
-        onPressed: _pickCertificates,
-        icon: const Icon(Icons.upload_file),
-        label: Text(tr('uploadCertificate')),
+      Expanded(
+        child: FilledButton.tonalIcon(
+          onPressed: _pickCertificates,
+          icon: const Icon(Icons.upload_file),
+          label: Text(tr('uploadCertificate')),
+          style: FilledButton.styleFrom(
+            padding: const EdgeInsets.symmetric(horizontal: AppSpacings.md),
+          ),
+        ),
       ),
-      OutlinedButton.icon(
-        onPressed: _pasteCertificate,
-        icon: const Icon(Icons.content_paste),
-        label: Text(tr('pastePem')),
+      Expanded(
+        child: OutlinedButton.icon(
+          onPressed: _pasteCertificate,
+          icon: const Icon(Icons.content_paste),
+          label: Text(tr('pastePem')),
+          style: OutlinedButton.styleFrom(
+            padding: const EdgeInsets.symmetric(horizontal: AppSpacings.md),
+          ),
+        ),
       ),
     ],
   );
