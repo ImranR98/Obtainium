@@ -427,7 +427,7 @@ class _AppPageState extends State<AppPage> {
 
   Widget _getAppWebView(BuildContext context, AppInMemory? app) {
     if (app == null) {
-      return const Center(child: CircularProgressIndicator());
+      return const Center(child: IndeterminateLoadingIndicator());
     }
     if (_webViewError != null) {
       return Center(

@@ -1173,12 +1173,7 @@ class AppsPageState extends State<AppsPage> {
       return [
         const SliverFillRemaining(
           hasScrollBody: false,
-          child: Center(
-            child: CircularProgressIndicator(
-              strokeCap: StrokeCap.round,
-              strokeWidth: 6,
-            ),
-          ),
+          child: Center(child: IndeterminateLoadingIndicator()),
         ),
       ];
     }

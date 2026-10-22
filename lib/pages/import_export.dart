@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:easy_localization/easy_localization.dart';
+import 'package:material_3p/material.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter/services.dart';
 import 'package:obtainium/components/generated_form_renderer.dart';
@@ -184,10 +185,13 @@ class _ImportFromURLListPageState extends State<ImportFromURLListPage> {
                                   _import();
                                 },
                           child: controller.isImporting
-                              ? const SizedBox(
-                                  width: 20,
-                                  height: 20,
-                                  child: CircularProgressIndicator(),
+                              ? SizedBox.square(
+                                  dimension: 20 * (48 / 38),
+                                  child: IndeterminateLoadingIndicator(
+                                    activeIndicatorColor: Theme.of(
+                                      context,
+                                    ).colorScheme.onPrimary,
+                                  ),
                                 )
                               : Text(tr('import')),
                         ),
