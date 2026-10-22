@@ -73,6 +73,7 @@ dependencies:
   flutter_markdown_plus: ^1.0.12
   workmanager: ^0.10.10
   logger: ^2.8.0
+  material_3p: ^0.6.2
 
 dev_dependencies:
   integration_test:
