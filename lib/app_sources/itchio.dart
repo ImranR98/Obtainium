@@ -409,9 +409,9 @@ class ItchIO extends AppSource {
     }, requestSettings);
 
     // Peek into the Content-Disposition header
-    final response = streamRes.value.value;
-    final cd = response.headers.value('content-disposition');
-    streamRes.value.key.close(force: true);
+    final response = streamRes.value;
+    final cd = response.headers['content-disposition'];
+    await cancelStreamedResponse(response);
 
     if (cd == null) return null;
 

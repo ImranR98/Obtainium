@@ -268,20 +268,21 @@ Future<String> checkPartialDownloadHash(
     reqHeaders,
     additionalSettings,
   );
-  final client = responseWithClient.value.key;
-  final response = responseWithClient.value.value;
+  final response = responseWithClient.value;
   try {
     if (response.statusCode < 200 || response.statusCode > 299) {
       throw ObtainiumError(
-        response.reasonPhrase.isNotEmpty
-            ? response.reasonPhrase
+        (response.reasonPhrase?.isNotEmpty ?? false)
+            ? response.reasonPhrase!
             : tr('unexpectedError'),
       )..url = url;
     }
-    final List<List<int>> bytes = await response.take(bytesToGrab).toList();
+    final List<List<int>> bytes = await response.stream
+        .take(bytesToGrab)
+        .toList();
     return _hashListOfLists(bytes);
   } finally {
-    client.close();
+    await cancelStreamedResponse(response);
   }
 }
 
@@ -294,20 +295,17 @@ Future<String?> checkETagHeader(
     headers ?? {},
     additionalSettings,
   );
-  final client = responseWithClient.value.key;
-  final response = responseWithClient.value.value;
+  final response = responseWithClient.value;
   try {
     if (response.statusCode < 200 || response.statusCode >= 300) {
       return null;
     }
-    final etag = response.headers
-        .value(HttpHeaders.etagHeader)
-        ?.replaceAll('"', '');
+    final etag = response.headers[HttpHeaders.etagHeader]?.replaceAll('"', '');
     return etag != null
         ? sha256.convert(utf8.encode(etag)).toString().substring(0, 12)
         : null;
   } finally {
-    client.close();
+    await cancelStreamedResponse(response);
   }
 }
 
@@ -394,16 +392,14 @@ Future<File> downloadFile(
     reqHeaders,
     additionalSettings,
   );
-  final headersClient = probeResponse.value.key;
-  final HttpClientResponse headersResponse = probeResponse.value.value;
+  final headersResponse = probeResponse.value;
   final resHeaders = headersResponse.headers;
-  headersClient.close();
+  await cancelStreamedResponse(headersResponse);
 
   // Use the headers to decide what the file extension is, and
   // whether it supports partial downloads (range request), and
   // what the total size of the file is (if provided)
-  String ext =
-      resHeaders.value('content-disposition')?.split('.').last ?? 'apk';
+  String ext = resHeaders['content-disposition']?.split('.').last ?? 'apk';
   if (ext.endsWith('"')) {
     ext = ext.substring(0, ext.length - 1);
   }
@@ -433,16 +429,18 @@ Future<File> downloadFile(
   }
 
   bool rangeFeatureEnabled = false;
-  final acceptRanges = resHeaders.value('accept-ranges');
+  final acceptRanges = resHeaders['accept-ranges'];
   if (acceptRanges?.isNotEmpty == true) {
     rangeFeatureEnabled = acceptRanges?.trim().toLowerCase() == 'bytes';
   }
 
   // If you have an existing file that is usable,
   // decide whether you can use it (either return full or resume partial)
-  // HttpClientResponse reports -1 for an unknown length; normalize to null.
-  final int? fullContentLength = headersResponse.contentLength > 0
-      ? headersResponse.contentLength
+  // StreamedResponse reports null for an unknown length; normalize to null.
+  final int? reportedContentLength = headersResponse.contentLength;
+  final int? fullContentLength =
+      reportedContentLength != null && reportedContentLength > 0
+      ? reportedContentLength
       : null;
   if (useExisting && downloadedFile.existsSync()) {
     final length = downloadedFile.lengthSync();
@@ -499,8 +497,7 @@ Future<File> downloadFile(
     reqHeaders,
     additionalSettings,
   );
-  final HttpClient responseClient = responseWithClient.value.key;
-  final HttpClientResponse response = responseWithClient.value.value;
+  final response = responseWithClient.value;
   try {
     // If we requested a byte range to resume a partial download but the server
     // ignored it and returned the full file (200 instead of 206 Partial
@@ -534,7 +531,7 @@ Future<File> downloadFile(
     if (response.statusCode < 200 || response.statusCode > 299) {
       await sink.close();
       sink = null;
-      await response.drain<void>().catchError((_) {
+      await response.stream.drain<void>().catchError((_) {
         AppLogger.warn('Failed to drain response body');
       });
       if (tempDownloadedFile.existsSync()) {
@@ -542,8 +539,8 @@ Future<File> downloadFile(
       }
       throw HTTPStatusError(
         response.statusCode,
-        response.reasonPhrase.isNotEmpty
-            ? response.reasonPhrase
+        (response.reasonPhrase?.isNotEmpty ?? false)
+            ? response.reasonPhrase!
             : tr(
                 'errorWithHttpStatusCode',
                 args: [response.statusCode.toString()],
@@ -553,7 +550,7 @@ Future<File> downloadFile(
 
     final downloadBuffer = BytesBuilder();
     try {
-      await response
+      await response.stream
           .map((chunk) {
             cancellationToken?.throwIfCancelled();
             received += chunk.length;
@@ -650,7 +647,7 @@ Future<File> downloadFile(
     }
     return downloadedFile;
   } finally {
-    responseClient.close();
+    await cancelStreamedResponse(response);
     unawaited(
       sink?.close().catchError(
         (_) => AppLogger.warn('Failed to close download sink'),
@@ -679,15 +676,13 @@ Future<int?> getDownloadSize(
     reqHeaders,
     additionalSettings,
   );
-  final client = responseWithClient.value.key;
-  final response = responseWithClient.value.value;
+  final response = responseWithClient.value;
   try {
     if (response.statusCode < 200 || response.statusCode >= 300) {
       return null;
     }
-    // HttpClientResponse reports -1 for an unknown length.
     final length = response.contentLength;
-    return length > 0 ? length : null;
+    return length != null && length > 0 ? length : null;
   } on SocketException {
     return null;
   } on TimeoutException {
@@ -700,7 +695,7 @@ Future<int?> getDownloadSize(
     AppLogger.error(e, message: 'Unexpected error in getDownloadSize');
     return null;
   } finally {
-    client.close();
+    await cancelStreamedResponse(response);
   }
 }
 

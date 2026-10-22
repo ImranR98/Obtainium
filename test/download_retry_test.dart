@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
+import 'package:http/http.dart' show ClientException;
 import 'package:obtainium/providers/apps_provider.dart';
 
 void main() {
@@ -76,7 +77,7 @@ void main() {
             return false;
           },
         ),
-        throwsA(isA<HttpException>()),
+        throwsA(isA<ClientException>()),
       );
 
       expect(holds, 1);

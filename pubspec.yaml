@@ -18,6 +18,7 @@ dependencies:
   flutter_local_notifications: ^22.3.2
   provider: ^6.1.5+1
   http: ^1.6.0
+  cronet_http: ^1.10.0
   webview_flutter: ^4.14.1
   dynamic_color: ^2.1.0
   material_ui: ^1.7.0

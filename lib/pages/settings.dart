@@ -16,6 +16,7 @@ import 'package:obtainium/installers/root_installer.dart';
 import 'package:obtainium/installers/shizuku_installer.dart';
 import 'package:obtainium/main.dart';
 import 'package:obtainium/pages/import_export.dart';
+import 'package:obtainium/pages/pinned_certificates.dart';
 import 'package:obtainium/providers/apps_provider.dart';
 import 'package:obtainium/providers/external_install_bridge.dart';
 import 'package:obtainium/providers/settings_provider.dart';
@@ -629,6 +630,17 @@ class _SettingsPageState extends State<SettingsPage> {
         label: tr('enableCertificatePinning'),
         value: settingsProvider.enableCertificatePinning,
         onChanged: (value) => settingsProvider.enableCertificatePinning = value,
+      ),
+      _settingsRow(
+        context,
+        icon: Icons.verified_user_outlined,
+        title: tr('viewPinnedCertificates'),
+        subtitle: tr('viewPinnedCertificatesDescription'),
+        onTap: () => _pushPage(
+          context,
+          title: tr('pinnedCertificates'),
+          childBuilder: (_) => const PinnedCertificatesView(),
+        ),
       ),
       ToggleTile(
         label: tr('checkOnStart'),

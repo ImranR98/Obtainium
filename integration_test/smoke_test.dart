@@ -1,6 +1,9 @@
+import 'dart:isolate';
+
 import 'package:flutter_test/flutter_test.dart';
 import 'package:integration_test/integration_test.dart';
 import 'package:obtainium/pages/settings.dart';
+import 'package:obtainium/services/http_service.dart';
 
 import 'e2e_helpers.dart';
 
@@ -48,6 +51,19 @@ void main() {
     expect(find.text('Appearance'), findsOneWidget);
     await tester.tap(find.text('Updates'));
     await pumpUntil(tester, find.text('Enable certificate pinning'));
+    await tester.tap(find.text('View pinned certificates'));
+    await pumpUntil(tester, find.text('Pinned certificates'));
+    expect(find.text('github.com'), findsOneWidget);
+    await tester.tap(
+      find.text('Sectigo Public Server Authentication Root R46').first,
+    );
+    await pumpUntil(tester, find.text('SHA-256 fingerprint'));
+    expect(find.text('Copy to clipboard'), findsOneWidget);
+    expect(find.text('Export certificate'), findsOneWidget);
+    await pressBack(tester);
+    await pumpUntil(tester, find.text('Pinned certificates'));
+    await pressBack(tester);
+    await pumpUntil(tester, find.text('Enable certificate pinning'));
     await pressBack(tester);
     await pumpUntil(tester, find.byType(SettingsPage));
     await pressBack(tester);
@@ -61,5 +77,18 @@ void main() {
     await pumpUntil(tester, find.text('Search'));
 
     restoreErrorWidgetBuilder();
+  });
+
+  testWidgets('HTTP works from a background isolate', (tester) async {
+    final result = await tester.runAsync(
+      () => Isolate.run(() async {
+        final response = await HttpService().request('GET', null, {
+          'url': '$e2eBaseUrl/',
+        });
+        return (response.statusCode, HttpService.isCronetInUse);
+      }),
+    );
+    expect(result?.$1, 200);
+    expect(result?.$2, isTrue);
   });
 }

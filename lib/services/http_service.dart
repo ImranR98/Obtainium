@@ -2,18 +2,30 @@
 
 import 'dart:convert';
 import 'dart:io';
-import 'dart:typed_data';
 
+import 'package:cronet_http/cronet_http.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/services.dart';
 import 'package:http/http.dart' as http;
+import 'package:http/http.dart' show HeadersWithSplitValues;
+import 'package:http/io_client.dart';
+import 'package:obtainium/core/logging/app_logger.dart';
 import 'package:obtainium/custom_errors.dart';
+import 'package:obtainium/services/pinned_certificates.dart';
 
 // ========================================================================
 // HttpService — HTTP client creation, streaming requests, and error mapping.
 // ========================================================================
 
+typedef HttpServiceClientFactory =
+    Future<http.Client> Function(Map<String, dynamic> settings);
+
 class HttpService {
+  HttpService({HttpServiceClientFactory? clientFactory})
+    : _clientFactory = clientFactory ?? _defaultClientFor;
+
+  final HttpServiceClientFactory _clientFactory;
+
   static const int maxRedirects = 10;
 
   /// Headers that may be forwarded to a different origin on redirect.
@@ -40,43 +52,21 @@ class HttpService {
   };
 
   static final Map<String, Future<List<Uint8List>>> _certificatePins = {
-    'github.com': _loadCertificateFromAsset([
-      'assets/ca-certs/sectigo-pub-serv-auth-r46.crt',
-      'assets/ca-certs/sectigo-pub-serv-auth-e46.crt',
-
-      // redirects from api.github.com for obtaining release assets point to
-      // release-assets.githubusercontent.com which uses ISRG (Let's Encrypt)
-      // adding that as another section doesn't work because of
-      // HttpClient follows redirects (as intended)
-      'assets/ca-certs/isrg-root-x1.crt',
-      'assets/ca-certs/isrg-root-x2.crt',
-      'assets/ca-certs/isrg-root-ye.crt',
-      'assets/ca-certs/isrg-root-yr.crt',
-    ]),
-    'codeberg.org': _loadCertificateFromAsset([
-      'assets/ca-certs/isrg-root-x1.crt',
-      'assets/ca-certs/isrg-root-x2.crt',
-      'assets/ca-certs/isrg-root-ye.crt',
-      'assets/ca-certs/isrg-root-yr.crt',
-    ]),
-    'gitlab.com': _loadCertificateFromAsset([
-      'assets/ca-certs/sectigo-pub-serv-auth-r46.crt',
-      'assets/ca-certs/sectigo-pub-serv-auth-e46.crt',
-    ]),
-    'rustore.ru': _loadCertificateFromAsset([
-      'assets/ca-certs/harica-tls-root-2021-rsa.crt',
-      'assets/ca-certs/harica-tls-root-2021-ecc.crt',
-      'assets/ca-certs/russian-mintsifry-root.crt',
-    ]),
+    for (final pinnedHost in pinnedHosts)
+      pinnedHost.host: _loadCertificatesFromAssets(
+        pinnedHost.certificates.map((cert) => cert.assetPath).toList(),
+      ),
   };
 
-  static Future<List<Uint8List>> _loadCertificateFromAsset(
+  static Future<List<Uint8List>> _loadCertificatesFromAssets(
     List<String> assetsPath,
   ) async {
     final List<Uint8List> certsBytes = [];
     for (final certPath in assetsPath) {
       final cert = await rootBundle.load(certPath);
-      certsBytes.add(cert.buffer.asUint8List());
+      certsBytes.add(
+        cert.buffer.asUint8List(cert.offsetInBytes, cert.lengthInBytes),
+      );
     }
     return certsBytes;
   }
@@ -86,74 +76,99 @@ class HttpService {
     return parts.length > 2 ? parts.sublist(parts.length - 2).join('.') : host;
   }
 
-  Future<SecurityContext?> _createCertPinning(String url) async {
-    final uri = Uri.parse(url);
-    final host = uri.host;
+  static String? _pinnedHostFor(String url) {
+    final host = Uri.parse(url).host;
+    if (_certificatePins.containsKey(host)) return host;
     final rootHost = extractRootHost(host);
-    if (_certificatePins.containsKey(host)) {
-      final certsBytes = await _certificatePins[host]!;
-      final securityContext = SecurityContext();
-      for (final certBytes in certsBytes) {
-        securityContext.setTrustedCertificatesBytes(certBytes);
+    if (_certificatePins.containsKey(rootHost)) return rootHost;
+    return null;
+  }
+
+  static final Map<String, Future<http.Client>> _pinnedClients = {};
+  static final Map<String, Future<http.Client>> _ioClients = {};
+  static http.Client? _cronetClient;
+  static bool _cronetUnavailable = false;
+
+  static bool get isCronetInUse => _cronetClient != null;
+
+  static Future<http.Client> _defaultClientFor(
+    Map<String, dynamic> settings,
+  ) async {
+    final url = settings['url'] as String;
+    final host = Uri.parse(url).host;
+    final pinning = settings['enableCertificatePinning'] == true;
+    final insecure = settings['allowInsecure'] == true;
+
+    if (pinning) {
+      final pinHost = _pinnedHostFor(url);
+      if (pinHost != null) {
+        return _pinnedClients.putIfAbsent(pinHost, () async {
+          final certsBytes = await _certificatePins[pinHost]!;
+          final securityContext = SecurityContext();
+          for (final certBytes in certsBytes) {
+            securityContext.setTrustedCertificatesBytes(certBytes);
+          }
+          final httpClient = HttpClient(context: securityContext)
+            ..connectionTimeout = const Duration(seconds: 30)
+            ..badCertificateCallback = (cert, host, port) => false;
+          return IOClient(httpClient);
+        });
       }
-      return securityContext;
-    } else if (_certificatePins.containsKey(rootHost)) {
-      final certsBytes = await _certificatePins[rootHost]!;
-      final securityContext = SecurityContext();
-      for (final certBytes in certsBytes) {
-        securityContext.setTrustedCertificatesBytes(certBytes);
-      }
-      return securityContext;
-    } else {
+    }
+
+    if (insecure) {
+      return _ioClients.putIfAbsent('insecure', () async {
+        final httpClient = HttpClient()
+          ..connectionTimeout = const Duration(seconds: 30)
+          ..badCertificateCallback = (cert, host, port) => true;
+        return IOClient(httpClient);
+      });
+    }
+
+    final cronetClient = _tryCronetClient();
+    if (cronetClient != null) return cronetClient;
+
+    if (extractRootHost(host) == 'rustore.ru') {
+      return _ioClients.putIfAbsent('rustore', () async {
+        final securityContext = SecurityContext(withTrustedRoots: true);
+        final cert = await rootBundle.load(russianMintsifryAssetPath);
+        securityContext.setTrustedCertificatesBytes(
+          cert.buffer.asUint8List(cert.offsetInBytes, cert.lengthInBytes),
+        );
+        final httpClient = HttpClient(context: securityContext)
+          ..connectionTimeout = const Duration(seconds: 30);
+        return IOClient(httpClient);
+      });
+    }
+
+    return _ioClients.putIfAbsent('default', () async {
+      final httpClient = HttpClient()
+        ..connectionTimeout = const Duration(seconds: 30);
+      return IOClient(httpClient);
+    });
+  }
+
+  static http.Client? _tryCronetClient() {
+    if (!Platform.isAndroid || _cronetUnavailable) return null;
+    if (_cronetClient != null) return _cronetClient;
+    try {
+      final engine = CronetEngine.build(
+        userAgent: 'Dart/${Platform.version.split(' ').first} (dart:io)',
+        enableQuic: false,
+        useBuiltInDnsResolver: false,
+      );
+      _cronetClient = CronetClient.fromCronetEngine(engine);
+      AppLogger.info('HTTP: using embedded Cronet');
+      return _cronetClient;
+    } catch (e, stackTrace) {
+      _cronetUnavailable = true;
+      AppLogger.error(
+        e,
+        stackTrace: stackTrace,
+        message: 'HTTP: Cronet initialization failed; using dart:io',
+      );
       return null;
     }
-  }
-
-  /* Basically RuStore switched partially (and in the future it may be fully)
-     to russian government Mintsifry CA, which isnt trusted by Android nor
-     Chrome Root Store. This is workaround to trust Mintsifry CA for network
-     requests made to RuStore domains and subdomains
-   */
-  Future<SecurityContext> _ruStoreWorkaroundSecurityContext() async {
-    final securityContext = SecurityContext(withTrustedRoots: true);
-    final cert = await rootBundle.load(
-      'assets/ca-certs/russian-mintsifry-root.crt',
-    );
-    securityContext.setTrustedCertificatesBytes(cert.buffer.asUint8List());
-    return securityContext;
-  }
-
-  Future<HttpClient> createHttpClient(
-    Map<String, dynamic> additionalSettings,
-  ) async {
-    final insecure = additionalSettings['allowInsecure'] == true;
-    final url = additionalSettings['url'] as String;
-    final pinning = additionalSettings['enableCertificatePinning'] == true;
-    SecurityContext? securityContext;
-    final host = Uri.parse(url).host;
-    if (pinning) {
-      securityContext = await _createCertPinning(url);
-    } else if (extractRootHost(host) == 'rustore.ru') {
-      securityContext = await _ruStoreWorkaroundSecurityContext();
-    }
-    final client = securityContext != null
-        ? HttpClient(context: securityContext)
-        : HttpClient();
-    client.connectionTimeout = const Duration(seconds: 30);
-    if (insecure) {
-      client.badCertificateCallback =
-          (X509Certificate cert, String host, int port) {
-            if (pinning &&
-                (_certificatePins.containsKey(host) ||
-                    _certificatePins.containsKey(extractRootHost(host)))) {
-              // Pinned sites (and subdomains of a pinned root) must still
-              // reject bad certificates even when insecure mode is enabled.
-              return false;
-            }
-            return true;
-          };
-    }
-    return client;
   }
 
   /// Whether two URIs share the same origin (scheme, host, and port — Dart
@@ -176,9 +191,9 @@ class HttpService {
     return referenceAbsoluteUrl.resolve(ambiguousUrl).toString();
   }
 
-  /// Performs an HTTP request with redirect following, returning the final URL, client, and streamed response.
-  Future<MapEntry<Uri, MapEntry<HttpClient, HttpClientResponse>>>
-  sourceRequestStreamResponse(
+  /// Performs an HTTP request with redirect following, returning the final URL
+  /// and streamed response.
+  Future<MapEntry<Uri, http.StreamedResponse>> requestStream(
     String method,
     Map<String, String>? requestHeaders,
     Map<String, dynamic> additionalSettings, {
@@ -195,96 +210,122 @@ class HttpService {
       // original URL.
       final hopSettings = Map<String, dynamic>.from(additionalSettings)
         ..['url'] = currentUrl.toString();
-      final httpClient = await createHttpClient(hopSettings);
-      try {
-        final request = await httpClient.openUrl(method, currentUrl);
-        if (requestHeaders != null) {
-          requestHeaders.forEach((key, value) {
-            request.headers.set(key, value);
-          });
-        }
-        request.cookies.addAll(cookies);
-        request.followRedirects = false;
-        if (postBody != null) {
-          if (postBody is String) {
-            request.write(postBody);
-          } else {
-            request.headers.contentType = ContentType.json;
-            request.write(jsonEncode(postBody));
-          }
-        }
-        final response = await request.close();
-
-        if (followRedirects &&
-            (response.statusCode >= 300 && response.statusCode <= 399)) {
-          final location = response.headers.value(HttpHeaders.locationHeader);
-          if (location != null) {
-            final nextUrl = Uri.parse(ensureAbsoluteUrl(location, currentUrl));
-            if (currentUrl.scheme == 'https' &&
-                nextUrl.scheme == 'http' &&
-                additionalSettings['allowInsecure'] != true &&
-                additionalSettings['allowInsecureRedirects'] != true) {
-              // Never follow a redirect that downgrades to cleartext HTTP.
-              throw ObtainiumError(tr('insecureRedirect'));
-            }
-            if (!isSameOrigin(currentUrl, nextUrl)) {
-              // Do not forward credentials or any other caller-supplied
-              // headers to a different origin; keep only protocol-level ones.
-              requestHeaders = requestHeaders == null
-                  ? null
-                  : Map<String, String>.fromEntries(
-                      requestHeaders.entries.where(
-                        (e) =>
-                            safeRedirectHeaders.contains(e.key.toLowerCase()),
-                      ),
-                    );
-              cookies = [];
-            } else {
-              cookies = response.cookies;
-            }
-            currentUrl = nextUrl;
-            redirectCount++;
-            httpClient.close();
-            continue;
-          }
-        }
-
-        return MapEntry(currentUrl, MapEntry(httpClient, response));
-      } catch (e) {
-        // Never leak the client when a request or redirect handling throws.
-        httpClient.close();
-        rethrow;
+      final client = await _clientFactory(hopSettings);
+      final request = http.Request(method, currentUrl)
+        ..followRedirects = false
+        ..maxRedirects = maxRedirects;
+      if (requestHeaders != null) {
+        request.headers.addAll(requestHeaders);
       }
+      if (cookies.isNotEmpty) {
+        final cookieHeader = cookies
+            .map((cookie) => '${cookie.name}=${cookie.value}')
+            .join('; ');
+        final existing = request.headers['cookie'];
+        request.headers['cookie'] = existing == null
+            ? cookieHeader
+            : '$existing; $cookieHeader';
+      }
+      if (postBody != null) {
+        if (postBody is String) {
+          request.bodyBytes = utf8.encode(postBody);
+        } else {
+          request.headers['content-type'] = ContentType.json.toString();
+          request.body = jsonEncode(postBody);
+        }
+      }
+      final response = await client.send(request);
+
+      if (followRedirects &&
+          (response.statusCode >= 300 && response.statusCode <= 399)) {
+        final location = response.headers[HttpHeaders.locationHeader];
+        if (location != null) {
+          final nextUrl = Uri.parse(ensureAbsoluteUrl(location, currentUrl));
+          if (currentUrl.scheme == 'https' &&
+              nextUrl.scheme == 'http' &&
+              additionalSettings['allowInsecure'] != true &&
+              additionalSettings['allowInsecureRedirects'] != true) {
+            // Never follow a redirect that downgrades to cleartext HTTP.
+            await cancelStreamedResponse(response);
+            throw ObtainiumError(tr('insecureRedirect'));
+          }
+          if (!isSameOrigin(currentUrl, nextUrl)) {
+            // Do not forward credentials or any other caller-supplied
+            // headers to a different origin; keep only protocol-level ones.
+            requestHeaders = requestHeaders == null
+                ? null
+                : Map<String, String>.fromEntries(
+                    requestHeaders.entries.where(
+                      (e) => safeRedirectHeaders.contains(e.key.toLowerCase()),
+                    ),
+                  );
+            cookies = [];
+          } else {
+            cookies = _cookiesFromResponse(response);
+          }
+          currentUrl = nextUrl;
+          redirectCount++;
+          await cancelStreamedResponse(response);
+          continue;
+        }
+      }
+
+      return MapEntry(currentUrl, response);
     }
     throw ObtainiumError(tr('tooManyRedirects'));
   }
 
-  Future<http.Response> httpClientResponseStreamToFinalResponse(
-    HttpClient httpClient,
+  Future<http.Response> request(
+    String method,
+    Map<String, String>? requestHeaders,
+    Map<String, dynamic> additionalSettings, {
+    bool followRedirects = true,
+    Object? postBody,
+  }) async {
+    final result = await requestStream(
+      method,
+      requestHeaders,
+      additionalSettings,
+      followRedirects: followRedirects,
+      postBody: postBody,
+    );
+    return streamedResponseToFinalResponse(
+      result.value,
+      method,
+      result.key.toString(),
+    );
+  }
+
+  Future<http.Response> streamedResponseToFinalResponse(
+    http.StreamedResponse response,
     String method,
     String url,
-    HttpClientResponse response,
   ) async {
-    try {
-      final bytes = (await response.fold<BytesBuilder>(
-        BytesBuilder(),
-        (b, d) => b..add(d),
-      )).toBytes();
+    final bytes = await response.stream.toBytes();
+    return http.Response.bytes(
+      bytes,
+      response.statusCode,
+      headers: response.headers,
+      request: http.Request(method, Uri.parse(url)),
+      isRedirect: response.isRedirect,
+      reasonPhrase: response.reasonPhrase,
+    );
+  }
 
-      final headers = <String, String>{};
-      response.headers.forEach((name, values) {
-        headers[name] = values.join(', ');
-      });
-
-      return http.Response.bytes(
-        bytes,
-        response.statusCode,
-        headers: headers,
-        request: http.Request(method, Uri.parse(url)),
-      );
-    } finally {
-      httpClient.close();
+  List<Cookie> _cookiesFromResponse(http.StreamedResponse response) {
+    final values = HeadersWithSplitValues(
+      response,
+    ).headersSplitValues['set-cookie'];
+    if (values == null) return [];
+    final cookies = <Cookie>[];
+    for (final value in values) {
+      try {
+        cookies.add(Cookie.fromSetCookieValue(value));
+      } on FormatException {
+        // Ignore malformed Set-Cookie values instead of failing the response.
+      }
     }
+    return cookies;
   }
 
   ObtainiumError getHttpError(http.Response res) {
@@ -308,42 +349,29 @@ class HttpService {
 String ensureAbsoluteUrl(String ambiguousUrl, Uri referenceAbsoluteUrl) =>
     HttpService().ensureAbsoluteUrl(ambiguousUrl, referenceAbsoluteUrl);
 
-/// Delegates to [HttpService.createHttpClient].
-Future<HttpClient> createHttpClient(
-  Map<String, dynamic> additionalSettings,
-) async => await HttpService().createHttpClient(additionalSettings);
+/// Cancels an unread streamed response, releasing the underlying connection.
+Future<void> cancelStreamedResponse(http.StreamedResponse response) async {
+  try {
+    final subscription = response.stream.listen(null, onError: (_) {});
+    await subscription.cancel();
+  } catch (_) {
+    // The stream may already have been consumed or cancelled.
+  }
+}
 
-// ------------------------------------------------------------------------
-// More top-level delegation helpers (continued)
-// ------------------------------------------------------------------------
-
-/// Delegates to [HttpService.sourceRequestStreamResponse].
-Future<MapEntry<Uri, MapEntry<HttpClient, HttpClientResponse>>>
-sourceRequestStreamResponse(
+/// Delegates to [HttpService.requestStream].
+Future<MapEntry<Uri, http.StreamedResponse>> sourceRequestStreamResponse(
   String method,
   Map<String, String>? requestHeaders,
   Map<String, dynamic> additionalSettings, {
   bool followRedirects = true,
   Object? postBody,
-}) => HttpService().sourceRequestStreamResponse(
+}) => HttpService().requestStream(
   method,
   requestHeaders,
   additionalSettings,
   followRedirects: followRedirects,
   postBody: postBody,
-);
-
-/// Delegates to [HttpService.httpClientResponseStreamToFinalResponse].
-Future<http.Response> httpClientResponseStreamToFinalResponse(
-  HttpClient httpClient,
-  String method,
-  String url,
-  HttpClientResponse response,
-) => HttpService().httpClientResponseStreamToFinalResponse(
-  httpClient,
-  method,
-  url,
-  response,
 );
 
 /// Delegates to [HttpService.getHttpError].
