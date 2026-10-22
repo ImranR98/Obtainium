@@ -223,12 +223,34 @@ Override the contract methods you need:
   every build (including F-Droid). Do not remove it.
 - Cronet cannot disable TLS verification, so requests with `allowInsecure` use
   `dart:io` via `IOClient`. This is the only intentional exception.
-- Certificate pinning is opt-in. When enabled, the four hosts in
-  `lib/services/pinned_certificates.dart` use `dart:io` with only the bundled roots;
-  all other hosts still use Cronet. Settings → Updates → View pinned certificates
-  exposes the same registry and can copy or export each PEM. If a pinned root is
-  rotated, update the asset and the registry together; `test/pinned_certificates_test.dart`
-  checks the registry fingerprints and asset coverage.
+- Certificate pinning is opt-in. Settings → Updates → Certificate pinning opens a
+  dedicated management page. Built-in pin sets come from `builtInPinnedHosts` in
+  `lib/services/pinned_certificates.dart` and are kept virtual: the JSON store in
+  `lib/services/pin_store.dart` only records user pin sets and disabled built-in
+  hosts/certificate fingerprints. This lets app updates add or rotate bundled roots
+  automatically.
+- Pinning is exclusive per host: hosts with an enabled pin set use `dart:io` with
+  only that set's certificates, ignoring Android's trust store. Hosts without a
+  matching set still use Cronet. More-specific host rules win; user pin sets win
+  ties against built-ins. `HttpService` resolves the set per redirect hop.
+  Requests without an explicit `enableCertificatePinning` value use the setting
+  cached by `SettingsProvider`, so helper request paths cannot silently bypass
+  pinning.
+- The pin store is JSON schema version 1 at
+  `<app support>/pinned_certificates.json`. It contains `userSets`,
+  `disabledBuiltInHosts`, and `disabledBuiltInCerts` keyed by fingerprint. Saves
+  are atomic (temp file plus rename); unreadable files are renamed with a
+  `.corrupt-<millis>` suffix and the app continues with built-in pins.
+- User certificates are parsed by the platform `CertificateFactory` through
+  `lib/providers/certificate_bridge.dart`; PEM and DER uploads are supported. The
+  store keeps user certificates as PEM plus metadata. Built-in certificate
+  deletion/restoration is by fingerprint, so replacing a bundled root in a later
+  app version behaves predictably.
+- The existing `enableCertificatePinning` preference is preserved across upgrades.
+  A legacy install with pinning on keeps the same four built-in hosts and roots; a
+  legacy install with pinning off keeps it off, with the built-in sets ready to
+  enable. `test/pin_store_test.dart` covers this default state, resolution
+  precedence, persistence, and corrupt-store recovery.
 - `cronet_http` still applies the standalone Kotlin Gradle plugin, so
   `android.builtInKotlin` is disabled in `android/gradle.properties` for now. Revisit
   this when `cronet_http` migrates to built-in Kotlin.

@@ -50,20 +50,23 @@ void main() {
     expect(find.text('Import/export'), findsOneWidget);
     expect(find.text('Appearance'), findsOneWidget);
     await tester.tap(find.text('Updates'));
+    await pumpUntil(tester, find.text('Certificate pinning'));
+    await tester.tap(find.text('Certificate pinning').first);
     await pumpUntil(tester, find.text('Enable certificate pinning'));
-    await tester.tap(find.text('View pinned certificates'));
-    await pumpUntil(tester, find.text('Pinned certificates'));
-    expect(find.text('github.com'), findsOneWidget);
-    await tester.tap(
-      find.text('Sectigo Public Server Authentication Root R46').first,
-    );
+    expect(find.text('Your pin sets'), findsOneWidget);
+    final certificateFinder = find
+        .text('Sectigo Public Server Authentication Root R46')
+        .first;
+    await tester.ensureVisible(certificateFinder);
+    await tester.pumpAndSettle();
+    await tester.tap(certificateFinder);
     await pumpUntil(tester, find.text('SHA-256 fingerprint'));
     expect(find.text('Copy to clipboard'), findsOneWidget);
     expect(find.text('Export certificate'), findsOneWidget);
     await pressBack(tester);
-    await pumpUntil(tester, find.text('Pinned certificates'));
-    await pressBack(tester);
     await pumpUntil(tester, find.text('Enable certificate pinning'));
+    await pressBack(tester);
+    await pumpUntil(tester, find.text('Certificate pinning'));
     await pressBack(tester);
     await pumpUntil(tester, find.byType(SettingsPage));
     await pressBack(tester);

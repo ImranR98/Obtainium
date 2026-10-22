@@ -626,20 +626,18 @@ class _SettingsPageState extends State<SettingsPage> {
           ),
         ],
       ],
-      ToggleTile(
-        label: tr('enableCertificatePinning'),
-        value: settingsProvider.enableCertificatePinning,
-        onChanged: (value) => settingsProvider.enableCertificatePinning = value,
-      ),
       _settingsRow(
         context,
         icon: Icons.verified_user_outlined,
-        title: tr('viewPinnedCertificates'),
-        subtitle: tr('viewPinnedCertificatesDescription'),
-        onTap: () => _pushPage(
-          context,
-          title: tr('pinnedCertificates'),
-          childBuilder: (_) => const PinnedCertificatesView(),
+        title: tr('certificatePinning'),
+        subtitle: tr(
+          settingsProvider.enableCertificatePinning ? 'enabled' : 'disabled',
+        ),
+        onTap: () => Navigator.of(context).push(
+          MaterialPageRoute(
+            traversalEdgeBehavior: traversalEdgeBehaviorFor(context),
+            builder: (_) => const CertificatePinningPage(),
+          ),
         ),
       ),
       ToggleTile(

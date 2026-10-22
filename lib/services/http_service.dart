@@ -11,6 +11,7 @@ import 'package:http/http.dart' show HeadersWithSplitValues;
 import 'package:http/io_client.dart';
 import 'package:obtainium/core/logging/app_logger.dart';
 import 'package:obtainium/custom_errors.dart';
+import 'package:obtainium/services/pin_store.dart';
 import 'package:obtainium/services/pinned_certificates.dart';
 
 // ========================================================================
@@ -51,62 +52,44 @@ class HttpService {
     'x-requested-with',
   };
 
-  static final Map<String, Future<List<Uint8List>>> _certificatePins = {
-    for (final pinnedHost in pinnedHosts)
-      pinnedHost.host: _loadCertificatesFromAssets(
-        pinnedHost.certificates.map((cert) => cert.assetPath).toList(),
-      ),
-  };
-
-  static Future<List<Uint8List>> _loadCertificatesFromAssets(
-    List<String> assetsPath,
-  ) async {
-    final List<Uint8List> certsBytes = [];
-    for (final certPath in assetsPath) {
-      final cert = await rootBundle.load(certPath);
-      certsBytes.add(
-        cert.buffer.asUint8List(cert.offsetInBytes, cert.lengthInBytes),
-      );
-    }
-    return certsBytes;
-  }
-
   static String extractRootHost(String host) {
     final parts = host.split('.');
     return parts.length > 2 ? parts.sublist(parts.length - 2).join('.') : host;
-  }
-
-  static String? _pinnedHostFor(String url) {
-    final host = Uri.parse(url).host;
-    if (_certificatePins.containsKey(host)) return host;
-    final rootHost = extractRootHost(host);
-    if (_certificatePins.containsKey(rootHost)) return rootHost;
-    return null;
   }
 
   static final Map<String, Future<http.Client>> _pinnedClients = {};
   static final Map<String, Future<http.Client>> _ioClients = {};
   static http.Client? _cronetClient;
   static bool _cronetUnavailable = false;
+  static bool _defaultCertificatePinning = false;
 
   static bool get isCronetInUse => _cronetClient != null;
+
+  static void setDefaultCertificatePinning(bool enabled) {
+    _defaultCertificatePinning = enabled;
+  }
 
   static Future<http.Client> _defaultClientFor(
     Map<String, dynamic> settings,
   ) async {
     final url = settings['url'] as String;
     final host = Uri.parse(url).host;
-    final pinning = settings['enableCertificatePinning'] == true;
+    final pinning =
+        (settings['enableCertificatePinning'] as bool?) ??
+        _defaultCertificatePinning;
     final insecure = settings['allowInsecure'] == true;
 
-    if (pinning) {
-      final pinHost = _pinnedHostFor(url);
-      if (pinHost != null) {
-        return _pinnedClients.putIfAbsent(pinHost, () async {
-          final certsBytes = await _certificatePins[pinHost]!;
+    if (pinning && Uri.parse(url).scheme == 'https') {
+      final store = PinStore.instance;
+      await store.ensureLoaded();
+      final resolved = store.resolve(host);
+      if (resolved != null) {
+        final cacheKey = '${resolved.id}:${resolved.revision}';
+        return _pinnedClients.putIfAbsent(cacheKey, () async {
           final securityContext = SecurityContext();
-          for (final certBytes in certsBytes) {
-            securityContext.setTrustedCertificatesBytes(certBytes);
+          for (final certificate in resolved.certificates) {
+            final pem = await certificate.loadPem();
+            securityContext.setTrustedCertificatesBytes(utf8.encode(pem));
           }
           final httpClient = HttpClient(context: securityContext)
             ..connectionTimeout = const Duration(seconds: 30)
