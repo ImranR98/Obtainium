@@ -676,11 +676,34 @@ class _SettingsPageState extends State<SettingsPage> {
                 additionalValidators: [regExValidator],
               )..value = settingsProvider.globalApkFilterRegEx,
             ],
+            [
+              GeneratedFormTextField(
+                'globalVersionExtractionRegEx',
+                label: tr('globalVersionExtractionRegEx'),
+                required: false,
+                additionalValidators: [regExValidator],
+              )..value = settingsProvider.globalVersionExtractionRegEx,
+            ],
+            [
+              GeneratedFormTextField(
+                'globalMatchGroupToUse',
+                label: tr(
+                  'matchGroupToUseForX',
+                  args: [tr('globalVersionExtractionRegEx')],
+                ),
+                required: false,
+                hint: '\$0',
+              )..value = settingsProvider.globalMatchGroupToUse,
+            ],
           ],
           onValueChanges: (values, valid, isBuilding) {
             if (valid && !isBuilding) {
               settingsProvider.globalApkFilterRegEx =
                   values['globalApkFilterRegEx'];
+              settingsProvider.globalVersionExtractionRegEx =
+                  values['globalVersionExtractionRegEx'];
+              settingsProvider.globalMatchGroupToUse =
+                  values['globalMatchGroupToUse'];
             }
           },
         ),

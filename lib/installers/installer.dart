@@ -1,5 +1,29 @@
 import 'package:obtainium/providers/settings_provider.dart';
 import 'package:obtainium/providers/source_provider.dart';
+import 'package:obtainium/app_sources/samsunggalaxystore.dart';
+
+String installerPackageNameForApp(App app, {required bool googlePlayDefault}) {
+  var isGalaxyStore = false;
+  if (app.settings.getBool('shizukuPretendToBeGalaxyStore')) {
+    try {
+      isGalaxyStore =
+          SourceProvider().getSource(
+                app.url,
+                overrideSource: app.overrideSource,
+              )
+              is SamsungGalaxyStore;
+    } catch (_) {
+      isGalaxyStore = false;
+    }
+  }
+  if (isGalaxyStore) {
+    return 'com.sec.android.app.samsungapps';
+  }
+  return googlePlayDefault ||
+          app.settings.getBool('shizukuPretendToBeGooglePlay')
+      ? 'com.android.vending'
+      : '';
+}
 
 /// Android PackageInstaller status codes: 0 = success, 3 = cancelled / pending.
 const int _installSuccessCode = 0;
@@ -80,7 +104,7 @@ abstract class Installer {
 
   /// Installs one or more APK file paths (a base APK plus optional splits).
   /// [installOptions] carries installer-specific key-value flags (e.g. Shizuku's
-  /// `shizukuPretendToBeGooglePlay`).
+  /// `installerPackageName`).
   Future<InstallResult> installApk(
     List<String> apkFilePaths, {
     required String appId,

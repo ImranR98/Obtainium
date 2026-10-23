@@ -10,6 +10,7 @@ class _FakeShizukuPlatform extends ShizukuApkInstallerPlatform {
   String? permissionResult = 'granted_adb';
   int checkCalls = 0;
   int servicesNotFoundFailures = 0;
+  final installs = <({List<String> uris, String source})>[];
 
   @override
   Future<void> setInstallerMode(String mode) async {
@@ -24,6 +25,16 @@ class _FakeShizukuPlatform extends ShizukuApkInstallerPlatform {
       return 'services_not_found';
     }
     return permissionResult;
+  }
+
+  @override
+  Future<int?> installAPKs(
+    List<String> apkFilesURIs,
+    String fakeInstallSource, {
+    String? packageName,
+  }) async {
+    installs.add((uris: apkFilesURIs, source: fakeInstallSource));
+    return 0;
   }
 }
 
@@ -73,4 +84,78 @@ void main() {
     );
     expect(fake.checkCalls, 4);
   });
+
+  test('each single or split install forwards its selected source', () async {
+    final installer = ShizukuInstaller(settings);
+    for (final source in [
+      '',
+      'com.android.vending',
+      'com.sec.android.app.samsungapps',
+      '',
+    ]) {
+      expect(
+        (await installer.installApk(
+          ['/tmp/base.apk'],
+          appId: 'com.example.app',
+          installOptions: {'installerPackageName': source},
+        )).isSuccess,
+        isTrue,
+      );
+    }
+    await installer.installApk(
+      ['/tmp/base.apk', '/tmp/split.apk'],
+      appId: 'com.example.app',
+      installOptions: {
+        'installerPackageName': 'com.sec.android.app.samsungapps',
+      },
+    );
+    expect(fake.installs.map((i) => i.source), [
+      '',
+      'com.android.vending',
+      'com.sec.android.app.samsungapps',
+      '',
+      'com.sec.android.app.samsungapps',
+    ]);
+    expect(fake.installs.last.uris, [
+      'file:///tmp/base.apk',
+      'file:///tmp/split.apk',
+    ]);
+  });
+
+  test('Galaxy Store spoofing is rejected for the Dhizuku backend', () async {
+    settings.shizukuInstallerMode = 'dhizuku';
+    fake.permissionResult = 'granted_owner';
+    await expectLater(
+      ShizukuInstaller(settings).installApk(
+        ['/tmp/base.apk'],
+        appId: 'com.example.app',
+        installOptions: {
+          'installerPackageName': 'com.sec.android.app.samsungapps',
+        },
+      ),
+      throwsA(isA<ObtainiumError>()),
+    );
+    expect(fake.installs, isEmpty);
+  });
+
+  test(
+    'Samsung installation cannot fall back to Dhizuku in auto mode',
+    () async {
+      final installer = ShizukuInstaller(settings);
+      await installer.installApk(
+        ['/tmp/base.apk'],
+        appId: 'com.example.app',
+        installOptions: {
+          'installerPackageName': 'com.sec.android.app.samsungapps',
+        },
+      );
+      expect(fake.mode, 'shizuku');
+      await installer.installApk(
+        ['/tmp/base.apk'],
+        appId: 'com.example.app',
+        installOptions: {'installerPackageName': 'com.android.vending'},
+      );
+      expect(fake.mode, 'auto');
+    },
+  );
 }

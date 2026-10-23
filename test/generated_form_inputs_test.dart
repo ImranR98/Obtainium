@@ -40,6 +40,41 @@ void main() {
     expect(values()['flag'], isTrue);
   });
 
+  testWidgets('exclusive switches turn each other off and survive cloning', (
+    tester,
+  ) async {
+    final values = await pumpForm(
+      tester,
+      cloneFormItems([
+        [
+          GeneratedFormSwitch(
+            'play',
+            label: 'Google Play',
+            value: true,
+            mutuallyExclusiveWith: ['galaxy'],
+          ),
+        ],
+        [
+          GeneratedFormSwitch(
+            'galaxy',
+            label: 'Samsung Galaxy Store',
+            mutuallyExclusiveWith: ['play'],
+          ),
+        ],
+        [GeneratedFormSwitch('unrelated', label: 'Unrelated', value: true)],
+      ]),
+    );
+    await tester.tap(find.byType(Switch).at(1));
+    await tester.pump();
+    expect(values(), {'play': false, 'galaxy': true, 'unrelated': true});
+    await tester.tap(find.byType(Switch).at(0));
+    await tester.pump();
+    expect(values(), {'play': true, 'galaxy': false, 'unrelated': true});
+    await tester.tap(find.byType(Switch).at(0));
+    await tester.pump();
+    expect(values(), {'play': false, 'galaxy': false, 'unrelated': true});
+  });
+
   testWidgets('text field writes through', (tester) async {
     final values = await pumpForm(tester, [
       [GeneratedFormTextField('text', label: 'Text', value: '')],

@@ -831,6 +831,32 @@ class SettingsProvider with ChangeNotifier {
     notifyListeners();
   }
 
+  String? get globalVersionExtractionRegEx =>
+      getSettingString('globalVersionExtractionRegEx');
+
+  set globalVersionExtractionRegEx(String? val) {
+    final cleaned = val?.trim();
+    if (cleaned == null || cleaned.isEmpty) {
+      prefs?.remove('globalVersionExtractionRegEx');
+    } else {
+      prefs?.setString('globalVersionExtractionRegEx', cleaned);
+    }
+    notifyListeners();
+  }
+
+  String? get globalMatchGroupToUse =>
+      getSettingString('globalMatchGroupToUse');
+
+  set globalMatchGroupToUse(String? val) {
+    final cleaned = val?.trim();
+    if (cleaned == null || cleaned.isEmpty) {
+      prefs?.remove('globalMatchGroupToUse');
+    } else {
+      prefs?.setString('globalMatchGroupToUse', cleaned);
+    }
+    notifyListeners();
+  }
+
   bool get onlyCheckInstalledOrTrackOnlyApps {
     return _getBool('onlyCheckInstalledOrTrackOnlyApps') ?? false;
   }
@@ -963,7 +989,12 @@ class SettingsProvider with ChangeNotifier {
 
   List<String> get searchDeselected {
     return prefs?.getStringList('searchDeselected') ??
-        SourceProvider().sources.map((s) => s.name).toList();
+        SourceProvider().sources
+            .where((source) => source.canSearch)
+            .expand(
+              (source) => source.searchProfiles.map((profile) => profile.id),
+            )
+            .toList();
   }
 
   set searchDeselected(List<String> list) {

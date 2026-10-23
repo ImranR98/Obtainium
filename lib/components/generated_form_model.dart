@@ -93,12 +93,14 @@ class GeneratedFormDropdown extends GeneratedFormItem {
 
 class GeneratedFormSwitch extends GeneratedFormItem {
   bool disabled;
+  final List<String> mutuallyExclusiveWith;
 
   GeneratedFormSwitch(
     super.key, {
     super.label,
     bool super.value = false,
     this.disabled = false,
+    this.mutuallyExclusiveWith = const [],
     List<String? Function(bool value)> super.additionalValidators = const [],
   });
 
@@ -116,6 +118,7 @@ class GeneratedFormSwitch extends GeneratedFormItem {
       label: label,
       value: value,
       disabled: disabled,
+      mutuallyExclusiveWith: List.from(mutuallyExclusiveWith),
       additionalValidators: List.from(additionalValidators),
     );
   }

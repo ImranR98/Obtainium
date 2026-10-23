@@ -53,8 +53,10 @@ class RootInstaller extends Installer {
       final stagedApks = [
         for (var i = 0; i < apkFilePaths.length; i++) '"\$d/obt$i.apk"',
       ].join(' ');
-      final installLine = installOptions['shizukuPretendToBeGooglePlay'] == true
-          ? "pm install -r -i 'com.android.vending' --user \"\$uid\" $stagedApks"
+      final installerPackageName =
+          installOptions['installerPackageName'] as String? ?? '';
+      final installLine = installerPackageName.isNotEmpty
+          ? 'pm install -r -i ${_quoteShell(installerPackageName)} --user "\$uid" $stagedApks'
           : 'pm install -r --user "\$uid" $stagedApks';
       final script = [
         'd="\$(mktemp -d /data/local/tmp/obtainium.XXXXXX)" || exit 1',

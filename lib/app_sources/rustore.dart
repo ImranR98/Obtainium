@@ -68,6 +68,11 @@ class RuStore extends AppSource {
       'RuStore/1.105.0.2 (Android $_firmwareVer; SDK $_androidSdkVer; '
       'arm64-v8a; $_deviceManufacturer $_deviceModelName; $_firmwareLang)';
 
+  // Last real screen density and locales, for background isolates without
+  // view metrics.
+  static const String _screenDensityPrefsKey = 'ruStore-screenDensity';
+  static const String _localesPrefsKey = 'ruStore-locales';
+
   static _SecureSession? _session;
   static String? _deviceType;
 
@@ -80,7 +85,9 @@ class RuStore extends AppSource {
     return _deviceType!;
   }
 
-  /// Device fields RuStore requires before it will return split APK URLs.
+  /// Device fields RuStore requires before it will return split APK URLs
+  /// (ABI and SDK always; density for some apps; locales pick the language
+  /// split).
   Future<Map<String, dynamic>> _deviceDownloadProfile() async {
     List<String> abis = const ['arm64-v8a'];
     int sdkVersion = int.tryParse(_androidSdkVer) ?? 36;
@@ -93,21 +100,50 @@ class RuStore extends AppSource {
     } catch (e) {
       AppLogger.warn('RuStore: failed to read device info: $e', error: e);
     }
+    final display = await _displayProfile();
     return {
       'supportedAbis': abis,
       'sdkVersion': sdkVersion,
-      'screenDensity': _screenDensity(),
+      'screenDensity': display.density,
+      if (display.locales.isNotEmpty) 'supportedLocales': display.locales,
     };
   }
 
-  int _screenDensity() {
-    try {
-      return (PlatformDispatcher.instance.views.first.devicePixelRatio * 160)
-          .round();
-    } catch (_) {
-      // No views (e.g. background isolate): use a plausible phone density.
-      return 420;
+  /// Screen density and system locales (Java `Locale.toString()` form).
+  Future<({int density, List<String> locales})> _displayProfile() async {
+    final settingsProvider = SettingsProvider();
+    await settingsProvider.initializeSettings();
+    final dispatcher = PlatformDispatcher.instance;
+    final view = dispatcher.views.firstOrNull;
+    final savedDensity = int.tryParse(
+      settingsProvider.getSettingString(_screenDensityPrefsKey) ?? '',
+    );
+    final savedLocales = settingsProvider.getSettingString(_localesPrefsKey);
+    // A headless engine exposes the implicit view with default metrics with 160dpi.
+    // RuStore may not return download URLs for that, so only trust attached views.
+    if (view != null && !view.physicalSize.isEmpty) {
+      final density = (view.devicePixelRatio * 160).round();
+      final locales = dispatcher.locales.map((l) => l.toString()).toList();
+      if (savedDensity != density) {
+        settingsProvider.setSettingString(
+          _screenDensityPrefsKey,
+          density.toString(),
+        );
+      }
+      final joinedLocales = locales.join(';');
+      if (locales.isNotEmpty && savedLocales != joinedLocales) {
+        settingsProvider.setSettingString(_localesPrefsKey, joinedLocales);
+      }
+      return (density: density, locales: locales);
     }
+    // Reuse the last foreground values, else a plausible phone density and
+    // whatever locales the engine reports.
+    return (
+      density: savedDensity ?? 420,
+      locales:
+          savedLocales?.split(';') ??
+          dispatcher.locales.map((l) => l.toString()).toList(),
+    );
   }
 
   @override
@@ -180,42 +216,18 @@ class RuStore extends AppSource {
         relDate = DateTime.tryParse(dateStr);
       }
 
-      final Response downloadLinksResponse =
-          await _sourceRequestWithSessionRetry(
-            _downloadLinkUrl,
-            additionalSettings,
-            followRedirects: false,
-            postBody: {
-              'appId': appDetails['appId'],
-              'firstInstall': true,
-              // Include the device profile so RuStore returns split APKs for
-              // apps that have no universal APK (all three fields required).
-              'withoutSplits': false,
-              ...await _deviceDownloadProfile(),
-            },
-          );
-      ensureHttpSuccess(downloadLinksResponse);
-      final downloadDetails = await decodeJsonBody(
-        downloadLinksResponse.bodyBytes,
-      );
-      if (downloadDetails == null) {
-        throw getObtainiumHttpError(downloadLinksResponse);
-      }
-      final downloadUrls = downloadDetails['downloadUrls'];
-      final List<String> urls = downloadUrls is List
-          ? downloadUrls
-                .whereType<Map>()
-                .map((e) => e['url']?.toString())
-                .whereType<String>()
-                .where((e) => e.isNotEmpty)
-                .toList()
-          : const [];
+      final downloadBody = {'appId': appDetails['appId'], 'firstInstall': true};
+      var urls = await _fetchDownloadUrls(downloadBody, additionalSettings);
       if (urls.isEmpty) {
-        // Aggregated cards are generated from an external source; RuStore
-        // does not host an APK for them (#3298).
-        if (appDetails['aggregatorInfo'] is Map) {
-          throw RuStoreAggregatedAppError();
-        }
+        // Include the device profile so RuStore returns split APKs for
+        // apps that have no universal APK (all three fields required).
+        urls = await _fetchDownloadUrls({
+          ...downloadBody,
+          'withoutSplits': false,
+          ...await _deviceDownloadProfile(),
+        }, additionalSettings);
+      }
+      if (urls.isEmpty) {
         throw NoAPKError();
       }
 
@@ -229,6 +241,32 @@ class RuStore extends AppSource {
     } catch (e) {
       rethrowOrWrapError(e);
     }
+  }
+
+  Future<List<String>> _fetchDownloadUrls(
+    Map<String, dynamic> body,
+    Map<String, dynamic> additionalSettings,
+  ) async {
+    final Response response = await _sourceRequestWithSessionRetry(
+      _downloadLinkUrl,
+      additionalSettings,
+      followRedirects: false,
+      postBody: body,
+    );
+    ensureHttpSuccess(response);
+    final details = await decodeJsonBody(response.bodyBytes);
+    if (details == null) {
+      throw getObtainiumHttpError(response);
+    }
+    final downloadUrls = details is Map ? details['downloadUrls'] : null;
+    return downloadUrls is List
+        ? downloadUrls
+              .whereType<Map>()
+              .map((e) => e['url']?.toString())
+              .whereType<String>()
+              .where((e) => e.isNotEmpty)
+              .toList()
+        : const [];
   }
 
   @override
