@@ -267,7 +267,19 @@ class _LogsPageState extends State<LogsPage> {
         else
           SliverList.builder(
             itemCount: _logs.length,
-            itemBuilder: (context, index) => _logTile(_logs[index]),
+            itemBuilder: (context, index) {
+              return Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  _logTile(_logs[index]),
+                  if (index < _logs.length - 1)
+                    Divider(
+                      height: 1,
+                      color: Theme.of(context).colorScheme.outlineVariant,
+                    ),
+                ],
+              );
+            },
           ),
         const SliverToBoxAdapter(child: SizedBox(height: 96)),
       ],
