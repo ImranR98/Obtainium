@@ -13,18 +13,18 @@ body:
         - Please ensure you have checked the [Obtainium Wiki](https://wiki.obtainium.imranr.dev/).
 
          >[!NOTE]
-         > For new Sources, please ensure:
-        >1. It is not already possible to use the HTML Source for your purposes.
+         > For new sources, please ensure:
+        >1. It is not already possible to use the HTML source for your purposes.
         >
         >2. It must be possible to extract the following details from the Source in a reliable way:
         >
-           >	- The App version (or any release-specific identifier — a "pseudo-version") for the latest release.
+           >	- The app version (or any release-specific identifier — a "pseudo-version") for the latest release.
            >	- One or more APK URL(s) for the latest release.
            >	- Above details for previous releases (optional).
         >
         >If you're not sure about 1 or 2, open a discussion item instead.
         >
-        >Note that the Web scraper cannot deal with JavaScript-enabled content.
+        >Note that the web scraper cannot deal with JavaScript-enabled content.
 
   - type: textarea
     id: feature
@@ -43,7 +43,7 @@ body:
       description: |
         A clear and concise description of any alternative solutions or features you've considered.
 
-        Note that app-specific Sources are less likely to be added. In those cases, see if the HTML Source will work for you. If not, see if a generally-applicable enhancement to the HTML Source would work, and suggest that instead.
+        Note that app-specific sources are less likely to be added. In those cases, see if the HTML source will work for you. If not, see if a generally-applicable enhancement to the HTML source would work, and suggest that instead.
 
   - type: textarea
     id: additional_context

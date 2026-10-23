@@ -226,6 +226,7 @@
     "githubSourceNote": "Beperkingen van GitHub kunnen worden vermeden door het gebruik van een API-sleutel.",
     "githubStarredRepos": "GitHub-repo's met ster",
     "globalApkFilterRegEx": "Globale APK-filter in reguliere expressie",
+    "globalVersionExtractionRegEx": "Global version trimming regex",
     "gitlabPATLabel": "GitLab-toegangskenmerk",
     "googleVerificationWarningP1": "Google heeft aangekondigd dat vanaf 2026/2027 alle apps op \"gecertificeerde\" Android-apparaten de ontwikkelaar nodig hebben om persoonlijke identiteitsgegevens rechtstreeks aan Google te verzenden.\n\nAangezien de ontwikkelaars van deze app niet akkoord gaan met deze eis, zal Obtainium niet meer werken op gecertificeerde Android-apparaten na die tijd.",
     "googleVerificationWarningP2": "Ga naar https://keepandroidopen.org/ voor meer informatie.",

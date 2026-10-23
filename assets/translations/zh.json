@@ -226,6 +226,7 @@
     "githubSourceNote": "使用访问令牌可避免触发 GitHub 的 API 请求限制。",
     "githubStarredRepos": "已星标的 GitHub 仓库",
     "globalApkFilterRegEx": "全局 APK 过滤正则表达式",
+    "globalVersionExtractionRegEx": "Global version trimming regex",
     "gitlabPATLabel": "GitLab 个人访问令牌",
     "googleVerificationWarningP1": "Google 宣布，从 2026/2027 年开始，所有在“认证” Android 设备上的应用程序都将要求开发者直接向 Google 提交个人身份细节。\n\n由于此应用程序的开发者不同意这一要求，Obtainium 在此之后将不再在认证的 Android 设备上工作。",
     "googleVerificationWarningP2": "详情请访问 https://keepandroidopen.org/。",
