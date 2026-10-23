@@ -327,12 +327,15 @@ class RuStore extends AppSource {
 
   Future<_SecureSession?> _generateSecureSession() async {
     Future<String?> fetchNonce(String deviceId) async {
-      final response = await post(
-        Uri.parse(_nonceUrl),
-        headers: _deviceHeaders(
-          deviceType: await _getDeviceType(),
-          deviceId: deviceId,
-        ),
+      final settingsProvider = SettingsProvider();
+      await settingsProvider.initializeSettings();
+      final response = await HttpService().request(
+        'POST',
+        _deviceHeaders(deviceType: await _getDeviceType(), deviceId: deviceId),
+        {
+          'url': _nonceUrl,
+          'enableCertificatePinning': settingsProvider.enableCertificatePinning,
+        },
       );
       if (response.statusCode != 200) {
         AppLogger.warn(

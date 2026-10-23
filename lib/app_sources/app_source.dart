@@ -143,19 +143,12 @@ abstract class AppSource {
       url,
     );
     Future<http.Response> perform() async {
-      final streamedResponseUrlWithResponseAndClient = await HttpService()
-          .sourceRequestStreamResponse(
-            method,
-            requestHeaders,
-            additionalSettingsPlusSourceConfig,
-            followRedirects: followRedirects,
-            postBody: postBody,
-          );
-      return await HttpService().httpClientResponseStreamToFinalResponse(
-        streamedResponseUrlWithResponseAndClient.value.key,
+      return await HttpService().request(
         method,
-        streamedResponseUrlWithResponseAndClient.key.toString(),
-        streamedResponseUrlWithResponseAndClient.value.value,
+        requestHeaders,
+        additionalSettingsPlusSourceConfig,
+        followRedirects: followRedirects,
+        postBody: postBody,
       );
     }
 

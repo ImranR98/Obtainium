@@ -92,6 +92,8 @@ PHONE_SUITES=(
   redirected_zip_test.dart
   html_links_test.dart
   app_list_density_test.dart
+  app_list_semantics_test.dart
+  stale_update_notification_test.dart
   codeberg_auth_test.dart
   screens_navigation_test.dart
   track_only_actions_test.dart
@@ -171,6 +173,8 @@ fi
 run_suite() {
   local suite="$1"
   echo "=== $suite ==="
+  "$ADB" -s "$DEV" shell pm grant dev.imranr.obtainium.debug \
+    android.permission.POST_NOTIFICATIONS >/dev/null 2>&1 || true
   if [ "$TARGET" = "phone" ] && $WITH_INSTALL && \
     [[ " ${INSTALL_SUITES[*]} " == *" $suite "* ]]; then
     reset_install_targets

@@ -207,13 +207,60 @@ the same URL can appear under multiple profiles without losing its settings.
   `.apk/.xapk/.apkm/.apks` (+ optional `.zip` and tarballs). Use it instead of
   hand-rolling `.endsWith('.apk')`, which historically missed split-APK formats.
 - `sourceRequest(...)` — the base HTTP method. It merges source config + per-app
-  settings, applies header/prefetch modifiers, follows redirects with a cap, and
-  always closes the `HttpClient`. **Use this**, not a raw `http.get`. Sources can opt
+  settings, applies header/prefetch modifiers, and follows redirects with a cap.
+  **Use this**, not a raw `http.get`. It uses the shared client from `HttpService`;
+  callers that stream a response must consume or cancel it. Sources can opt
   into a per-host request gate (`enableHostRequestGate`, `maxConcurrentRequestsPerHost`)
   that bounds metadata concurrency and short-circuits a host for a window after a
   `429`/`503`/Cloudflare challenge (APKMirror uses 2 concurrent).
 - `filterApks`, `filterApksByArch`, `extractVersion`, `findStandardFormatsForVersion`,
   `getLinksFromParsedHTML`, `getApkUrlsFromUrls`.
+
+### Networking and certificates
+
+- All app HTTP requests go through `lib/services/http_service.dart`. On Android the
+  default client is **embedded Cronet** (`cronet_http`), not `dart:io`. Cronet uses
+  Android's platform certificate verifier, so it honors the OS trust store,
+  user-installed CAs, disabled system CAs, and system proxy settings.
+- `android/app/src/main/res/xml/network_security_config.xml` opts into system and
+  user CAs. The RuStore Mintsifry root lives in `res/raw` and is trusted only for
+  `rustore.ru` and its subdomains; it is not a global trust anchor.
+- `cronet_http` defaults to the Play Services implementation. The Gradle hook in
+  `android/build.gradle.kts` forces `cronetHttpNoPlay=true`, embedding Cronet in
+  every build (including F-Droid). Do not remove it.
+- Cronet cannot disable TLS verification, so requests with `allowInsecure` use
+  `dart:io` via `IOClient`. This is the only intentional exception.
+- Certificate pinning is opt-in. Settings → Updates → Certificate pinning opens a
+  dedicated management page. Built-in pin sets come from `builtInPinnedHosts` in
+  `lib/services/pinned_certificates.dart` and are kept virtual: the JSON store in
+  `lib/services/pin_store.dart` only records user pin sets and disabled built-in
+  hosts/certificate fingerprints. This lets app updates add or rotate bundled roots
+  automatically.
+- Pinning is exclusive per host: hosts with an enabled pin set use `dart:io` with
+  only that set's certificates, ignoring Android's trust store. Hosts without a
+  matching set still use Cronet. More-specific host rules win; user pin sets win
+  ties against built-ins. `HttpService` resolves the set per redirect hop.
+  Requests without an explicit `enableCertificatePinning` value use the setting
+  cached by `SettingsProvider`, so helper request paths cannot silently bypass
+  pinning.
+- The pin store is JSON schema version 1 at
+  `<app support>/pinned_certificates.json`. It contains `userSets`,
+  `disabledBuiltInHosts`, and `disabledBuiltInCerts` keyed by fingerprint. Saves
+  are atomic (temp file plus rename); unreadable files are renamed with a
+  `.corrupt-<millis>` suffix and the app continues with built-in pins.
+- User certificates are parsed by the platform `CertificateFactory` through
+  `lib/providers/certificate_bridge.dart`; PEM and DER uploads are supported. The
+  store keeps user certificates as PEM plus metadata. Built-in certificate
+  deletion/restoration is by fingerprint, so replacing a bundled root in a later
+  app version behaves predictably.
+- The existing `enableCertificatePinning` preference is preserved across upgrades.
+  A legacy install with pinning on keeps the same four built-in hosts and roots; a
+  legacy install with pinning off keeps it off, with the built-in sets ready to
+  enable. `test/pin_store_test.dart` covers this default state, resolution
+  precedence, persistence, and corrupt-store recovery.
+- `cronet_http` still applies the standalone Kotlin Gradle plugin, so
+  `android.builtInKotlin` is disabled in `android/gradle.properties` for now. Revisit
+  this when `cronet_http` migrates to built-in Kotlin.
 
 ### Samsung Galaxy Store settings
 

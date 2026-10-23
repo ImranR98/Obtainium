@@ -252,8 +252,18 @@ class AppsPageState extends State<AppsPage> {
     settingsProvider.lightImpact();
     setState(() {});
     final ctx = context;
+    final np = context.read<NotificationsProvider>();
     return appsProvider
         .checkUpdates(forceAll: true)
+        .then((updates) {
+          unawaited(
+            clearStaleUpdateNotification(
+              np,
+              appsProvider.findAppIdsWithPendingUpdates(installedOnly: true),
+            ),
+          );
+          return updates;
+        })
         .catchError((e) {
           if (ctx.mounted) {
             showError(e is CheckUpdatesException ? e.errors : e, ctx);

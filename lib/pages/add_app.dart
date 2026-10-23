@@ -296,14 +296,16 @@ class AddAppPageState extends State<AddAppPage> {
           final proceed = await showConfirmDialog(
             context,
             title: tr('addWithoutCheckQuestion'),
-            content: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(tr('addWithoutCheckExplanation')),
-                const SizedBox(height: AppSpacings.elementGap),
-                Text('$e'),
-              ],
+            content: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(tr('addWithoutCheckExplanation')),
+                  const SizedBox(height: AppSpacings.elementGap),
+                  Text('$e'),
+                ],
+              ),
             ),
             confirmText: tr('addAnyway'),
             autofocusConfirm: settingsProvider.isTV,

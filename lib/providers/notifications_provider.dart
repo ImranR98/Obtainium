@@ -29,6 +29,15 @@ const int trackOnlyUpdateNotificationId = 7;
 const int silentUpdateAttemptNotificationId = 8;
 const int downloadNotificationBaseId = 100;
 
+Future<void> clearStaleUpdateNotification(
+  NotificationsProvider notificationsProvider,
+  List<String> pendingUpdateIds,
+) async {
+  if (pendingUpdateIds.isEmpty) {
+    await notificationsProvider.cancel(updateNotificationId);
+  }
+}
+
 /// Size of the ID space for per-download notifications. Kept just under the
 /// 32-bit signed max (minus [downloadNotificationBaseId]) so download IDs stay
 /// positive and clear of the small fixed IDs above, while making collisions

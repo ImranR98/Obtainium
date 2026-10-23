@@ -95,6 +95,9 @@ class SettingsProvider with ChangeNotifier {
 
   Future<void> initializeSettings() async {
     prefs = await SharedPreferences.getInstance();
+    HttpService.setDefaultCertificatePinning(
+      _getBool('enableCertificatePinning') ?? false,
+    );
     _cachedDefaultAppDir ??= (await getAppStorageDir()).path;
     if (_cachedIsTV == null) {
       final info = await DeviceInfoPlugin().androidInfo;
@@ -669,6 +672,7 @@ class SettingsProvider with ChangeNotifier {
 
   set enableCertificatePinning(bool enableCertificatePinning) {
     prefs?.setBool('enableCertificatePinning', enableCertificatePinning);
+    HttpService.setDefaultCertificatePinning(enableCertificatePinning);
     notifyListeners();
   }
 

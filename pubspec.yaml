@@ -2,7 +2,7 @@ name: obtainium
 description: Get Android app updates straight from the source.
 publish_to: 'none'
 
-version: 1.7.1+2359
+version: 1.7.2+2360
 
 environment:
   sdk: ^3.12.0
@@ -18,9 +18,10 @@ dependencies:
   flutter_local_notifications: ^22.3.2
   provider: ^6.1.5+1
   http: ^1.6.0
+  cronet_http: ^1.10.0
   webview_flutter: ^4.14.1
   dynamic_color: ^2.1.0
-  material_ui: ^1.7.0
+  material_ui: ^1.8.0
   material_color_utilities: ^0.13.0
   html: ^0.15.7
   shared_preferences: ^2.5.6
@@ -39,7 +40,7 @@ dependencies:
       url: https://github.com/ImranR98/android_package_manager
       ref: b5bc0365bd7faab6f51f6ec8baf4a9dab0df9117
   share_plus: ^13.3.1
-  sqflite: ^2.4.4+2
+  sqflite: ^2.4.5
   easy_localization: ^3.0.8
   intl: ^0.20.3
   android_intent_plus: ^6.1.0
@@ -52,7 +53,7 @@ dependencies:
       url: https://github.com/AlexBacich/shared-storage
       ref: 6dbcdf2c2045e326f59c062f542724aedf73cb6e
   crypto: ^3.0.7
-  xml: ^7.0.1
+  xml: ^7.1.0
   bcrypt: ^1.2.0
   app_links: ^7.2.2
   equations: ^6.0.0

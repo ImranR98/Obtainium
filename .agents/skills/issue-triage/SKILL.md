@@ -27,7 +27,9 @@ the issue (usually as `not planned`) instead of leaving it parked indefinitely.
 **Before starting, read `AGENTS.md` at the repo root.** The hard rules (no plagiarism, no
 version bumps, translation handling, staging, commit style, environment discovery,
 verification expectations) live there and are not repeated here. The one extra rule for this
-skill: **never close an issue that was fixed** — the maintainer closes those after release.
+skill: **do not close an issue whose fix has not yet landed in a release** — the maintainer
+closes those after release. Once the fix is in a released version, closing it as `completed`
+without a comment is fine when the user approves.
 
 ## Phase 0 — Preflight
 
@@ -164,8 +166,9 @@ Only after approval, per issue:
   reviewed comment naming the missing information and the 8-week window.
 - Valid: `gh issue edit <n> --remove-label "to check" --add-label ...` with the approved
   labels only.
-- Never close fixed issues, and do not post fix/release comments — the maintainer does that
-  when releasing.
+- Do not close an issue whose fix has not landed in a release. Fixed-in-release issues may
+  be closed as `completed` when the user approves; do not post fix/release comments — the
+  maintainer does that when releasing.
 - **Footer on every posted comment.** All comments (closing comments, follow-up questions,
   any other) must end with a divider, a blank line, and exactly:
 
