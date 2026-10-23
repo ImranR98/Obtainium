@@ -313,109 +313,133 @@ class _SettingsPageState extends State<SettingsPage> {
       children: [
         Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
-          spacing: AppSpacings.connectedGap,
-          children: shapeCardTiles([
-            _settingsRow(
-              context,
-              icon: Icons.import_export,
-              title: tr('importExport'),
-              autofocus: settingsProvider.isTV,
-              onTap: () => _pushPage(
-                context,
-                title: tr('importExport'),
-                childBuilder: (_) => const Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    ExportSection(),
-                    SizedBox(height: 14),
-                    ImportSection(),
-                  ],
-                ),
-              ),
+          children: [
+            SectionHeader(
+              tr('sectionAppOptions'),
+              padding: const EdgeInsets.only(top: AppSpacings.sm),
             ),
-            _settingsRow(
-              context,
-              icon: Icons.update_outlined,
-              title: tr('updates'),
-              onTap: () => _pushPage(
-                context,
-                title: tr('updates'),
-                childBuilder: (ctx) =>
-                    _buildUpdatesSection(ctx, showBgSection, sdk),
-              ),
-            ),
-            _settingsRow(
-              context,
-              icon: Icons.warning_amber_rounded,
-              title: tr('updateHealth'),
-              subtitle: updateHealthAppCount > 0
-                  ? plural('apps', updateHealthAppCount)
-                  : null,
-              onTap: () => NavHelper.pushUpdateHealthPage(context),
-            ),
-            if (hasSourceSpecificSettings)
-              _settingsRow(
-                context,
-                icon: Icons.tune_outlined,
-                title: tr('sourceSpecific'),
-                onTap: () => _pushPage(
+            const SizedBox(height: AppSpacings.sm),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              spacing: AppSpacings.connectedGap,
+              children: shapeCardTiles([
+                _settingsRow(
                   context,
-                  title: tr('sourceSpecific'),
-                  childBuilder: (ctx) => _buildSourceSpecificForm(ctx),
+                  icon: Icons.import_export,
+                  title: tr('importExport'),
+                  autofocus: settingsProvider.isTV,
+                  onTap: () => _pushPage(
+                    context,
+                    title: tr('importExport'),
+                    childBuilder: (_) => Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        SectionHeader(
+                          tr('obtainiumExport'),
+                          padding: EdgeInsets.zero,
+                        ),
+                        const SizedBox(height: AppSpacings.sm),
+                        const ExportSection(),
+                        const SizedBox(height: AppSpacings.sectionGap),
+                        SectionHeader(tr('import'), padding: EdgeInsets.zero),
+                        const SizedBox(height: AppSpacings.sm),
+                        const ImportSection(),
+                      ],
+                    ),
+                  ),
                 ),
-              ),
-            _settingsRow(
-              context,
-              icon: Icons.palette_outlined,
-              title: tr('appearance'),
-              onTap: () => _pushPage(
-                context,
-                title: tr('appearance'),
-                childBuilder: (ctx) => _buildAppearanceSection(ctx),
-              ),
+                _settingsRow(
+                  context,
+                  icon: Icons.update_outlined,
+                  title: tr('updates'),
+                  onTap: () => _pushPage(
+                    context,
+                    title: tr('updates'),
+                    childBuilder: (ctx) =>
+                        _buildUpdatesSection(ctx, showBgSection, sdk),
+                  ),
+                ),
+                _settingsRow(
+                  context,
+                  icon: Icons.warning_amber_rounded,
+                  title: tr('updateHealth'),
+                  subtitle: updateHealthAppCount > 0
+                      ? plural('apps', updateHealthAppCount)
+                      : null,
+                  onTap: () => NavHelper.pushUpdateHealthPage(context),
+                ),
+                if (hasSourceSpecificSettings)
+                  _settingsRow(
+                    context,
+                    icon: Icons.tune_outlined,
+                    title: tr('sourceSpecific'),
+                    onTap: () => _pushPage(
+                      context,
+                      title: tr('sourceSpecific'),
+                      childBuilder: (ctx) => _buildSourceSpecificForm(ctx),
+                    ),
+                  ),
+                _settingsRow(
+                  context,
+                  icon: Icons.palette_outlined,
+                  title: tr('appearance'),
+                  onTap: () => _pushPage(
+                    context,
+                    title: tr('appearance'),
+                    childBuilder: (ctx) => _buildAppearanceSection(ctx),
+                  ),
+                ),
+              ]),
             ),
-          ]),
+          ],
         ),
         Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
-          spacing: AppSpacings.connectedGap,
-          children: shapeCardTiles([
-            _settingsRow(
-              context,
-              icon: Icons.code,
-              title: tr('appSource'),
-              trailingIcon: Icons.open_in_new,
-              trailingIconSize: 20,
-              onTap: () =>
-                  _openExternalUrl(context, settingsProvider.sourceUrl),
+          children: [
+            SectionHeader(tr('about'), padding: EdgeInsets.zero),
+            const SizedBox(height: AppSpacings.sm),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              spacing: AppSpacings.connectedGap,
+              children: shapeCardTiles([
+                _settingsRow(
+                  context,
+                  icon: Icons.code,
+                  title: tr('appSource'),
+                  trailingIcon: Icons.open_in_new,
+                  trailingIconSize: 20,
+                  onTap: () =>
+                      _openExternalUrl(context, settingsProvider.sourceUrl),
+                ),
+                _settingsRow(
+                  context,
+                  icon: Icons.help_outline_rounded,
+                  title: tr('wiki'),
+                  trailingIcon: Icons.open_in_new,
+                  trailingIconSize: 20,
+                  onTap: () => _openExternalUrl(
+                    context,
+                    'https://wiki.obtainium.imranr.dev/',
+                  ),
+                ),
+                _settingsRow(
+                  context,
+                  icon: Icons.bug_report_outlined,
+                  title: tr('appLogs'),
+                  onTap: () {
+                    AppLogger.getLogs().then((logs) {
+                      if (!context.mounted) return;
+                      if (logs.isEmpty) {
+                        showMessage(ObtainiumError(tr('noLogs')), context);
+                      } else {
+                        NavHelper.pushLogsPage(context);
+                      }
+                    });
+                  },
+                ),
+              ]),
             ),
-            _settingsRow(
-              context,
-              icon: Icons.help_outline_rounded,
-              title: tr('wiki'),
-              trailingIcon: Icons.open_in_new,
-              trailingIconSize: 20,
-              onTap: () => _openExternalUrl(
-                context,
-                'https://wiki.obtainium.imranr.dev/',
-              ),
-            ),
-            _settingsRow(
-              context,
-              icon: Icons.bug_report_outlined,
-              title: tr('appLogs'),
-              onTap: () {
-                AppLogger.getLogs().then((logs) {
-                  if (!context.mounted) return;
-                  if (logs.isEmpty) {
-                    showMessage(ObtainiumError(tr('noLogs')), context);
-                  } else {
-                    NavHelper.pushLogsPage(context);
-                  }
-                });
-              },
-            ),
-          ]),
+          ],
         ),
       ],
     );

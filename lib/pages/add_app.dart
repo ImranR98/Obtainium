@@ -743,12 +743,9 @@ class AddAppPageState extends State<AddAppPage> {
     crossAxisAlignment: CrossAxisAlignment.stretch,
     children: [
       const SizedBox(height: AppSpacings.lg),
-      Text(
+      SectionHeader(
         tr('additionalOptsFor', args: [pickedSource?.name ?? tr('source')]),
-        style: Theme.of(context).textTheme.titleMedium?.copyWith(
-          color: Theme.of(context).colorScheme.primary,
-          fontWeight: FontWeight.w600,
-        ),
+        padding: EdgeInsets.zero,
       ),
       const SizedBox(height: AppSpacings.sm),
       _buildSourceSpecificForm(settingsProvider),

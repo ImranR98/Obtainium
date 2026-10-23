@@ -608,7 +608,13 @@ class _GeneratedFormState extends State<GeneratedForm> {
   }
 
   Widget _buildHeader(GeneratedFormHeader item) {
-    final header = SectionHeader(tr(item.label));
+    final header = SectionHeader(
+      tr(item.label),
+      padding: const EdgeInsets.only(
+        top: AppSpacings.xl,
+        bottom: AppSpacings.sm,
+      ),
+    );
     return item.id == null
         ? header
         : KeyedSubtree(key: GlobalObjectKey(item.id!), child: header);
