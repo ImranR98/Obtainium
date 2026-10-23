@@ -46,6 +46,7 @@ import 'package:obtainium/app_sources/vivoappstore.dart';
 import 'package:obtainium/components/generated_form_model.dart';
 import 'package:obtainium/custom_errors.dart';
 import 'package:obtainium/models/app.dart';
+import 'package:obtainium/models/typed_settings.dart';
 import 'package:obtainium/providers/settings_provider.dart';
 import 'package:obtainium/services/apk_filter_service.dart';
 import 'package:obtainium/services/version_service.dart';
@@ -304,7 +305,7 @@ class SourceProvider {
     apk = apk.copyWith(
       apkUrls: filterApks(
         apk.apkUrls,
-        additionalSettings['apkFilterRegEx'] ??
+        TypedSettings(additionalSettings).getStringOrNull('apkFilterRegEx') ??
             settingsProvider.globalApkFilterRegEx,
         additionalSettings['invertAPKFilter'],
       ),
