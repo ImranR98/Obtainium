@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:obtainium/providers/apps_provider_lifecycle.dart';
@@ -115,6 +117,53 @@ void main() {
         ),
         isNull,
       );
+    });
+  });
+
+  group('cached icon file helpers', () {
+    late Directory tempDir;
+
+    setUp(() async {
+      tempDir = await Directory.systemTemp.createTemp('obtainium-icon-test');
+    });
+
+    tearDown(() async {
+      if (tempDir.existsSync()) {
+        await tempDir.delete(recursive: true);
+      }
+    });
+
+    test('reads an existing cached icon', () async {
+      final file = File('${tempDir.path}/icon.png');
+      final bytes = Uint8List.fromList([1, 2, 3]);
+      await file.writeAsBytes(bytes);
+      expect(await readCachedAppIconSafely(file), equals(bytes));
+    });
+
+    test('returns null when the cached icon is missing', () async {
+      expect(
+        await readCachedAppIconSafely(File('${tempDir.path}/missing.png')),
+        isNull,
+      );
+    });
+
+    test('creates missing cache directories before writing', () async {
+      final file = File('${tempDir.path}/missing/icons/icon.png');
+      final bytes = Uint8List.fromList([4, 5, 6]);
+      await writeCachedAppIconSafely(file, bytes);
+      expect(file.existsSync(), isTrue);
+      expect(await file.readAsBytes(), equals(bytes));
+    });
+
+    test('does not throw when the cache path cannot be written', () async {
+      final blocker = File('${tempDir.path}/blocked');
+      await blocker.writeAsString('not a directory');
+      final file = File('${blocker.path}/icon.png');
+      await expectLater(
+        writeCachedAppIconSafely(file, Uint8List.fromList([7])),
+        completes,
+      );
+      expect(file.existsSync(), isFalse);
     });
   });
 }
