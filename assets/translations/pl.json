@@ -5,6 +5,7 @@
     "actionBanner": "Baner akcji",
     "add": "Dodaj",
     "addApp": "Dodaj",
+    "addAppHint": "Paste an app source URL, or search selected sources by name.",
     "addAnyway": "Add anyway",
     "addCategory": "Dodaj kategorię",
     "addInfoBelow": "Dodaj tę informacje poniżej.",

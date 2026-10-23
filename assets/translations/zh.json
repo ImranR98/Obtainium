@@ -5,6 +5,7 @@
     "actionBanner": "操作横幅",
     "add": "添加",
     "addApp": "添加应用",
+    "addAppHint": "Paste an app source URL, or search selected sources by name.",
     "addAnyway": "仍然添加",
     "addCategory": "添加类别",
     "addInfoBelow": "在下方添加此凭据。",

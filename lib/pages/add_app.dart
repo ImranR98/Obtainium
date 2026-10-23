@@ -881,6 +881,16 @@ class AddAppPageState extends State<AddAppPage> {
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   _buildUrlRow(context, settingsProvider, doingSomething),
+                  if (pickedSource == null)
+                    Padding(
+                      padding: const EdgeInsets.only(top: AppSpacings.sm),
+                      child: Text(
+                        tr('addAppHint'),
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          color: Theme.of(context).colorScheme.onSurfaceVariant,
+                        ),
+                      ),
+                    ),
                   if (pickedSource != null) ...[
                     const SizedBox(height: 13),
                     _buildSourceOverrideField(context),

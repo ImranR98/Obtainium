@@ -5,6 +5,7 @@
     "actionBanner": "Actiebalk",
     "add": "Toevoegen",
     "addApp": "App toevoegen",
+    "addAppHint": "Paste an app source URL, or search selected sources by name.",
     "addAnyway": "Add anyway",
     "addCategory": "Categorie toevoegen",
     "addInfoBelow": "Deze informatie hieronder toevoegen.",

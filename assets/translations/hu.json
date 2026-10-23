@@ -5,6 +5,7 @@
     "actionBanner": "Műveletsáv",
     "add": "Hozzáadás",
     "addApp": "Hozzáadás",
+    "addAppHint": "Paste an app source URL, or search selected sources by name.",
     "addAnyway": "Hozzáadás",
     "addCategory": "Kategória hozzáadása",
     "addInfoBelow": "Adja hozzá ezt az adatot alább.",

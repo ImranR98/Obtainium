@@ -5,6 +5,7 @@
     "actionBanner": "Eylem afişi",
     "add": "Ekle",
     "addApp": "Uygulama ekle",
+    "addAppHint": "Paste an app source URL, or search selected sources by name.",
     "addAnyway": "Add anyway",
     "addCategory": "Kategori ekle",
     "addInfoBelow": "Bu bilgiyi aşağıya ekleyin.",

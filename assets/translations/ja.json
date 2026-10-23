@@ -5,6 +5,7 @@
     "actionBanner": "アクションバナー",
     "add": "追加",
     "addApp": "アプリの追加",
+    "addAppHint": "Paste an app source URL, or search selected sources by name.",
     "addAnyway": "そのまま追加",
     "addCategory": "カテゴリを追加",
     "addInfoBelow": "以下にこの情報を追加してください。",

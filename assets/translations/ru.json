@@ -5,6 +5,7 @@
     "actionBanner": "Панель действий",
     "add": "Добавить",
     "addApp": "Добавить приложение",
+    "addAppHint": "Paste an app source URL, or search selected sources by name.",
     "addAnyway": "Добавить всё равно",
     "addCategory": "Добавить категорию",
     "addInfoBelow": "Добавьте эту информацию ниже",

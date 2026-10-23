@@ -5,6 +5,7 @@
     "actionBanner": "Action banner",
     "add": "Afegeix",
     "addApp": "Afegeix l'aplicació",
+    "addAppHint": "Paste an app source URL, or search selected sources by name.",
     "addAnyway": "Add anyway",
     "addCategory": "Afegeix una categoria",
     "addInfoBelow": "Afegeix aquesta informació a sota.",
