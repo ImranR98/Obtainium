@@ -49,6 +49,19 @@ bool isIconCacheUsable({
   return cacheModified.millisecondsSinceEpoch >= packageLastUpdateTime;
 }
 
+Future<Uint8List?> loadAppIconSafely(
+  Future<Uint8List?> Function()? load, {
+  Uint8List? fallback,
+}) async {
+  if (load == null) return fallback;
+  try {
+    return await load();
+  } catch (e) {
+    AppLogger.warn('Failed to load app icon: $e', error: e);
+    return fallback;
+  }
+}
+
 /// Uses [bulk] when it contains [key], otherwise confirms with [lookup].
 ///
 /// The bulk package list can be incomplete (for example when the platform
@@ -396,7 +409,9 @@ extension AppsProviderLifecycle on AppsProvider {
     if (app?.icon == null || !alreadyCached) {
       final icon = alreadyCached
           ? (await cachedIcon.readAsBytes())
-          : (await app?.installedInfo?.applicationInfo?.getAppIcon());
+          : (await loadAppIconSafely(
+              app?.installedInfo?.applicationInfo?.getAppIcon,
+            ));
       if (icon != null && !alreadyCached) {
         unawaited(cachedIcon.writeAsBytes(icon));
       }
@@ -438,7 +453,10 @@ extension AppsProviderLifecycle on AppsProvider {
             : await getInstalledInfo(app.id);
         final Uint8List? icon = canReuse
             ? this.apps[app.id]!.icon
-            : await info?.applicationInfo?.getAppIcon();
+            : await loadAppIconSafely(
+                info?.applicationInfo?.getAppIcon,
+                fallback: this.apps[app.id]?.icon,
+              );
         if (!canReuse) {
           app = app.copyWith(
             name: await (info?.applicationInfo?.getAppLabel()) ?? app.name,
