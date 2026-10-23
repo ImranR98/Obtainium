@@ -476,11 +476,19 @@ class _CategorySelectorState extends State<CategorySelector> {
     }
 
     if (names.isEmpty && !widget.allowCreate) {
-      return Text(
-        tr('noCategories'),
-        style: Theme.of(
-          context,
-        ).textTheme.bodyMedium?.copyWith(color: cs.onSurfaceVariant),
+      return Row(
+        children: [
+          Icon(Icons.label_outline, size: 18, color: cs.onSurfaceVariant),
+          const SizedBox(width: AppSpacings.sm),
+          Expanded(
+            child: Text(
+              tr('noCategories'),
+              style: Theme.of(
+                context,
+              ).textTheme.bodyMedium?.copyWith(color: cs.onSurfaceVariant),
+            ),
+          ),
+        ],
       );
     }
 
