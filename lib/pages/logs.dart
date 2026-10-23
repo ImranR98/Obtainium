@@ -136,14 +136,16 @@ class _LogsPageState extends State<LogsPage> {
             style: Theme.of(context).textTheme.labelSmall?.copyWith(
               color: color.withValues(alpha: 0.8),
               fontWeight: FontWeight.bold,
+              fontFamily: 'monospace',
             ),
           ),
           const SizedBox(height: 2),
           Text(
             log.message,
-            style: Theme.of(
-              context,
-            ).textTheme.bodySmall?.copyWith(color: color),
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+              color: color,
+              fontFamily: 'monospace',
+            ),
           ),
         ],
       ),
