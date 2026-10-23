@@ -208,8 +208,8 @@ ThemeData buildObtainiumTheme(
 /// Corner radius for the outer corners of a connected tile run.
 const double connectedTileBigRadius = 24;
 
-/// Corner radius for the inner (joined) corners of a connected tile run.
-const double connectedTileSmallRadius = 6;
+/// Corner radius for the inner corners of a grouped tile run.
+const double connectedTileSmallRadius = 20;
 
 BorderRadius positionalTileRadius({
   required bool isFirst,
@@ -243,7 +243,7 @@ abstract final class AppSpacings {
 
   static const double elementGap = sm;
   static const double sectionGap = xl;
-  static const double connectedGap = 3;
+  static const double connectedGap = 8;
   static const double listGap = xs;
 }
 
