@@ -91,6 +91,7 @@ PHONE_SUITES=(
   redirected_zip_test.dart
   html_links_test.dart
   app_list_density_test.dart
+  app_list_semantics_test.dart
   codeberg_auth_test.dart
   screens_navigation_test.dart
   track_only_actions_test.dart

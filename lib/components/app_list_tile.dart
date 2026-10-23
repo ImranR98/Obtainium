@@ -459,7 +459,6 @@ class AppListTile extends StatelessWidget {
       valueListenable: appInMemory.downloadProgressNotifier,
       builder: (context, downloadProgress, child) {
         final tileChild = Semantics(
-          label: appInMemory.name,
           customSemanticsActions: <CustomSemanticsAction, VoidCallback>{
             if (canInstall || canUpdate)
               CustomSemanticsAction(
@@ -1119,10 +1118,21 @@ class _VersionLabel extends StatelessWidget {
           ),
         );
       }
-      content = InkWell(
-        borderRadius: BorderRadius.circular(AppRadii.small),
+      final semanticLabel = [
+        installedVersionText(app),
+        changesLabel(app, true),
+      ].where((part) => part.isNotEmpty).join(' ');
+      content = Semantics(
+        container: true,
+        button: true,
+        label: semanticLabel,
+        excludeSemantics: true,
         onTap: showChangesFn,
-        child: content,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(AppRadii.small),
+          onTap: showChangesFn,
+          child: content,
+        ),
       );
     }
 
