@@ -29,6 +29,28 @@ import 'package:obtainium/utils/nav_helper.dart';
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher_string.dart';
 
+const _settingsSectionPadding = EdgeInsets.only(
+  top: AppSpacings.xl,
+  bottom: AppSpacings.sm,
+);
+
+Widget _sliderHeader(BuildContext context, String label, String value) {
+  final textTheme = Theme.of(context).textTheme;
+  return Row(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      Expanded(child: Text(label, style: textTheme.bodyLarge)),
+      const SizedBox(width: AppSpacings.md),
+      Text(
+        value,
+        style: textTheme.bodyMedium?.copyWith(
+          color: Theme.of(context).colorScheme.onSurfaceVariant,
+        ),
+      ),
+    ],
+  );
+}
+
 class SettingsPage extends StatefulWidget {
   const SettingsPage({super.key});
 
@@ -563,6 +585,7 @@ class _SettingsPageState extends State<SettingsPage> {
   ) {
     final settingsProvider = context.read<SettingsProvider>();
     final children = <Widget>[
+      SectionHeader(tr('backgroundChecks'), padding: _settingsSectionPadding),
       const CardTile(
         padding: AppPaddings.sliderTile,
         child: _UpdateIntervalSliderTile(),
@@ -650,6 +673,7 @@ class _SettingsPageState extends State<SettingsPage> {
           ),
         ],
       ],
+      SectionHeader(tr('updateChecks'), padding: _settingsSectionPadding),
       _settingsRow(
         context,
         icon: Icons.verified_user_outlined,
@@ -686,6 +710,10 @@ class _SettingsPageState extends State<SettingsPage> {
         value: settingsProvider.onlyCheckInstalledOrTrackOnlyApps,
         onChanged: (value) =>
             settingsProvider.onlyCheckInstalledOrTrackOnlyApps = value,
+      ),
+      SectionHeader(
+        tr('filteringAndVersions'),
+        padding: _settingsSectionPadding,
       ),
       ConnectedCard(
         color: Theme.of(context).colorScheme.surfaceContainerHighest,
@@ -764,6 +792,7 @@ class _SettingsPageState extends State<SettingsPage> {
         padding: AppPaddings.sliderTile,
         child: _MinimumUpdateAgeSliderTile(),
       ),
+      SectionHeader(tr('installation'), padding: _settingsSectionPadding),
       ToggleTile(
         label: tr('parallelDownloads'),
         value: settingsProvider.parallelDownloads,
@@ -927,13 +956,14 @@ class _SettingsPageState extends State<SettingsPage> {
       ),
     );
     final children = <Widget>[
+      SectionHeader(tr('theme'), padding: _settingsSectionPadding),
       // Theme segmented button wrapped in CardTile so shapeCardTiles finds it.
       CardTile(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Flexible(child: Text(tr('theme'))),
+            Flexible(child: Text(tr('themeMode'))),
             const SizedBox(width: 12),
             SegmentedButton<ThemeSettings>(
               showSelectedIcon: false,
@@ -1009,8 +1039,10 @@ class _SettingsPageState extends State<SettingsPage> {
             ),
           ),
         ),
+      SectionHeader(tr('appListSection'), padding: _settingsSectionPadding),
       _fieldTile(context, sortDropdown),
       orderControl,
+      SectionHeader(tr('languageAndText'), padding: _settingsSectionPadding),
       _fieldTile(context, const _LocaleDropdown()),
       if (sdk >= 29)
         ToggleTile(
@@ -1034,6 +1066,7 @@ class _SettingsPageState extends State<SettingsPage> {
             }
           },
         ),
+      SectionHeader(tr('appBehavior'), padding: _settingsSectionPadding),
       ToggleTile(
         label: tr('showWebInAppView'),
         value: settingsProvider.showAppWebpage,
@@ -1188,7 +1221,6 @@ class _MinimumUpdateAgeSliderTile extends StatefulWidget {
 class _MinimumUpdateAgeSliderTileState
     extends State<_MinimumUpdateAgeSliderTile> {
   double sliderVal = 0;
-  bool showLabel = true;
 
   int get _days =>
       minimumUpdateAgeOptions[sliderVal.round().clamp(
@@ -1233,15 +1265,7 @@ class _MinimumUpdateAgeSliderTileState
           sliderVal = value;
         });
       },
-      onChangeStart: (double value) {
-        setState(() {
-          showLabel = false;
-        });
-      },
       onChangeEnd: (double value) {
-        setState(() {
-          showLabel = true;
-        });
         _commit();
       },
     );
@@ -1264,7 +1288,7 @@ class _MinimumUpdateAgeSliderTileState
                         _commit();
                       },
               ),
-              Expanded(child: Text(_label, textAlign: TextAlign.center)),
+              const Spacer(),
               IconButton(
                 icon: const Icon(Icons.add),
                 onPressed:
@@ -1286,11 +1310,9 @@ class _MinimumUpdateAgeSliderTileState
         : rawSlider;
 
     return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
+      crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        showLabel
-            ? Text("${tr('minimumUpdateAgeDays')}: $_label")
-            : const SizedBox(height: 20),
+        _sliderHeader(context, tr('minimumUpdateAgeDays'), _label),
         ageSlider,
       ],
     );
@@ -1327,7 +1349,6 @@ class _UpdateIntervalSliderTileState extends State<_UpdateIntervalSliderTile> {
   int updateInterval = 0;
   late SplineInterpolation updateIntervalInterpolator;
   String updateIntervalLabel = tr('neverManualOnly');
-  bool showIntervalLabel = true;
   late double sliderVal;
 
   @override
@@ -1416,15 +1437,7 @@ class _UpdateIntervalSliderTileState extends State<_UpdateIntervalSliderTile> {
           processIntervalSliderValue(value);
         });
       },
-      onChangeStart: (double value) {
-        setState(() {
-          showIntervalLabel = false;
-        });
-      },
       onChangeEnd: (double value) {
-        setState(() {
-          showIntervalLabel = true;
-        });
         _commit(value);
       },
     );
@@ -1448,9 +1461,7 @@ class _UpdateIntervalSliderTileState extends State<_UpdateIntervalSliderTile> {
                         _commit(newVal);
                       },
               ),
-              Expanded(
-                child: Text(updateIntervalLabel, textAlign: TextAlign.center),
-              ),
+              const Spacer(),
               IconButton(
                 icon: const Icon(Icons.add),
                 onPressed: sliderVal >= updateIntervalNodes.length.toDouble()
@@ -1472,11 +1483,13 @@ class _UpdateIntervalSliderTileState extends State<_UpdateIntervalSliderTile> {
         : rawSlider;
 
     return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
+      crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        showIntervalLabel
-            ? Text("${tr('bgUpdateCheckInterval')}: $updateIntervalLabel")
-            : const SizedBox(height: 20),
+        _sliderHeader(
+          context,
+          tr('bgUpdateCheckInterval'),
+          updateIntervalLabel,
+        ),
         intervalSlider,
       ],
     );
