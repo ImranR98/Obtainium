@@ -190,6 +190,13 @@ Override the contract methods you need:
 | `changeLogPageFromStandardUrl(url)` | URL of the human-readable changelog/releases page. Set `changeLogPageIsStandardUrl = true` in the constructor instead of overriding this if the changelog page is the same as the standard URL. |
 | `postProcessApp(app)` | Transform the `App` object after all other processing (e.g. F-Droid repos update the URL with an `appId` query param). |
 
+`searchProfiles` defaults to one option using the source's existing name and
+selection preference. A source can expose separate profiles with independent
+IDs, names, query settings, and app settings. Only the explicitly declared app
+settings follow a selected result; query-only values, including credentials,
+are not copied. Search results retain separate selection IDs and real links so
+the same URL can appear under multiple profiles without losing its settings.
+
 ### Helpers you should reuse (don't reinvent)
 
 - **`standardizeUrlWithRegex(url, subdomainPrefix:, pathPattern:)`** — the common
@@ -221,6 +228,14 @@ remain strings to preserve leading zeros.
 For example, Samsung Assistant (`com.samsung.android.app.sreminder`) can be
 queried with device model `SM-S9480` and CSC `CHC` for the China release.
 Availability still depends on the requested app, device, and Android SDK version.
+
+Search exposes `Samsung Galaxy Store` and `Samsung Galaxy Store (CN)`. The
+international option uses the existing `SM-S948B/DBT/425/01` profile and endpoint
+discovery; it is not a fixed US catalog.
+China uses `SM-S9480/CHC/460/00`. Each search requests only the first `2040`
+result batch (1–20), without fetching details or download authorization for
+every result. Selecting a result carries its device model and CSC into the app
+settings used by subsequent queries and updates.
 
 After a failed stub request, ODS uses the same configured device and network
 parameters. `CHC` with MCC `460` selects the China service; other configurations
@@ -259,6 +274,11 @@ fails before authorization. Full APKs, including universal `32n64` packages, are
 accepted; delta URLs are unused. ODS POST redirects are disabled and headers do
 not affect APK transfers.
 
+The publisher comes from a nonblank `sellerName` in validated download metadata
+or identity-bound main details. Missing later details retain the confirmed
+publisher and name. The existing version-code option changes the returned
+version while detail matching continues to use the original store version name.
+
 Optional store dates and publisher notes use same-endpoint main (`2290`),
 overview (`2291`), and main (`2290`) requests. Both main responses must match the
 selected package, product, version, version code, and full size; overview must
@@ -270,14 +290,23 @@ remain unique scalar values. The validated overview `lastUpdateDate` populates
 changed, malformed, or unavailable details leave these fields unset and preserve
 the authorized APK.
 
-The source remains per-app: it does not add cross-app update batches or new
-settings. Anonymous ODS requests reuse one generated identity throughout the
+The source remains per-app and does not add cross-app update batches.
+Anonymous ODS requests reuse one generated identity throughout the
 operation and do not require account credentials. Stub and ODS requests have
 40-second deadlines. A stub timeout can use the same-profile ODS fallback;
 ODS timeouts do not trigger restore or mirror authorization. Rate limits retain
 their retry timing and stop the fallback chain. During optional discovery or
 store details, a rate limit preserves the already authorized APK and stops
 further detail requests.
+
+### Source-specific notes: Tencent release dates
+
+The existing simple-page download remains authoritative. An optional detail-page
+request reads `__NEXT_DATA__` only from the main `GameDetail` card and accepts a
+unique package record matching the selected version, MD5, and size. Its Unix
+seconds populate the UTC `releaseDate`. A different 64-bit APK URL or missing
+legacy fingerprint skips this request. A 15-second deadline, oversized response,
+invalid metadata, or transport failure leaves the original APK result intact.
 
 ### Source-specific notes: F-Droid page metadata
 
@@ -575,6 +604,16 @@ Four concrete implementations:
 | `ShizukuInstaller` | `shizuku_apk_installer` plugin | Self-update of Obtainium itself, or when Shizuku/Dhizuku/Sui is available |
 | `ExternalInstaller` | Native `MethodChannel` bridge (`external_install_bridge.dart` + `MainActivity.kt`) | Hands off to a third-party installer app chosen by the user; lists eligible targets via `listInstallTargets()` and converts file paths to `content://` URIs via `FileProvider` |
 | `RootInstaller` | `su` + `pm install` CLI | Elevated installs for the current foreground user, not just user 0 (needed under multi-user) |
+
+Samsung Galaxy Store apps expose an opt-in installation-source switch next to
+the existing per-app Google Play switch. These switches are mutually exclusive.
+`installerPackageNameForApp` resolves the source once for single and split APK
+installs: the Samsung opt-in uses `com.sec.android.app.samsungapps`, overriding
+the global Google Play default for that app; otherwise the existing global or
+per-app Google Play rule applies. Other sources ignore the Samsung flag.
+Only Shizuku/Sui and root apply this attribution; Dhizuku rejects the Samsung
+option. The selected store must be installed for the target user. This changes
+installation-source metadata, not APK signatures or privileged permissions.
 
 The selection logic (in `apps_provider_install.dart`) checks: self-update → `ShizukuInstaller`;
 user has chosen an external installer → `ExternalInstaller`; otherwise → `StockInstaller`.

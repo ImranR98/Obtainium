@@ -985,7 +985,12 @@ class SettingsProvider with ChangeNotifier {
 
   List<String> get searchDeselected {
     return prefs?.getStringList('searchDeselected') ??
-        SourceProvider().sources.map((s) => s.name).toList();
+        SourceProvider().sources
+            .where((source) => source.canSearch)
+            .expand(
+              (source) => source.searchProfiles.map((profile) => profile.id),
+            )
+            .toList();
   }
 
   set searchDeselected(List<String> list) {

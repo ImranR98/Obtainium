@@ -80,11 +80,16 @@ class ShizukuInstaller extends Installer {
     required String appId,
     Map<String, dynamic> installOptions = const {},
   }) async {
-    await _applyBackend();
     final fakeInstallSource =
-        installOptions['shizukuPretendToBeGooglePlay'] == true
-        ? 'com.android.vending'
-        : '';
+        installOptions['installerPackageName'] as String? ?? '';
+    if (fakeInstallSource == 'com.sec.android.app.samsungapps') {
+      if (settingsProvider.shizukuInstallerMode == 'dhizuku') {
+        throw ObtainiumError(tr('galaxyStoreInstallSourceRequiresShizuku'));
+      }
+      await ShizukuApkInstaller().setInstallerMode(InstallerMode.shizuku);
+    } else {
+      await _applyBackend();
+    }
     final uris = apkFilePaths.map((p) => File(p).uri.toString()).toList();
     int? code;
     if (uris.length > 1) {
