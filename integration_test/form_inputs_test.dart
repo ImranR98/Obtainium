@@ -49,6 +49,22 @@ void main() {
     await pumpFor(tester, const Duration(milliseconds: 300));
     expect(settings.globalApkFilterRegEx, 'e2e-input-sample');
 
+    final versionField = find.widgetWithText(
+      TextFormField,
+      'Global version trimming regex',
+    );
+    await tester.enterText(versionField, r'\d+(\.\d+)+');
+    await pumpFor(tester, const Duration(milliseconds: 300));
+    expect(settings.globalVersionExtractionRegEx, r'\d+(\.\d+)+');
+
+    final groupField = find.widgetWithText(
+      TextFormField,
+      'Match group to use for "Global version trimming regex"',
+    );
+    await tester.enterText(groupField, '0');
+    await pumpFor(tester, const Duration(milliseconds: 300));
+    expect(settings.globalMatchGroupToUse, '0');
+
     restoreErrorWidgetBuilder();
   });
 }

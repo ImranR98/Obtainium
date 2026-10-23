@@ -8,6 +8,8 @@ import 'package:shizuku_apk_installer/shizuku_apk_installer_platform_interface.d
 class _FakeShizukuPlatform extends ShizukuApkInstallerPlatform {
   String? mode;
   String? permissionResult = 'granted_adb';
+  int checkCalls = 0;
+  int servicesNotFoundFailures = 0;
   final installs = <({List<String> uris, String source})>[];
 
   @override
@@ -16,13 +18,21 @@ class _FakeShizukuPlatform extends ShizukuApkInstallerPlatform {
   }
 
   @override
-  Future<String?> checkPermission() async => permissionResult;
+  Future<String?> checkPermission() async {
+    checkCalls++;
+    if (servicesNotFoundFailures > 0) {
+      servicesNotFoundFailures--;
+      return 'services_not_found';
+    }
+    return permissionResult;
+  }
 
   @override
   Future<int?> installAPKs(
     List<String> apkFilesURIs,
-    String fakeInstallSource,
-  ) async {
+    String fakeInstallSource, {
+    String? packageName,
+  }) async {
     installs.add((uris: apkFilesURIs, source: fakeInstallSource));
     return 0;
   }
@@ -58,12 +68,21 @@ void main() {
     expect(fake.mode, 'shizuku');
   });
 
-  test('ensurePermission surfaces backend errors', () async {
+  test('ensurePermission retries a transient missing binder', () async {
+    fake.servicesNotFoundFailures = 2;
+
+    await ShizukuInstaller(settings).ensurePermission();
+
+    expect(fake.checkCalls, 3);
+  });
+
+  test('ensurePermission surfaces persistent backend errors', () async {
     fake.permissionResult = 'services_not_found';
     await expectLater(
       ShizukuInstaller(settings).ensurePermission(),
       throwsA(isA<ObtainiumError>()),
     );
+    expect(fake.checkCalls, 4);
   });
 
   test('each single or split install forwards its selected source', () async {

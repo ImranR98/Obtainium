@@ -58,12 +58,16 @@ void main() {
     await pumpFor(tester, const Duration(milliseconds: 500));
     expect(state.additionalSettings['shizukuPretendToBeGooglePlay'], isTrue);
     expect(state.additionalSettings['shizukuPretendToBeGalaxyStore'], isFalse);
-    final galaxySwitch = find.byWidgetPredicate(
-      (widget) =>
-          widget is ToggleTile &&
-          widget.label.contains('Set Samsung Galaxy Store'),
+    final galaxySwitch = find.descendant(
+      of: find.byWidgetPredicate(
+        (widget) =>
+            widget is ToggleTile &&
+            widget.label.contains('Set Samsung Galaxy Store'),
+      ),
+      matching: find.byType(Switch),
     );
     await tester.ensureVisible(galaxySwitch);
+    await tester.pumpAndSettle();
     await tester.tap(galaxySwitch);
     await pumpFor(tester, const Duration(milliseconds: 500));
     expect(state.additionalSettings['shizukuPretendToBeGalaxyStore'], isTrue);

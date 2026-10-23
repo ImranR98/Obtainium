@@ -152,6 +152,10 @@ class Codeberg extends AppSource {
   }
 
   @override
+  String standardizeUrl(String url) =>
+      sourceSpecificStandardizeURL(preStandardizeUrl(url));
+
+  @override
   String? changeLogPageFromStandardUrl(String standardUrl) =>
       '$standardUrl/releases';
 

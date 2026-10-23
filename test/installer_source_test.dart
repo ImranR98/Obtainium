@@ -71,4 +71,24 @@ void main() {
       }
     },
   );
+
+  test('unresolvable URLs and overrides fall back to the Google Play rule', () {
+    for (final global in [false, true]) {
+      final expected = global ? 'com.android.vending' : '';
+      expect(
+        installerPackageNameForApp(
+          _app('not a url', {galaxyFlag: true}),
+          googlePlayDefault: global,
+        ),
+        expected,
+      );
+      expect(
+        installerPackageNameForApp(
+          _app(github, {galaxyFlag: true}, overrideSource: 'MissingSource'),
+          googlePlayDefault: global,
+        ),
+        expected,
+      );
+    }
+  });
 }

@@ -46,6 +46,7 @@ import 'package:obtainium/app_sources/vivoappstore.dart';
 import 'package:obtainium/components/generated_form_model.dart';
 import 'package:obtainium/custom_errors.dart';
 import 'package:obtainium/models/app.dart';
+import 'package:obtainium/models/typed_settings.dart';
 import 'package:obtainium/providers/settings_provider.dart';
 import 'package:obtainium/services/apk_filter_service.dart';
 import 'package:obtainium/services/version_service.dart';
@@ -282,11 +283,16 @@ class SourceProvider {
       }
     }
 
+    final settingsProvider = SettingsProvider();
+    await settingsProvider.initializeSettings();
     if (!source.suppressStandardVersionExtraction) {
-      final String? extractedVersion = extractVersion(
-        additionalSettings['versionExtractionRegEx'] as String?,
-        additionalSettings['matchGroupToUse'] as String?,
+      final String? extractedVersion = extractVersionWithGlobalDefault(
+        additionalSettings,
+        settingsProvider,
         apk.version,
+        allowGlobalDefault: !source.excludeCommonSettingKeys.contains(
+          'versionExtractionRegEx',
+        ),
       );
       if (extractedVersion != null) {
         apk = apk.copyWith(version: extractedVersion);
@@ -299,12 +305,10 @@ class SourceProvider {
         version: apk.releaseDate!.microsecondsSinceEpoch.toString(),
       );
     }
-    final settingsProvider = SettingsProvider();
-    await settingsProvider.initializeSettings();
     apk = apk.copyWith(
       apkUrls: filterApks(
         apk.apkUrls,
-        additionalSettings['apkFilterRegEx'] ??
+        TypedSettings(additionalSettings).getStringOrNull('apkFilterRegEx') ??
             settingsProvider.globalApkFilterRegEx,
         additionalSettings['invertAPKFilter'],
       ),

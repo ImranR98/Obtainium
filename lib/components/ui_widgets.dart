@@ -396,6 +396,52 @@ class AppIcon extends StatelessWidget {
   }
 }
 
+/// A tappable app icon with a single, explicit accessibility node.
+///
+/// Wrapping the visual [InkWell] in a container semantics node with
+/// `excludeSemantics` prevents TalkBack from stopping on a second, unlabeled
+/// node at the same bounds. Callers pass an action-oriented label such as
+/// "Open Obtainium" rather than only the app name.
+class AppIconAction extends StatelessWidget {
+  final Widget child;
+  final String semanticLabel;
+  final bool enabled;
+  final VoidCallback? onTap;
+  final VoidCallback? onLongPress;
+  final double borderRadius;
+
+  const AppIconAction({
+    super.key,
+    required this.child,
+    required this.semanticLabel,
+    this.enabled = true,
+    this.onTap,
+    this.onLongPress,
+    this.borderRadius = 12,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Semantics(
+      container: true,
+      button: enabled,
+      label: semanticLabel,
+      excludeSemantics: true,
+      onTap: enabled ? onTap : null,
+      onLongPress: onLongPress,
+      child: TvFocusRing(
+        borderRadius: borderRadius,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(borderRadius),
+          onTap: enabled ? onTap : null,
+          onLongPress: onLongPress,
+          child: child,
+        ),
+      ),
+    );
+  }
+}
+
 class EmptyState extends StatelessWidget {
   final IconData icon;
   final String? message;
@@ -871,11 +917,19 @@ class ToggleTile extends StatelessWidget {
                 onPressed: () =>
                     showHelpDialog(context, title: label, content: helpWidgets),
               ),
-            Switch(
-              value: value,
-              onChanged: onChanged == null
-                  ? null
-                  : hapticSwitchOnChanged(context, onChanged!),
+            Semantics(
+              container: true,
+              label: label,
+              toggled: value,
+              enabled: onChanged != null,
+              excludeSemantics: true,
+              onTap: onChanged == null ? null : () => onChanged!(!value),
+              child: Switch(
+                value: value,
+                onChanged: onChanged == null
+                    ? null
+                    : hapticSwitchOnChanged(context, onChanged!),
+              ),
             ),
           ],
         ),

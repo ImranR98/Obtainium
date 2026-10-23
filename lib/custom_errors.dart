@@ -146,12 +146,6 @@ class MinUpdateAgeError extends ObtainiumError {
       );
 }
 
-/// RuStore lists some apps only as aggregated cards pulled from an external
-/// source and does not host an APK for them (see #3298).
-class RuStoreAggregatedAppError extends ObtainiumError {
-  RuStoreAggregatedAppError() : super.withCode('RUSTORE_AGGREGATED_APP');
-}
-
 class NoVersionError extends ObtainiumError {
   NoVersionError() : super.withCode('NO_VERSION');
 }
@@ -331,7 +325,6 @@ String localizeErrorCode(String code, Map<String, dynamic>? data) {
       'releaseTooYoungForMinAge',
       args: ['${data?['minAgeDays'] ?? ''}'],
     ),
-    'RUSTORE_AGGREGATED_APP' => tr('rustoreAggregatedAppNoApk'),
     'NO_VERSION' => tr('noVersionFound'),
     'UNSUPPORTED_URL' => tr('urlMatchesNoSource'),
     'DOWNGRADE' =>

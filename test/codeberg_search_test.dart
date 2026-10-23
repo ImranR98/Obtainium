@@ -43,6 +43,43 @@ void main() {
     });
   });
 
+  group('Codeberg.standardizeUrl', () {
+    test('normalizes an overridden Gitea host to the repo root', () {
+      final source = Codeberg()
+        ..hosts = ['gitea.com']
+        ..hostChanged = true;
+      expect(
+        source.standardizeUrl('https://gitea.com/gitea/runner/releases'),
+        'https://gitea.com/gitea/runner',
+      );
+      expect(
+        source.standardizeUrl('https://gitea.com/gitea/runner/'),
+        'https://gitea.com/gitea/runner',
+      );
+    });
+
+    test('normalizes an overridden Forgejo host', () {
+      final source = Codeberg()
+        ..hosts = ['git.ptr.moe']
+        ..hostChanged = true;
+      expect(
+        source.standardizeUrl(
+          'https://git.ptr.moe/baalajimaestro/NewPipe/releases/',
+        ),
+        'https://git.ptr.moe/baalajimaestro/NewPipe',
+      );
+    });
+
+    test('keeps the default codeberg.org behavior', () {
+      expect(
+        Codeberg().standardizeUrl(
+          'https://codeberg.org/forgejo/forgejo/releases',
+        ),
+        'https://codeberg.org/forgejo/forgejo',
+      );
+    });
+  });
+
   test('Codeberg exposes the release-date pseudo-version toggle', () {
     final items = Codeberg().combinedAppSpecificSettingFormItems
         .expand((row) => row)
