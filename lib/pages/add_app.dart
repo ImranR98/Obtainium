@@ -916,73 +916,63 @@ class AddAppPageState extends State<AddAppPage> {
     SettingsProvider settingsProvider,
     bool doingSomething,
   ) {
-    return Row(
-      children: [
-        Expanded(
-          child: GeneratedForm(
-            key: Key('url-$urlInputKey'),
-            tileMode: true,
-            autofocusFirstTextField: settingsProvider.isTV,
-            items: [
-              [
-                GeneratedFormTextField(
-                  'appSourceURL',
-                  label: tr('appSourceURL'),
-                  value: userInput,
-                  required: false,
-                  additionalValidators: [
-                    (value) {
-                      if (value == null || value.trim().isEmpty) {
-                        return null;
-                      }
-                      try {
-                        sourceProvider
-                            .getSource(
-                              value,
-                              overrideSource: pickedSourceOverride,
-                            )
-                            .standardizeUrl(value);
-                      } catch (e) {
-                        return e is String
-                            ? e
-                            : e is ObtainiumError
-                            ? e.toString()
-                            : tr('error');
-                      }
-                      return null;
-                    },
-                  ],
-                ),
-              ],
+    final source = pickedSource;
+    final canAdd =
+        !doingSomething &&
+        source != null &&
+        _urlValid &&
+        userInput.trim().isNotEmpty &&
+        (source.combinedAppSpecificSettingFormItems.isEmpty ||
+            additionalSettingsValid);
+    return GeneratedForm(
+      key: Key('url-$urlInputKey'),
+      tileMode: true,
+      autofocusFirstTextField: settingsProvider.isTV,
+      items: [
+        [
+          GeneratedFormTextField(
+            'appSourceURL',
+            label: tr('appSourceURL'),
+            value: userInput,
+            required: false,
+            suffixIcon: gettingAppInfo
+                ? _smallSpinner()
+                : IconButton(
+                    icon: const Icon(Icons.add_rounded),
+                    visualDensity: VisualDensity.compact,
+                    tooltip: tr('add'),
+                    onPressed: canAdd
+                        ? () {
+                            settingsProvider.selectionClick();
+                            addApp(context);
+                          }
+                        : null,
+                  ),
+            additionalValidators: [
+              (value) {
+                if (value == null || value.trim().isEmpty) {
+                  return null;
+                }
+                try {
+                  sourceProvider
+                      .getSource(value, overrideSource: pickedSourceOverride)
+                      .standardizeUrl(value);
+                } catch (e) {
+                  return e is String
+                      ? e
+                      : e is ObtainiumError
+                      ? e.toString()
+                      : tr('error');
+                }
+                return null;
+              },
             ],
-            onValueChanges: (values, valid, isBuilding) {
-              changeUserInput(values['appSourceURL']!, valid, isBuilding);
-            },
           ),
-        ),
-        const SizedBox(width: AppSpacings.elementGap),
-        gettingAppInfo
-            ? _smallSpinner()
-            : IconButton(
-                icon: const Icon(Icons.add_rounded),
-                visualDensity: VisualDensity.compact,
-                tooltip: tr('add'),
-                onPressed:
-                    doingSomething ||
-                        pickedSource == null ||
-                        !_urlValid ||
-                        userInput.trim().isEmpty ||
-                        (pickedSource!
-                                .combinedAppSpecificSettingFormItems
-                                .isNotEmpty &&
-                            !additionalSettingsValid)
-                    ? null
-                    : () {
-                        settingsProvider.selectionClick();
-                        addApp(context);
-                      },
-              ),
+        ],
       ],
+      onValueChanges: (values, valid, isBuilding) {
+        changeUserInput(values['appSourceURL']!, valid, isBuilding);
+      },
     );
   }
 
@@ -1019,39 +1009,32 @@ class AddAppPageState extends State<AddAppPage> {
   }
 
   Widget _buildSearchRow(bool doingSomething) {
-    return Row(
-      children: [
-        Expanded(
-          child: GeneratedForm(
-            tileMode: true,
-            items: [
-              [
-                GeneratedFormTextField(
-                  'searchSomeSources',
-                  label: tr('searchSomeSourcesLabel'),
-                  required: false,
-                ),
-              ],
-            ],
-            onValueChanges: (values, valid, isBuilding) {
-              if (values.isNotEmpty && valid && !isBuilding) {
-                setState(() {
-                  searchQuery = values['searchSomeSources']!.trim();
-                });
-              }
-            },
+    return GeneratedForm(
+      tileMode: true,
+      items: [
+        [
+          GeneratedFormTextField(
+            'searchSomeSources',
+            label: tr('searchSomeSourcesLabel'),
+            required: false,
+            suffixIcon: searching
+                ? _smallSpinner()
+                : IconButton(
+                    icon: const Icon(Icons.search_rounded),
+                    visualDensity: VisualDensity.compact,
+                    tooltip: tr('search'),
+                    onPressed: doingSomething ? null : () => runSearch(context),
+                  ),
           ),
-        ),
-        const SizedBox(width: AppSpacings.elementGap),
-        searching
-            ? _smallSpinner()
-            : IconButton(
-                icon: const Icon(Icons.search_rounded),
-                visualDensity: VisualDensity.compact,
-                tooltip: tr('search'),
-                onPressed: doingSomething ? null : () => runSearch(context),
-              ),
+        ],
       ],
+      onValueChanges: (values, valid, isBuilding) {
+        if (values.isNotEmpty && valid && !isBuilding) {
+          setState(() {
+            searchQuery = values['searchSomeSources']!.trim();
+          });
+        }
+      },
     );
   }
 
@@ -1094,13 +1077,10 @@ class AddAppPageState extends State<AddAppPage> {
   }
 
   Widget _smallSpinner() {
-    return const Padding(
-      padding: EdgeInsets.all(AppSpacings.md),
-      child: SizedBox(
-        width: 20,
-        height: 20,
-        child: CircularProgressIndicator(strokeWidth: 2),
-      ),
+    return const SizedBox(
+      width: 20,
+      height: 20,
+      child: CircularProgressIndicator(strokeWidth: 2),
     );
   }
 }

@@ -1,3 +1,5 @@
+import 'package:flutter/widgets.dart';
+
 abstract class GeneratedFormItem {
   late String key;
   late String label;
@@ -21,6 +23,7 @@ class GeneratedFormTextField extends GeneratedFormItem {
   final bool password;
   final List<String>? autoCompleteOptions;
   final String? helpUrl;
+  final Widget? suffixIcon;
 
   GeneratedFormTextField(
     super.key, {
@@ -33,6 +36,7 @@ class GeneratedFormTextField extends GeneratedFormItem {
     this.password = false,
     this.autoCompleteOptions,
     this.helpUrl,
+    this.suffixIcon,
   });
 
   @override
@@ -53,6 +57,7 @@ class GeneratedFormTextField extends GeneratedFormItem {
       password: password,
       autoCompleteOptions: autoCompleteOptions,
       helpUrl: helpUrl,
+      suffixIcon: suffixIcon,
     );
   }
 }

@@ -245,7 +245,8 @@ class _GeneratedFormState extends State<GeneratedForm> {
           decoration: _fieldDecoration(
             labelText: tr(formItem.label) + (formItem.required ? ' *' : ''),
             hintText: formItem.hint,
-            suffixIcon: _buildHelpSuffixIcon(formItem.helpUrl),
+            suffixIcon:
+                formItem.suffixIcon ?? _buildHelpSuffixIcon(formItem.helpUrl),
           ),
           minLines: formItem.max <= 1 ? null : formItem.max,
           maxLines: formItem.max <= 1 ? 1 : formItem.max,
