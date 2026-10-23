@@ -42,7 +42,7 @@ are gitignored; only `gradle-wrapper.properties` is tracked.
 The canonical check is `./.flutter/bin/flutter analyze --suggestions`; these files explain the
 numbers when the suggestion output is ambiguous.
 
-## Java compatibility (Flutter 3.47.4 SDK)
+## Java compatibility (Flutter 3.47.8 SDK)
 
 - `errorJavaMinVersionAndroid` / `warnJavaMinVersionAndroid` = **17.0.0** — Flutter errors below
   Java 17.
@@ -57,9 +57,9 @@ numbers when the suggestion output is ambiguous.
 
 ## Deliberate repo deviations (do not "fix" without asking)
 
-As of Flutter 3.47.4 the repo is intentionally ahead of the template:
+As of Flutter 3.47.8 the repo is intentionally ahead of the template:
 
-| Value | Repo | Flutter 3.47.4 template / max known | Why it stays |
+| Value | Repo | Flutter 3.47.8 template / max known | Why it stays |
 | --- | --- | --- | --- |
 | Gradle wrapper | 9.4.1 | 9.3.1 / max known 9.3.1 | Ahead; builds fine |
 | AGP | 9.2.1 | 9.1.0 / max known 9.2 | `build.gradle.kts` comment: versioned compileSdk requires AGP 9.1+ |
