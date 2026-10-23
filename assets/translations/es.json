@@ -226,6 +226,7 @@
     "githubSourceNote": "La limitación de velocidad de GitHub puede evitarse con un 'token de acceso personal'.",
     "githubStarredRepos": "repositorios favoritos en GitHub",
     "globalApkFilterRegEx": "Global APK filter regex",
+    "globalVersionExtractionRegEx": "Global version trimming regex",
     "gitlabPATLabel": "Token de acceso personal a GitLab",
     "googleVerificationWarningP1": "Google ha anunciado que, a partir de 2026/2027, todas las aplicaciones en dispositivos Android \"certificados\" requerirán que el desarrollador envíe detalles de identidad personal directamente a Google.\n\nDado que los desarrolladores de esta aplicación no están de acuerdo con este requisito, Obtainium ya no trabajará en dispositivos Android certificados después de ese tiempo.",
     "googleVerificationWarningP2": "Vaya a https://keepandroidopen.org/ para más información.",
