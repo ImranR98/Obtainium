@@ -307,7 +307,8 @@ Future<String?> checkETagHeader(
         ? sha256.convert(utf8.encode(etag)).toString().substring(0, 12)
         : null;
   } finally {
-    client.close();
+    // The body is never read: force the close, or the connection stays open.
+    client.close(force: true);
   }
 }
 
@@ -397,7 +398,9 @@ Future<File> downloadFile(
   final headersClient = probeResponse.value.key;
   final HttpClientResponse headersResponse = probeResponse.value.value;
   final resHeaders = headersResponse.headers;
-  headersClient.close();
+  // Only the headers are needed: force the close so the unread body doesn't
+  // keep the connection open (#3413).
+  headersClient.close(force: true);
 
   // Use the headers to decide what the file extension is, and
   // whether it supports partial downloads (range request), and
@@ -700,7 +703,8 @@ Future<int?> getDownloadSize(
     AppLogger.error(e, message: 'Unexpected error in getDownloadSize');
     return null;
   } finally {
-    client.close();
+    // The body is never read: force the close, or the connection stays open.
+    client.close(force: true);
   }
 }
 
