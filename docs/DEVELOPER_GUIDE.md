@@ -355,6 +355,14 @@ seconds populate the UTC `releaseDate`. A different 64-bit APK URL or missing
 legacy fingerprint skips this request. A 15-second deadline, oversized response,
 invalid metadata, or transport failure leaves the original APK result intact.
 
+### Source-specific notes: Uptodown metadata
+
+Search results use canonical English `/android/download` URLs before selection,
+including when the add flow uses a source override. Invalid search URLs are
+skipped. Release dates come from the selected download page and are parsed
+strictly in English, independently of the app locale. Missing or invalid dates
+remain unset without discarding an otherwise valid download result.
+
 ### Source-specific notes: F-Droid page metadata
 
 The F-Droid API does not expose per-APK ABIs or release dates. For the official

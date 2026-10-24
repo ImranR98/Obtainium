@@ -123,8 +123,16 @@ class Uptodown extends AppSource {
           if (url == null || url.isEmpty || name == null || name.isEmpty) {
             continue;
           }
+          final String standardUrl;
+          try {
+            standardUrl = sourceSpecificStandardizeURL(url);
+          } on ObtainiumError {
+            continue;
+          } on FormatException {
+            continue;
+          }
           final author = app['author']?.toString().trim();
-          results[url] = [
+          results[standardUrl] = [
             name,
             (author != null && author.isNotEmpty)
                 ? author
@@ -340,7 +348,7 @@ class Uptodown extends AppSource {
 DateTime? _parseUptodownDate(String? dateString) {
   if (dateString == null) return null;
   try {
-    return DateFormat('MMM dd, yyyy').parse(dateString);
+    return DateFormat('MMM dd, yyyy', 'en_US').parseStrict(dateString);
   } catch (_) {
     AppLogger.error(
       'Failed to parse Uptodown release date (short format): $dateString',
@@ -349,7 +357,7 @@ DateTime? _parseUptodownDate(String? dateString) {
     );
   }
   try {
-    return DateFormat('MMMM dd, yyyy').parse(dateString);
+    return DateFormat('MMMM dd, yyyy', 'en_US').parseStrict(dateString);
   } catch (_) {
     AppLogger.error(
       'Failed to parse Uptodown release date: $dateString',
