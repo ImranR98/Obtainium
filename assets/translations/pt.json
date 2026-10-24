@@ -268,6 +268,7 @@
     "importedAppsIdDisclaimer": "Aplicações Importadas podem ser mostradas incorretamente como \"Não Instalado\".\nPara corrigir, reinstale-as usando o Obtainium.\nIsto não deve afetar os dados da aplicação.\n\nAfeta apenas os métodos de importação de URL e de terceiros.",
     "importedX": "Importado {}",
     "importedXOfYApps": "{} de {} aplicações importadas.",
+    "includeDrafts": "Include drafts (needs a token with write access to the repository)",
     "includePrereleases": "Incluir pré-lançamentos",
     "includePrereleasesByDefault": "Include pre-releases by default",
     "includeSettings": "Incluir configurações",

@@ -31,6 +31,14 @@ DateTime? newestAssetDateFromRelease(dynamic release) {
   return dates.first;
 }
 
+bool isReleaseExcluded(
+  dynamic release, {
+  required bool includePrereleases,
+  required bool includeDrafts,
+}) =>
+    (!includePrereleases && release['prerelease'] == true) ||
+    (!includeDrafts && release['draft'] == true);
+
 class GitHub extends AppSource {
   static const int _fallbackCacheSeconds = 3600;
 
@@ -92,6 +100,13 @@ class GitHub extends AppSource {
       GeneratedFormSwitch(
         'includePrereleases',
         label: tr('includePrereleases'),
+        value: false,
+      ),
+    ],
+    [
+      GeneratedFormSwitch(
+        'includeDrafts',
+        label: tr('includeDrafts'),
         value: false,
       ),
     ],
@@ -633,11 +648,11 @@ class GitHub extends AppSource {
         additionalSettings['invertReleaseNotesFilter'] == true;
     for (int i = 0; i < releases.length; i++) {
       if (!fallbackToOlderReleases && i > releaseSkipped) break;
-      if (!includePrereleases && releases[i]['prerelease'] == true) {
-        releaseSkipped++;
-        continue;
-      }
-      if (releases[i]['draft'] == true) {
+      if (isReleaseExcluded(
+        releases[i],
+        includePrereleases: includePrereleases,
+        includeDrafts: additionalSettings['includeDrafts'] == true,
+      )) {
         releaseSkipped++;
         continue;
       }

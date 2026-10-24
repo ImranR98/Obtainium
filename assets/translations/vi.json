@@ -268,6 +268,7 @@
     "importedAppsIdDisclaimer": "Ứng dụng đã nhập có thể hiển thị không chính xác là \"Chưa được cài đặt\".\nĐể khắc phục sự cố này, hãy cài đặt lại chúng thông qua Obtainium.\nĐiều này sẽ không ảnh hưởng đến dữ liệu Ứng dụng.\n\nChỉ ảnh hưởng đến URL và phương thức nhập của bên thứ ba.",
     "importedX": "Đã nhập {}",
     "importedXOfYApps": "{} trong số {} Ứng dụng đã được nhập.",
+    "includeDrafts": "Include drafts (needs a token with write access to the repository)",
     "includePrereleases": "Bao gồm các bản phát hành trước",
     "includePrereleasesByDefault": "Include pre-releases by default",
     "includeSettings": "Bao gồm thiết đặt",
