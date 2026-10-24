@@ -155,6 +155,15 @@ void main() {
       isTrue,
       reason: 'Add app opens with the URL field focused',
     );
+    // The add/search actions are rendered beside the field on TV so the
+    // remote can reach them instead of being trapped inside the text field.
+    await pressKey(tester, LogicalKeyboardKey.arrowRight);
+    await pumpFor(tester, const Duration(milliseconds: 300));
+    expect(
+      focusIsWithin<IconButton>(),
+      isTrue,
+      reason: 'Add app field action reachable with the remote',
+    );
     await pressBack(tester);
     await pumpFor(tester, const Duration(milliseconds: 500));
 

@@ -62,6 +62,24 @@ Future<Uint8List?> loadAppIconSafely(
   }
 }
 
+Future<Uint8List?> readCachedAppIconSafely(File file) async {
+  try {
+    return await file.readAsBytes();
+  } catch (e) {
+    AppLogger.warn('Failed to read cached app icon: $e', error: e);
+    return null;
+  }
+}
+
+Future<void> writeCachedAppIconSafely(File file, Uint8List bytes) async {
+  try {
+    await file.parent.create(recursive: true);
+    await file.writeAsBytes(bytes);
+  } catch (e) {
+    AppLogger.warn('Failed to write cached app icon: $e', error: e);
+  }
+}
+
 /// Uses [bulk] when it contains [key], otherwise confirms with [lookup].
 ///
 /// The bulk package list can be incomplete (for example when the platform
@@ -407,13 +425,17 @@ extension AppsProviderLifecycle on AppsProvider {
       packageLastUpdateTime: app?.installedInfo?.lastUpdateTime,
     );
     if (app?.icon == null || !alreadyCached) {
-      final icon = alreadyCached
-          ? (await cachedIcon.readAsBytes())
-          : (await loadAppIconSafely(
-              app?.installedInfo?.applicationInfo?.getAppIcon,
-            ));
-      if (icon != null && !alreadyCached) {
-        unawaited(cachedIcon.writeAsBytes(icon));
+      Uint8List? icon;
+      var needsCacheWrite = false;
+      if (alreadyCached) {
+        icon = await readCachedAppIconSafely(cachedIcon);
+        needsCacheWrite = icon == null;
+      }
+      icon ??= await loadAppIconSafely(
+        app?.installedInfo?.applicationInfo?.getAppIcon,
+      );
+      if (icon != null && (!alreadyCached || needsCacheWrite)) {
+        unawaited(writeCachedAppIconSafely(cachedIcon, icon));
       }
       if (icon != null) {
         apps.update(
@@ -483,7 +505,10 @@ extension AppsProviderLifecycle on AppsProvider {
         } else if (!canReuse && icon != null) {
           // Persist the freshly fetched icon so future cold starts can reuse
           // it (and so a changed icon replaces the stale cached one).
-          await File('${iconsCacheDir.path}/${app.id}.png').writeAsBytes(icon);
+          await writeCachedAppIconSafely(
+            File('${iconsCacheDir.path}/${app.id}.png'),
+            icon,
+          );
         }
       }),
     );

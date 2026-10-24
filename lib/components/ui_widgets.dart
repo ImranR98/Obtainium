@@ -965,7 +965,6 @@ class NumericOptionSliderTile extends StatefulWidget {
 
 class _NumericOptionSliderTileState extends State<NumericOptionSliderTile> {
   late double sliderVal;
-  bool showLabel = true;
 
   int get _selected =>
       widget.options[sliderVal.round().clamp(0, widget.options.length - 1)];
@@ -1007,15 +1006,7 @@ class _NumericOptionSliderTileState extends State<NumericOptionSliderTile> {
           sliderVal = value;
         });
       },
-      onChangeStart: (double value) {
-        setState(() {
-          showLabel = false;
-        });
-      },
       onChangeEnd: (double value) {
-        setState(() {
-          showLabel = true;
-        });
         _commit();
       },
     );
@@ -1034,7 +1025,7 @@ class _NumericOptionSliderTileState extends State<NumericOptionSliderTile> {
                         _commit();
                       },
               ),
-              Expanded(child: Text(_label, textAlign: TextAlign.center)),
+              const Spacer(),
               IconButton(
                 icon: const Icon(Icons.add),
                 onPressed: sliderVal >= max
@@ -1050,12 +1041,23 @@ class _NumericOptionSliderTileState extends State<NumericOptionSliderTile> {
           )
         : rawSlider;
 
+    final textTheme = Theme.of(context).textTheme;
     return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
+      crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        showLabel
-            ? Text('${widget.label}: $_label')
-            : const SizedBox(height: 20),
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Expanded(child: Text(widget.label, style: textTheme.bodyLarge)),
+            const SizedBox(width: AppSpacings.md),
+            Text(
+              _label,
+              style: textTheme.bodyMedium?.copyWith(
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
+              ),
+            ),
+          ],
+        ),
         slider,
       ],
     );

@@ -120,11 +120,7 @@ class _ImportFromURLListPageState extends State<ImportFromURLListPage> {
             backgroundColor: Theme.of(context).colorScheme.surface,
             body: CustomScrollView(
               slivers: [
-                SliverAppBar(
-                  pinned: true,
-                  automaticallyImplyLeading: false,
-                  title: Text(tr('importFromURLList')),
-                ),
+                CustomAppBar(title: tr('importFromURLList')),
                 SliverToBoxAdapter(
                   child: Padding(
                     padding: EdgeInsets.fromLTRB(
@@ -146,9 +142,12 @@ class _ImportFromURLListPageState extends State<ImportFromURLListPage> {
                               focusNode: _urlListFocus,
                               controller: controller.urlController,
                               maxLines: null,
-                              minLines: 8,
+                              minLines: 5,
+                              keyboardType: TextInputType.multiline,
+                              textInputAction: TextInputAction.newline,
                               decoration: InputDecoration(
                                 labelText: tr('appURLList'),
+                                alignLabelWithHint: true,
                               ),
                               validator: controller.validate,
                               autovalidateMode:
@@ -198,9 +197,12 @@ class _ImportFromURLListPageState extends State<ImportFromURLListPage> {
                           padding: AppPaddings.cardInner,
                           child: Text(
                             tr('importedAppsIdDisclaimer'),
-                            textAlign: TextAlign.center,
                             style: Theme.of(context).textTheme.bodySmall
-                                ?.copyWith(fontStyle: FontStyle.italic),
+                                ?.copyWith(
+                                  color: Theme.of(
+                                    context,
+                                  ).colorScheme.onSurfaceVariant,
+                                ),
                           ),
                         ),
                       ],

@@ -713,6 +713,7 @@ class AddAppPageState extends State<AddAppPage> {
     }
     return GeneratedForm(
       tileMode: true,
+      headerTopPadding: AppSpacings.sm,
       key: Key(
         '${s.name}-${s.hostChanged.toString()}-${s.hostIdenticalDespiteAnyChange.toString()}',
       ),
@@ -742,7 +743,7 @@ class AddAppPageState extends State<AddAppPage> {
   ) => Column(
     crossAxisAlignment: CrossAxisAlignment.stretch,
     children: [
-      const SizedBox(height: AppSpacings.lg),
+      const SizedBox(height: AppSpacings.xl),
       Text(
         tr('additionalOptsFor', args: [pickedSource?.name ?? tr('source')]),
         style: Theme.of(context).textTheme.titleMedium?.copyWith(
@@ -750,7 +751,6 @@ class AddAppPageState extends State<AddAppPage> {
           fontWeight: FontWeight.w600,
         ),
       ),
-      const SizedBox(height: AppSpacings.sm),
       _buildSourceSpecificForm(settingsProvider),
       const SizedBox(height: AppSpacings.md),
       CardTile(
@@ -909,72 +909,77 @@ class AddAppPageState extends State<AddAppPage> {
     SettingsProvider settingsProvider,
     bool doingSomething,
   ) {
+    final source = pickedSource;
+    final canAdd =
+        !doingSomething &&
+        source != null &&
+        _urlValid &&
+        userInput.trim().isNotEmpty &&
+        (source.combinedAppSpecificSettingFormItems.isEmpty ||
+            additionalSettingsValid);
+    final addAction = _fieldAction(
+      loading: gettingAppInfo,
+      icon: Icons.add_rounded,
+      tooltip: tr('add'),
+      onPressed: canAdd
+          ? () {
+              settingsProvider.selectionClick();
+              addApp(context);
+            }
+          : null,
+    );
+    final form = GeneratedForm(
+      key: Key('url-$urlInputKey'),
+      tileMode: true,
+      autofocusFirstTextField: settingsProvider.isTV,
+      items: [
+        [
+          GeneratedFormTextField(
+            'appSourceURL',
+            label: tr('appSourceURL'),
+            value: userInput,
+            required: false,
+            suffixIcon: settingsProvider.isTV
+                ? null
+                : Padding(
+                    padding: const EdgeInsets.only(right: AppSpacings.sm),
+                    child: addAction,
+                  ),
+            additionalValidators: [
+              (value) {
+                if (value == null || value.trim().isEmpty) {
+                  return null;
+                }
+                try {
+                  sourceProvider
+                      .getSource(value, overrideSource: pickedSourceOverride)
+                      .standardizeUrl(value);
+                } catch (e) {
+                  return e is String
+                      ? e
+                      : e is ObtainiumError
+                      ? e.toString()
+                      : tr('error');
+                }
+                return null;
+              },
+            ],
+          ),
+        ],
+      ],
+      onValueChanges: (values, valid, isBuilding) {
+        changeUserInput(values['appSourceURL']!, valid, isBuilding);
+      },
+    );
+    if (!settingsProvider.isTV) return form;
     return Row(
       children: [
-        Expanded(
-          child: GeneratedForm(
-            key: Key('url-$urlInputKey'),
-            tileMode: true,
-            autofocusFirstTextField: settingsProvider.isTV,
-            items: [
-              [
-                GeneratedFormTextField(
-                  'appSourceURL',
-                  label: tr('appSourceURL'),
-                  value: userInput,
-                  required: false,
-                  additionalValidators: [
-                    (value) {
-                      if (value == null || value.trim().isEmpty) {
-                        return null;
-                      }
-                      try {
-                        sourceProvider
-                            .getSource(
-                              value,
-                              overrideSource: pickedSourceOverride,
-                            )
-                            .standardizeUrl(value);
-                      } catch (e) {
-                        return e is String
-                            ? e
-                            : e is ObtainiumError
-                            ? e.toString()
-                            : tr('error');
-                      }
-                      return null;
-                    },
-                  ],
-                ),
-              ],
-            ],
-            onValueChanges: (values, valid, isBuilding) {
-              changeUserInput(values['appSourceURL']!, valid, isBuilding);
-            },
-          ),
+        Expanded(child: form),
+        const SizedBox(width: AppSpacings.sm),
+        Padding(
+          padding: const EdgeInsets.only(right: AppSpacings.sm),
+          child: addAction,
         ),
-        const SizedBox(width: AppSpacings.elementGap),
-        gettingAppInfo
-            ? _smallSpinner()
-            : IconButton(
-                icon: const Icon(Icons.add_rounded),
-                visualDensity: VisualDensity.compact,
-                tooltip: tr('add'),
-                onPressed:
-                    doingSomething ||
-                        pickedSource == null ||
-                        !_urlValid ||
-                        userInput.trim().isEmpty ||
-                        (pickedSource!
-                                .combinedAppSpecificSettingFormItems
-                                .isNotEmpty &&
-                            !additionalSettingsValid)
-                    ? null
-                    : () {
-                        settingsProvider.selectionClick();
-                        addApp(context);
-                      },
-              ),
       ],
     );
   }
@@ -1012,38 +1017,47 @@ class AddAppPageState extends State<AddAppPage> {
   }
 
   Widget _buildSearchRow(bool doingSomething) {
+    final isTV = context.read<SettingsProvider>().isTV;
+    final searchAction = _fieldAction(
+      loading: searching,
+      icon: Icons.search_rounded,
+      tooltip: tr('search'),
+      onPressed: doingSomething ? null : () => runSearch(context),
+    );
+    final form = GeneratedForm(
+      tileMode: true,
+      items: [
+        [
+          GeneratedFormTextField(
+            'searchSomeSources',
+            label: tr('searchSomeSourcesLabel'),
+            required: false,
+            suffixIcon: isTV
+                ? null
+                : Padding(
+                    padding: const EdgeInsets.only(right: AppSpacings.sm),
+                    child: searchAction,
+                  ),
+          ),
+        ],
+      ],
+      onValueChanges: (values, valid, isBuilding) {
+        if (values.isNotEmpty && valid && !isBuilding) {
+          setState(() {
+            searchQuery = values['searchSomeSources']!.trim();
+          });
+        }
+      },
+    );
+    if (!isTV) return form;
     return Row(
       children: [
-        Expanded(
-          child: GeneratedForm(
-            tileMode: true,
-            items: [
-              [
-                GeneratedFormTextField(
-                  'searchSomeSources',
-                  label: tr('searchSomeSourcesLabel'),
-                  required: false,
-                ),
-              ],
-            ],
-            onValueChanges: (values, valid, isBuilding) {
-              if (values.isNotEmpty && valid && !isBuilding) {
-                setState(() {
-                  searchQuery = values['searchSomeSources']!.trim();
-                });
-              }
-            },
-          ),
+        Expanded(child: form),
+        const SizedBox(width: AppSpacings.sm),
+        Padding(
+          padding: const EdgeInsets.only(right: AppSpacings.sm),
+          child: searchAction,
         ),
-        const SizedBox(width: AppSpacings.elementGap),
-        searching
-            ? _smallSpinner()
-            : IconButton(
-                icon: const Icon(Icons.search_rounded),
-                visualDensity: VisualDensity.compact,
-                tooltip: tr('search'),
-                onPressed: doingSomething ? null : () => runSearch(context),
-              ),
       ],
     );
   }
@@ -1059,24 +1073,9 @@ class AddAppPageState extends State<AddAppPage> {
               isFirst: true,
               isLast: true,
               padding: AppPaddings.cardInner,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    pickedSource!.name,
-                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                      color: Theme.of(context).colorScheme.primary,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.only(top: 4),
-                    child: Text(
-                      val.data!,
-                      style: Theme.of(context).textTheme.bodySmall,
-                    ),
-                  ),
-                ],
+              child: Text(
+                val.data!,
+                style: Theme.of(context).textTheme.bodySmall,
               ),
             ),
           );
@@ -1086,14 +1085,29 @@ class AddAppPageState extends State<AddAppPage> {
     );
   }
 
+  Widget _fieldAction({
+    required bool loading,
+    required IconData icon,
+    required String tooltip,
+    required VoidCallback? onPressed,
+  }) {
+    return SizedBox.square(
+      dimension: 48,
+      child: loading
+          ? Center(child: _smallSpinner())
+          : IconButton(
+              icon: Icon(icon),
+              tooltip: tooltip,
+              onPressed: onPressed,
+            ),
+    );
+  }
+
   Widget _smallSpinner() {
-    return const Padding(
-      padding: EdgeInsets.all(AppSpacings.md),
-      child: SizedBox(
-        width: 20,
-        height: 20,
-        child: CircularProgressIndicator(strokeWidth: 2),
-      ),
+    return const SizedBox(
+      width: 20,
+      height: 20,
+      child: CircularProgressIndicator(strokeWidth: 2),
     );
   }
 }

@@ -29,6 +29,28 @@ import 'package:obtainium/utils/nav_helper.dart';
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher_string.dart';
 
+const _settingsSectionPadding = EdgeInsets.only(
+  top: AppSpacings.xl,
+  bottom: AppSpacings.sm,
+);
+
+Widget _sliderHeader(BuildContext context, String label, String value) {
+  final textTheme = Theme.of(context).textTheme;
+  return Row(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      Expanded(child: Text(label, style: textTheme.bodyLarge)),
+      const SizedBox(width: AppSpacings.md),
+      Text(
+        value,
+        style: textTheme.bodyMedium?.copyWith(
+          color: Theme.of(context).colorScheme.onSurfaceVariant,
+        ),
+      ),
+    ],
+  );
+}
+
 class SettingsPage extends StatefulWidget {
   const SettingsPage({super.key});
 
@@ -313,109 +335,133 @@ class _SettingsPageState extends State<SettingsPage> {
       children: [
         Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
-          spacing: AppSpacings.connectedGap,
-          children: shapeCardTiles([
-            _settingsRow(
-              context,
-              icon: Icons.import_export,
-              title: tr('importExport'),
-              autofocus: settingsProvider.isTV,
-              onTap: () => _pushPage(
-                context,
-                title: tr('importExport'),
-                childBuilder: (_) => const Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    ExportSection(),
-                    SizedBox(height: 14),
-                    ImportSection(),
-                  ],
-                ),
-              ),
+          children: [
+            SectionHeader(
+              tr('sectionAppOptions'),
+              padding: const EdgeInsets.only(top: AppSpacings.sm),
             ),
-            _settingsRow(
-              context,
-              icon: Icons.update_outlined,
-              title: tr('updates'),
-              onTap: () => _pushPage(
-                context,
-                title: tr('updates'),
-                childBuilder: (ctx) =>
-                    _buildUpdatesSection(ctx, showBgSection, sdk),
-              ),
-            ),
-            _settingsRow(
-              context,
-              icon: Icons.warning_amber_rounded,
-              title: tr('updateHealth'),
-              subtitle: updateHealthAppCount > 0
-                  ? plural('apps', updateHealthAppCount)
-                  : null,
-              onTap: () => NavHelper.pushUpdateHealthPage(context),
-            ),
-            if (hasSourceSpecificSettings)
-              _settingsRow(
-                context,
-                icon: Icons.tune_outlined,
-                title: tr('sourceSpecific'),
-                onTap: () => _pushPage(
+            const SizedBox(height: AppSpacings.sm),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              spacing: AppSpacings.connectedGap,
+              children: shapeCardTiles([
+                _settingsRow(
                   context,
-                  title: tr('sourceSpecific'),
-                  childBuilder: (ctx) => _buildSourceSpecificForm(ctx),
+                  icon: Icons.import_export,
+                  title: tr('importExport'),
+                  autofocus: settingsProvider.isTV,
+                  onTap: () => _pushPage(
+                    context,
+                    title: tr('importExport'),
+                    childBuilder: (_) => Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        SectionHeader(
+                          tr('obtainiumExport'),
+                          padding: EdgeInsets.zero,
+                        ),
+                        const SizedBox(height: AppSpacings.sm),
+                        const ExportSection(),
+                        const SizedBox(height: AppSpacings.sectionGap),
+                        SectionHeader(tr('import'), padding: EdgeInsets.zero),
+                        const SizedBox(height: AppSpacings.sm),
+                        const ImportSection(),
+                      ],
+                    ),
+                  ),
                 ),
-              ),
-            _settingsRow(
-              context,
-              icon: Icons.palette_outlined,
-              title: tr('appearance'),
-              onTap: () => _pushPage(
-                context,
-                title: tr('appearance'),
-                childBuilder: (ctx) => _buildAppearanceSection(ctx),
-              ),
+                _settingsRow(
+                  context,
+                  icon: Icons.update_outlined,
+                  title: tr('updates'),
+                  onTap: () => _pushPage(
+                    context,
+                    title: tr('updates'),
+                    childBuilder: (ctx) =>
+                        _buildUpdatesSection(ctx, showBgSection, sdk),
+                  ),
+                ),
+                _settingsRow(
+                  context,
+                  icon: Icons.warning_amber_rounded,
+                  title: tr('updateHealth'),
+                  subtitle: updateHealthAppCount > 0
+                      ? plural('apps', updateHealthAppCount)
+                      : null,
+                  onTap: () => NavHelper.pushUpdateHealthPage(context),
+                ),
+                if (hasSourceSpecificSettings)
+                  _settingsRow(
+                    context,
+                    icon: Icons.tune_outlined,
+                    title: tr('sourceSpecific'),
+                    onTap: () => _pushPage(
+                      context,
+                      title: tr('sourceSpecific'),
+                      childBuilder: (ctx) => _buildSourceSpecificForm(ctx),
+                    ),
+                  ),
+                _settingsRow(
+                  context,
+                  icon: Icons.palette_outlined,
+                  title: tr('appearance'),
+                  onTap: () => _pushPage(
+                    context,
+                    title: tr('appearance'),
+                    childBuilder: (ctx) => _buildAppearanceSection(ctx),
+                  ),
+                ),
+              ]),
             ),
-          ]),
+          ],
         ),
         Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
-          spacing: AppSpacings.connectedGap,
-          children: shapeCardTiles([
-            _settingsRow(
-              context,
-              icon: Icons.code,
-              title: tr('appSource'),
-              trailingIcon: Icons.open_in_new,
-              trailingIconSize: 20,
-              onTap: () =>
-                  _openExternalUrl(context, settingsProvider.sourceUrl),
+          children: [
+            SectionHeader(tr('about'), padding: EdgeInsets.zero),
+            const SizedBox(height: AppSpacings.sm),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              spacing: AppSpacings.connectedGap,
+              children: shapeCardTiles([
+                _settingsRow(
+                  context,
+                  icon: Icons.code,
+                  title: tr('appSource'),
+                  trailingIcon: Icons.open_in_new,
+                  trailingIconSize: 20,
+                  onTap: () =>
+                      _openExternalUrl(context, settingsProvider.sourceUrl),
+                ),
+                _settingsRow(
+                  context,
+                  icon: Icons.help_outline_rounded,
+                  title: tr('wiki'),
+                  trailingIcon: Icons.open_in_new,
+                  trailingIconSize: 20,
+                  onTap: () => _openExternalUrl(
+                    context,
+                    'https://wiki.obtainium.imranr.dev/',
+                  ),
+                ),
+                _settingsRow(
+                  context,
+                  icon: Icons.bug_report_outlined,
+                  title: tr('appLogs'),
+                  onTap: () {
+                    AppLogger.getLogs().then((logs) {
+                      if (!context.mounted) return;
+                      if (logs.isEmpty) {
+                        showMessage(ObtainiumError(tr('noLogs')), context);
+                      } else {
+                        NavHelper.pushLogsPage(context);
+                      }
+                    });
+                  },
+                ),
+              ]),
             ),
-            _settingsRow(
-              context,
-              icon: Icons.help_outline_rounded,
-              title: tr('wiki'),
-              trailingIcon: Icons.open_in_new,
-              trailingIconSize: 20,
-              onTap: () => _openExternalUrl(
-                context,
-                'https://wiki.obtainium.imranr.dev/',
-              ),
-            ),
-            _settingsRow(
-              context,
-              icon: Icons.bug_report_outlined,
-              title: tr('appLogs'),
-              onTap: () {
-                AppLogger.getLogs().then((logs) {
-                  if (!context.mounted) return;
-                  if (logs.isEmpty) {
-                    showMessage(ObtainiumError(tr('noLogs')), context);
-                  } else {
-                    NavHelper.pushLogsPage(context);
-                  }
-                });
-              },
-            ),
-          ]),
+          ],
         ),
       ],
     );
@@ -539,6 +585,7 @@ class _SettingsPageState extends State<SettingsPage> {
   ) {
     final settingsProvider = context.read<SettingsProvider>();
     final children = <Widget>[
+      SectionHeader(tr('backgroundChecks'), padding: _settingsSectionPadding),
       const CardTile(
         padding: AppPaddings.sliderTile,
         child: _UpdateIntervalSliderTile(),
@@ -626,6 +673,7 @@ class _SettingsPageState extends State<SettingsPage> {
           ),
         ],
       ],
+      SectionHeader(tr('updateChecks'), padding: _settingsSectionPadding),
       _settingsRow(
         context,
         icon: Icons.verified_user_outlined,
@@ -663,50 +711,52 @@ class _SettingsPageState extends State<SettingsPage> {
         onChanged: (value) =>
             settingsProvider.onlyCheckInstalledOrTrackOnlyApps = value,
       ),
-      ConnectedCard(
-        color: Theme.of(context).colorScheme.surfaceContainerHighest,
-        child: GeneratedForm(
-          tileMode: true,
-          items: [
-            [
-              GeneratedFormTextField(
-                'globalApkFilterRegEx',
-                label: tr('globalApkFilterRegEx'),
-                required: false,
-                additionalValidators: [regExValidator],
-              )..value = settingsProvider.globalApkFilterRegEx,
-            ],
-            [
-              GeneratedFormTextField(
-                'globalVersionExtractionRegEx',
-                label: tr('globalVersionExtractionRegEx'),
-                required: false,
-                additionalValidators: [regExValidator],
-              )..value = settingsProvider.globalVersionExtractionRegEx,
-            ],
-            [
-              GeneratedFormTextField(
-                'globalMatchGroupToUse',
-                label: tr(
-                  'matchGroupToUseForX',
-                  args: [tr('globalVersionExtractionRegEx')],
-                ),
-                required: false,
-                hint: '\$0',
-              )..value = settingsProvider.globalMatchGroupToUse,
-            ],
+      SectionHeader(
+        tr('filteringAndVersions'),
+        padding: _settingsSectionPadding,
+      ),
+      GeneratedForm(
+        tileMode: true,
+        joinedTiles: false,
+        items: [
+          [
+            GeneratedFormTextField(
+              'globalApkFilterRegEx',
+              label: tr('globalApkFilterRegEx'),
+              required: false,
+              additionalValidators: [regExValidator],
+            )..value = settingsProvider.globalApkFilterRegEx,
           ],
-          onValueChanges: (values, valid, isBuilding) {
-            if (valid && !isBuilding) {
-              settingsProvider.globalApkFilterRegEx =
-                  values['globalApkFilterRegEx'];
-              settingsProvider.globalVersionExtractionRegEx =
-                  values['globalVersionExtractionRegEx'];
-              settingsProvider.globalMatchGroupToUse =
-                  values['globalMatchGroupToUse'];
-            }
-          },
-        ),
+          [
+            GeneratedFormTextField(
+              'globalVersionExtractionRegEx',
+              label: tr('globalVersionExtractionRegEx'),
+              required: false,
+              additionalValidators: [regExValidator],
+            )..value = settingsProvider.globalVersionExtractionRegEx,
+          ],
+          [
+            GeneratedFormTextField(
+              'globalMatchGroupToUse',
+              label: tr(
+                'matchGroupToUseForX',
+                args: [tr('globalVersionExtractionRegEx')],
+              ),
+              required: false,
+              hint: '\$0',
+            )..value = settingsProvider.globalMatchGroupToUse,
+          ],
+        ],
+        onValueChanges: (values, valid, isBuilding) {
+          if (valid && !isBuilding) {
+            settingsProvider.globalApkFilterRegEx =
+                values['globalApkFilterRegEx'];
+            settingsProvider.globalVersionExtractionRegEx =
+                values['globalVersionExtractionRegEx'];
+            settingsProvider.globalMatchGroupToUse =
+                values['globalMatchGroupToUse'];
+          }
+        },
       ),
       ToggleTile(
         label: tr('removeOnExternalUninstall'),
@@ -740,6 +790,7 @@ class _SettingsPageState extends State<SettingsPage> {
         padding: AppPaddings.sliderTile,
         child: _MinimumUpdateAgeSliderTile(),
       ),
+      SectionHeader(tr('installation'), padding: _settingsSectionPadding),
       ToggleTile(
         label: tr('parallelDownloads'),
         value: settingsProvider.parallelDownloads,
@@ -903,13 +954,14 @@ class _SettingsPageState extends State<SettingsPage> {
       ),
     );
     final children = <Widget>[
+      SectionHeader(tr('theme'), padding: _settingsSectionPadding),
       // Theme segmented button wrapped in CardTile so shapeCardTiles finds it.
       CardTile(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Flexible(child: Text(tr('theme'))),
+            Flexible(child: Text(tr('themeMode'))),
             const SizedBox(width: 12),
             SegmentedButton<ThemeSettings>(
               showSelectedIcon: false,
@@ -985,8 +1037,10 @@ class _SettingsPageState extends State<SettingsPage> {
             ),
           ),
         ),
+      SectionHeader(tr('appListSection'), padding: _settingsSectionPadding),
       _fieldTile(context, sortDropdown),
       orderControl,
+      SectionHeader(tr('languageAndText'), padding: _settingsSectionPadding),
       _fieldTile(context, const _LocaleDropdown()),
       if (sdk >= 29)
         ToggleTile(
@@ -1010,6 +1064,7 @@ class _SettingsPageState extends State<SettingsPage> {
             }
           },
         ),
+      SectionHeader(tr('appBehavior'), padding: _settingsSectionPadding),
       ToggleTile(
         label: tr('showWebInAppView'),
         value: settingsProvider.showAppWebpage,
@@ -1164,7 +1219,6 @@ class _MinimumUpdateAgeSliderTile extends StatefulWidget {
 class _MinimumUpdateAgeSliderTileState
     extends State<_MinimumUpdateAgeSliderTile> {
   double sliderVal = 0;
-  bool showLabel = true;
 
   int get _days =>
       minimumUpdateAgeOptions[sliderVal.round().clamp(
@@ -1209,15 +1263,7 @@ class _MinimumUpdateAgeSliderTileState
           sliderVal = value;
         });
       },
-      onChangeStart: (double value) {
-        setState(() {
-          showLabel = false;
-        });
-      },
       onChangeEnd: (double value) {
-        setState(() {
-          showLabel = true;
-        });
         _commit();
       },
     );
@@ -1240,7 +1286,7 @@ class _MinimumUpdateAgeSliderTileState
                         _commit();
                       },
               ),
-              Expanded(child: Text(_label, textAlign: TextAlign.center)),
+              const Spacer(),
               IconButton(
                 icon: const Icon(Icons.add),
                 onPressed:
@@ -1262,11 +1308,9 @@ class _MinimumUpdateAgeSliderTileState
         : rawSlider;
 
     return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
+      crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        showLabel
-            ? Text("${tr('minimumUpdateAgeDays')}: $_label")
-            : const SizedBox(height: 20),
+        _sliderHeader(context, tr('minimumUpdateAgeDays'), _label),
         ageSlider,
       ],
     );
@@ -1303,7 +1347,6 @@ class _UpdateIntervalSliderTileState extends State<_UpdateIntervalSliderTile> {
   int updateInterval = 0;
   late SplineInterpolation updateIntervalInterpolator;
   String updateIntervalLabel = tr('neverManualOnly');
-  bool showIntervalLabel = true;
   late double sliderVal;
 
   @override
@@ -1392,15 +1435,7 @@ class _UpdateIntervalSliderTileState extends State<_UpdateIntervalSliderTile> {
           processIntervalSliderValue(value);
         });
       },
-      onChangeStart: (double value) {
-        setState(() {
-          showIntervalLabel = false;
-        });
-      },
       onChangeEnd: (double value) {
-        setState(() {
-          showIntervalLabel = true;
-        });
         _commit(value);
       },
     );
@@ -1424,9 +1459,7 @@ class _UpdateIntervalSliderTileState extends State<_UpdateIntervalSliderTile> {
                         _commit(newVal);
                       },
               ),
-              Expanded(
-                child: Text(updateIntervalLabel, textAlign: TextAlign.center),
-              ),
+              const Spacer(),
               IconButton(
                 icon: const Icon(Icons.add),
                 onPressed: sliderVal >= updateIntervalNodes.length.toDouble()
@@ -1448,11 +1481,13 @@ class _UpdateIntervalSliderTileState extends State<_UpdateIntervalSliderTile> {
         : rawSlider;
 
     return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
+      crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        showIntervalLabel
-            ? Text("${tr('bgUpdateCheckInterval')}: $updateIntervalLabel")
-            : const SizedBox(height: 20),
+        _sliderHeader(
+          context,
+          tr('bgUpdateCheckInterval'),
+          updateIntervalLabel,
+        ),
         intervalSlider,
       ],
     );

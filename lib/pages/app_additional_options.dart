@@ -74,7 +74,7 @@ Future<Map<String, dynamic>?> showAdditionalOptionsPage(
           Navigator.of(ctx).pop(values);
         },
         child: _AdditionalOptionsPage(
-          title: tr('additionalOptsFor', args: [app?.name ?? tr('app')]),
+          title: tr('additionalOptions'),
           items: items,
           scrollToSection: scrollToSection,
           onValuesChanged: (v) => values = v,

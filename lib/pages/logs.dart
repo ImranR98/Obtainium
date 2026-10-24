@@ -136,14 +136,16 @@ class _LogsPageState extends State<LogsPage> {
             style: Theme.of(context).textTheme.labelSmall?.copyWith(
               color: color.withValues(alpha: 0.8),
               fontWeight: FontWeight.bold,
+              fontFamily: 'monospace',
             ),
           ),
           const SizedBox(height: 2),
           Text(
             log.message,
-            style: Theme.of(
-              context,
-            ).textTheme.bodySmall?.copyWith(color: color),
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+              color: color,
+              fontFamily: 'monospace',
+            ),
           ),
         ],
       ),
@@ -267,7 +269,19 @@ class _LogsPageState extends State<LogsPage> {
         else
           SliverList.builder(
             itemCount: _logs.length,
-            itemBuilder: (context, index) => _logTile(_logs[index]),
+            itemBuilder: (context, index) {
+              return Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  _logTile(_logs[index]),
+                  if (index < _logs.length - 1)
+                    Divider(
+                      height: 1,
+                      color: Theme.of(context).colorScheme.outlineVariant,
+                    ),
+                ],
+              );
+            },
           ),
         const SliverToBoxAdapter(child: SizedBox(height: 96)),
       ],
