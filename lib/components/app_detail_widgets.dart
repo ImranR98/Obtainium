@@ -52,10 +52,17 @@ class AppInfoDialog extends StatelessWidget {
               color: Theme.of(context).colorScheme.onSurfaceVariant,
             ),
           ),
-          Text(
-            app.app.url,
-            style: textTheme.labelSmall?.copyWith(
-              decoration: TextDecoration.underline,
+          Tooltip(
+            message: tr('copyToClipboard'),
+            child: GestureDetector(
+              onLongPress: () {
+                copyToClipboard(context, app.app.url);
+              },
+              child: LinkText(
+                text: app.app.url,
+                url: app.app.url,
+                style: textTheme.labelSmall,
+              ),
             ),
           ),
           Text(app.app.id, style: textTheme.labelSmall),
