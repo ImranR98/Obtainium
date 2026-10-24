@@ -715,50 +715,47 @@ class _SettingsPageState extends State<SettingsPage> {
         tr('filteringAndVersions'),
         padding: _settingsSectionPadding,
       ),
-      ConnectedCard(
-        color: Theme.of(context).colorScheme.surfaceContainerHighest,
-        child: GeneratedForm(
-          tileMode: true,
-          items: [
-            [
-              GeneratedFormTextField(
-                'globalApkFilterRegEx',
-                label: tr('globalApkFilterRegEx'),
-                required: false,
-                additionalValidators: [regExValidator],
-              )..value = settingsProvider.globalApkFilterRegEx,
-            ],
-            [
-              GeneratedFormTextField(
-                'globalVersionExtractionRegEx',
-                label: tr('globalVersionExtractionRegEx'),
-                required: false,
-                additionalValidators: [regExValidator],
-              )..value = settingsProvider.globalVersionExtractionRegEx,
-            ],
-            [
-              GeneratedFormTextField(
-                'globalMatchGroupToUse',
-                label: tr(
-                  'matchGroupToUseForX',
-                  args: [tr('globalVersionExtractionRegEx')],
-                ),
-                required: false,
-                hint: '\$0',
-              )..value = settingsProvider.globalMatchGroupToUse,
-            ],
+      GeneratedForm(
+        tileMode: true,
+        items: [
+          [
+            GeneratedFormTextField(
+              'globalApkFilterRegEx',
+              label: tr('globalApkFilterRegEx'),
+              required: false,
+              additionalValidators: [regExValidator],
+            )..value = settingsProvider.globalApkFilterRegEx,
           ],
-          onValueChanges: (values, valid, isBuilding) {
-            if (valid && !isBuilding) {
-              settingsProvider.globalApkFilterRegEx =
-                  values['globalApkFilterRegEx'];
-              settingsProvider.globalVersionExtractionRegEx =
-                  values['globalVersionExtractionRegEx'];
-              settingsProvider.globalMatchGroupToUse =
-                  values['globalMatchGroupToUse'];
-            }
-          },
-        ),
+          [
+            GeneratedFormTextField(
+              'globalVersionExtractionRegEx',
+              label: tr('globalVersionExtractionRegEx'),
+              required: false,
+              additionalValidators: [regExValidator],
+            )..value = settingsProvider.globalVersionExtractionRegEx,
+          ],
+          [
+            GeneratedFormTextField(
+              'globalMatchGroupToUse',
+              label: tr(
+                'matchGroupToUseForX',
+                args: [tr('globalVersionExtractionRegEx')],
+              ),
+              required: false,
+              hint: '\$0',
+            )..value = settingsProvider.globalMatchGroupToUse,
+          ],
+        ],
+        onValueChanges: (values, valid, isBuilding) {
+          if (valid && !isBuilding) {
+            settingsProvider.globalApkFilterRegEx =
+                values['globalApkFilterRegEx'];
+            settingsProvider.globalVersionExtractionRegEx =
+                values['globalVersionExtractionRegEx'];
+            settingsProvider.globalMatchGroupToUse =
+                values['globalMatchGroupToUse'];
+          }
+        },
       ),
       ToggleTile(
         label: tr('removeOnExternalUninstall'),

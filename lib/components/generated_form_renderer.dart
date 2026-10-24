@@ -708,8 +708,6 @@ class _GeneratedFormState extends State<GeneratedForm> {
         } else {
           rawTiles.add(
             ConnectedCard(
-              isFirst: r == 0 || isHeaderRow(r - 1),
-              isLast: r == n - 1 || isHeaderRow(r + 1),
               color: isFieldRow(r)
                   ? colorScheme.surfaceContainerHighest
                   : colorScheme.surfaceContainerLow,
@@ -720,7 +718,7 @@ class _GeneratedFormState extends State<GeneratedForm> {
       }
       return Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
-        spacing: AppSpacings.connectedGap,
+        spacing: AppSpacings.sm,
         children: rawTiles,
       );
     }
