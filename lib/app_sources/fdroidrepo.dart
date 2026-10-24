@@ -453,6 +453,10 @@ class FDroidRepo extends AppSource {
     return null;
   }
 
+  /// This device's supported ABIs, in preference order.
+  Future<List<String>> getSupportedAbis() async =>
+      (await DeviceInfoPlugin().androidInfo).supportedAbis;
+
   /// Narrows [versions] to those compatible with this device's ABIs using the
   /// index's nativecode metadata (entries without nativecode are universal).
   /// Falls back to the full list when nothing matches.
@@ -461,7 +465,7 @@ class FDroidRepo extends AppSource {
   ) async {
     if (versions.length <= 1) return versions;
     if (versions.every((v) => v.nativecode.isEmpty)) return versions;
-    final abis = (await DeviceInfoPlugin().androidInfo).supportedAbis;
+    final abis = await getSupportedAbis();
     final compatible = versions
         .where((v) => v.nativecode.isEmpty || v.nativecode.any(abis.contains))
         .toList();
@@ -532,6 +536,16 @@ class FDroidRepo extends AppSource {
         throw NoReleasesError();
       }
       selected = await _filterVersionsByArch(selected);
+      // A repo can publish several builds under one version name. Keep only
+      // the newest build per architecture, otherwise the default APK (the
+      // last one) is an older build.
+      final seenNativecodes = <String>{};
+      selected = selected
+          .where(
+            (v) =>
+                seenNativecodes.add((v.nativecode.toList()..sort()).join(' ')),
+          )
+          .toList();
       if (selected.isEmpty) {
         throw NoReleasesError();
       }
