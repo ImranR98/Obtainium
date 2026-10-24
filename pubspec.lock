@@ -1060,8 +1060,8 @@ packages:
     dependency: "direct main"
     description:
       path: "."
-      ref: e0bab24c4b4b418f60cc15343ccea30ebc085449
-      resolved-ref: e0bab24c4b4b418f60cc15343ccea30ebc085449
+      ref: "447d88a0d134ec80d986064fdf458b55644d2ab3"
+      resolved-ref: "447d88a0d134ec80d986064fdf458b55644d2ab3"
       url: "https://github.com/ImranR98/shizuku_apk_installer"
     source: git
     version: "1.4.0"

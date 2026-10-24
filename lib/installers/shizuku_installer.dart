@@ -82,6 +82,8 @@ class ShizukuInstaller extends Installer {
   }) async {
     final fakeInstallSource =
         installOptions['installerPackageName'] as String? ?? '';
+    final requestUpdateOwnership =
+        installOptions['requestUpdateOwnership'] as bool? ?? false;
     if (fakeInstallSource == 'com.sec.android.app.samsungapps') {
       if (settingsProvider.shizukuInstallerMode == 'dhizuku') {
         throw ObtainiumError(tr('galaxyStoreInstallSourceRequiresShizuku'));
@@ -96,11 +98,13 @@ class ShizukuInstaller extends Installer {
       code = await ShizukuApkInstaller().installAABSplits(
         uris,
         fakeInstallSource,
+        requestUpdateOwnership: requestUpdateOwnership,
       );
     } else {
       code = await ShizukuApkInstaller().installAPK(
         uris.first,
         fakeInstallSource,
+        requestUpdateOwnership: requestUpdateOwnership,
       );
     }
     return InstallResult.fromPlatformCode(code);

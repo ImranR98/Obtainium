@@ -10,7 +10,8 @@ class _FakeShizukuPlatform extends ShizukuApkInstallerPlatform {
   String? permissionResult = 'granted_adb';
   int checkCalls = 0;
   int servicesNotFoundFailures = 0;
-  final installs = <({List<String> uris, String source})>[];
+  final installs =
+      <({List<String> uris, String source, bool requestUpdateOwnership})>[];
 
   @override
   Future<void> setInstallerMode(String mode) async {
@@ -32,8 +33,13 @@ class _FakeShizukuPlatform extends ShizukuApkInstallerPlatform {
     List<String> apkFilesURIs,
     String fakeInstallSource, {
     String? packageName,
+    bool requestUpdateOwnership = false,
   }) async {
-    installs.add((uris: apkFilesURIs, source: fakeInstallSource));
+    installs.add((
+      uris: apkFilesURIs,
+      source: fakeInstallSource,
+      requestUpdateOwnership: requestUpdateOwnership,
+    ));
     return 0;
   }
 }
@@ -120,6 +126,21 @@ void main() {
       'file:///tmp/base.apk',
       'file:///tmp/split.apk',
     ]);
+  });
+
+  test('forwards update ownership for new installs only', () async {
+    final installer = ShizukuInstaller(settings);
+    await installer.installApk(
+      ['/tmp/base.apk'],
+      appId: 'com.example.app',
+      installOptions: {'requestUpdateOwnership': true},
+    );
+    await installer.installApk(
+      ['/tmp/base.apk'],
+      appId: 'com.example.app',
+      installOptions: {'requestUpdateOwnership': false},
+    );
+    expect(fake.installs.map((i) => i.requestUpdateOwnership), [true, false]);
   });
 
   test('Galaxy Store spoofing is rejected for the Dhizuku backend', () async {

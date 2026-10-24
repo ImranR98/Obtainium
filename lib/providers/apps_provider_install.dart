@@ -1630,6 +1630,7 @@ extension AppsProviderInstall on AppsProvider {
           appEntry.app,
           googlePlayDefault: settingsProvider.shizukuPretendToBeGooglePlay,
         ),
+        'requestUpdateOwnership': appEntry.installedInfo == null,
       };
       if (downloadedFile != null) {
         if (needBGWorkaround) {
