@@ -407,6 +407,7 @@
     "rawJson": "Sirovi JSON",
     "refresh": "Osvježi",
     "refreshBeforeDownload": "Osvježi detalje aplikacije prije preuzimanja",
+    "detectionDateAsReleaseDate": "Use the time an update was found as its release date when the source gives none",
     "releaseAsset": "Fajlovi verzije",
     "releaseDate": "Datum izdavanja",
     "releaseDateAsVersion": "Koristi datum izdanja kao verziju",

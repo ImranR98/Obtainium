@@ -407,6 +407,7 @@
     "rawJson": "Raw JSON",
     "refresh": "Vernieuwen",
     "refreshBeforeDownload": "Vernieuw appdetails voor installatie",
+    "detectionDateAsReleaseDate": "Use the time an update was found as its release date when the source gives none",
     "releaseAsset": "Publicatie-upload",
     "releaseDate": "Publicatiedatum",
     "releaseDateAsVersion": "Publicatiedatum als versie gebruiken",

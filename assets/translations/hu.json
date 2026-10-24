@@ -407,6 +407,7 @@
     "rawJson": "Nyers JSON-fájl",
     "refresh": "Frissítés",
     "refreshBeforeDownload": "Alkalmazás adatainak frissítése a letöltés előtt",
+    "detectionDateAsReleaseDate": "Use the time an update was found as its release date when the source gives none",
     "releaseAsset": "Kiadási csomag",
     "releaseDate": "Kiadás dátuma",
     "releaseDateAsVersion": "Kiadás dátumának használata verzió-karakterláncként",

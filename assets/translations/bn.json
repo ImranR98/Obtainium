@@ -407,6 +407,7 @@
     "rawJson": "Raw JSON",
     "refresh": "রিফ্রেশ করুন",
     "refreshBeforeDownload": "ডাউনলোডের আগে অ্যাপের বিবরণ রিফ্রেশ করুন",
+    "detectionDateAsReleaseDate": "Use the time an update was found as its release date when the source gives none",
     "releaseAsset": "রিলিজ অ্যাসেট",
     "releaseDate": "রিলিজের তারিখ",
     "releaseDateAsVersion": "ভার্সন স্ট্রিং হিসেবে রিলিজের তারিখ ব্যবহার করুন",

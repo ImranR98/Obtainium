@@ -407,6 +407,7 @@
     "rawJson": "Raw JSON",
     "refresh": "Refresh",
     "refreshBeforeDownload": "ഡൗൺലോഡ് ചെയ്യുന്നതിന് മുമ്പ് ആപ്പ് വിവരങ്ങൾ പുതുക്കുക",
+    "detectionDateAsReleaseDate": "Use the time an update was found as its release date when the source gives none",
     "releaseAsset": "റിലീസ് അസറ്റ്",
     "releaseDate": "റിലീസ് തീയതി",
     "releaseDateAsVersion": "റിലീസ് തീയതി പതിപ്പ് സ്ട്രിംഗായി ഉപയോഗിക്കുക",

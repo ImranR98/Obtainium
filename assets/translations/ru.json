@@ -418,6 +418,7 @@
     "rawJson": "Исходный JSON",
     "refresh": "Обновить",
     "refreshBeforeDownload": "Обновлять информацию о приложении перед загрузкой",
+    "detectionDateAsReleaseDate": "Use the time an update was found as its release date when the source gives none",
     "releaseAsset": "Файл выпуска",
     "releaseDate": "Дата выпуска",
     "releaseDateAsVersion": "Использовать дату выпуска в качестве версии",
