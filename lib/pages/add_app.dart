@@ -1054,24 +1054,9 @@ class AddAppPageState extends State<AddAppPage> {
               isFirst: true,
               isLast: true,
               padding: AppPaddings.cardInner,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    pickedSource!.name,
-                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                      color: Theme.of(context).colorScheme.primary,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.only(top: 4),
-                    child: Text(
-                      val.data!,
-                      style: Theme.of(context).textTheme.bodySmall,
-                    ),
-                  ),
-                ],
+              child: Text(
+                val.data!,
+                style: Theme.of(context).textTheme.bodySmall,
               ),
             ),
           );
