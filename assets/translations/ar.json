@@ -358,6 +358,7 @@
     "onlyCheckInstalledOrTrackOnlyApps": "التحقق فقط من التطبيقات المثبتة أو للتعقب فقط",
     "onlyWorksWithNonVersionDetectApps": "يعمل فقط مع التطبيقات التي عُطّل اكتشاف الإصدار لها.",
     "openApp": "Open {}",
+    "openInBrowser": "Open in browser",
     "openReleasePage": "Open release page",
     "overrideSource": "تجاوز المصدر",
     "parallelDownloads": "اسمح بالتنزيل المتوازي",

@@ -358,6 +358,7 @@
     "onlyCheckInstalledOrTrackOnlyApps": "Kontrollera bara installerade appar och endast spårbara appar för uppdateringar",
     "onlyWorksWithNonVersionDetectApps": "Fungerar bara för Appar med versionsdetektering inaktiverat..",
     "openApp": "Open {}",
+    "openInBrowser": "Open in browser",
     "openReleasePage": "Open release page",
     "overrideSource": "Överskrid Källa",
     "parallelDownloads": "Tillåt parallella nedladdningar",

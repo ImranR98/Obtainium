@@ -358,6 +358,7 @@
     "onlyCheckInstalledOrTrackOnlyApps": "Έλεγχος ενημερώσεων μόνο για εγκατεστημένες εφαρμογές και εφαρμογές «μόνο παρακολούθηση»",
     "onlyWorksWithNonVersionDetectApps": "Λειτουργεί μόνο για εφαρμογές με απενεργοποιημένη ανίχνευση έκδοσης.",
     "openApp": "Άνοιγμα {}",
+    "openInBrowser": "Open in browser",
     "openReleasePage": "Άνοιγμα σελίδας έκδοσης",
     "overrideSource": "Παράκαμψη πηγής",
     "parallelDownloads": "Να επιτρέπονται παράλληλες λήψεις",

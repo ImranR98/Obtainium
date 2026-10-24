@@ -358,6 +358,7 @@
     "onlyCheckInstalledOrTrackOnlyApps": "Only check installed and track-only apps for updates",
     "onlyWorksWithNonVersionDetectApps": "Only works for apps with version detection disabled.",
     "openApp": "Open {}",
+    "openInBrowser": "Open in browser",
     "openReleasePage": "Open release page",
     "overrideSource": "Override source",
     "parallelDownloads": "Allow parallel downloads",

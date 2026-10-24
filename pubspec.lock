@@ -344,18 +344,18 @@ packages:
     dependency: "direct main"
     description:
       name: file_picker
-      sha256: "98c0b156b6380ba55bc767a14e2e6b3feb246e713ad40092424596fa79005bea"
+      sha256: f201f3cbbb38ea5cd4e6896549662690f445a66261484f8ad697351c1ca25581
       url: "https://pub.dev"
     source: hosted
-    version: "13.1.0"
+    version: "13.2.0"
   file_picker_darwin:
     dependency: transitive
     description:
       name: file_picker_darwin
-      sha256: ca2918264c453400c80ef0d69ca3f8b816f894db6144bebac73064ad64927e0e
+      sha256: bd172f8ddec522f9bd9a26365545320f130a6ab7839eb2a634051fab4ced7eb7
       url: "https://pub.dev"
     source: hosted
-    version: "2.3.3"
+    version: "2.3.4"
   file_picker_linux:
     dependency: transitive
     description:
@@ -429,10 +429,10 @@ packages:
     dependency: transitive
     description:
       name: flutter_charset_detector_android
-      sha256: "9b788572ee54e005139a623d7f3403875faaca732e8cc43db6d1af1a11211b61"
+      sha256: ad17e5c7374739a9714c66e321b380c242a5c73bfb35ce1ab34d43da070e2c64
       url: "https://pub.dev"
     source: hosted
-    version: "4.0.1"
+    version: "4.0.2"
   flutter_charset_detector_darwin:
     dependency: transitive
     description:
@@ -1060,8 +1060,8 @@ packages:
     dependency: "direct main"
     description:
       path: "."
-      ref: e0bab24c4b4b418f60cc15343ccea30ebc085449
-      resolved-ref: e0bab24c4b4b418f60cc15343ccea30ebc085449
+      ref: "447d88a0d134ec80d986064fdf458b55644d2ab3"
+      resolved-ref: "447d88a0d134ec80d986064fdf458b55644d2ab3"
       url: "https://github.com/ImranR98/shizuku_apk_installer"
     source: git
     version: "1.4.0"

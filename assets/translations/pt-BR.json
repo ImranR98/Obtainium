@@ -358,6 +358,7 @@
     "onlyCheckInstalledOrTrackOnlyApps": "Buscar atualizações somente para apps instalados e de somente rastreamento",
     "onlyWorksWithNonVersionDetectApps": "Funciona somente em apps com a detecção de versão desativada.",
     "openApp": "Open {}",
+    "openInBrowser": "Open in browser",
     "openReleasePage": "Open release page",
     "overrideSource": "Sobrescrever fonte",
     "parallelDownloads": "Permitir downloads em paralelo",

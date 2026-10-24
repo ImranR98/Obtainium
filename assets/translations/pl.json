@@ -376,6 +376,7 @@
     "onlyCheckInstalledOrTrackOnlyApps": "Sprawdzaj aktualizacje tylko dla aplikacji zainstalowanych i obserwowanych",
     "onlyWorksWithNonVersionDetectApps": "Działa tylko dla aplikacji z wyłączonym wykrywaniem wersji.",
     "openApp": "Open {}",
+    "openInBrowser": "Open in browser",
     "openReleasePage": "Otwórz stronę wydania",
     "overrideSource": "Zastąp źródło",
     "parallelDownloads": "Zezwalaj na pobieranie równoległe",

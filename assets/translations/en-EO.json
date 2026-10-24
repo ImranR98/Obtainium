@@ -358,6 +358,7 @@
     "onlyCheckInstalledOrTrackOnlyApps": "Nur serĉi la ĝisdatigojn de instalitaj kaj 'nur sekvitaj' apoj",
     "onlyWorksWithNonVersionDetectApps": "Funkcias nur por apoj kun malaktiva versiodetekto.",
     "openApp": "Open {}",
+    "openInBrowser": "Open in browser",
     "openReleasePage": "Open release page",
     "overrideSource": "Substitui la fonton",
     "parallelDownloads": "Permesi dumajn elŝutojn",
