@@ -29,7 +29,7 @@ dependencies:
   permission_handler: ^13.0.2
   fluttertoast: 10.0.0 # TODO: 10.0.1+ applies KGP unconditionally, breaking AGP 9 built-in Kotlin
   device_info_plus: ^13.3.0
-  file_picker: ^13.1.0
+  file_picker: ^13.2.0
   animations: ^3.0.0
   android_package_installer: # TODO: Upstream PR pending; if not accepted, keep fork maintained
     git:
