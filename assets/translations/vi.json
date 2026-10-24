@@ -407,6 +407,7 @@
     "rawJson": "Raw JSON",
     "refresh": "Refresh",
     "refreshBeforeDownload": "Cập nhật thông tin ứng dụng trước khi tải xuống",
+    "detectionDateAsReleaseDate": "Use the time an update was found as its release date when the source gives none",
     "releaseAsset": "Tệp phát hành",
     "releaseDate": "Ngày phát hành",
     "releaseDateAsVersion": "Sử dụng ngày phát hành làm phiên bản",

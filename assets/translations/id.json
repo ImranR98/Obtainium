@@ -407,6 +407,7 @@
     "rawJson": "Raw JSON",
     "refresh": "Refresh",
     "refreshBeforeDownload": "Segarkan detail aplikasi sebelum mengunduh",
+    "detectionDateAsReleaseDate": "Use the time an update was found as its release date when the source gives none",
     "releaseAsset": "Aset rilis",
     "releaseDate": "Tanggal rilis",
     "releaseDateAsVersion": "Gunakan tanggal rilis sebagai versi string",

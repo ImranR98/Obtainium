@@ -407,6 +407,7 @@
     "rawJson": "Raw JSON",
     "refresh": "Refresh",
     "refreshBeforeDownload": "Оновіть інформацію про програму перед завантаженням",
+    "detectionDateAsReleaseDate": "Use the time an update was found as its release date when the source gives none",
     "releaseAsset": "Звільнити актив",
     "releaseDate": "Дата випуску",
     "releaseDateAsVersion": "Використовувати дату випуску як рядок версії",

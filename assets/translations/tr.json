@@ -407,6 +407,7 @@
     "rawJson": "Ham JSON",
     "refresh": "Refresh",
     "refreshBeforeDownload": "İndirmeden önce uygulama detaylarını yenile",
+    "detectionDateAsReleaseDate": "Use the time an update was found as its release date when the source gives none",
     "releaseAsset": "Sürüm dosyası",
     "releaseDate": "Yayın tarihi",
     "releaseDateAsVersion": "Yayın tarihini sürüm olarak kullan",
