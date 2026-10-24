@@ -742,12 +742,14 @@ class AddAppPageState extends State<AddAppPage> {
   ) => Column(
     crossAxisAlignment: CrossAxisAlignment.stretch,
     children: [
-      const SizedBox(height: AppSpacings.lg),
-      SectionHeader(
+      const SizedBox(height: AppSpacings.xxl),
+      Text(
         tr('additionalOptsFor', args: [pickedSource?.name ?? tr('source')]),
-        padding: EdgeInsets.zero,
+        style: Theme.of(context).textTheme.titleMedium?.copyWith(
+          color: Theme.of(context).colorScheme.primary,
+          fontWeight: FontWeight.w600,
+        ),
       ),
-      const SizedBox(height: AppSpacings.sm),
       _buildSourceSpecificForm(settingsProvider),
       const SizedBox(height: AppSpacings.md),
       CardTile(
@@ -880,10 +882,11 @@ class AddAppPageState extends State<AddAppPage> {
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  _buildUrlRow(context, settingsProvider, doingSomething),
                   if (pickedSource == null)
                     Padding(
-                      padding: const EdgeInsets.only(top: AppSpacings.sm),
+                      padding: const EdgeInsets.symmetric(
+                        vertical: AppSpacings.sm,
+                      ),
                       child: Text(
                         tr('addAppHint'),
                         style: Theme.of(context).textTheme.bodySmall?.copyWith(
@@ -891,6 +894,7 @@ class AddAppPageState extends State<AddAppPage> {
                         ),
                       ),
                     ),
+                  _buildUrlRow(context, settingsProvider, doingSomething),
                   if (pickedSource != null) ...[
                     const SizedBox(height: 13),
                     _buildSourceOverrideField(context),
@@ -935,19 +939,22 @@ class AddAppPageState extends State<AddAppPage> {
             label: tr('appSourceURL'),
             value: userInput,
             required: false,
-            suffixIcon: gettingAppInfo
-                ? _smallSpinner()
-                : IconButton(
-                    icon: const Icon(Icons.add_rounded),
-                    visualDensity: VisualDensity.compact,
-                    tooltip: tr('add'),
-                    onPressed: canAdd
-                        ? () {
-                            settingsProvider.selectionClick();
-                            addApp(context);
-                          }
-                        : null,
-                  ),
+            suffixIcon: Padding(
+              padding: const EdgeInsets.only(right: AppSpacings.sm),
+              child: gettingAppInfo
+                  ? _smallSpinner()
+                  : IconButton(
+                      icon: const Icon(Icons.add_rounded),
+                      visualDensity: VisualDensity.compact,
+                      tooltip: tr('add'),
+                      onPressed: canAdd
+                          ? () {
+                              settingsProvider.selectionClick();
+                              addApp(context);
+                            }
+                          : null,
+                    ),
+            ),
             additionalValidators: [
               (value) {
                 if (value == null || value.trim().isEmpty) {
@@ -1017,14 +1024,19 @@ class AddAppPageState extends State<AddAppPage> {
             'searchSomeSources',
             label: tr('searchSomeSourcesLabel'),
             required: false,
-            suffixIcon: searching
-                ? _smallSpinner()
-                : IconButton(
-                    icon: const Icon(Icons.search_rounded),
-                    visualDensity: VisualDensity.compact,
-                    tooltip: tr('search'),
-                    onPressed: doingSomething ? null : () => runSearch(context),
-                  ),
+            suffixIcon: Padding(
+              padding: const EdgeInsets.only(right: AppSpacings.sm),
+              child: searching
+                  ? _smallSpinner()
+                  : IconButton(
+                      icon: const Icon(Icons.search_rounded),
+                      visualDensity: VisualDensity.compact,
+                      tooltip: tr('search'),
+                      onPressed: doingSomething
+                          ? null
+                          : () => runSearch(context),
+                    ),
+            ),
           ),
         ],
       ],
