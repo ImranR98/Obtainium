@@ -742,7 +742,7 @@ class AddAppPageState extends State<AddAppPage> {
   ) => Column(
     crossAxisAlignment: CrossAxisAlignment.stretch,
     children: [
-      const SizedBox(height: AppSpacings.xxl),
+      const SizedBox(height: AppSpacings.xxl + AppSpacings.lg),
       Text(
         tr('additionalOptsFor', args: [pickedSource?.name ?? tr('source')]),
         style: Theme.of(context).textTheme.titleMedium?.copyWith(
