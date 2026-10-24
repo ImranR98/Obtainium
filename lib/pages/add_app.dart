@@ -917,7 +917,18 @@ class AddAppPageState extends State<AddAppPage> {
         userInput.trim().isNotEmpty &&
         (source.combinedAppSpecificSettingFormItems.isEmpty ||
             additionalSettingsValid);
-    return GeneratedForm(
+    final addAction = _fieldAction(
+      loading: gettingAppInfo,
+      icon: Icons.add_rounded,
+      tooltip: tr('add'),
+      onPressed: canAdd
+          ? () {
+              settingsProvider.selectionClick();
+              addApp(context);
+            }
+          : null,
+    );
+    final form = GeneratedForm(
       key: Key('url-$urlInputKey'),
       tileMode: true,
       autofocusFirstTextField: settingsProvider.isTV,
@@ -928,24 +939,12 @@ class AddAppPageState extends State<AddAppPage> {
             label: tr('appSourceURL'),
             value: userInput,
             required: false,
-            suffixIcon: Padding(
-              padding: const EdgeInsets.only(right: AppSpacings.sm),
-              child: SizedBox.square(
-                dimension: 48,
-                child: gettingAppInfo
-                    ? Center(child: _smallSpinner())
-                    : IconButton(
-                        icon: const Icon(Icons.add_rounded),
-                        tooltip: tr('add'),
-                        onPressed: canAdd
-                            ? () {
-                                settingsProvider.selectionClick();
-                                addApp(context);
-                              }
-                            : null,
-                      ),
-              ),
-            ),
+            suffixIcon: settingsProvider.isTV
+                ? null
+                : Padding(
+                    padding: const EdgeInsets.only(right: AppSpacings.sm),
+                    child: addAction,
+                  ),
             additionalValidators: [
               (value) {
                 if (value == null || value.trim().isEmpty) {
@@ -971,6 +970,17 @@ class AddAppPageState extends State<AddAppPage> {
       onValueChanges: (values, valid, isBuilding) {
         changeUserInput(values['appSourceURL']!, valid, isBuilding);
       },
+    );
+    if (!settingsProvider.isTV) return form;
+    return Row(
+      children: [
+        Expanded(child: form),
+        const SizedBox(width: AppSpacings.sm),
+        Padding(
+          padding: const EdgeInsets.only(right: AppSpacings.sm),
+          child: addAction,
+        ),
+      ],
     );
   }
 
@@ -1007,7 +1017,14 @@ class AddAppPageState extends State<AddAppPage> {
   }
 
   Widget _buildSearchRow(bool doingSomething) {
-    return GeneratedForm(
+    final isTV = context.read<SettingsProvider>().isTV;
+    final searchAction = _fieldAction(
+      loading: searching,
+      icon: Icons.search_rounded,
+      tooltip: tr('search'),
+      onPressed: doingSomething ? null : () => runSearch(context),
+    );
+    final form = GeneratedForm(
       tileMode: true,
       items: [
         [
@@ -1015,21 +1032,12 @@ class AddAppPageState extends State<AddAppPage> {
             'searchSomeSources',
             label: tr('searchSomeSourcesLabel'),
             required: false,
-            suffixIcon: Padding(
-              padding: const EdgeInsets.only(right: AppSpacings.sm),
-              child: SizedBox.square(
-                dimension: 48,
-                child: searching
-                    ? Center(child: _smallSpinner())
-                    : IconButton(
-                        icon: const Icon(Icons.search_rounded),
-                        tooltip: tr('search'),
-                        onPressed: doingSomething
-                            ? null
-                            : () => runSearch(context),
-                      ),
-              ),
-            ),
+            suffixIcon: isTV
+                ? null
+                : Padding(
+                    padding: const EdgeInsets.only(right: AppSpacings.sm),
+                    child: searchAction,
+                  ),
           ),
         ],
       ],
@@ -1040,6 +1048,17 @@ class AddAppPageState extends State<AddAppPage> {
           });
         }
       },
+    );
+    if (!isTV) return form;
+    return Row(
+      children: [
+        Expanded(child: form),
+        const SizedBox(width: AppSpacings.sm),
+        Padding(
+          padding: const EdgeInsets.only(right: AppSpacings.sm),
+          child: searchAction,
+        ),
+      ],
     );
   }
 
@@ -1063,6 +1082,24 @@ class AddAppPageState extends State<AddAppPage> {
         }
         return const SizedBox.shrink();
       },
+    );
+  }
+
+  Widget _fieldAction({
+    required bool loading,
+    required IconData icon,
+    required String tooltip,
+    required VoidCallback? onPressed,
+  }) {
+    return SizedBox.square(
+      dimension: 48,
+      child: loading
+          ? Center(child: _smallSpinner())
+          : IconButton(
+              icon: Icon(icon),
+              tooltip: tooltip,
+              onPressed: onPressed,
+            ),
     );
   }
 
