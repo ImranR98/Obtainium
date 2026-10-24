@@ -1,12 +1,18 @@
+import 'dart:convert';
+
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
+import 'package:intl/date_symbol_data_local.dart';
+import 'package:intl/intl.dart';
 import 'package:obtainium/app_sources/uptodown.dart';
 import 'package:obtainium/custom_errors.dart';
 
 class _UptodownWithPage extends Uptodown {
   final String page;
+  final List<Map<String, dynamic>> searchResults;
+  final requests = <String>[];
 
-  _UptodownWithPage(this.page);
+  _UptodownWithPage(this.page, {this.searchResults = const []});
 
   @override
   Future<http.Response> sourceRequest(
@@ -14,11 +20,25 @@ class _UptodownWithPage extends Uptodown {
     Map<String, dynamic> additionalSettings, {
     bool followRedirects = true,
     Object? postBody,
-  }) async => http.Response(
-    page,
-    200,
-    headers: {'content-type': 'text/html; charset=utf-8'},
-  );
+  }) async {
+    requests.add(url);
+    if (url == 'https://en.uptodown.com/android/en/s') {
+      return http.Response(
+        jsonEncode({
+          'success': 1,
+          'data': {'apps': searchResults},
+        }),
+        200,
+      );
+    }
+    return http.Response(
+      Uri.parse(url).path == '/android/download'
+          ? page
+          : '<div class="version">1.17.3</div>',
+      200,
+      headers: {'content-type': 'text/html; charset=utf-8'},
+    );
+  }
 }
 
 void main() {
@@ -55,6 +75,101 @@ void main() {
   <tr><th>Package Name</th><td>ai.character.app</td></tr>
 </table></section>
 ''';
+
+  test(
+    'search returns canonical Android download pages and skips invalid rows',
+    () async {
+      final source = _UptodownWithPage(
+        page('APK'),
+        searchResults: [
+          {
+            'url': 'https://google-play.en.uptodown.com/android',
+            'name': '<b>Google</b> Play',
+            'author': 'Google LLC',
+            'platformURL': '/android',
+          },
+          {
+            'url': 'https://character-ai.ru.uptodown.com/android',
+            'name': 'Character AI',
+            'author': 'Character.AI',
+            'platformURL': '/android',
+          },
+          {
+            'url': 'https://google-play.en.uptodown.com/android/download',
+            'name': 'Google Play',
+            'author': 'Google LLC',
+            'platformURL': '/android',
+          },
+          {
+            'url': 'https://unrelated.example/android',
+            'name': 'Invalid',
+            'platformURL': '/android',
+          },
+          {
+            'url': 'https://desktop.en.uptodown.com/windows',
+            'name': 'Desktop',
+            'platformURL': '/windows',
+          },
+        ],
+      );
+      final results = await source.search('Google Play');
+      expect(results.keys, [
+        'https://google-play.en.uptodown.com/android/download',
+        url,
+      ]);
+      expect(results.values.first, ['Google Play', 'Google LLC']);
+      expect(source.requests, ['https://en.uptodown.com/android/en/s']);
+    },
+  );
+
+  test(
+    'a selected search result works with the source override used by the add flow',
+    () async {
+      final source = _UptodownWithPage(
+        page('APK'),
+        searchResults: [
+          {
+            'url': 'https://character-ai.en.uptodown.com/android',
+            'name': 'Character AI',
+            'platformURL': '/android',
+          },
+        ],
+      );
+      final selected = (await source.search('Character AI')).keys.single;
+      source.hostChanged = true;
+      source.hostIdenticalDespiteAnyChange = true;
+      final result = await source.getLatestAPKDetails(
+        source.standardizeUrl(selected),
+        {},
+      );
+      expect(source.requests.last, url);
+      expect(result.version, '1.17.3');
+      expect(result.apkUrls.single.value, '$url/1213975188-x');
+      expect(result.releaseDate, DateTime(2026, 9, 11));
+    },
+  );
+
+  test('English page dates do not depend on the app locale', () async {
+    await initializeDateFormatting('zh');
+    await Intl.withLocale('zh', () async {
+      for (final date in ['Oct 21, 2026', 'October 21, 2026']) {
+        final source = _UptodownWithPage(
+          page('APK').replaceFirst('Sep 11, 2026', date),
+        );
+        expect(
+          (await source.getLatestAPKDetails(url, {})).releaseDate,
+          DateTime(2026, 10, 21),
+        );
+      }
+    });
+  });
+
+  test('invalid calendar dates remain unset', () async {
+    final source = _UptodownWithPage(
+      page('APK').replaceFirst('Sep 11, 2026', 'Feb 30, 2026'),
+    );
+    expect((await source.getLatestAPKDetails(url, {})).releaseDate, isNull);
+  });
 
   test('parses all app details from the download page', () async {
     final source = _UptodownWithPage(page('XAPK'));

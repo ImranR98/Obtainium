@@ -268,6 +268,7 @@
     "importedAppsIdDisclaimer": "가져온 앱은 \"설치되지 않음\"으로 잘못 표시될 수 있습니다.\n이를 수정하려면 Obtainium을 통해 다시 설치하십시오.\n앱 데이터에는 영향을 미치지 않습니다.\n\nURL 및 타사 가져오기 방법에만 영향을 미칩니다.",
     "importedX": "{} 가져오기 완료",
     "importedXOfYApps": "{}개의 앱 중 {}개 가져오기 완료.",
+    "includeDrafts": "Include drafts (needs a token with write access to the repository)",
     "includePrereleases": "사전 릴리스 포함",
     "includePrereleasesByDefault": "기본값으로 사전 릴리스 포함",
     "includeSettings": "설정 포함",

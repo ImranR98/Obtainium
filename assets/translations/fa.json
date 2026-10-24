@@ -268,6 +268,7 @@
     "importedAppsIdDisclaimer": "ممکن است برنامه‌های وارد شده به اشتباه به‌عنوان \"نصب نشده\" نشان داده شوند.\nبرای رفع این مشکل، آنها را دوباره از طریق Obtainium نصب کنید.\nاین نباید روی داده‌های برنامه تأثیر بگذارد.\n\nفقط بر روی آدرس اینترنتی و روش‌های درون ریزی شخص ثالث تأثیر می‌گذارد.",
     "importedX": "وارد شده {}",
     "importedXOfYApps": "{} از {} برنامه وارد شد.",
+    "includeDrafts": "Include drafts (needs a token with write access to the repository)",
     "includePrereleases": "شامل نسخه های اولیه",
     "includePrereleasesByDefault": "Include pre-releases by default",
     "includeSettings": "شامل تنظیمات",

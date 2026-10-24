@@ -268,6 +268,7 @@
     "importedAppsIdDisclaimer": "匯入的應用程式可能會錯誤顯示為「未安裝」。\n要修復此問題，請透過 Obtainium 重新安裝它們。\n這應該不會影響應用程式資料。\n\n僅影響網址和第三方匯入方法。",
     "importedX": "已匯入 {}",
     "importedXOfYApps": "已匯入 {}/{} 個應用程式。",
+    "includeDrafts": "Include drafts (needs a token with write access to the repository)",
     "includePrereleases": "包含預先發佈版本",
     "includePrereleasesByDefault": "預設包含預先發佈版本",
     "includeSettings": "包含設定",

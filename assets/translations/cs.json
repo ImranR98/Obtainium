@@ -274,6 +274,7 @@
     "importedAppsIdDisclaimer": "Importované aplikace mohou být nesprávně zobrazeny jako „nenainstalované“.\nChcete-li to opravit, nainstalujte je znovu prostřednictvím aplikace Obtainium.\nNemá vliv na data aplikací.\n\nOvlivňuje pouze způsoby importu URL a třetích stran.",
     "importedX": "Importováno {}",
     "importedXOfYApps": "Importováno {} z {} aplikací.",
+    "includeDrafts": "Include drafts (needs a token with write access to the repository)",
     "includePrereleases": "Zahrnout předběžná vydání",
     "includePrereleasesByDefault": "Include pre-releases by default",
     "includeSettings": "Zahrnout nastavení",

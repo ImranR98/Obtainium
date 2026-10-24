@@ -268,6 +268,7 @@
     "importedAppsIdDisclaimer": "Aplikasi yang diimpor mungkin secara salah ditampilkan sebagai \"Tidak terpasang\".\nUntuk memperbaikinya, lakukan pemasangan ulang melalui Obtainium.\nHal ini seharusnya tidak mempengaruhi data aplikasi.\n\nHanya mempengaruhi metode impor URL dan pihak ketiga.",
     "importedX": "{} diimpor",
     "importedXOfYApps": "{} dari {} aplikasi diimpor.",
+    "includeDrafts": "Include drafts (needs a token with write access to the repository)",
     "includePrereleases": "Sertakan pra-rilis",
     "includePrereleasesByDefault": "Include pre-releases by default",
     "includeSettings": "Sertakan pengaturan",

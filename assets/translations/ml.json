@@ -268,6 +268,7 @@
     "importedAppsIdDisclaimer": "ഇംപോർട്ട് ചെയ്ത ആപ്പുകൾ \"ഇൻസ്റ്റാൾ ചെയ്തിട്ടില്ല\" എന്ന് തെറ്റായി കാണിച്ചേക്കാം.\nഇത് ശരിയാക്കാൻ, ഒബ്‌റ്റേനിയം വഴി അവ വീണ്ടും ഇൻസ്റ്റാൾ ചെയ്യുക.\nഇത് ആപ്പ് ഡാറ്റയെ ബാധിക്കില്ല.\n\nURL, മൂന്നാം കക്ഷി ഇംപോർട്ട് രീതികളെ മാത്രം ബാധിക്കുന്നു.",
     "importedX": "{} ഇംപോർട്ട് ചെയ്തു",
     "importedXOfYApps": "{} ആപ്പുകളിൽ {} എണ്ണം ഇംപോർട്ട് ചെയ്തു.",
+    "includeDrafts": "Include drafts (needs a token with write access to the repository)",
     "includePrereleases": "പ്രീ-റിലീസുകൾ ഉൾപ്പെടുത്തുക",
     "includePrereleasesByDefault": "Include pre-releases by default",
     "includeSettings": "ക്രമീകരണങ്ങൾ ഉൾപ്പെടുത്തുക",

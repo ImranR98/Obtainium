@@ -268,6 +268,7 @@
     "importedAppsIdDisclaimer": "İçe aktarılan uygulamalar hatalı şekilde \"yüklenmemiş\" olarak gözükebilir.\nBunu düzeltmek için, bu uygulamaları Obtainium ile yeniden yükleyin.\nBu, uygulama verilerini etkilememelidir.\n\nSadece URL ve üçüncü parti içe aktarma yöntemlerini etkiler.",
     "importedX": "{} içe aktarıldı",
     "importedXOfYApps": "{}/{} uygulama içe aktarıldı.",
+    "includeDrafts": "Include drafts (needs a token with write access to the repository)",
     "includePrereleases": "Ön sürümleri dahil et",
     "includePrereleasesByDefault": "Varsayılan olarak ön sürümleri dahil et",
     "includeSettings": "Ayarları dahil et",
