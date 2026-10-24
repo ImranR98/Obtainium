@@ -713,7 +713,6 @@ class AddAppPageState extends State<AddAppPage> {
     }
     return GeneratedForm(
       tileMode: true,
-      headerTopPadding: AppSpacings.sm,
       key: Key(
         '${s.name}-${s.hostChanged.toString()}-${s.hostIdenticalDespiteAnyChange.toString()}',
       ),

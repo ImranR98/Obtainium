@@ -1222,7 +1222,7 @@ class _SelectionModalState extends State<SelectionModal> {
       // A single flexible row keeps the select-all count from pushing the
       // actions into AlertDialog's vertical overflow layout. The label
       // ellipsizes on very narrow screens instead.
-      actionsPadding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
+      actionsPadding: const EdgeInsets.fromLTRB(12, 16, 12, 12),
       actions: [
         Row(
           children: [
