@@ -276,6 +276,7 @@
     "importedAppsIdDisclaimer": "Импортированные приложения могут неверно отображаться как неустановленные.\nДля исправления этой проблемы повторно установите их через Obtainium.\nЭто не должно повлиять на данные приложения.\n\nПроблемы возникают только при импорте из URL-адреса и сторонних источников.",
     "importedX": "Импортировано {}",
     "importedXOfYApps": "Импортировано приложений: {} из {}",
+    "includeDrafts": "Include drafts (needs a token with write access to the repository)",
     "includePrereleases": "Включать предварительные выпуски",
     "includePrereleasesByDefault": "Включать предварительные выпуски по умолчанию",
     "includeSettings": "Включить настройки",

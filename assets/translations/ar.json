@@ -268,6 +268,7 @@
     "importedAppsIdDisclaimer": "قد تظهر التطبيقات المستوردة بشكل غير صحيح كـ \"غير مثبتة\".\nلإصلاح هذا، ثبتها عبر Obtainium.\nهذا لا يؤثر على بيانات التطبيق.\n\nينطبق فقط على طرق الاستيراد عبر الروابط أو الطرف الثالث.",
     "importedX": "استوردت {}",
     "importedXOfYApps": "استوردت {} من {} تطبيقات.",
+    "includeDrafts": "Include drafts (needs a token with write access to the repository)",
     "includePrereleases": "تضمين الإصدارات الأولية",
     "includePrereleasesByDefault": "تضمين الإصدارات التجريبية افتراضيًا",
     "includeSettings": "ضمّن الإعدادات",

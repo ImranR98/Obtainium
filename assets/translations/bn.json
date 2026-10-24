@@ -268,6 +268,7 @@
     "importedAppsIdDisclaimer": "ইম্পোর্ট করা অ্যাপগুলো ভুলবশত \"ইনস্টল করা নেই\" হিসেবে দেখাতে পারে।\nএটি ঠিক করতে, Obtainium-এর মাধ্যমে সেগুলো পুনরায় ইনস্টল করুন।\nএতে অ্যাপের ডেটা প্রভাবিত হওয়া উচিত নয়।\n\nএটি শুধুমাত্র URL এবং তৃতীয় পক্ষের ইম্পোর্ট পদ্ধতির ক্ষেত্রে প্রযোজ্য।",
     "importedX": "{} ইম্পোর্ট করা হয়েছে",
     "importedXOfYApps": "{}/{}টি অ্যাপ ইম্পোর্ট করা হয়েছে।",
+    "includeDrafts": "Include drafts (needs a token with write access to the repository)",
     "includePrereleases": "প্রি-রিলিজ অন্তর্ভুক্ত করুন",
     "includePrereleasesByDefault": "ডিফল্টভাবে প্রি-রিলিজ অন্তর্ভুক্ত করুন",
     "includeSettings": "সেটিংস অন্তর্ভুক্ত করুন",
