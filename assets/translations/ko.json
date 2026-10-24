@@ -357,6 +357,7 @@
     "onlyCheckInstalledOrTrackOnlyApps": "설치된 앱과 추적 전용 앱만 업데이트 확인",
     "onlyWorksWithNonVersionDetectApps": "버전 감지가 비활성화된 앱에만 작동합니다.",
     "openApp": "Open {}",
+    "openInBrowser": "Open in browser",
     "openReleasePage": "Open release page",
     "overrideSource": "소스 재정의",
     "parallelDownloads": "병렬 다운로드 허용",

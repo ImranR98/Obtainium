@@ -357,6 +357,7 @@
     "onlyCheckInstalledOrTrackOnlyApps": "Yalnızca yüklü ve 'sadece takip edilen' uygulamaların güncellemesini denetle",
     "onlyWorksWithNonVersionDetectApps": "Yalnızca sürüm algılamasının devre dışı olduğu uygulamalarda çalışır.",
     "openApp": "Open {}",
+    "openInBrowser": "Open in browser",
     "openReleasePage": "Open release page",
     "overrideSource": "Kaynağı geçersiz kıl",
     "parallelDownloads": "Paralel indirmelere izin ver",

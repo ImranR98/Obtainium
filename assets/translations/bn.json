@@ -357,6 +357,7 @@
     "onlyCheckInstalledOrTrackOnlyApps": "কেবল ইনস্টল করা এবং ট্র্যাক-অনলি অ্যাপের আপডেট চেক করুন",
     "onlyWorksWithNonVersionDetectApps": "শুধুমাত্র ভার্সন ডিটেকশন নিষ্ক্রিয় থাকা অ্যাপগুলোর জন্য কাজ করে।",
     "openApp": "{} খুলুন",
+    "openInBrowser": "Open in browser",
     "openReleasePage": "রিলিজ পেজ খুলুন",
     "overrideSource": "সোর্স ওভাররাইড করুন",
     "parallelDownloads": "একযোগে ডাউনলোডের অনুমতি দিন",

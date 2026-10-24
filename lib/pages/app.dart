@@ -1020,6 +1020,20 @@ class _AppPageState extends State<AppPage> {
               ),
             ),
           ),
+          if (app?.app.url.isNotEmpty == true)
+            Align(
+              alignment: Alignment.centerLeft,
+              child: TextButton.icon(
+                onPressed: () => unawaited(
+                  launchUrlString(
+                    app!.app.url,
+                    mode: LaunchMode.externalApplication,
+                  ),
+                ),
+                icon: const Icon(Icons.open_in_browser, size: 18),
+                label: Text(tr('openInBrowser')),
+              ),
+            ),
           const SizedBox(height: 4),
           Text(
             app?.app.id ?? '',

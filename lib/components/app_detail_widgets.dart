@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:easy_localization/easy_localization.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:obtainium/components/ui_widgets.dart';
@@ -8,6 +10,7 @@ import 'package:obtainium/providers/apps_provider.dart';
 import 'package:obtainium/providers/settings_provider.dart';
 import 'package:obtainium/providers/source_provider.dart';
 import 'package:provider/provider.dart';
+import 'package:url_launcher/url_launcher_string.dart';
 
 String appInstalledVersionText(App? app) {
   final installed = app?.installedVersion;
@@ -52,10 +55,20 @@ class AppInfoDialog extends StatelessWidget {
               color: Theme.of(context).colorScheme.onSurfaceVariant,
             ),
           ),
-          Text(
-            app.app.url,
-            style: textTheme.labelSmall?.copyWith(
-              decoration: TextDecoration.underline,
+          InkWell(
+            onTap: app.app.url.isEmpty
+                ? null
+                : () => unawaited(
+                    launchUrlString(
+                      app.app.url,
+                      mode: LaunchMode.externalApplication,
+                    ),
+                  ),
+            child: Text(
+              app.app.url,
+              style: textTheme.labelSmall?.copyWith(
+                decoration: TextDecoration.underline,
+              ),
             ),
           ),
           Text(app.app.id, style: textTheme.labelSmall),
@@ -78,6 +91,17 @@ class AppInfoDialog extends StatelessWidget {
         ],
       ),
       actions: [
+        if (app.app.url.isNotEmpty)
+          TextButton.icon(
+            onPressed: () => unawaited(
+              launchUrlString(
+                app.app.url,
+                mode: LaunchMode.externalApplication,
+              ),
+            ),
+            icon: const Icon(Icons.open_in_browser),
+            label: Text(tr('openInBrowser')),
+          ),
         FilledButton.tonal(
           autofocus: isTV,
           onPressed: () => Navigator.of(context).pop(),
