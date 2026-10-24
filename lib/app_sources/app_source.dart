@@ -365,6 +365,20 @@ abstract class AppSource {
     [GeneratedFormTextField('appName', label: tr('appName'), required: false)],
     [GeneratedFormTextField('appAuthor', label: tr('author'), required: false)],
     [
+      GeneratedFormDropdown(
+        'installerMode',
+        [
+          const MapEntry('', 'useGlobalDefault'),
+          MapEntry(InstallerMode.system.name, 'installMethodSystem'),
+          MapEntry(InstallerMode.shizuku.name, 'installMethodShizuku'),
+          MapEntry(InstallerMode.external.name, 'installMethodExternal'),
+          MapEntry(InstallerMode.root.name, 'installMethodRoot'),
+        ],
+        label: tr('installMethod'),
+        required: false,
+      ),
+    ],
+    [
       GeneratedFormSwitch(
         'shizukuPretendToBeGooglePlay',
         label: tr('shizukuPretendToBeGooglePlay'),

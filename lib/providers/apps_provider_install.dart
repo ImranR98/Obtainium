@@ -82,6 +82,15 @@ bool shouldPollForInstallConfirmation(
   return installerModeKey != 'external';
 }
 
+/// The installer mode for [app]: its own `installerMode` setting when it sets
+/// a known one, otherwise [globalMode].
+String installerModeFor(App? app, String globalMode) {
+  final own = app?.settings.getStringOrNull('installerMode');
+  return own != null && InstallerMode.values.any((m) => m.name == own)
+      ? own
+      : globalMode;
+}
+
 class _InstallResult {
   final String id;
   final bool willBeSilent;
@@ -97,9 +106,10 @@ class _InstallResult {
 
 /// App download, install, and on-device package operations for [AppsProvider].
 extension AppsProviderInstall on AppsProvider {
-  /// Returns the [Installer] strategy for the current installer mode setting.
-  Installer getInstaller() {
-    switch (settingsProvider.installerMode) {
+  /// Returns the [Installer] strategy for [app]'s install method, or for the
+  /// global installer mode setting when the app doesn't set one.
+  Installer getInstaller([App? app]) {
+    switch (installerModeFor(app, settingsProvider.installerMode)) {
       case 'shizuku':
         return ShizukuInstaller(settingsProvider);
       case 'external':
@@ -497,7 +507,7 @@ extension AppsProviderInstall on AppsProvider {
     }
     // Installer-specific eligibility (target SDK, installer of record, OS
     // version, Shizuku, etc.) is delegated to the active installer strategy.
-    return getInstaller().canInstallSilently(app);
+    return getInstaller(app).canInstallSilently(app);
   }
 
   /// Whether [app] should be installed silently in the background: the
@@ -669,7 +679,7 @@ extension AppsProviderInstall on AppsProvider {
   }) async {
     // Try installing all APKs; succeed if at least one installed.
     var somethingInstalled = false;
-    final installer = getInstaller();
+    final installer = getInstaller(apps[dir.appId]?.app);
     try {
       final MultiAppMultiError errors = MultiAppMultiError();
       List<File> apkFiles = [];
@@ -821,7 +831,7 @@ extension AppsProviderInstall on AppsProvider {
     }
     final allAPKs = [file.file.path];
     allAPKs.addAll(additionalAPKs.map((a) => a.file.path));
-    final installer = getInstaller();
+    final installer = getInstaller(apps[file.appId]?.app);
     final InstallResult result =
         shouldPollForInstallConfirmation(
           installer.modeKey,
@@ -1173,7 +1183,7 @@ extension AppsProviderInstall on AppsProvider {
     NotificationsProvider? notificationsProvider,
   ) async {
     try {
-      await getInstaller().ensurePermission();
+      await getInstaller(apps[res.id]?.app).ensurePermission();
       final BuildContext? installContext = context?.mounted == true
           ? context
           : null;
@@ -1620,7 +1630,7 @@ extension AppsProviderInstall on AppsProvider {
       final contextIfNewInstall = appEntry.installedInfo == null
           ? context
           : null;
-      final String installerModeKey = getInstaller().modeKey;
+      final String installerModeKey = getInstaller(appEntry.app).modeKey;
       // Only the stock session-based installer needs the background-completion
       // workaround (its install await never returns in the background).
       final bool needBGWorkaround =
@@ -1746,7 +1756,7 @@ extension AppsProviderInstall on AppsProvider {
       notify();
       if (!isBg) settingsProvider.lightImpact();
       willBeSilent = await canInstallSilently(apps[id]!.app);
-      final installer = getInstaller();
+      final installer = getInstaller(apps[id]!.app);
       // Only the stock installer surfaces a system install prompt that pulls the
       // user away; wait for them to return before proceeding.
       if (!willBeSilent &&
