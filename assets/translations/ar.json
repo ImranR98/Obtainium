@@ -408,6 +408,7 @@
     "rawJson": "JSON خام",
     "refresh": "Refresh",
     "refreshBeforeDownload": "تحديث تفاصيل التطبيق قبل التنزيل",
+    "detectionDateAsReleaseDate": "Use the time an update was found as its release date when the source gives none",
     "releaseAsset": "ملف الإصدار",
     "releaseDate": "تاريخ الإصدار",
     "releaseDateAsVersion": "استخدم تاريخ الإصدار كسلسلة إصدار",

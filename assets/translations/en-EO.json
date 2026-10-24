@@ -408,6 +408,7 @@
     "rawJson": "Raw JSON",
     "refresh": "Refresh",
     "refreshBeforeDownload": "Refresh app details before download",
+    "detectionDateAsReleaseDate": "Use the time an update was found as its release date when the source gives none",
     "releaseAsset": "Aktiva versio",
     "releaseDate": "Eldondato",
     "releaseDateAsVersion": "Uzi eldondato kiel versioĉeno",

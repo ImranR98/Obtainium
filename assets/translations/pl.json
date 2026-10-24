@@ -426,6 +426,7 @@
     "rawJson": "Surowy JSON",
     "refresh": "Odśwież",
     "refreshBeforeDownload": "Odświeżaj szczegóły aplikacji przed pobraniem",
+    "detectionDateAsReleaseDate": "Use the time an update was found as its release date when the source gives none",
     "releaseAsset": "Zasób wydania",
     "releaseDate": "Data wydania",
     "releaseDateAsVersion": "Używaj daty wydania jako wersji",

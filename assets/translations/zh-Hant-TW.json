@@ -408,6 +408,7 @@
     "rawJson": "Raw JSON",
     "refresh": "Refresh",
     "refreshBeforeDownload": "下載前重新整理應用程式詳細資料",
+    "detectionDateAsReleaseDate": "Use the time an update was found as its release date when the source gives none",
     "releaseAsset": "發佈資產",
     "releaseDate": "發佈日期",
     "releaseDateAsVersion": "將發佈日期作為版本字串",

@@ -408,6 +408,7 @@
     "rawJson": "Raw JSON",
     "refresh": "Refresh",
     "refreshBeforeDownload": "Actualitza les dades de l'aplicació abans de descarregar-la",
+    "detectionDateAsReleaseDate": "Use the time an update was found as its release date when the source gives none",
     "releaseAsset": "Recurs actualitzat",
     "releaseDate": "Data de publicació",
     "releaseDateAsVersion": "Usa la data de llançament com a cadena de la versió",

@@ -408,6 +408,7 @@
     "rawJson": "Raw JSON",
     "refresh": "Refresh",
     "refreshBeforeDownload": "Atualizar detalhes do app antes de baixar",
+    "detectionDateAsReleaseDate": "Use the time an update was found as its release date when the source gives none",
     "releaseAsset": "Item de lançamento",
     "releaseDate": "Data de lançamento",
     "releaseDateAsVersion": "Usar data de lançamento como número da versão",

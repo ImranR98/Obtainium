@@ -408,6 +408,7 @@
     "rawJson": "Roh-JSON",
     "refresh": "Neu laden",
     "refreshBeforeDownload": "App-Details vor dem Download aktualisieren",
+    "detectionDateAsReleaseDate": "Use the time an update was found as its release date when the source gives none",
     "releaseAsset": "Release-Anhang",
     "releaseDate": "Veröffentlichungsdatum",
     "releaseDateAsVersion": "Veröffentlichungsdatum als Version verwenden",

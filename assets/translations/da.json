@@ -408,6 +408,7 @@
     "rawJson": "Raw JSON",
     "refresh": "Refresh",
     "refreshBeforeDownload": "Opdater app-detaljer før download",
+    "detectionDateAsReleaseDate": "Use the time an update was found as its release date when the source gives none",
     "releaseAsset": "Udgivelsesressource",
     "releaseDate": "Udgivelsesdato",
     "releaseDateAsVersion": "Brug udgivelsesdato som versionsstreng",

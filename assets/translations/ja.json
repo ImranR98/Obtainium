@@ -408,6 +408,7 @@
     "rawJson": "Raw JSON",
     "refresh": "更新",
     "refreshBeforeDownload": "ダウンロード前にアプリの詳細を更新する",
+    "detectionDateAsReleaseDate": "Use the time an update was found as its release date when the source gives none",
     "releaseAsset": "リリースアセット",
     "releaseDate": "リリース日",
     "releaseDateAsVersion": "リリース日をバージョンとして使用する",

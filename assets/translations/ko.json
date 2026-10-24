@@ -408,6 +408,7 @@
     "rawJson": "Raw JSON",
     "refresh": "Refresh",
     "refreshBeforeDownload": "다운로드 전에 앱 세부 정보 새로 고침",
+    "detectionDateAsReleaseDate": "Use the time an update was found as its release date when the source gives none",
     "releaseAsset": "릴리스 자산",
     "releaseDate": "릴리스 날짜",
     "releaseDateAsVersion": "릴리스 날짜를 버전 문자열로 사용",

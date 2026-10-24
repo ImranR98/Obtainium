@@ -415,6 +415,7 @@
     "rawJson": "Raw JSON",
     "refresh": "Refresh",
     "refreshBeforeDownload": "Obnovit údaje o aplikaci před stažením",
+    "detectionDateAsReleaseDate": "Use the time an update was found as its release date when the source gives none",
     "releaseAsset": "Soubor vydání",
     "releaseDate": "Datum vydání",
     "releaseDateAsVersion": "Použít datum vydání jako verzi",

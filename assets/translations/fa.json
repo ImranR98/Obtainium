@@ -408,6 +408,7 @@
     "rawJson": "Raw JSON",
     "refresh": "Refresh",
     "refreshBeforeDownload": "قبل از دانلود، جزئیات برنامه را بازخوانی کنید",
+    "detectionDateAsReleaseDate": "Use the time an update was found as its release date when the source gives none",
     "releaseAsset": "انتشار دارایی",
     "releaseDate": "تاریخ انتشار",
     "releaseDateAsVersion": "از تاریخ انتشار به عنوان نسخه استفاده کنید",
