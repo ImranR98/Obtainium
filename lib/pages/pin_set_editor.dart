@@ -3,6 +3,7 @@ import 'dart:typed_data';
 
 import 'package:easy_localization/easy_localization.dart';
 import 'package:file_picker/file_picker.dart';
+import 'package:material_3p/material.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:obtainium/components/generated_form_renderer.dart';
 import 'package:obtainium/components/ui_widgets.dart';
@@ -129,10 +130,16 @@ class _PinSetEditorPageState extends State<PinSetEditorPage> {
                     FilledButton.icon(
                       onPressed: _saving ? null : _save,
                       icon: _saving
-                          ? const SizedBox(
-                              width: 18,
-                              height: 18,
-                              child: CircularProgressIndicator(strokeWidth: 2),
+                          ? Builder(
+                              builder: (context) {
+                                final iconTheme = IconTheme.of(context);
+                                return SizedBox.square(
+                                  dimension: iconTheme.size ?? 20,
+                                  child: IndeterminateLoadingIndicator(
+                                    activeIndicatorColor: iconTheme.color,
+                                  ),
+                                );
+                              },
                             )
                           : const Icon(Icons.save),
                       label: Text(tr('save')),
