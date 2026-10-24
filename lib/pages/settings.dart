@@ -717,6 +717,7 @@ class _SettingsPageState extends State<SettingsPage> {
       ),
       GeneratedForm(
         tileMode: true,
+        joinedTiles: false,
         items: [
           [
             GeneratedFormTextField(
