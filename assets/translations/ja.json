@@ -268,6 +268,7 @@
     "importedAppsIdDisclaimer": "インポートしたアプリが「未インストール」と表示されることがあります。\nこの問題を解決するには、Obtainiumから再インストールしてください。\n通常、アプリのデータには影響しません。\n\nこの問題は、URLからのインポートと、他のサービスからのインポートでのみ発生します。",
     "importedX": "{} をインポートしました",
     "importedXOfYApps": "{} / {} アプリをインポートしました",
+    "includeDrafts": "Include drafts (needs a token with write access to the repository)",
     "includePrereleases": "プレリリースを含む",
     "includePrereleasesByDefault": "デフォルトでプレリリースを含める",
     "includeSettings": "設定を含む",

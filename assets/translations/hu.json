@@ -268,6 +268,7 @@
     "importedAppsIdDisclaimer": "Előfordulhat, hogy az importált alkalmazások helytelenül „Nincs telepítve” jelzéssel jelennek meg.\nA probléma megoldásához telepítse újra őket az Obtainiumon keresztül.\nEz nem érinti az alkalmazásadatokat.\n\nCsak a webcímekre és a harmadik féltől származó importálási módszerekre vonatkozik.",
     "importedX": "Importálva innen: {}",
     "importedXOfYApps": "{}/{} alkalmazás importálva.",
+    "includeDrafts": "Include drafts (needs a token with write access to the repository)",
     "includePrereleases": "Tartalmazza az előzetes kiadásokat",
     "includePrereleasesByDefault": "Előzetes verziók belefoglalása alapértelmezés szerint",
     "includeSettings": "Tartalmazza a beállításokat",
