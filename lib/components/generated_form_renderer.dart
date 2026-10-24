@@ -25,6 +25,7 @@ class GeneratedForm extends StatefulWidget {
     this.tileMode = false,
     this.noTilePadding = false,
     this.autofocusFirstTextField = false,
+    this.headerTopPadding = AppSpacings.xl,
   });
 
   final List<List<GeneratedFormItem>> items;
@@ -32,6 +33,7 @@ class GeneratedForm extends StatefulWidget {
 
   final bool tileMode;
   final bool noTilePadding;
+  final double headerTopPadding;
 
   /// On TV, focuses the first text field's wrapper when the form is built so
   /// pages do not open without a focus ring.
@@ -611,8 +613,8 @@ class _GeneratedFormState extends State<GeneratedForm> {
   Widget _buildHeader(GeneratedFormHeader item) {
     final header = SectionHeader(
       tr(item.label),
-      padding: const EdgeInsets.only(
-        top: AppSpacings.xl,
+      padding: EdgeInsets.only(
+        top: widget.headerTopPadding,
         bottom: AppSpacings.sm,
       ),
     );

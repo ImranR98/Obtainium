@@ -713,6 +713,7 @@ class AddAppPageState extends State<AddAppPage> {
     }
     return GeneratedForm(
       tileMode: true,
+      headerTopPadding: AppSpacings.sm,
       key: Key(
         '${s.name}-${s.hostChanged.toString()}-${s.hostIdenticalDespiteAnyChange.toString()}',
       ),
@@ -742,7 +743,7 @@ class AddAppPageState extends State<AddAppPage> {
   ) => Column(
     crossAxisAlignment: CrossAxisAlignment.stretch,
     children: [
-      const SizedBox(height: AppSpacings.xxl + AppSpacings.lg),
+      const SizedBox(height: AppSpacings.xl),
       Text(
         tr('additionalOptsFor', args: [pickedSource?.name ?? tr('source')]),
         style: Theme.of(context).textTheme.titleMedium?.copyWith(
@@ -882,18 +883,6 @@ class AddAppPageState extends State<AddAppPage> {
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  if (pickedSource == null)
-                    Padding(
-                      padding: const EdgeInsets.symmetric(
-                        vertical: AppSpacings.sm,
-                      ),
-                      child: Text(
-                        tr('addAppHint'),
-                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: Theme.of(context).colorScheme.onSurfaceVariant,
-                        ),
-                      ),
-                    ),
                   _buildUrlRow(context, settingsProvider, doingSomething),
                   if (pickedSource != null) ...[
                     const SizedBox(height: 13),
@@ -941,19 +930,21 @@ class AddAppPageState extends State<AddAppPage> {
             required: false,
             suffixIcon: Padding(
               padding: const EdgeInsets.only(right: AppSpacings.sm),
-              child: gettingAppInfo
-                  ? _smallSpinner()
-                  : IconButton(
-                      icon: const Icon(Icons.add_rounded),
-                      visualDensity: VisualDensity.compact,
-                      tooltip: tr('add'),
-                      onPressed: canAdd
-                          ? () {
-                              settingsProvider.selectionClick();
-                              addApp(context);
-                            }
-                          : null,
-                    ),
+              child: SizedBox.square(
+                dimension: 48,
+                child: gettingAppInfo
+                    ? Center(child: _smallSpinner())
+                    : IconButton(
+                        icon: const Icon(Icons.add_rounded),
+                        tooltip: tr('add'),
+                        onPressed: canAdd
+                            ? () {
+                                settingsProvider.selectionClick();
+                                addApp(context);
+                              }
+                            : null,
+                      ),
+              ),
             ),
             additionalValidators: [
               (value) {
@@ -1026,16 +1017,18 @@ class AddAppPageState extends State<AddAppPage> {
             required: false,
             suffixIcon: Padding(
               padding: const EdgeInsets.only(right: AppSpacings.sm),
-              child: searching
-                  ? _smallSpinner()
-                  : IconButton(
-                      icon: const Icon(Icons.search_rounded),
-                      visualDensity: VisualDensity.compact,
-                      tooltip: tr('search'),
-                      onPressed: doingSomething
-                          ? null
-                          : () => runSearch(context),
-                    ),
+              child: SizedBox.square(
+                dimension: 48,
+                child: searching
+                    ? Center(child: _smallSpinner())
+                    : IconButton(
+                        icon: const Icon(Icons.search_rounded),
+                        tooltip: tr('search'),
+                        onPressed: doingSomething
+                            ? null
+                            : () => runSearch(context),
+                      ),
+              ),
             ),
           ),
         ],
