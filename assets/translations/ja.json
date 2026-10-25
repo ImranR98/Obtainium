@@ -358,7 +358,6 @@
     "onlyCheckInstalledOrTrackOnlyApps": "インストール済みのアプリと「追跡のみ」のアプリのアップデートのみを確認する",
     "onlyWorksWithNonVersionDetectApps": "バージョン検出を無効にしているアプリにのみ適用されます。",
     "openApp": "{}を開く",
-    "openInBrowser": "Open in browser",
     "openReleasePage": "リリースページを開く",
     "overrideSource": "ソースの上書き",
     "parallelDownloads": "並行ダウンロードを許可する",

@@ -367,7 +367,6 @@
     "onlyCheckInstalledOrTrackOnlyApps": "Проверять обновления только у установленных или отслеживаемых приложений",
     "onlyWorksWithNonVersionDetectApps": "Работает только для приложений с отключённым определением версии",
     "openApp": "Открыть {}",
-    "openInBrowser": "Open in browser",
     "openReleasePage": "Открыть страницу выпуска",
     "overrideSource": "Переопределить источник",
     "parallelDownloads": "Загружать параллельно",

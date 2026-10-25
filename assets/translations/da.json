@@ -358,7 +358,6 @@
     "onlyCheckInstalledOrTrackOnlyApps": "Tjek kun installerede og 'Følg Kun'-apps for opdateringer",
     "onlyWorksWithNonVersionDetectApps": "Virker kun for apps med versionsregistrering deaktiveret.",
     "openApp": "Open {}",
-    "openInBrowser": "Open in browser",
     "openReleasePage": "Open release page",
     "overrideSource": "Tilsidesæt kilde",
     "parallelDownloads": "Tillad samtidige overførsler",

@@ -358,7 +358,6 @@
     "onlyCheckInstalledOrTrackOnlyApps": "Nur mit „Nur nachverfolgen“ markierte und installierte Apps auf Aktualisierungen prüfen",
     "onlyWorksWithNonVersionDetectApps": "Funktioniert nur bei Apps mit deaktivierter Versionserkennung.",
     "openApp": "{} öffnen",
-    "openInBrowser": "Open in browser",
     "openReleasePage": "Release-Seite öffnen",
     "overrideSource": "Quelle überschreiben",
     "parallelDownloads": "Parallele Downloads erlauben",

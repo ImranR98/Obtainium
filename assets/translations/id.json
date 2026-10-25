@@ -358,7 +358,6 @@
     "onlyCheckInstalledOrTrackOnlyApps": "Hanya periksa aplikasi yang dipasang dan ditandai 'Pelacakan Saja' untuk pembaruan",
     "onlyWorksWithNonVersionDetectApps": "Hanya bekerja untuk aplikasi dengan pendeteksi versi yang nonaktif.",
     "openApp": "Open {}",
-    "openInBrowser": "Open in browser",
     "openReleasePage": "Open release page",
     "overrideSource": "Ganti sumber",
     "parallelDownloads": "Izinkan mengunduh paralel",

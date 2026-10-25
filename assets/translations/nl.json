@@ -358,7 +358,6 @@
     "onlyCheckInstalledOrTrackOnlyApps": "Alleen geïnstalleerde apps en 'Alleen volgen' controleren op updates",
     "onlyWorksWithNonVersionDetectApps": "Werkt alleen voor apps waarbij versieherkenning is uitgeschakeld.",
     "openApp": "Open {}",
-    "openInBrowser": "Open in browser",
     "openReleasePage": "Publicatiepagina openen",
     "overrideSource": "Bron overschrijven",
     "parallelDownloads": "Parallelle installaties toestaan",
