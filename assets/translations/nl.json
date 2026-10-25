@@ -145,6 +145,7 @@
     "copiedToClipboard": "Gekopieerd naar klembord",
     "copyToClipboard": "Kopiëren naar klembord",
     "paste": "Paste",
+    "showPasteButton": "Show a paste button in the add app URL field",
     "couldNotExtractArchive": "Could not extract the downloaded archive",
     "couldNotGetIdFromApk": "Kon ID van APK niet vinden",
     "crowdsourcedConfigsLabel": "App-configuraties door gemeenschap (gebruik op eigen risico)",

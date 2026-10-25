@@ -145,6 +145,7 @@
     "copiedToClipboard": "클립보드에 복사됨",
     "copyToClipboard": "클립보드에 복사",
     "paste": "Paste",
+    "showPasteButton": "Show a paste button in the add app URL field",
     "couldNotExtractArchive": "Could not extract the downloaded archive",
     "couldNotGetIdFromApk": "APK의 ID를 확인할 수 없습니다",
     "crowdsourcedConfigsLabel": "크라우드소싱 앱 구성 (자신의 책임 하에 사용)",

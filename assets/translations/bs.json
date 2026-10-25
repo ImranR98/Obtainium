@@ -145,6 +145,7 @@
     "copiedToClipboard": "Podaci kopirani u međuspremnik",
     "copyToClipboard": "Kopiraj u međuspremnik",
     "paste": "Paste",
+    "showPasteButton": "Show a paste button in the add app URL field",
     "couldNotExtractArchive": "Could not extract the downloaded archive",
     "couldNotGetIdFromApk": "Nije moguće dobiti ID iz APK-a",
     "crowdsourcedConfigsLabel": "Konfiguracije aplikacije obezbeđene pomoću velikog broja ljudi (crowdsourcing) (koristite na svoju odgovornost)",

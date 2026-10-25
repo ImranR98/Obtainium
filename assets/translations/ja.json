@@ -145,6 +145,7 @@
     "copiedToClipboard": "クリップボードにコピーしました",
     "copyToClipboard": "クリップボードにコピー",
     "paste": "Paste",
+    "showPasteButton": "Show a paste button in the add app URL field",
     "couldNotExtractArchive": "ダウンロードしたアーカイブを展開できませんでした",
     "couldNotGetIdFromApk": "APKからIDを取得できませんでした",
     "crowdsourcedConfigsLabel": "クラウドソーシングによるアプリの設定（利用は自己責任で）",

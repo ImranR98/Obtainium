@@ -145,6 +145,7 @@
     "copiedToClipboard": "Copiat al porta-retalls",
     "copyToClipboard": "Copy to clipboard",
     "paste": "Paste",
+    "showPasteButton": "Show a paste button in the add app URL field",
     "couldNotExtractArchive": "Could not extract the downloaded archive",
     "couldNotGetIdFromApk": "Could not get ID from APK",
     "crowdsourcedConfigsLabel": "Configuració de les aplicacions crowdsourcing (usa-ho sota la teva responsabilitat)",

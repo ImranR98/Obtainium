@@ -900,12 +900,13 @@ class AddAppPageState extends State<AddAppPage> {
             },
           ),
         ),
-        IconButton(
-          icon: const Icon(Icons.content_paste_rounded),
-          visualDensity: VisualDensity.compact,
-          tooltip: tr('paste'),
-          onPressed: doingSomething ? null : pasteUrl,
-        ),
+        if (context.select<SettingsProvider, bool>((s) => s.showPasteButton))
+          IconButton(
+            icon: const Icon(Icons.content_paste_rounded),
+            visualDensity: VisualDensity.compact,
+            tooltip: tr('paste'),
+            onPressed: doingSomething ? null : pasteUrl,
+          ),
         const SizedBox(width: AppSpacings.elementGap),
         gettingAppInfo
             ? _smallSpinner()

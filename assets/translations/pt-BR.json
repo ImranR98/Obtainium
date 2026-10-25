@@ -145,6 +145,7 @@
     "copiedToClipboard": "Copiado para a área de transferência",
     "copyToClipboard": "Copiar para a área de transferência",
     "paste": "Paste",
+    "showPasteButton": "Show a paste button in the add app URL field",
     "couldNotExtractArchive": "Could not extract the downloaded archive",
     "couldNotGetIdFromApk": "Não foi possível obter o ID do APK",
     "crowdsourcedConfigsLabel": "Configurações de app pela comunidade (use ao seu próprio risco)",

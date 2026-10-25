@@ -145,6 +145,7 @@
     "copiedToClipboard": "Sao chép vào clipboard",
     "copyToClipboard": "Copy to clipboard",
     "paste": "Paste",
+    "showPasteButton": "Show a paste button in the add app URL field",
     "couldNotExtractArchive": "Could not extract the downloaded archive",
     "couldNotGetIdFromApk": "Could not get ID from APK",
     "crowdsourcedConfigsLabel": "Cấu hình ứng dụng do cộng đồng đóng góp (tự chịu rủi ro khi sử dụng)",

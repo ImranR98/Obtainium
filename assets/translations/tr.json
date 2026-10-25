@@ -145,6 +145,7 @@
     "copiedToClipboard": "Panoya kopyalandı",
     "copyToClipboard": "Panoya kopyala",
     "paste": "Paste",
+    "showPasteButton": "Show a paste button in the add app URL field",
     "couldNotExtractArchive": "Could not extract the downloaded archive",
     "couldNotGetIdFromApk": "APK'dan kimlik alınamadı",
     "crowdsourcedConfigsLabel": "Topluluk kaynaklı uygulama yapılandırmaları (sorumluluk size aittir)",

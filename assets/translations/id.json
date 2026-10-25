@@ -145,6 +145,7 @@
     "copiedToClipboard": "Disalin ke papan klip",
     "copyToClipboard": "Copy to clipboard",
     "paste": "Paste",
+    "showPasteButton": "Show a paste button in the add app URL field",
     "couldNotExtractArchive": "Could not extract the downloaded archive",
     "couldNotGetIdFromApk": "Could not get ID from APK",
     "crowdsourcedConfigsLabel": "Konfigurasi aplikasi Crowdsourced (risiko penggunaan ditanggung sendiri)",

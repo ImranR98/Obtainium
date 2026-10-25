@@ -145,6 +145,7 @@
     "copiedToClipboard": "已複製到剪貼簿",
     "copyToClipboard": "Copy to clipboard",
     "paste": "Paste",
+    "showPasteButton": "Show a paste button in the add app URL field",
     "couldNotExtractArchive": "Could not extract the downloaded archive",
     "couldNotGetIdFromApk": "Could not get ID from APK",
     "crowdsourcedConfigsLabel": "群眾外包應用程式設定（使用風險自負）",

@@ -648,6 +648,11 @@ class _SettingsPageState extends State<SettingsPage> {
         helpWidgets: [Text(tr('allowAddingAppsWithoutCheckHelp'))],
       ),
       ToggleTile(
+        label: tr('showPasteButton'),
+        value: settingsProvider.showPasteButton,
+        onChanged: (value) => settingsProvider.showPasteButton = value,
+      ),
+      ToggleTile(
         label: tr('onlyCheckInstalledOrTrackOnlyApps'),
         value: settingsProvider.onlyCheckInstalledOrTrackOnlyApps,
         onChanged: (value) =>

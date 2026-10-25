@@ -654,6 +654,15 @@ class SettingsProvider with ChangeNotifier {
     notifyListeners();
   }
 
+  bool get showPasteButton {
+    return _getBool('showPasteButton') ?? false;
+  }
+
+  set showPasteButton(bool value) {
+    prefs?.setBool('showPasteButton', value);
+    notifyListeners();
+  }
+
   bool get enableBackgroundUpdates {
     return _getBool('enableBackgroundUpdates') ?? true;
   }

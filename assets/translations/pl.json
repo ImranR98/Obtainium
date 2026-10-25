@@ -157,6 +157,7 @@
     "copiedToClipboard": "Skopiowano do schowka",
     "copyToClipboard": "Skopiuj do schowka",
     "paste": "Paste",
+    "showPasteButton": "Show a paste button in the add app URL field",
     "couldNotExtractArchive": "Could not extract the downloaded archive",
     "couldNotGetIdFromApk": "Nie udało się pobrać ID z pliku APK",
     "crowdsourcedConfigsLabel": "Konfiguracje społeczności (używasz na własne ryzyko)",
