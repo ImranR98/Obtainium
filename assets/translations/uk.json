@@ -358,7 +358,6 @@
     "onlyCheckInstalledOrTrackOnlyApps": "Перевіряти лише встановлені та застосунки, які відстежуються для оновлень",
     "onlyWorksWithNonVersionDetectApps": "Працює лише з застосунками з вимкненим визначенням версії.",
     "openApp": "Open {}",
-    "openInBrowser": "Open in browser",
     "openReleasePage": "Open release page",
     "overrideSource": "Перевизначити джерело",
     "parallelDownloads": "Дозволити паралельні завантаження",

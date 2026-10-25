@@ -365,7 +365,6 @@
     "onlyCheckInstalledOrTrackOnlyApps": "Aktualizace kontrolovat pouze u nainstalovaných a sledovaných aplikací",
     "onlyWorksWithNonVersionDetectApps": "Funguje pouze pro aplikace s vypnutou detekcí verze.",
     "openApp": "Open {}",
-    "openInBrowser": "Open in browser",
     "openReleasePage": "Open release page",
     "overrideSource": "Přepsat zdroj",
     "parallelDownloads": "Povolit souběžné stahování",

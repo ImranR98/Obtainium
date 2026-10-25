@@ -358,7 +358,6 @@
     "onlyCheckInstalledOrTrackOnlyApps": "Isključivo provjerite ažuriranje za instalirane i aplikacije 'samo za praćenje'",
     "onlyWorksWithNonVersionDetectApps": "Radi samo za aplikacije s onemogućenom detekcijom verzije.",
     "openApp": "Otvori {}",
-    "openInBrowser": "Open in browser",
     "openReleasePage": "Otvori stranicu s objavama",
     "overrideSource": "Premosti izvor",
     "parallelDownloads": "Dozvoli paralelna preuzimanja",
