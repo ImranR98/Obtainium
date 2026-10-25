@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'dart:typed_data';
 
 import 'package:easy_localization/easy_localization.dart' hide TextDirection;
+import 'package:material_3p/material.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:obtainium/components/app_list_tile.dart';
 import 'package:obtainium/utils/string_utils.dart';
@@ -65,8 +66,8 @@ class AppsPageState extends State<AppsPage> {
 
   final TextEditingController searchController = TextEditingController();
   final ScrollController scrollController = ScrollController();
-  final GlobalKey<RefreshIndicatorState> refreshIndicatorKey =
-      GlobalKey<RefreshIndicatorState>();
+  final GlobalKey<CustomPullToRefreshState> pullToRefreshKey =
+      GlobalKey<CustomPullToRefreshState>();
 
   Timer? _searchDebounce;
 
@@ -86,7 +87,7 @@ class AppsPageState extends State<AppsPage> {
       _autoRefreshTriggered = true;
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (!mounted) return;
-        refreshIndicatorKey.currentState?.show();
+        pullToRefreshKey.currentState?.show();
       });
     }
   }
@@ -1172,12 +1173,7 @@ class AppsPageState extends State<AppsPage> {
       return [
         const SliverFillRemaining(
           hasScrollBody: false,
-          child: Center(
-            child: CircularProgressIndicator(
-              strokeCap: StrokeCap.round,
-              strokeWidth: 6,
-            ),
-          ),
+          child: Center(child: IndeterminateLoadingIndicator()),
         ),
       ];
     }
@@ -1303,14 +1299,16 @@ class AppsPageState extends State<AppsPage> {
         body: GestureDetector(
           behavior: HitTestBehavior.translucent,
           onTap: () => FocusManager.instance.primaryFocus?.unfocus(),
-          child: RefreshIndicator(
-            key: refreshIndicatorKey,
+          child: CustomPullToRefresh(
+            key: pullToRefreshKey,
             onRefresh: refresh,
-            child: Scrollbar(
+            builder: (context, controller) => Scrollbar(
               interactive: true,
               controller: scrollController,
               child: CustomScrollView(
-                physics: const AlwaysScrollableScrollPhysics(),
+                physics: AlwaysScrollableScrollPhysics(
+                  parent: controller.createScrollPhysics(),
+                ),
                 controller: scrollController,
                 slivers: <Widget>[
                   CustomAppBar(
@@ -1331,7 +1329,7 @@ class AppsPageState extends State<AppsPage> {
                       if (settingsProvider.isTV)
                         IconButton(
                           onPressed: () =>
-                              refreshIndicatorKey.currentState?.show(),
+                              pullToRefreshKey.currentState?.show(),
                           icon: const Icon(Icons.refresh_rounded),
                           tooltip: tr('refresh'),
                         ),
@@ -1357,6 +1355,19 @@ class AppsPageState extends State<AppsPage> {
                     ),
                   ..._getLoadingWidgets(context, appsProvider, listedApps),
                   const _RefreshProgressBar(),
+                  SliverToBoxAdapter(
+                    child: PullToRefreshDefaultLayout(
+                      controller: controller,
+                      child: Center(
+                        child: PullToRefreshFadeTransition(
+                          controller: controller,
+                          child: PullToRefreshLoadingIndicator(
+                            controller: controller,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
                   _getDisplayedList(
                     context,
                     listedApps,
