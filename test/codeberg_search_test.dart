@@ -70,6 +70,24 @@ void main() {
       );
     });
 
+    final customHostUrls = {
+      'http://192.0.2.10:3000/user/repo': 'http://192.0.2.10:3000/user/repo',
+      'http://192.0.2.10:3000/user/repo/releases':
+          'http://192.0.2.10:3000/user/repo',
+      'https://git.example.com:8443/user/repo':
+          'https://git.example.com:8443/user/repo',
+      'https://git.example.com/user/repo/releases':
+          'https://git.example.com/user/repo',
+    };
+    for (final entry in customHostUrls.entries) {
+      test('normalizes custom host URL ${entry.key}', () {
+        final source = Codeberg()
+          ..hosts = [Uri.parse(entry.key).host]
+          ..hostChanged = true;
+        expect(source.standardizeUrl(entry.key), entry.value);
+      });
+    }
+
     test('keeps the default codeberg.org behavior', () {
       expect(
         Codeberg().standardizeUrl(
