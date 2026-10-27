@@ -6,6 +6,7 @@ import 'package:material_ui/material_ui.dart';
 import 'package:flutter/semantics.dart';
 import 'package:flutter_markdown_plus/flutter_markdown_plus.dart';
 import 'package:markdown/markdown.dart' as md;
+import 'package:obtainium/app_sources/github.dart';
 import 'package:obtainium/components/generated_form_renderer.dart';
 import 'package:obtainium/main.dart';
 import 'package:obtainium/theme.dart';
@@ -24,6 +25,25 @@ import 'package:url_launcher/url_launcher_string.dart';
 final RegExp _changelogUrlRegEx = RegExp(
   '(http|ftp|https)://([\\w_-]+(?:(?:\\.[\\w_-]+)+))([\\w.,@?^=%&:/~+#-]*[\\w@?^=%&/~+#-])?',
 );
+
+String resolveChangeLogLink(App app, AppSource appSource, String href) {
+  if (href.startsWith('http://') || href.startsWith('https://')) return href;
+  final release = appSource is GitHub
+      ? Uri.tryParse(app.releaseUrl ?? '')
+      : null;
+  final link = Uri.tryParse(href);
+  if (release != null &&
+      release.path.contains('/releases/tag/') &&
+      link != null &&
+      !link.hasScheme) {
+    if (link.hasAuthority || link.path.isEmpty || link.path.startsWith('/')) {
+      return release.resolveUri(link).toString();
+    }
+    return '${release.toString().replaceFirst('/releases/tag/', '/blob/')}'
+        '${Uri(path: '/').resolveUri(link)}';
+  }
+  return '${Uri.parse(app.url).origin}/$href';
+}
 
 void showChangeLogDialog(
   BuildContext context,
@@ -59,14 +79,12 @@ void showChangeLogDialog(
                       ),
                     ),
                     data: changeLog,
+                    softLineBreak: true,
                     onTapLink: (text, href, title) {
                       if (href != null) {
                         unawaited(
                           launchUrlString(
-                            href.startsWith('http://') ||
-                                    href.startsWith('https://')
-                                ? href
-                                : '${Uri.parse(app.url).origin}/$href',
+                            resolveChangeLogLink(app, appSource, href),
                             mode: LaunchMode.externalApplication,
                           ),
                         );
