@@ -322,6 +322,15 @@ class SourceProvider {
         throw NoAPKError()..url = standardUrl;
       }
     }
+    var preferredApkIndex =
+        currentApp?.preferredApkIndex ??
+        (apk.apkUrls.isNotEmpty ? apk.apkUrls.length - 1 : 0);
+    if (additionalSettings['autoApkFilterByArch'] == true) {
+      preferredApkIndex = await resolvePreferredApkIndexForArchFilter(
+        apk.apkUrls,
+        preferredApkIndex,
+      );
+    }
     var name = currentApp != null ? currentApp.name.trim() : '';
     name = name.isNotEmpty ? name : apk.names.name;
     final App finalApp = App(
@@ -340,9 +349,7 @@ class SourceProvider {
       installedVersion: currentApp?.installedVersion,
       latestVersion: apk.version,
       apkUrls: apk.apkUrls,
-      preferredApkIndex:
-          currentApp?.preferredApkIndex ??
-          (apk.apkUrls.isNotEmpty ? apk.apkUrls.length - 1 : 0),
+      preferredApkIndex: preferredApkIndex,
       additionalSettings: additionalSettings,
       lastUpdateCheck: DateTime.now(),
       pinned: currentApp?.pinned ?? false,
