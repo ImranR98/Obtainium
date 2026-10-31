@@ -26,6 +26,14 @@
         "other": "…and {} more errors"
     },
     "andOneMoreError": "…and 1 more error",
+    "androidCertStore": "Android certificate store",
+    "androidCertStoreHelp": "Use Android's certificate store for HTTPS requests, including certificates you add or disable in Android settings and Android's proxy settings. This requires dynamic code loading; when it is blocked or disabled, Obtainium uses Flutter's fallback network client.",
+    "androidCertStoreUnavailable": "Unavailable (dynamic code loading is blocked)",
+    "androidCertStoreUnavailableHelp": "Allow dynamic code loading via memory for Obtainium in the app's exploit protection settings to enable this. On GrapheneOS: Settings → Apps → Obtainium → Exploit protection.",
+    "androidCertStoreWarningP1": "Your operating system is blocking dynamic code loading for Obtainium. Obtainium's normal network client needs it, so Obtainium switched to its fallback network client to avoid crashing.",
+    "androidCertStoreWarningP2": "The fallback does not use Android's certificate store. Certificates you added or disabled in Android settings, and Android's proxy settings, will not apply. Certificate pinning still works.",
+    "androidCertStoreWarningP3": "To use Android's certificate store, allow dynamic code loading via memory for Obtainium in the app's exploit protection settings, then reopen Obtainium. On GrapheneOS: Settings → Apps → Obtainium → Exploit protection.",
+    "androidCertStoreWarningTitle": "Android certificate store unavailable",
     "apk": {
         "one": "{} APK",
         "other": "{} APK"
@@ -358,6 +366,7 @@
     "onlyCheckInstalledOrTrackOnlyApps": "설치된 앱과 추적 전용 앱만 업데이트 확인",
     "onlyWorksWithNonVersionDetectApps": "버전 감지가 비활성화된 앱에만 작동합니다.",
     "openApp": "Open {}",
+    "openAppSettings": "Open app settings",
     "openReleasePage": "Open release page",
     "overrideSource": "소스 재정의",
     "parallelDownloads": "병렬 다운로드 허용",

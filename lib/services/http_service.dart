@@ -11,6 +11,7 @@ import 'package:http/http.dart' show HeadersWithSplitValues;
 import 'package:http/io_client.dart';
 import 'package:obtainium/core/logging/app_logger.dart';
 import 'package:obtainium/custom_errors.dart';
+import 'package:obtainium/services/dcl_support.dart';
 import 'package:obtainium/services/pin_store.dart';
 import 'package:obtainium/services/pinned_certificates.dart';
 
@@ -61,12 +62,32 @@ class HttpService {
   static final Map<String, Future<http.Client>> _ioClients = {};
   static http.Client? _cronetClient;
   static bool _cronetUnavailable = false;
+  static bool _androidCertStoreEnabled = true;
   static bool _defaultCertificatePinning = false;
+  static bool _loggedCertStoreDisabled = false;
+  static bool _loggedDclRestricted = false;
 
   static bool get isCronetInUse => _cronetClient != null;
 
   static void setDefaultCertificatePinning(bool enabled) {
     _defaultCertificatePinning = enabled;
+  }
+
+  static void setAndroidCertStoreEnabled(bool enabled) {
+    _androidCertStoreEnabled = enabled;
+    _loggedCertStoreDisabled = false;
+  }
+
+  static bool shouldUseCronet({
+    required bool isAndroid,
+    required bool androidCertStoreEnabled,
+    required bool execmemRestricted,
+    required bool cronetUnavailable,
+  }) {
+    return isAndroid &&
+        androidCertStoreEnabled &&
+        !execmemRestricted &&
+        !cronetUnavailable;
   }
 
   static Future<http.Client> _defaultClientFor(
@@ -132,7 +153,18 @@ class HttpService {
   }
 
   static http.Client? _tryCronetClient() {
-    if (!Platform.isAndroid || _cronetUnavailable) return null;
+    final execmemRestricted = _androidCertStoreEnabled
+        ? DclSupport.isExecmemRestricted
+        : false;
+    if (!shouldUseCronet(
+      isAndroid: Platform.isAndroid,
+      androidCertStoreEnabled: _androidCertStoreEnabled,
+      execmemRestricted: execmemRestricted,
+      cronetUnavailable: _cronetUnavailable,
+    )) {
+      _logCronetFallback(execmemRestricted);
+      return null;
+    }
     if (_cronetClient != null) return _cronetClient;
     try {
       final engine = CronetEngine.build(
@@ -151,6 +183,20 @@ class HttpService {
         message: 'HTTP: Cronet initialization failed; using dart:io',
       );
       return null;
+    }
+  }
+
+  static void _logCronetFallback(bool execmemRestricted) {
+    if (!Platform.isAndroid) return;
+    if (!_androidCertStoreEnabled) {
+      if (_loggedCertStoreDisabled) return;
+      _loggedCertStoreDisabled = true;
+      AppLogger.info('HTTP: Android certificate store disabled; using dart:io');
+      return;
+    }
+    if (execmemRestricted && !_loggedDclRestricted) {
+      _loggedDclRestricted = true;
+      AppLogger.info('HTTP: Android DCL restricted; using dart:io');
     }
   }
 

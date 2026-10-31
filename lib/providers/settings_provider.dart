@@ -14,6 +14,7 @@ import 'package:obtainium/providers/apps_provider.dart';
 import 'package:obtainium/core/logging/app_logger.dart';
 import 'package:obtainium/providers/document_tree_bridge.dart';
 import 'package:obtainium/providers/source_provider.dart';
+import 'package:obtainium/services/dcl_support.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:device_info_plus/device_info_plus.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -74,6 +75,7 @@ class SettingsProvider with ChangeNotifier {
   String? defaultAppDir;
   bool justStarted = true;
   bool isTV = false;
+  Future<void>? _initializeFuture;
 
   T? _get<T>(String key) {
     final value = prefs?.get(key);
@@ -93,10 +95,17 @@ class SettingsProvider with ChangeNotifier {
   static String? _cachedDefaultAppDir;
   static bool? _cachedIsTV;
 
-  Future<void> initializeSettings() async {
+  Future<void> initializeSettings() {
+    return _initializeFuture ??= _initializeSettings();
+  }
+
+  Future<void> _initializeSettings() async {
     prefs = await SharedPreferences.getInstance();
     HttpService.setDefaultCertificatePinning(
       _getBool('enableCertificatePinning') ?? false,
+    );
+    HttpService.setAndroidCertStoreEnabled(
+      useAndroidCertStore && !memoryDclRestricted,
     );
     _cachedDefaultAppDir ??= (await getAppStorageDir()).path;
     if (_cachedIsTV == null) {
@@ -673,6 +682,27 @@ class SettingsProvider with ChangeNotifier {
   set enableCertificatePinning(bool enableCertificatePinning) {
     prefs?.setBool('enableCertificatePinning', enableCertificatePinning);
     HttpService.setDefaultCertificatePinning(enableCertificatePinning);
+    notifyListeners();
+  }
+
+  bool get memoryDclRestricted => DclSupport.isExecmemRestricted;
+
+  bool get useAndroidCertStore {
+    return _getBool('useAndroidCertStore') ?? true;
+  }
+
+  set useAndroidCertStore(bool value) {
+    prefs?.setBool('useAndroidCertStore', value);
+    HttpService.setAndroidCertStoreEnabled(value && !memoryDclRestricted);
+    notifyListeners();
+  }
+
+  bool get dclWarningShown {
+    return _getBool('dclWarningShown') ?? false;
+  }
+
+  set dclWarningShown(bool value) {
+    prefs?.setBool('dclWarningShown', value);
     notifyListeners();
   }
 

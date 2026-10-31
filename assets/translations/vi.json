@@ -26,6 +26,14 @@
         "other": "…and {} more errors"
     },
     "andOneMoreError": "…and 1 more error",
+    "androidCertStore": "Android certificate store",
+    "androidCertStoreHelp": "Use Android's certificate store for HTTPS requests, including certificates you add or disable in Android settings and Android's proxy settings. This requires dynamic code loading; when it is blocked or disabled, Obtainium uses Flutter's fallback network client.",
+    "androidCertStoreUnavailable": "Unavailable (dynamic code loading is blocked)",
+    "androidCertStoreUnavailableHelp": "Allow dynamic code loading via memory for Obtainium in the app's exploit protection settings to enable this. On GrapheneOS: Settings → Apps → Obtainium → Exploit protection.",
+    "androidCertStoreWarningP1": "Your operating system is blocking dynamic code loading for Obtainium. Obtainium's normal network client needs it, so Obtainium switched to its fallback network client to avoid crashing.",
+    "androidCertStoreWarningP2": "The fallback does not use Android's certificate store. Certificates you added or disabled in Android settings, and Android's proxy settings, will not apply. Certificate pinning still works.",
+    "androidCertStoreWarningP3": "To use Android's certificate store, allow dynamic code loading via memory for Obtainium in the app's exploit protection settings, then reopen Obtainium. On GrapheneOS: Settings → Apps → Obtainium → Exploit protection.",
+    "androidCertStoreWarningTitle": "Android certificate store unavailable",
     "apk": {
         "one": "{} APK",
         "other": "{} APKs"
@@ -358,6 +366,7 @@
     "onlyCheckInstalledOrTrackOnlyApps": "Chỉ kiểm tra cập nhật các ứng dụng đã cài đặt và Chỉ theo dõi",
     "onlyWorksWithNonVersionDetectApps": "Chỉ hoạt động với Ứng dụng đã tắt tính năng phát hiện phiên bản.",
     "openApp": "Open {}",
+    "openAppSettings": "Open app settings",
     "openReleasePage": "Open release page",
     "overrideSource": "Ghi đè nguồn",
     "parallelDownloads": "Cho phép tải đa luồng",

@@ -26,6 +26,7 @@ import 'package:obtainium/utils/update_health.dart';
 import 'package:obtainium/utils/locale_utils.dart';
 import 'package:obtainium/utils/native_features.dart';
 import 'package:obtainium/utils/nav_helper.dart';
+import 'package:permission_handler/permission_handler.dart';
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher_string.dart';
 
@@ -584,6 +585,9 @@ class _SettingsPageState extends State<SettingsPage> {
     int sdk,
   ) {
     final settingsProvider = context.read<SettingsProvider>();
+    final certStoreBlocked = settingsProvider.memoryDclRestricted;
+    final certStoreEnabled =
+        settingsProvider.useAndroidCertStore && !certStoreBlocked;
     final children = <Widget>[
       SectionHeader(tr('backgroundChecks'), padding: _settingsSectionPadding),
       const CardTile(
@@ -687,6 +691,33 @@ class _SettingsPageState extends State<SettingsPage> {
             builder: (_) => const CertificatePinningPage(),
           ),
         ),
+      ),
+      ToggleTile(
+        label: tr('androidCertStore'),
+        value: certStoreEnabled,
+        onChanged: certStoreBlocked
+            ? null
+            : (value) => settingsProvider.useAndroidCertStore = value,
+        subtitle: Text(
+          tr(
+            certStoreBlocked
+                ? 'androidCertStoreUnavailable'
+                : certStoreEnabled
+                ? 'enabled'
+                : 'disabled',
+          ),
+        ),
+        helpWidgets: [
+          Text(tr('androidCertStoreHelp')),
+          if (certStoreBlocked) ...[
+            const SizedBox(height: AppSpacings.elementGap),
+            Text(tr('androidCertStoreUnavailableHelp')),
+            TextButton(
+              onPressed: () => unawaited(openAppSettings()),
+              child: Text(tr('openAppSettings')),
+            ),
+          ],
+        ],
       ),
       ToggleTile(
         label: tr('checkOnStart'),

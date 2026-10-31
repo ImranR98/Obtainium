@@ -4,6 +4,7 @@ import 'dart:convert';
 import 'package:app_links/app_links.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:material_ui/material_ui.dart';
+import 'package:obtainium/components/dcl_warning_dialog.dart';
 import 'package:obtainium/components/generated_form_renderer.dart';
 import 'package:obtainium/components/ui_widgets.dart';
 import 'package:obtainium/custom_errors.dart';
@@ -15,6 +16,7 @@ import 'package:obtainium/providers/settings_provider.dart';
 import 'package:obtainium/providers/source_provider.dart';
 import 'package:obtainium/theme.dart';
 import 'package:obtainium/utils/nav_helper.dart';
+import 'package:permission_handler/permission_handler.dart';
 import 'package:provider/provider.dart';
 
 class HomePage extends StatefulWidget {
@@ -98,6 +100,8 @@ class _HomePageState extends State<HomePage> {
 
   Future<void> showWelcomeDialogs() async {
     final sp = settingsProvider;
+    await sp.initializeSettings();
+    if (!mounted) return;
     if (!sp.welcomeShown) {
       await _showAcknowledgedDialog(
         isAcknowledged: () => sp.welcomeShown,
@@ -138,6 +142,19 @@ class _HomePageState extends State<HomePage> {
           ],
         ),
       );
+    }
+    if (!mounted) return;
+    if (sp.memoryDclRestricted &&
+        sp.useAndroidCertStore &&
+        !sp.dclWarningShown) {
+      await showDialog(
+        context: context,
+        builder: (_) => DclWarningDialog(
+          autofocus: sp.isTV,
+          onOpenSettings: () => unawaited(openAppSettings()),
+        ),
+      );
+      if (!sp.dclWarningShown) sp.dclWarningShown = true;
     }
   }
 
