@@ -63,10 +63,7 @@ void showChangeLogDialog(
                       if (href != null) {
                         unawaited(
                           launchUrlString(
-                            href.startsWith('http://') ||
-                                    href.startsWith('https://')
-                                ? href
-                                : '${Uri.parse(app.url).origin}/$href',
+                            appSource.resolveChangeLogLink(app, href),
                             mode: LaunchMode.externalApplication,
                           ),
                         );

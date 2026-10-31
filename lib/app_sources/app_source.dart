@@ -569,6 +569,15 @@ abstract class AppSource {
     return changeLogPageIsStandardUrl ? standardUrl : null;
   }
 
+  String resolveChangeLogLink(App app, String href) {
+    if (href.startsWith('#')) return href;
+    final uri = Uri.tryParse(href);
+    if (uri == null || uri.hasScheme || href.startsWith('//')) {
+      return href.startsWith('//') ? 'https:$href' : href;
+    }
+    return '${Uri.parse(app.url).origin}/$href';
+  }
+
   Future<String?> getSourceNote() async {
     return null;
   }

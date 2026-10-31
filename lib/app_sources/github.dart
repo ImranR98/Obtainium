@@ -487,6 +487,22 @@ class GitHub extends AppSource {
   String? changeLogPageFromStandardUrl(String standardUrl) =>
       '$standardUrl/releases';
 
+  @override
+  String resolveChangeLogLink(App app, String href) {
+    if (href.startsWith('#')) return href;
+    final uri = Uri.tryParse(href);
+    if (uri == null || uri.hasScheme || href.startsWith('//')) {
+      return super.resolveChangeLogLink(app, href);
+    }
+    final releaseUrl = app.releaseUrl;
+    final tag = releaseUrl != null && releaseUrl.isNotEmpty
+        ? Uri.parse(releaseUrl).pathSegments.last
+        : app.latestVersion;
+    if (tag.isEmpty) return super.resolveChangeLogLink(app, href);
+    final base = '${app.url}/blob/${Uri.encodeComponent(tag)}/';
+    return Uri.parse(base).resolve(href).toString();
+  }
+
   List<dynamic> _findReleaseAssetUrls(
     dynamic release,
     bool includeZips,
@@ -905,6 +921,7 @@ class GitHub extends AppSource {
         getAppNames(standardUrl),
         releaseDate: releaseDate,
         changeLog: changeLog.isEmpty ? null : changeLog,
+        releaseUrl: targetRelease['html_url'] as String?,
         allAssetUrls:
             targetRelease['allAssetUrls'] as List<MapEntry<String, String>>,
         isArchived: isArchived,
