@@ -30,8 +30,8 @@ packages:
     dependency: "direct main"
     description:
       path: "."
-      ref: b5bc0365bd7faab6f51f6ec8baf4a9dab0df9117
-      resolved-ref: b5bc0365bd7faab6f51f6ec8baf4a9dab0df9117
+      ref: "997065dccfaae71c4b34699ade7eedf5eeb66cac"
+      resolved-ref: "997065dccfaae71c4b34699ade7eedf5eeb66cac"
       url: "https://github.com/ImranR98/android_package_manager"
     source: git
     version: "0.7.1"
