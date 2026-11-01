@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:easy_localization/easy_localization.dart';
+import 'package:material_3p/material.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:obtainium/components/ui_widgets.dart';
 import 'package:obtainium/core/logging/app_log_db.dart';
@@ -256,7 +257,9 @@ class _LogsPageState extends State<LogsPage> {
         if (_loading)
           const SliverFillRemaining(
             hasScrollBody: false,
-            child: Center(child: CircularProgressIndicator()),
+            child: Center(
+              child: IndeterminateLoadingIndicator(contained: true),
+            ),
           )
         else if (_logs.isEmpty)
           SliverFillRemaining(

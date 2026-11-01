@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:easy_localization/easy_localization.dart';
+import 'package:material_3p/material.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:obtainium/components/ui_widgets.dart';
 import 'package:obtainium/components/generated_form_renderer.dart';
@@ -1093,20 +1094,17 @@ class AddAppPageState extends State<AddAppPage> {
     return SizedBox.square(
       dimension: 48,
       child: loading
-          ? Center(child: _smallSpinner())
+          ? const Center(
+              child: SizedBox.square(
+                dimension: 32,
+                child: IndeterminateLoadingIndicator(),
+              ),
+            )
           : IconButton(
               icon: Icon(icon),
               tooltip: tooltip,
               onPressed: onPressed,
             ),
-    );
-  }
-
-  Widget _smallSpinner() {
-    return const SizedBox(
-      width: 20,
-      height: 20,
-      child: CircularProgressIndicator(strokeWidth: 2),
     );
   }
 }
