@@ -112,22 +112,6 @@ class GitLab extends AppSource {
       '$standardUrl/-/releases';
 
   @override
-  String resolveChangeLogLink(App app, String href) {
-    if (href.startsWith('#')) return href;
-    final uri = Uri.tryParse(href);
-    if (uri == null || uri.hasScheme || href.startsWith('//')) {
-      return super.resolveChangeLogLink(app, href);
-    }
-    final releaseUrl = app.releaseUrl;
-    final tag = releaseUrl != null && releaseUrl.isNotEmpty
-        ? Uri.parse(releaseUrl).pathSegments.last
-        : app.latestVersion;
-    if (tag.isEmpty) return super.resolveChangeLogLink(app, href);
-    final base = '${app.url}/-/blob/${Uri.encodeComponent(tag)}/';
-    return Uri.parse(base).resolve(href).toString();
-  }
-
-  @override
   Future<Map<String, String>?> getRequestHeaders(
     Map<String, dynamic> additionalSettings,
     String url, {
