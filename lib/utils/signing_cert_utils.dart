@@ -6,6 +6,7 @@ import 'package:crypto/crypto.dart';
 final AndroidPackageManager _packageManager = AndroidPackageManager();
 final PackageInfoFlags _signingInfoFlags = PackageInfoFlags({
   PMFlag.getSigningCertificates,
+  PMFlag.getSignatures,
 });
 
 /// Formats a signing certificate (DER bytes) as an uppercase, colon-separated

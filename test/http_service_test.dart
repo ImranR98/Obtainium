@@ -151,6 +151,30 @@ void main() {
     expect(jsonDecode(seen.body), {'a': 1});
   });
 
+  group('Cronet selection', () {
+    bool canUse({
+      bool isAndroid = true,
+      bool androidCertStoreEnabled = true,
+      bool execmemRestricted = false,
+      bool cronetUnavailable = false,
+    }) {
+      return HttpService.shouldUseCronet(
+        isAndroid: isAndroid,
+        androidCertStoreEnabled: androidCertStoreEnabled,
+        execmemRestricted: execmemRestricted,
+        cronetUnavailable: cronetUnavailable,
+      );
+    }
+
+    test('requires Android, the setting and a usable DCL state', () {
+      expect(canUse(), isTrue);
+      expect(canUse(isAndroid: false), isFalse);
+      expect(canUse(androidCertStoreEnabled: false), isFalse);
+      expect(canUse(execmemRestricted: true), isFalse);
+      expect(canUse(cronetUnavailable: true), isFalse);
+    });
+  });
+
   group('HttpService error mapping', () {
     test('maps 404 to NoReleasesError', () {
       final error = HttpService().getHttpError(http.Response('', 404));

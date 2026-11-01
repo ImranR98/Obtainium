@@ -80,17 +80,18 @@ class ApkFilterService {
     'x86_64': ['x64'],
   };
 
+  static RegExp _abiRegex(String abi) {
+    final variants = [abi, ...?abiNameAliases[abi]];
+    return RegExp('.*(?:${variants.join('|')}).*', caseSensitive: false);
+  }
+
   Future<List<MapEntry<String, String>>> filterApksByArch(
     List<MapEntry<String, String>> apkUrls,
     List<String> abis,
   ) async {
     if (apkUrls.length > 1) {
       for (var abi in abis) {
-        final variants = [abi, ...?abiNameAliases[abi]];
-        final abiRegex = RegExp(
-          '.*(?:${variants.join('|')}).*',
-          caseSensitive: false,
-        );
+        final abiRegex = _abiRegex(abi);
         final urls2 = apkUrls
             .where((element) => abiRegex.hasMatch(element.key))
             .toList();
@@ -109,6 +110,29 @@ class ApkFilterService {
       }
     }
     return apkUrls;
+  }
+
+  int preferredApkIndexForArchFilter(
+    List<MapEntry<String, String>> apkUrls,
+    int preferredIndex,
+    List<String> abis,
+  ) {
+    if (preferredIndex < 0 || preferredIndex >= apkUrls.length) {
+      return preferredIndex;
+    }
+    final preferredKey = apkUrls[preferredIndex].key;
+    if (abis.any((abi) => _abiRegex(abi).hasMatch(preferredKey))) {
+      return preferredIndex;
+    }
+    if (!preferredKey.toLowerCase().contains('universal')) {
+      return preferredIndex;
+    }
+    for (final abi in abis) {
+      final abiRegex = _abiRegex(abi);
+      final index = apkUrls.indexWhere((e) => abiRegex.hasMatch(e.key));
+      if (index >= 0) return index;
+    }
+    return preferredIndex;
   }
 }
 
@@ -130,6 +154,18 @@ Future<List<MapEntry<String, String>>> filterApksByArch(
 ) async {
   final abis = (await DeviceInfoPlugin().androidInfo).supportedAbis;
   return ApkFilterService().filterApksByArch(apkUrls, abis);
+}
+
+Future<int> resolvePreferredApkIndexForArchFilter(
+  List<MapEntry<String, String>> apkUrls,
+  int preferredIndex,
+) async {
+  final abis = (await DeviceInfoPlugin().androidInfo).supportedAbis;
+  return ApkFilterService().preferredApkIndexForArchFilter(
+    apkUrls,
+    preferredIndex,
+    abis,
+  );
 }
 
 /// Delegates to [ApkFilterService.filterApks].

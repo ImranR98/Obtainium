@@ -230,6 +230,32 @@ the same URL can appear under multiple profiles without losing its settings.
   every build (including F-Droid). Do not remove it.
 - Cronet cannot disable TLS verification, so requests with `allowInsecure` use
   `dart:io` via `IOClient`. This is the only intentional exception.
+- Cronet needs Dart FFI callback trampolines, which require executable anonymous
+  memory. `lib/services/dcl_support.dart` checks the process's GrapheneOS flags
+  (`/proc/self/attr/grapheneos_flags`, older builds:
+  `/proc/self/attr/selinux_flags`) and tests bit 0 (`DENY_EXECMEM`), matching
+  `SELinuxFlags.isExecmemBlocked()`. Reading the attribute does not attempt DCL,
+  so it avoids the OS notification. If neither attribute exists, it falls back to
+  an `mmap(PROT_EXEC)` probe (the approach used by media-kit/Aves); that probe can
+  trigger the notification on a restricting build without the attribute. The
+  fallback can be removed once dart-lang/sdk#64137 is fixed.
+- This is memory DCL, not storage DCL. Every native library (`libcronet`,
+  `libdartjni`, `libapp`, `libflutter`) is packaged uncompressed under
+  `lib/<abi>/` with `extractNativeLibs=false`, so Android maps it from the APK;
+  nothing is extracted to app data. Do not add extraction to app data as a
+  workaround.
+- When DCL is blocked, `HttpService` uses `dart:io` instead of Cronet for the
+  default client (pinned and `allowInsecure` requests already use `dart:io`);
+  user-installed/disabled CAs and system proxy settings are then unavailable.
+  `SettingsProvider.initializeSettings()` applies the `useAndroidCertStore`
+  preference (default on) and `HttpService` also checks the DCL state itself, so
+  background isolates are safe. A one-time home-page dialog explains the fallback;
+  Settings → Updates → Android certificate store shows the current state and lets
+  users opt out of Cronet even when DCL is allowed.
+- The per-app DCL settings activity is guarded by `WRITE_SECURE_SETTINGS`, so the
+  app can only open the app info page (`openAppSettings`), not the DCL screen.
+- `grapheneos_flags` was renamed from `selinux_flags` in 2026. Support both; if
+  GrapheneOS renames it again, the `mmap` probe is the fallback.
 - Certificate pinning is opt-in. Settings → Updates → Certificate pinning opens a
   dedicated management page. Built-in pin sets come from `builtInPinnedHosts` in
   `lib/services/pinned_certificates.dart` and are kept virtual: the JSON store in

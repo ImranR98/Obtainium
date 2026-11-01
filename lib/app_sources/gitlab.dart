@@ -253,6 +253,8 @@ class GitLab extends AppSource {
           apkUrls.entries.toList(),
           AppNames(names.author, names.name.split('/').last),
           releaseDate: releaseDate,
+          releaseUrl:
+              '$standardUrl/-/releases/${Uri.encodeComponent(version.toString())}',
         );
       }).whereType<APKDetails>();
       if (apkDetailsList.isEmpty) {
