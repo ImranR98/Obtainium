@@ -13,7 +13,6 @@ import 'package:crypto/crypto.dart';
 import 'package:easy_localization/easy_localization.dart';
 
 import 'package:obtainium/app_sources/apk4free.dart';
-import 'package:obtainium/app_sources/apkcombo.dart';
 import 'package:obtainium/app_sources/apkmirror.dart';
 import 'package:obtainium/app_sources/apkpure.dart';
 import 'package:obtainium/app_sources/app_source.dart';
@@ -103,7 +102,6 @@ class SourceProvider {
     () => SourceForge(),
     () => Jenkins(),
     () => APKMirror(),
-    () => APKCombo(),
     () => RockMods(),
     () => TelegramApp(),
     () => NeutronCode(),
