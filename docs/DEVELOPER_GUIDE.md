@@ -433,6 +433,24 @@ APKMirror is track-only and keeps regular-page traffic to a minimum:
 - Package ids are inferred from the feed icon filename at add time; the feed is the
   only non-API source that is listing-scoped. Temp-ID apps stay on the feed.
 
+### Source-specific notes: APKCube
+
+APKCube is API-only, needs the user's key (Settings → Source-specific), and bills
+in credits, so paid calls are kept to a minimum:
+
+- **Update checks** use the free `POST /apps/availability`, batched via
+  `prefetchUpdateInfo` (≤100 apps per request) and cached per package for 5 min.
+- **Build details** come from `GET /apps/<package>/versions` (5 credits). It is
+  called once per new `versionCode`, only when the last `X-Credits-Remaining`
+  covers it plus a download.
+- **Downloads**: the stored APK URL is an opaque marker
+  (`apkcube:<package>:<versionCode>[:<apkId>]`), not a fetchable URL.
+  `generalReqPrefetchModifier` swaps it for a signed URL (10 credits).
+  `assetUrlPrefetchModifier` must stay free because the app page's size probe
+  calls it.
+- **Errors**: 429/503 are left to the host request gate. A rejected key blocks
+  calls for that key for 24 h, and other 5xx errors block calls for 5 min.
+
 ### `SourceProvider` (the service)
 
 - **Singleton** (`factory SourceProvider() => _instance`). All `SourceProvider()` calls

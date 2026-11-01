@@ -97,8 +97,8 @@ class _AppPageState extends State<AppPage> {
             app.app.apkUrls[apkIndex].value,
           ).where((u) => u.isNotEmpty && u != 'placeholder').toList()
         : const [];
-    if (urls.isEmpty) {
-      // Track-only sources resolve the size during update checks.
+    if (urls.isEmpty || app.app.apkSizeBytes != null) {
+      // Use the size the source stored during the update check, if any.
       final storedSize = app.app.apkSizeBytes;
       final key = '${app.app.id}|size';
       if (key == _sizeProbeKey && _probedDownloadSize == storedSize) return;
