@@ -249,6 +249,8 @@
     "globalApkFilterRegEx": "Sveopšti APK filtera regex-a",
     "globalVersionExtractionRegEx": "Global version trimming regex",
     "gitlabPATLabel": "GitLab token za lični pristup",
+    "apkCubeApiKeyLabel": "APKCube API key",
+    "invalidApiKey": "Invalid API key",
     "googleVerificationWarningP1": "Google je najavio da će, počevši od 2026./2027., sve aplikacije na „certificiranim\" Android uređajima zahtijevati da programer Googleu dostavi lične podatke o identitetu.\n\nPošto se programeri ove aplikacije ne slažu s tim zahtjevom, Obtainium više neće raditi na certificiranim Android uređajima nakon tog vremena.",
     "googleVerificationWarningP2": "Posjetite https://keepandroidopen.org/ za više informacija.",
     "googleVerificationWarningP3": "Imajte na umu da u kratkom roku i dalje može biti moguće instalirati „neverifikovane\" (nesukladne) aplikacije kroz „napredni tok\" koji je Google obećao implementirati nakon široke reakcije javnosti na njihovu najavu, ali nisu detaljno objasnili kako bi to funkcionisalo, pa nije jasno hoće li to stvarno sačuvati slobode korisnika na bilo koji praktičan način.\n\nU svakom slučaju, Googleov potez je značajan korak ka kraju slobodnog, opštenamjenskog računarstva za pojedince.\n\nNecertificirani operativni sistemi, poput GrapheneOS-a, ne bi trebali biti pogođeni ovime dok god im je dozvoljeno da nastave da postoje.",
