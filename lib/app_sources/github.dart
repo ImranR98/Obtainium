@@ -905,6 +905,7 @@ class GitHub extends AppSource {
         getAppNames(standardUrl),
         releaseDate: releaseDate,
         changeLog: changeLog.isEmpty ? null : changeLog,
+        releaseUrl: targetRelease['html_url'] as String?,
         allAssetUrls:
             targetRelease['allAssetUrls'] as List<MapEntry<String, String>>,
         isArchived: isArchived,
