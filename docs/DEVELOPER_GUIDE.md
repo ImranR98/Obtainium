@@ -684,7 +684,7 @@ Four concrete implementations:
 | `StockInstaller` | `android_package_installer` plugin (PackageInstaller session API) | Standard installs; supports silent install via ADB-granted `INSTALL_PACKAGES` |
 | `ShizukuInstaller` | `shizuku_apk_installer` plugin | Self-update of Obtainium itself, or when Shizuku/Dhizuku/Sui is available |
 | `ExternalInstaller` | Native `MethodChannel` bridge (`external_install_bridge.dart` + `MainActivity.kt`) | Hands off to a third-party installer app chosen by the user; lists eligible targets via `listInstallTargets()` and converts file paths to `content://` URIs via `FileProvider` |
-| `RootInstaller` | `su` + `pm install` CLI | Elevated installs for the current foreground user, not just user 0 (needed under multi-user) |
+| `RootInstaller` | `su` + `pm install` CLI | Elevated installs into the user or profile Obtainium itself runs in (derived from its own uid, so work profiles get `--user 10` rather than the foreground user 0), not just user 0 (needed under multi-user) |
 
 Samsung Galaxy Store apps expose an opt-in installation-source switch next to
 the existing per-app Google Play switch. These switches are mutually exclusive.
