@@ -55,42 +55,37 @@ class Farsroid extends AppSource {
       final res = await sourceRequest(standardUrl, additionalSettings);
       ensureHttpSuccess(res);
       final html = parse(res.body);
-      final dlinks = html.querySelectorAll('.download-links');
+      final dlinks = html.querySelectorAll('#secure-json [data-j]');
       if (dlinks.isEmpty) {
         throw NoReleasesError();
       }
-      final postId = dlinks.first.attributes['data-post-id'] ?? '';
-      var version = dlinks.first.attributes['data-post-version'] ?? '';
+      final base64 = dlinks.map((n) => n.attributes['data-j'] ?? '').join();
+      var version = html.querySelector('h3.version-name')?.text.split(' ').last ?? '';
 
-      if (postId.isEmpty || version.isEmpty) {
+      if (base64.isEmpty || version.isEmpty) {
         throw NoVersionError();
       }
 
-      final res2 = await sourceRequest(
-        'https://${hosts[0]}/api/download-box/?post_id=$postId&post_version=$version',
-        additionalSettings,
-      );
-      ensureHttpSuccess(res2);
-      Map<String, dynamic>? farsroidJson;
+      List<dynamic>? farsroidJson;
       try {
-        farsroidJson = jsonDecode(res2.body) as Map<String, dynamic>?;
+        farsroidJson = jsonDecode(utf8.decode(base64Decode(base64))) as List<dynamic>?;
       } catch (e) {
         AppLogger.error(e, message: 'Failed to decode Farsroid JSON');
         throw NoAPKError();
       }
-      final html2 = farsroidJson?['data']?['content'] as String? ?? '';
-      if (html2.isEmpty) {
-        throw NoAPKError();
-      }
-      final requestUrl = res2.request?.url;
+      final requestUrl = res.request?.url;
       if (requestUrl == null) throw NoAPKError();
-      var apkLinks =
-          (await grabLinksCommon(html2, requestUrl, {
-                ...additionalSettings,
-                'skipSort': true,
-              }))
-              .map((l) => MapEntry(Uri.parse(l.key).pathSegments.last, l.key))
-              .toList();
+      var apkLinks = farsroidJson?.map(
+        (l) => l?['url'] as String? ?? '',
+      ).where(
+        (l) => l.isNotEmpty,
+      ).map(
+        (l) => ensureAbsoluteUrl(l, requestUrl),
+      ).where(
+        (l) => AppSource.isApkOrContainerFile(l),
+      ).map(
+        (l) => MapEntry(Uri.parse(l).pathSegments.last, l),
+      ).toList() ?? [];
 
       apkLinks = filterApks(
         apkLinks,
