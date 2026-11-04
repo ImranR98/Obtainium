@@ -85,7 +85,7 @@ class Farsroid extends AppSource {
         (l) => AppSource.isApkOrContainerFile(l),
       ).map(
         (l) => MapEntry(Uri.parse(l).pathSegments.last, l),
-      ).toList() ?? [];
+      ).toList() ?? <MapEntry<String, String>>[];
 
       apkLinks = filterApks(
         apkLinks,
@@ -99,7 +99,10 @@ class Farsroid extends AppSource {
         apkLinks = await filterApksByArch(apkLinks);
       }
       if (additionalSettings['useFirstApkOfVersion'] == true) {
-        apkLinks = [apkLinks.first];
+        apkLinks = [apkLinks.firstWhere(
+          (l) => l.key.toLowerCase().contains(version.toLowerCase()),
+          orElse: () => apkLinks.first,
+        )];
       }
 
       if (additionalSettings['releaseTitleAsVersion'] == true) {
