@@ -298,7 +298,7 @@
     "intermediateLink": "Link intermediário",
     "intermediateLinkNotFound": "Link intermediário não encontrado",
     "intermediateLinkRegex": "Filtrar um link 'intermediário' para visitar",
-    "invalidArchive": "O arquivo contém um ficheiro com um caminho inseguro",
+    "invalidArchive": "O arquivo compactado contém um arquivo com um caminho inseguro",
     "invalidInput": "Entrada inválida",
     "invalidRegEx": "Expressão regular inválida",
     "invalidSigningCertHash": "Hash do certificado de assinatura inválido",
