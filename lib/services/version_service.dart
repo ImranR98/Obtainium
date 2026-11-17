@@ -416,7 +416,9 @@ bool isAppUpdateable(App app, SettingsProvider settingsProvider) {
   if (installed == null || installed == latest) {
     return false;
   }
-  if (!settingsProvider.hideDowngrades) {
+  // A pseudo-version (track-only, or no version detection) carries no real
+  // ordering, so any difference is an update and "hide downgrades" can't apply.
+  if (!settingsProvider.hideDowngrades || isVersionPseudo(app)) {
     return true;
   }
   final comparison = compareVersionsNumerically(installed, latest);
