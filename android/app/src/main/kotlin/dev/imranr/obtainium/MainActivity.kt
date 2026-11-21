@@ -587,6 +587,18 @@ class MainActivity : FlutterActivity() {
     }
 
     private fun transformShareIntent(intent: Intent): Intent {
+        // Settings > App info > App details sends SHOW_APP_INFO to the app's
+        // installer; redirect it to the obtainium://open deep link.
+        if (intent.action == Intent.ACTION_SHOW_APP_INFO) {
+            val packageName = intent.getStringExtra(Intent.EXTRA_PACKAGE_NAME)
+            if (!packageName.isNullOrEmpty()) {
+                intent.apply {
+                    action = Intent.ACTION_VIEW
+                    data = Uri.parse("obtainium://open?id=${Uri.encode(packageName)}")
+                }
+            }
+            return intent
+        }
         if (intent.action == Intent.ACTION_SEND && intent.type?.startsWith("text/") == true) {
             val sharedText = intent.getStringExtra(Intent.EXTRA_TEXT)
             val match = sharedText?.let { """https?://[^\s]+""".toRegex().find(it) } // Extract URL from shared text
