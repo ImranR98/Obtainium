@@ -656,6 +656,7 @@
     "useFirstApkOfVersion": "Legelső APK-fájl automatikus kiválasztása, ha több is található",
     "useLatestAssetDateAsReleaseDate": "Legutóbbi csomagfeltöltés használata a kiadás dátumaként",
     "useMaterialYou": "Material You használata",
+    "useRefreshButton": "Use a refresh button instead of pull to refresh",
     "useShizuku": "Dhizuku, Shizuku vagy Sui használata a telepítéshez",
     "useSystemFont": "Rendszer betűtípusának használata",
     "useVersionCodeAsOSVersion": "Alkalmazás verziókódjának használata a rendszer által felismert verzióként",

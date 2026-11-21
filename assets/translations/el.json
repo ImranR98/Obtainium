@@ -656,6 +656,7 @@
     "useFirstApkOfVersion": "Αυτόματη επιλογή πρώτου από πολλαπλά APK",
     "useLatestAssetDateAsReleaseDate": "Χρήση της τελευταίας μεταφόρτωσης αρχείου ως ημερομηνία έκδοσης",
     "useMaterialYou": "Χρήση Material You",
+    "useRefreshButton": "Use a refresh button instead of pull to refresh",
     "useShizuku": "Χρήση Dhizuku, Shizuku ή Sui για εγκατάσταση",
     "useSystemFont": "Χρήση της γραμματοσειράς συστήματος",
     "useVersionCodeAsOSVersion": "Χρήση του versionCode εφαρμογής ως έκδοση που ανιχνεύεται από το σύστημα",

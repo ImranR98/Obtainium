@@ -656,6 +656,7 @@
     "useFirstApkOfVersion": "Välj automatiskt den första av flera APK:er",
     "useLatestAssetDateAsReleaseDate": "Använd senaste tillgångsuppladdning som releasedatum",
     "useMaterialYou": "Använd material Du",
+    "useRefreshButton": "Use a refresh button instead of pull to refresh",
     "useShizuku": "Använd Shizuku eller Sui för att installera",
     "useSystemFont": "Använd systemteckensnittet",
     "useVersionCodeAsOSVersion": "Använd appversionskoden som OS-upptäckt version",

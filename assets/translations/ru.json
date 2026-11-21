@@ -670,6 +670,7 @@
     "useFirstApkOfVersion": "Автовыбор первого из нескольких APK",
     "useLatestAssetDateAsReleaseDate": "Использовать последний загруженный файл в качестве даты выпуска",
     "useMaterialYou": "Использовать Material You",
+    "useRefreshButton": "Use a refresh button instead of pull to refresh",
     "useShizuku": "Использовать Dhizuku, Shizuku или Sui для установки",
     "useSystemFont": "Использовать системный шрифт",
     "useVersionCodeAsOSVersion": "Использовать код версии приложения как версию, обнаруженную ОС",

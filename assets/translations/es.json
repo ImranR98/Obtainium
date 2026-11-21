@@ -656,6 +656,7 @@
     "useFirstApkOfVersion": "Auto-selección del primero de múltiples APKs",
     "useLatestAssetDateAsReleaseDate": "Usar última subida del recurso como fecha de lanzamiento",
     "useMaterialYou": "Aplicar 'Material You'",
+    "useRefreshButton": "Use a refresh button instead of pull to refresh",
     "useShizuku": "Usar Shizuku o Sui para instalar",
     "useSystemFont": "Usar fuente del sistema",
     "useVersionCodeAsOSVersion": "Usar versión de la app como versión detectada por el sistema operativo",

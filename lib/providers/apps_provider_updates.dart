@@ -180,6 +180,7 @@ extension AppsProviderUpdates on AppsProvider {
       await runningCheck.future.catchError((_) => <App>[]);
     }
     final completer = updateCheckCompleter = Completer<List<App>>();
+    final cancellation = updateCheckCancellation = CancellationToken();
     var completed = 0;
     var total = 0;
     refreshProgress.value = 0.0;
@@ -218,6 +219,7 @@ extension AppsProviderUpdates on AppsProvider {
         }
       }
       for (final group in prefetchGroups.entries) {
+        if (cancellation.isCancelled) break;
         try {
           await group.key.prefetchUpdateInfo(group.value);
         } catch (e) {
@@ -276,7 +278,7 @@ extension AppsProviderUpdates on AppsProvider {
       }
 
       Future<void> worker() async {
-        while (true) {
+        while (!cancellation.isCancelled) {
           final int i = nextIndex++;
           if (i >= appIds.length) return;
           final result = await fetchOne(appIds[i]);
@@ -327,6 +329,7 @@ extension AppsProviderUpdates on AppsProvider {
     } finally {
       progressTimer.cancel();
       updateCheckCompleter = null;
+      updateCheckCancellation = null;
       refreshProgress.value = null;
       notify();
     }

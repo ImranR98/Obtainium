@@ -656,6 +656,7 @@
     "useFirstApkOfVersion": "Birden fazla APK arasından ilkini otomatik seç",
     "useLatestAssetDateAsReleaseDate": "En son varlık yüklemesini yayın tarihi olarak kullan",
     "useMaterialYou": "Material You kullan",
+    "useRefreshButton": "Use a refresh button instead of pull to refresh",
     "useShizuku": "Yüklemek için Dhizuku, Shizuku ya da Sui kullan",
     "useSystemFont": "Sistem yazı tipini kullan",
     "useVersionCodeAsOSVersion": "Uygulama versionCode'sini işletim sistemi tarafından algılanan sürüm olarak kullan",
