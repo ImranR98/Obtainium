@@ -45,6 +45,9 @@ class _TestAppsProvider extends ChangeNotifier implements AppsProvider {
   Completer<List<App>>? updateCheckCompleter;
 
   @override
+  CancellationToken? updateCheckCancellation;
+
+  @override
   final ValueNotifier<double?> refreshProgress = ValueNotifier<double?>(null);
 
   @override
