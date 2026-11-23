@@ -656,6 +656,7 @@
     "useFirstApkOfVersion": "একাধিক APK থাকলে প্রথমটি স্বয়ংক্রিয়ভাবে নির্বাচন করুন",
     "useLatestAssetDateAsReleaseDate": "সর্বশেষ অ্যাসেট আপলোডের তারিখ রিলিজের তারিখ হিসেবে ব্যবহার করুন",
     "useMaterialYou": "Material You ব্যবহার করুন",
+    "useRefreshButton": "Use a refresh button instead of pull to refresh",
     "useShizuku": "ইনস্টল করতে Dhizuku, Shizuku বা Sui ব্যবহার করুন",
     "useSystemFont": "সিস্টেম ফন্ট ব্যবহার করুন",
     "useVersionCodeAsOSVersion": "OS থেকে শনাক্ত করা সংস্করণ হিসেবে অ্যাপের versionCode ব্যবহার করুন",

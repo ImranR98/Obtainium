@@ -55,14 +55,14 @@ class RootInstaller extends Installer {
       ].join(' ');
       final installerPackageName =
           installOptions['installerPackageName'] as String? ?? '';
+      final userId = await _userId();
       final installLine = installerPackageName.isNotEmpty
-          ? 'pm install -r -i ${_quoteShell(installerPackageName)} --user "\$uid" $stagedApks'
-          : 'pm install -r --user "\$uid" $stagedApks';
+          ? 'pm install -r -i ${_quoteShell(installerPackageName)} --user $userId $stagedApks'
+          : 'pm install -r --user $userId $stagedApks';
       final script = [
         'd="\$(mktemp -d /data/local/tmp/obtainium.XXXXXX)" || exit 1',
         'trap \'rm -rf "\$d"\' EXIT',
         stagedCopies,
-        'uid="\$(am get-current-user 2>/dev/null)"; uid="\${uid:-0}"',
         installLine,
       ].join('\n');
       final result = await _runAsRoot(script);
@@ -83,6 +83,15 @@ class RootInstaller extends Installer {
 
   Future<ProcessResult> _runAsRoot(String cmd) =>
       Process.run('su', ['-c', cmd]);
+
+  Future<int> _userId() async {
+    final status = await File('/proc/self/status').readAsString();
+    final uid = int.tryParse(
+      RegExp(r'^Uid:\s+(\d+)', multiLine: true).firstMatch(status)?.group(1) ??
+          '',
+    );
+    return (uid ?? 0) ~/ 100000;
+  }
 
   static String _quoteShell(String path) =>
       "'${path.replaceAll("'", "'\\''")}'";

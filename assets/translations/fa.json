@@ -656,6 +656,7 @@
     "useFirstApkOfVersion": "اولین بار از چندین APK",
     "useLatestAssetDateAsReleaseDate": "استفاده از آخرین بارگذاری دارایی به عنوان تاریخ انتشار",
     "useMaterialYou": "از Material You استفاده کنید",
+    "useRefreshButton": "Use a refresh button instead of pull to refresh",
     "useShizuku": "برای نصب از Shizuku یا Sui استفاده کنید",
     "useSystemFont": "استفاده از فونت سیستم",
     "useVersionCodeAsOSVersion": "استفاده کد نسخه برنامه به جای نسخه شناسایی شده توسط سیستم عامل استفاده کنید",

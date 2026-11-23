@@ -656,6 +656,7 @@
     "useFirstApkOfVersion": "Tria automàticament la primera aplicació entre moltes",
     "useLatestAssetDateAsReleaseDate": "Usa el darrer recurs carregat com a data de llançament",
     "useMaterialYou": "Usa 'Material You'",
+    "useRefreshButton": "Use a refresh button instead of pull to refresh",
     "useShizuku": "Usa Shizuku o Sui per instal·lar",
     "useSystemFont": "Usa la font del sistema",
     "useVersionCodeAsOSVersion": "Usa la versió de l'aplicació com a versió detectada del Sistema Operatiu",

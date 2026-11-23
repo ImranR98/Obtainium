@@ -656,6 +656,7 @@
     "useFirstApkOfVersion": "自動選取多個 APK 中的第一個",
     "useLatestAssetDateAsReleaseDate": "使用最新資產上傳作為發佈日期",
     "useMaterialYou": "使用 Material You",
+    "useRefreshButton": "Use a refresh button instead of pull to refresh",
     "useShizuku": "使用 Dhizuku、Shizuku 或 Sui 進行安裝",
     "useSystemFont": "使用系統字型",
     "useVersionCodeAsOSVersion": "使用應用程式 versionCode 作為作業系統偵測到的版本",

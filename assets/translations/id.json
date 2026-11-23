@@ -656,6 +656,7 @@
     "useFirstApkOfVersion": "Pilih otomatis yang pertama dari beberapa APK",
     "useLatestAssetDateAsReleaseDate": "Gunakan unggahan aset terbaru sebagai tanggal rilis",
     "useMaterialYou": "Gunakan Material You",
+    "useRefreshButton": "Use a refresh button instead of pull to refresh",
     "useShizuku": "Gunakan Shizuku atau Sui untuk memasang",
     "useSystemFont": "Gunakan font sistem",
     "useVersionCodeAsOSVersion": "Gunakan versi kode aplikasi sebagai versi yang terdeteksi OS",

@@ -295,6 +295,18 @@ class _HomePageState extends State<HomePage> {
               );
             }
           }
+        } else if (action == 'open') {
+          final targetId = uri.queryParameters['id'];
+          final AppsProvider ap = appsProvider;
+          await waitUntil(
+            () => !ap.loadingApps,
+            interval: const Duration(milliseconds: 10),
+            maxAttempts: 500,
+          );
+          if (targetId == null || !ap.apps.containsKey(targetId)) {
+            throw ObtainiumError(tr('appNotFound'));
+          }
+          await goToExistingApp(targetId);
         } else if (action == 'refresh') {
           final targetId = uri.queryParameters['id'];
           await appsProvider.checkUpdates(

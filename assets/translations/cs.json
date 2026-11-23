@@ -665,6 +665,7 @@
     "useFirstApkOfVersion": "Automatický výběr prvního z více souborů APK",
     "useLatestAssetDateAsReleaseDate": "Použít poslední nahraný soubor jako datum vydání",
     "useMaterialYou": "Použít Material You",
+    "useRefreshButton": "Use a refresh button instead of pull to refresh",
     "useShizuku": "K instalaci použít Shizuku nebo Sui",
     "useSystemFont": "Použít systémové písmo",
     "useVersionCodeAsOSVersion": "Použít kód verze aplikace jako verzi zjištěnou OS",
