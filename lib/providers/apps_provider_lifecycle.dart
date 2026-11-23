@@ -166,7 +166,7 @@ extension AppsProviderLifecycle on AppsProvider {
       // interleave writes or race each other's rename. #2089
       final String tmpPath =
           '$filePath.${DateTime.now().microsecondsSinceEpoch}-${_saveTempCounter++}.tmp';
-      await File(tmpPath).writeAsString(jsonEncode(app.toJson()));
+      await File(tmpPath).writeAsString(jsonEncode(app.toJson()), flush: true);
       await File(tmpPath).rename(filePath);
     }
 

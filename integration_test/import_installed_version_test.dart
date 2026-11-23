@@ -61,6 +61,12 @@ void main() {
     expect(imported['com.example.pinned']?.installedVersion, '2.3.4');
     expect(imported['com.example.regular']?.installedVersion, isNull);
 
+    final savedFile = File(
+      '${(await externalAppDataDir()).path}/com.example.tracked.json',
+    );
+    expect(savedFile.existsSync(), isTrue);
+    expect(jsonDecode(await savedFile.readAsString()), isA<Map>());
+
     await provider.removeApps(result.key.map((app) => app.id).toList());
   });
 
