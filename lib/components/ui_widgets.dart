@@ -513,6 +513,7 @@ class DownloadCancelButton extends StatelessWidget {
 class TvFocusRing extends StatefulWidget {
   final Widget child;
   final double borderRadius;
+  final ShapeBorder? shape;
   final double width;
   final Color? color;
 
@@ -520,6 +521,7 @@ class TvFocusRing extends StatefulWidget {
     super.key,
     required this.child,
     this.borderRadius = connectedTileBigRadius,
+    this.shape,
     this.width = 3,
     this.color,
   });
@@ -536,6 +538,16 @@ class _TvFocusRingState extends State<TvFocusRing> {
     final isTV = context.select<SettingsProvider, bool>((p) => p.isTV);
     if (!isTV) return widget.child;
     final color = widget.color ?? Theme.of(context).colorScheme.primary;
+    final baseShape =
+        widget.shape ??
+        RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(widget.borderRadius),
+        );
+    final ringShape = _focused && baseShape is OutlinedBorder
+        ? baseShape.copyWith(
+            side: BorderSide(color: color, width: widget.width),
+          )
+        : baseShape;
     return Focus(
       canRequestFocus: false,
       skipTraversal: true,
@@ -545,12 +557,7 @@ class _TvFocusRingState extends State<TvFocusRing> {
       },
       child: DecoratedBox(
         position: DecorationPosition.foreground,
-        decoration: BoxDecoration(
-          border: _focused
-              ? Border.all(color: color, width: widget.width)
-              : null,
-          borderRadius: BorderRadius.circular(widget.borderRadius),
-        ),
+        decoration: ShapeDecoration(shape: ringShape),
         child: widget.child,
       ),
     );
@@ -639,16 +646,18 @@ class ActionListTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final tileShape = borderRadius != null
+        ? RoundedRectangleBorder(borderRadius: borderRadius!)
+        : Theme.of(context).listTileTheme.shape;
     return TvFocusRing(
       borderRadius: borderRadius?.topLeft.x ?? connectedTileBigRadius,
+      shape: tileShape,
       child: ListTile(
         leading: Icon(icon),
         title: Text(label),
         trailing: trailing,
         enabled: onTap != null,
-        shape: borderRadius != null
-            ? RoundedRectangleBorder(borderRadius: borderRadius!)
-            : null,
+        shape: tileShape,
         onTap: onTap == null
             ? null
             : () {
@@ -902,11 +911,14 @@ class ToggleTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final tileShape = Theme.of(context).listTileTheme.shape;
     return TvFocusRing(
+      shape: tileShape,
       child: ListTile(
         contentPadding: noPadding ? EdgeInsets.zero : AppPaddings.rowHorizontal,
         title: Text(label),
         subtitle: subtitle,
+        shape: tileShape,
         trailing: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -1217,6 +1229,7 @@ class _TvColourSwatch extends StatelessWidget {
       selected: selected,
       child: TvFocusRing(
         borderRadius: 24,
+        shape: const CircleBorder(),
         child: InkWell(
           autofocus: autofocus,
           onTap: onTap,

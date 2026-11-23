@@ -285,6 +285,9 @@ class _PinSetEditorPageState extends State<PinSetEditorPage> {
           padding: EdgeInsets.zero,
           child: TvFocusRing(
             borderRadius: AppRadii.small,
+            shape: RoundedSuperellipseBorder(
+              borderRadius: BorderRadius.circular(AppRadii.small),
+            ),
             child: ListTile(
               contentPadding: AppPaddings.rowHorizontal,
               leading: Icon(Icons.add, color: colorScheme.primary),

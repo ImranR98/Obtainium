@@ -415,6 +415,7 @@ class _HomePageState extends State<HomePage> {
     // tablet/two-pane UI matches mobile.
     final actionsFab = TvFocusRing(
       borderRadius: AppRadii.medium,
+      shape: const StadiumBorder(),
       child: FloatingActionButton.extended(
         heroTag: null,
         onPressed: onActionsPressed,

@@ -512,11 +512,12 @@ class AppListTile extends StatelessWidget {
             ),
             child: () {
               final metrics = AppTileMetrics(settingsProvider.appListDensity);
+              final tileShape = borderRadius != null
+                  ? RoundedSuperellipseBorder(borderRadius: borderRadius!)
+                  : Theme.of(context).listTileTheme.shape;
               final tile = ListTile(
                 autofocus: autofocus,
-                shape: borderRadius != null
-                    ? RoundedSuperellipseBorder(borderRadius: borderRadius!)
-                    : null,
+                shape: tileShape,
                 tileColor: _app.pinned
                     ? Theme.of(
                         context,
@@ -609,6 +610,7 @@ class AppListTile extends StatelessWidget {
                 return TvFocusRing(
                   borderRadius:
                       borderRadius?.topLeft.x ?? connectedTileBigRadius,
+                  shape: tileShape,
                   child: Row(
                     children: [
                       if (selectionMode)
@@ -787,6 +789,12 @@ class AppListGroupSection extends StatelessWidget {
               expanded: expanded,
               label: title,
               child: TvFocusRing(
+                shape: RoundedSuperellipseBorder(
+                  borderRadius: positionalTileRadius(
+                    isFirst: true,
+                    isLast: segmentCount == 1,
+                  ),
+                ),
                 child: InkWell(
                   onTap: onToggle,
                   child: Padding(
