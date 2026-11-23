@@ -427,6 +427,7 @@
     },
     "updateHealthReasonStaleRelease": "Latest release is more than {} days old",
     "updateHealthReasonStaleVersion": "Not updated in over {} days",
+    "updateHealthStaleNote": "No update detected recently",
     "updateHealthStaleReleaseCheck": "Flag apps whose latest release is older than",
     "updateHealthStaleVersionCheck": "Flag apps that have not been updated in",
     "updateHealthViewDetails": "This app config may prevent updates",

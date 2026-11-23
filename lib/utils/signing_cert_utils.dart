@@ -31,22 +31,64 @@ Set<String> certHashesFromSigningInfo(SigningInfo? signingInfo) {
 
 /// Signer certificate hashes of the APK at [apkPath], or an empty set when the
 /// signing info is unavailable (pre-API 28 or unreadable archive).
-Future<Set<String>> apkSigningCertHashes(String apkPath) async {
+Future<Set<String>> apkSigningCertHashes(String apkPath) async =>
+    (await apkSigningCertInfo(apkPath)).hashes;
+
+/// Union of the signer certificate hashes across [apkPaths] (base APK plus
+/// splits); every split of a valid bundle is signed with the same certificate.
+Future<Set<String>> apkFilesSigningCertHashes(
+  Iterable<String> apkPaths,
+) async => (await apkFilesSigningCertInfo(apkPaths)).hashes;
+
+class ApkSigningCertInfo {
+  final Set<String> hashes;
+  final bool hasPastSigningCertificates;
+
+  const ApkSigningCertInfo({
+    required this.hashes,
+    required this.hasPastSigningCertificates,
+  });
+}
+
+Future<ApkSigningCertInfo> apkSigningCertInfo(String apkPath) async {
   final info = await _packageManager.getPackageArchiveInfo(
     archiveFilePath: apkPath,
     flags: _signingInfoFlags,
   );
-  return certHashesFromSigningInfo(info?.signingInfo);
+  final signingInfo = info?.signingInfo;
+  return ApkSigningCertInfo(
+    hashes: certHashesFromSigningInfo(signingInfo),
+    hasPastSigningCertificates:
+        signingInfo?.hasPastSigningCertificates ?? false,
+  );
 }
 
-/// Union of the signer certificate hashes across [apkPaths] (base APK plus
-/// splits); every split of a valid bundle is signed with the same certificate.
-Future<Set<String>> apkFilesSigningCertHashes(Iterable<String> apkPaths) async {
-  final result = <String>{};
+Future<ApkSigningCertInfo> apkFilesSigningCertInfo(
+  Iterable<String> apkPaths,
+) async {
+  final hashes = <String>{};
+  var hasPastSigningCertificates = false;
   for (final path in apkPaths) {
-    result.addAll(await apkSigningCertHashes(path));
+    final info = await apkSigningCertInfo(path);
+    hashes.addAll(info.hashes);
+    hasPastSigningCertificates =
+        hasPastSigningCertificates || info.hasPastSigningCertificates;
   }
-  return result;
+  return ApkSigningCertInfo(
+    hashes: hashes,
+    hasPastSigningCertificates: hasPastSigningCertificates,
+  );
+}
+
+bool signingCertsMatch({
+  required Set<String> installedHashes,
+  required Set<String> apkHashes,
+  required bool apkHasPastSigningCertificates,
+}) {
+  if (apkHashes.isEmpty || installedHashes.isEmpty) return false;
+  if (apkHashes.every(installedHashes.contains)) return true;
+  return apkHasPastSigningCertificates &&
+      installedHashes.every(apkHashes.contains);
 }
 
 final RegExp _certHashHex = RegExp(r'^[0-9a-fA-F]{64}$');

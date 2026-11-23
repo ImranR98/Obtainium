@@ -29,6 +29,7 @@ class _Vivo extends VivoAppStore {
     String url,
     Map<String, dynamic> additionalSettings, {
     bool followRedirects = true,
+    Map<String, String>? headers,
     Object? postBody,
   }) async {
     requests++;
@@ -51,6 +52,7 @@ class _Huawei extends HuaweiAppGallery {
     String url,
     Map<String, dynamic> additionalSettings, {
     bool followRedirects = true,
+    Map<String, String>? headers,
     Object? postBody,
   }) async {
     requests++;

@@ -409,6 +409,7 @@
     },
     "updateHealthReasonStaleRelease": "Több mint {} napos a legújabb kiadás",
     "updateHealthReasonStaleVersion": "Több mint {} napja nem található új verzió",
+    "updateHealthStaleNote": "No update detected recently",
     "updateHealthStaleReleaseCheck": "Alkalmazások megjelölése, amelyeknek legújabb kiadása régebbi, mint",
     "updateHealthStaleVersionCheck": "Alkalmazások megjelölése, amelyekhez nincs új verzió ennyi ideje",
     "updateHealthViewDetails": "Ez az alkalmazáskonfiguráció megakadályozhatja a frissítéseket",

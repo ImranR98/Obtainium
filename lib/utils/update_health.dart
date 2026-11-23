@@ -14,6 +14,20 @@ enum UpdateHealthReason {
   filteredReleases,
 }
 
+bool isConfigRelatedUpdateHealthReason(UpdateHealthReason reason) =>
+    reason != UpdateHealthReason.staleRelease &&
+    reason != UpdateHealthReason.staleVersion;
+
+String updateHealthLinkLabelKey({
+  required bool ignored,
+  required List<UpdateHealthReason> reasons,
+}) {
+  if (ignored) return 'updateHealthIgnoredNote';
+  return reasons.any(isConfigRelatedUpdateHealthReason)
+      ? 'updateHealthViewDetails'
+      : 'updateHealthStaleNote';
+}
+
 class UpdateHealthConfig {
   final int? staleReleaseDays;
   final int? staleVersionDays;

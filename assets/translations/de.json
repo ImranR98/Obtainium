@@ -409,6 +409,7 @@
     },
     "updateHealthReasonStaleRelease": "Das neueste Release ist älter als {} Tage",
     "updateHealthReasonStaleVersion": "Seit über {} Tagen nicht aktualisiert",
+    "updateHealthStaleNote": "No update detected recently",
     "updateHealthStaleReleaseCheck": "Apps markieren, deren neuestes Release älter ist als",
     "updateHealthStaleVersionCheck": "Apps markieren, die nicht aktualisiert wurden seit",
     "updateHealthViewDetails": "Diese App-Konfiguration kann Aktualisierungen verhindern",

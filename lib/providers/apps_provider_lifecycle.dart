@@ -17,6 +17,7 @@ import 'package:obtainium/providers/apps_provider.dart';
 import 'package:obtainium/providers/notifications_provider.dart';
 import 'package:obtainium/providers/settings_provider.dart';
 import 'package:obtainium/providers/source_provider.dart';
+import 'package:obtainium/utils/app_id_utils.dart';
 import 'package:path_provider/path_provider.dart';
 
 /// App persistence (load/save/remove), icons, and version-detection helpers.
@@ -155,13 +156,17 @@ extension AppsProviderLifecycle on AppsProvider {
   /// directory that vanished between the existence check and the rename makes
   /// saves/imports fail with a user-visible PathNotFoundException. See #2860.
   Future<void> _writeAppJson(App app) async {
+    if (!isValidAppId(app.id)) {
+      AppLogger.warn('Refusing to write app JSON with unsafe ID: ${app.id}');
+      throw ObtainiumError(tr('invalidInput'));
+    }
     Future<void> attempt() async {
       final String filePath = '${(await getAppsDir()).path}/${app.id}.json';
       // Unique temp path: two concurrent saves of the same app must not
       // interleave writes or race each other's rename. #2089
       final String tmpPath =
           '$filePath.${DateTime.now().microsecondsSinceEpoch}-${_saveTempCounter++}.tmp';
-      await File(tmpPath).writeAsString(jsonEncode(app.toJson()));
+      await File(tmpPath).writeAsString(jsonEncode(app.toJson()), flush: true);
       await File(tmpPath).rename(filePath);
     }
 
@@ -306,6 +311,13 @@ extension AppsProviderLifecycle on AppsProvider {
                     );
                   }
                 }
+              }
+              if (app != null && !isValidAppId(app.id)) {
+                AppLogger.warn(
+                  'Skipping app JSON with unsafe ID: ${app.id} (${item.path})',
+                );
+                unawaited(item.rename('${item.path}$_corruptFileSuffix'));
+                app = null;
               }
               if (app != null) {
                 apps.update(
@@ -521,6 +533,11 @@ extension AppsProviderLifecycle on AppsProvider {
     final apkFiles = await apkDir.list().toList();
     await Future.wait(
       appIds.map((appId) async {
+        if (!isValidAppId(appId)) {
+          AppLogger.warn('Refusing to delete files for unsafe app ID: $appId');
+          apps.remove(appId);
+          return;
+        }
         final File file = File('${(await getAppsDir()).path}/$appId.json');
         if (file.existsSync()) {
           deleteFile(file);

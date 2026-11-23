@@ -409,6 +409,7 @@
     },
     "updateHealthReasonStaleRelease": "最新发行版发布已超过 {} 天",
     "updateHealthReasonStaleVersion": "已有超过 {} 天未获得新版本",
+    "updateHealthStaleNote": "No update detected recently",
     "updateHealthStaleReleaseCheck": "判定发行版过旧的时长阈值",
     "updateHealthStaleVersionCheck": "判定长期未更新的时长阈值",
     "updateHealthViewDetails": "此应用配置可能会导致无法更新",

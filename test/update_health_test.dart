@@ -348,6 +348,68 @@ void main() {
     });
   });
 
+  group('updateHealthLinkLabelKey', () {
+    test('uses the ignored note when checks are ignored', () {
+      expect(
+        updateHealthLinkLabelKey(ignored: true, reasons: const []),
+        'updateHealthIgnoredNote',
+      );
+    });
+
+    test('uses the stale note for stale-only reasons', () {
+      expect(
+        updateHealthLinkLabelKey(
+          ignored: false,
+          reasons: const [UpdateHealthReason.staleRelease],
+        ),
+        'updateHealthStaleNote',
+      );
+      expect(
+        updateHealthLinkLabelKey(
+          ignored: false,
+          reasons: const [UpdateHealthReason.staleVersion],
+        ),
+        'updateHealthStaleNote',
+      );
+      expect(
+        updateHealthLinkLabelKey(
+          ignored: false,
+          reasons: const [
+            UpdateHealthReason.staleRelease,
+            UpdateHealthReason.staleVersion,
+          ],
+        ),
+        'updateHealthStaleNote',
+      );
+    });
+
+    test('uses the config warning for config-related reasons', () {
+      for (final reason in const [
+        UpdateHealthReason.failedChecks,
+        UpdateHealthReason.archived,
+        UpdateHealthReason.filteredReleases,
+      ]) {
+        expect(
+          updateHealthLinkLabelKey(ignored: false, reasons: [reason]),
+          'updateHealthViewDetails',
+        );
+      }
+    });
+
+    test('prefers the config warning when reasons are mixed', () {
+      expect(
+        updateHealthLinkLabelKey(
+          ignored: false,
+          reasons: const [
+            UpdateHealthReason.staleRelease,
+            UpdateHealthReason.failedChecks,
+          ],
+        ),
+        'updateHealthViewDetails',
+      );
+    });
+  });
+
   group('App JSON', () {
     test('round-trips the detection fields', () {
       final app = _app(

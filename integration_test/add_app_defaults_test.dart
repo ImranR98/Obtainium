@@ -94,4 +94,32 @@ void main() {
 
     restoreErrorWidgetBuilder();
   });
+
+  testWidgets('GHE override exposes its own GitHub credential field', (
+    tester,
+  ) async {
+    if (await skipIfTV()) return;
+
+    await clearAppData();
+    await launchApp(tester);
+
+    await pumpUntil(tester, find.text('No apps'));
+    await tester.tap(find.text('Add'));
+    await pumpUntil(tester, find.text('Add app'));
+
+    final state = tester.state<AddAppPageState>(find.byType(AddAppPage));
+    state.changeUserInput(
+      'https://git.hoodnet.work/microcord/microcord',
+      true,
+      false,
+      overrideSource: 'GitHub',
+    );
+    await pumpFor(tester, const Duration(milliseconds: 800));
+
+    expect(state.pickedSource?.sourceIdentifier, 'GitHub');
+    expect(state.pickedSource?.hostChanged, isTrue);
+    expect(find.text('GitHub access token'), findsOneWidget);
+
+    restoreErrorWidgetBuilder();
+  });
 }

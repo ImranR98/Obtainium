@@ -420,6 +420,7 @@
     },
     "updateHealthReasonStaleRelease": "Последний выпуск старше {} дн.",
     "updateHealthReasonStaleVersion": "Не обновлялось более {} дн.",
+    "updateHealthStaleNote": "No update detected recently",
     "updateHealthStaleReleaseCheck": "Помечать приложения с последним выпуском старше",
     "updateHealthStaleVersionCheck": "Помечать приложения без обновлений более",
     "updateHealthViewDetails": "Эта конфигурация приложения может препятствовать обновлениям",

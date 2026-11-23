@@ -409,6 +409,7 @@
     },
     "updateHealthReasonStaleRelease": "La dernière release date de plus de {} jours",
     "updateHealthReasonStaleVersion": "Aucune nouvelle version trouvée depuis plus de {} jours",
+    "updateHealthStaleNote": "No update detected recently",
     "updateHealthStaleReleaseCheck": "Signaler les applications dont la dernière release est plus ancienne que",
     "updateHealthStaleVersionCheck": "Signaler les applications sans nouvelle version depuis",
     "updateHealthViewDetails": "La configuration de cette application est peut-être défectueuse - voir les détails",
