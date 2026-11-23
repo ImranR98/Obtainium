@@ -1,10 +1,33 @@
 import 'dart:io';
 
+import 'package:android_package_manager/android_package_manager.dart';
+import 'package:device_info_plus/device_info_plus.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:obtainium/core/logging/app_logger.dart';
 import 'package:obtainium/custom_errors.dart';
 import 'package:obtainium/installers/installer.dart';
 import 'package:obtainium/providers/source_provider.dart';
+
+String buildRootInstallCommand({
+  required String installerPackageName,
+  required int userId,
+  required List<String> stagedApks,
+  required bool bypassLowTargetSdkBlock,
+}) {
+  return [
+    'pm',
+    'install',
+    '-r',
+    if (installerPackageName.isNotEmpty) ...[
+      '-i',
+      RootInstaller._quoteShell(installerPackageName),
+    ],
+    '--user',
+    '$userId',
+    if (bypassLowTargetSdkBlock) '--bypass-low-target-sdk-block',
+    ...stagedApks,
+  ].join(' ');
+}
 
 /// Installs via the Android `pm` CLI over root (`su`).
 class RootInstaller extends Installer {
@@ -52,13 +75,19 @@ class RootInstaller extends Installer {
       ].join('\n');
       final stagedApks = [
         for (var i = 0; i < apkFilePaths.length; i++) '"\$d/obt$i.apk"',
-      ].join(' ');
+      ];
       final installerPackageName =
           installOptions['installerPackageName'] as String? ?? '';
       final userId = await _userId();
-      final installLine = installerPackageName.isNotEmpty
-          ? 'pm install -r -i ${_quoteShell(installerPackageName)} --user $userId $stagedApks'
-          : 'pm install -r --user $userId $stagedApks';
+      final bypassLowTargetSdkBlock =
+          apkFilePaths.isNotEmpty &&
+          await _shouldBypassLowTargetSdkBlock(apkFilePaths.first);
+      final installLine = buildRootInstallCommand(
+        installerPackageName: installerPackageName,
+        userId: userId,
+        stagedApks: stagedApks,
+        bypassLowTargetSdkBlock: bypassLowTargetSdkBlock,
+      );
       final script = [
         'd="\$(mktemp -d /data/local/tmp/obtainium.XXXXXX)" || exit 1',
         'trap \'rm -rf "\$d"\' EXIT',
@@ -78,6 +107,21 @@ class RootInstaller extends Installer {
     } on IOException catch (e) {
       AppLogger.error(e, message: 'Root pm install I/O error for $appId');
       return InstallResult.error(-1);
+    }
+  }
+
+  Future<bool> _shouldBypassLowTargetSdkBlock(String apkPath) async {
+    try {
+      final sdkInt = (await DeviceInfoPlugin().androidInfo).version.sdkInt;
+      if (sdkInt < 34) return false;
+      final info = await AndroidPackageManager().getPackageArchiveInfo(
+        archiveFilePath: apkPath,
+      );
+      final targetSdkVersion = info?.applicationInfo?.targetSdkVersion;
+      return targetSdkVersion != null && targetSdkVersion < 23;
+    } catch (e) {
+      AppLogger.warn('Failed to inspect target SDK for $apkPath: $e');
+      return false;
     }
   }
 
