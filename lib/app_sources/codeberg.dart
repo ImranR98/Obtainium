@@ -1,4 +1,5 @@
 import 'package:easy_localization/easy_localization.dart';
+import 'package:obtainium/app_sources/forgejo_pagination.dart';
 import 'package:obtainium/app_sources/github.dart';
 import 'package:obtainium/components/generated_form_model.dart';
 import 'package:obtainium/custom_errors.dart';
@@ -176,18 +177,23 @@ class Codeberg extends AppSource {
     Map<String, dynamic> additionalSettings,
   ) async {
     try {
+      final settings = await _requestSettings(additionalSettings);
       return await _gh.fetchReleaseDetailsWithTagFallback(
         standardUrl,
-        await _requestSettings(additionalSettings),
+        settings,
         (bool useTagUrl) async {
           final standardUri = Uri.parse(standardUrl);
           final apiPath =
               '/api/v1/repos${standardUri.path}/${useTagUrl ? 'tags' : 'releases'}';
           return standardUri
-              .replace(path: apiPath, queryParameters: {'per_page': '100'})
+              .replace(path: apiPath, queryParameters: {'limit': '50'})
               .toString();
         },
         null,
+        releaseListLoader: (requestUrl) => fetchAllForgejoPages(
+          Uri.parse(requestUrl),
+          (uri) => _gh.sourceRequest(uri.toString(), settings),
+        ),
       );
     } catch (e) {
       rethrowOrWrapError(e);

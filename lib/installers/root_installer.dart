@@ -1,10 +1,33 @@
 import 'dart:io';
 
+import 'package:android_package_manager/android_package_manager.dart';
+import 'package:device_info_plus/device_info_plus.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:obtainium/core/logging/app_logger.dart';
 import 'package:obtainium/custom_errors.dart';
 import 'package:obtainium/installers/installer.dart';
 import 'package:obtainium/providers/source_provider.dart';
+
+String buildRootInstallCommand({
+  required String installerPackageName,
+  required int userId,
+  required List<String> stagedApks,
+  required bool bypassLowTargetSdkBlock,
+}) {
+  return [
+    'pm',
+    'install',
+    '-r',
+    if (installerPackageName.isNotEmpty) ...[
+      '-i',
+      RootInstaller._quoteShell(installerPackageName),
+    ],
+    '--user',
+    '$userId',
+    if (bypassLowTargetSdkBlock) '--bypass-low-target-sdk-block',
+    ...stagedApks,
+  ].join(' ');
+}
 
 /// Installs via the Android `pm` CLI over root (`su`).
 class RootInstaller extends Installer {
@@ -52,17 +75,23 @@ class RootInstaller extends Installer {
       ].join('\n');
       final stagedApks = [
         for (var i = 0; i < apkFilePaths.length; i++) '"\$d/obt$i.apk"',
-      ].join(' ');
+      ];
       final installerPackageName =
           installOptions['installerPackageName'] as String? ?? '';
-      final installLine = installerPackageName.isNotEmpty
-          ? 'pm install -r -i ${_quoteShell(installerPackageName)} --user "\$uid" $stagedApks'
-          : 'pm install -r --user "\$uid" $stagedApks';
+      final userId = await _userId();
+      final bypassLowTargetSdkBlock =
+          apkFilePaths.isNotEmpty &&
+          await _shouldBypassLowTargetSdkBlock(apkFilePaths.first);
+      final installLine = buildRootInstallCommand(
+        installerPackageName: installerPackageName,
+        userId: userId,
+        stagedApks: stagedApks,
+        bypassLowTargetSdkBlock: bypassLowTargetSdkBlock,
+      );
       final script = [
         'd="\$(mktemp -d /data/local/tmp/obtainium.XXXXXX)" || exit 1',
         'trap \'rm -rf "\$d"\' EXIT',
         stagedCopies,
-        'uid="\$(am get-current-user 2>/dev/null)"; uid="\${uid:-0}"',
         installLine,
       ].join('\n');
       final result = await _runAsRoot(script);
@@ -81,8 +110,32 @@ class RootInstaller extends Installer {
     }
   }
 
+  Future<bool> _shouldBypassLowTargetSdkBlock(String apkPath) async {
+    try {
+      final sdkInt = (await DeviceInfoPlugin().androidInfo).version.sdkInt;
+      if (sdkInt < 34) return false;
+      final info = await AndroidPackageManager().getPackageArchiveInfo(
+        archiveFilePath: apkPath,
+      );
+      final targetSdkVersion = info?.applicationInfo?.targetSdkVersion;
+      return targetSdkVersion != null && targetSdkVersion < 23;
+    } catch (e) {
+      AppLogger.warn('Failed to inspect target SDK for $apkPath: $e');
+      return false;
+    }
+  }
+
   Future<ProcessResult> _runAsRoot(String cmd) =>
       Process.run('su', ['-c', cmd]);
+
+  Future<int> _userId() async {
+    final status = await File('/proc/self/status').readAsString();
+    final uid = int.tryParse(
+      RegExp(r'^Uid:\s+(\d+)', multiLine: true).firstMatch(status)?.group(1) ??
+          '',
+    );
+    return (uid ?? 0) ~/ 100000;
+  }
 
   static String _quoteShell(String path) =>
       "'${path.replaceAll("'", "'\\''")}'";

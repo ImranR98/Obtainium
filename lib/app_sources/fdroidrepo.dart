@@ -1,14 +1,17 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:io';
 
 import 'package:device_info_plus/device_info_plus.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:html/parser.dart';
 import 'package:http/http.dart';
+import 'package:obtainium/app_sources/fdroid_index_cache.dart';
 import 'package:obtainium/components/generated_form_model.dart';
 import 'package:obtainium/custom_errors.dart';
 import 'package:obtainium/core/logging/app_logger.dart';
 import 'package:obtainium/providers/source_provider.dart';
+import 'package:path_provider/path_provider.dart';
 
 /// A single APK release in an F-Droid repository index.
 class _FdroidVersion {
@@ -72,6 +75,22 @@ class FDroidRepo extends AppSource {
     neverAutoSelect = true;
     showReleaseDateAsVersionToggle = true;
   }
+
+  late final FdroidIndexCache _indexCache = FdroidIndexCache(() async {
+    final base = await getApplicationCacheDirectory();
+    final dir = Directory('${base.path}/fdroid_index_cache');
+    if (!dir.existsSync()) dir.createSync(recursive: true);
+    return dir;
+  });
+
+  Future<Response> _requestIndex(
+    String url,
+    Map<String, dynamic> additionalSettings,
+  ) => _indexCache.fetch(
+    url,
+    (requestUrl, headers) =>
+        sourceRequest(requestUrl, additionalSettings, headers: headers),
+  );
 
   @override
   List<List<GeneratedFormItem>>
@@ -202,7 +221,7 @@ class FDroidRepo extends AppSource {
     String url,
     Map<String, dynamic> additionalSettings,
   ) async {
-    var res = await sourceRequest(
+    var res = await _requestIndex(
       '$url${url.endsWith('/index.xml') ? '' : '/index.xml'}',
       additionalSettings,
     );
@@ -210,9 +229,9 @@ class FDroidRepo extends AppSource {
       final base = url.endsWith('/index.xml')
           ? AppSource.stripLastPathSegment(url)
           : url;
-      res = await sourceRequest('$base/repo/index.xml', additionalSettings);
+      res = await _requestIndex('$base/repo/index.xml', additionalSettings);
       if (res.statusCode != 200) {
-        res = await sourceRequest(
+        res = await _requestIndex(
           '$base/fdroid/repo/index.xml',
           additionalSettings,
         );
@@ -248,7 +267,7 @@ class FDroidRepo extends AppSource {
     ];
     for (final candidate in candidates) {
       try {
-        final res = await sourceRequest(candidate, additionalSettings);
+        final res = await _requestIndex(candidate, additionalSettings);
         if (res.statusCode != 200) continue;
         final index = _parseIndexV2(res);
         if (index != null) return index;

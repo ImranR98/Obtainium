@@ -34,18 +34,25 @@ List<String> collectAllStringsFromJSONObject(dynamic obj) {
 }
 
 List<MapEntry<String, String>> getLinksInLines(String lines) =>
-    RegExp(r'''(?:(?:http|https|ftp)://)[^\s"'<>()\[\]{}]+''')
+    RegExp(r'''(?:(?:http|https|ftp)://)[^\s"'<>\[\]{}]+''')
         .allMatches(lines)
-        .map(
-          (match) => match
-              .group(0)!
-              // Punctuation usually belongs to the surrounding text/code
-              // rather than to the URL itself.
-              .replaceFirst(RegExp(r'[.,;:!?]+$'), ''),
-        )
+        .map((match) => trimTrailingUrlPunctuation(match.group(0)!))
         .where((url) => url.isNotEmpty)
         .map((url) => MapEntry(url, url.split('/').last))
         .toList();
+
+String trimTrailingUrlPunctuation(String url) {
+  var result = url;
+  while (true) {
+    result = result.replaceFirst(RegExp(r'[.,;:!?]+$'), '');
+    if (result.endsWith(')') &&
+        '('.allMatches(result).length < ')'.allMatches(result).length) {
+      result = result.substring(0, result.length - 1);
+      continue;
+    }
+    return result;
+  }
+}
 
 /// Collects absolute and root-relative URLs found in element attributes
 /// (e.g. `<script src="/js/app.js">`), resolved against [reqUrl].

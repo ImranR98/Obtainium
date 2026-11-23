@@ -30,6 +30,7 @@ import 'package:obtainium/providers/apps_provider_lifecycle.dart';
 import 'package:obtainium/providers/apps_provider_updates.dart';
 
 import 'package:obtainium/utils/bg_update_guards.dart';
+import 'package:obtainium/utils/cache_dir_utils.dart';
 import 'package:obtainium/utils/signing_cert_utils.dart';
 import 'package:obtainium/utils/translation_loader.dart';
 
@@ -129,6 +130,8 @@ class AppInMemory {
   bool get hasMultipleSigners {
     return installedInfo?.signingInfo?.hasMultipleSigners ?? false;
   }
+
+  bool get isSystemDisabled => installedInfo?.applicationInfo?.enabled == false;
 
   List<String> get certificateHashes =>
       certHashesFromSigningInfo(installedInfo?.signingInfo).toList();
@@ -779,6 +782,10 @@ class AppsProvider with ChangeNotifier {
   /// mechanism: subsequent callers receive the existing completer's future.
   Completer<List<App>>? updateCheckCompleter;
 
+  CancellationToken? updateCheckCancellation;
+
+  void cancelUpdateCheck() => updateCheckCancellation?.cancel();
+
   /// Update-check progress (0..1), or null when no check is running. Exposed as
   /// a [ValueNotifier] so the progress bar can rebuild on frequent ticks
   /// WITHOUT triggering a full [notify] (which would rerun the expensive app
@@ -927,20 +934,12 @@ class AppsProvider with ChangeNotifier {
           await getExternalStorageDirectory(),
         );
       } catch (_) {}
-      if (cacheRoot == null) {
-        final internalCache = await getApplicationCacheDirectory();
-        _apkDir = Directory('${internalCache.path}/apks');
-        _iconsCacheDir = Directory('${internalCache.path}/icons');
-      } else {
-        _apkDir = cacheRoot;
-        _iconsCacheDir = Directory('${cacheRoot.path}/icons');
-      }
-      if (!_apkDir!.existsSync()) {
-        _apkDir!.createSync(recursive: true);
-      }
-      if (!_iconsCacheDir!.existsSync()) {
-        _iconsCacheDir!.createSync(recursive: true);
-      }
+      final cacheDirs = resolveCacheDirectories(
+        externalCacheRoot: cacheRoot,
+        internalCacheRoot: await getApplicationCacheDirectory(),
+      );
+      _apkDir = cacheDirs.apkDir;
+      _iconsCacheDir = cacheDirs.iconsDir;
       if (!isBg) {
         loadingApps = true;
         notify();
@@ -1107,6 +1106,8 @@ Future<void> bgUpdateCheck(
               onlyCheckInstalledOrTrackOnlyApps: appsProvider
                   .settingsProvider
                   .onlyCheckInstalledOrTrackOnlyApps,
+              checkSystemDisabledApps:
+                  appsProvider.settingsProvider.checkSystemDisabledApps,
               forceAll: forceAll,
             )
             .map((e) => MapEntry(e, 0))),

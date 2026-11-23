@@ -478,6 +478,7 @@ URI host as the **action** and dispatches accordingly:
 | --- | --- | --- |
 | `add` | `uri.queryParameters['url']` or `uri.path.substring(1)` | Standardizes the URL, checks for duplicates, navigates to Add App page |
 | `app` / `apps` | URI-decoded query or path | Shows a confirmation dialog with the raw JSON, then imports via `AppsProvider` |
+| `open` | `uri.queryParameters['id']` (package name) | Waits for apps to load, then opens that app's page, or shows "App not found" |
 
 Inbound links arrive via `AppLinks` (Android App Links / intent filters) — the
 `obtainium://` scheme is registered in `AndroidManifest.xml`. Both `getInitialLink()`
@@ -493,6 +494,11 @@ alongside this dispatcher.
 The **share sheet** (`ACTION_SEND` intent) added in the `MainActivity.kt` native layer
 rewrites shared URLs as `obtainium://add/<url>` before they reach `interpretLink`, so
 the same Dart-side dispatch handles both manual deeplinks and share-target intents.
+
+Likewise, **Settings > App info > App details** sends `ACTION_SHOW_APP_INFO` (with
+`EXTRA_PACKAGE_NAME`) to the app's installer. `MainActivity.kt` rewrites it as
+`obtainium://open?id=<package>`, so apps installed by Obtainium get a working
+App details button that opens their page.
 
 ### Reusable components (`lib/components/`)
 
@@ -684,7 +690,7 @@ Four concrete implementations:
 | `StockInstaller` | `android_package_installer` plugin (PackageInstaller session API) | Standard installs; supports silent install via ADB-granted `INSTALL_PACKAGES` |
 | `ShizukuInstaller` | `shizuku_apk_installer` plugin | Self-update of Obtainium itself, or when Shizuku/Dhizuku/Sui is available |
 | `ExternalInstaller` | Native `MethodChannel` bridge (`external_install_bridge.dart` + `MainActivity.kt`) | Hands off to a third-party installer app chosen by the user; lists eligible targets via `listInstallTargets()` and converts file paths to `content://` URIs via `FileProvider` |
-| `RootInstaller` | `su` + `pm install` CLI | Elevated installs for the current foreground user, not just user 0 (needed under multi-user) |
+| `RootInstaller` | `su` + `pm install` CLI | Elevated installs into the user or profile Obtainium itself runs in (derived from its own uid, so work profiles get `--user 10` rather than the foreground user 0), not just user 0 (needed under multi-user) |
 
 Samsung Galaxy Store apps expose an opt-in installation-source switch next to
 the existing per-app Google Play switch. These switches are mutually exclusive.

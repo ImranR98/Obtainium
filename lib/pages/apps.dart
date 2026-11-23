@@ -1306,6 +1306,9 @@ class AppsPageState extends State<AppsPage> {
           child: RefreshIndicator(
             key: refreshIndicatorKey,
             onRefresh: refresh,
+            notificationPredicate: settingsProvider.useRefreshButton
+                ? (_) => false
+                : defaultScrollNotificationPredicate,
             child: Scrollbar(
               interactive: true,
               controller: scrollController,
@@ -1328,12 +1331,23 @@ class AppsPageState extends State<AppsPage> {
                               ? tr('close')
                               : plural('action', 2),
                         ),
-                      if (settingsProvider.isTV)
-                        IconButton(
-                          onPressed: () =>
-                              refreshIndicatorKey.currentState?.show(),
-                          icon: const Icon(Icons.refresh_rounded),
-                          tooltip: tr('refresh'),
+                      if (settingsProvider.isTV ||
+                          settingsProvider.useRefreshButton)
+                        ValueListenableBuilder<double?>(
+                          valueListenable: appsProvider.refreshProgress,
+                          builder: (context, refreshProgress, _) =>
+                              refreshProgress == null
+                              ? IconButton(
+                                  onPressed: () =>
+                                      refreshIndicatorKey.currentState?.show(),
+                                  icon: const Icon(Icons.refresh_rounded),
+                                  tooltip: tr('refresh'),
+                                )
+                              : IconButton(
+                                  onPressed: appsProvider.cancelUpdateCheck,
+                                  icon: const Icon(Icons.stop_rounded),
+                                  tooltip: tr('cancel'),
+                                ),
                         ),
                       IconButton(
                         onPressed: () {

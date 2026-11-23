@@ -28,6 +28,7 @@ class _Tencent extends Tencent {
     String url,
     Map<String, dynamic> additionalSettings, {
     bool followRedirects = true,
+    Map<String, String>? headers,
     Object? postBody,
   }) async {
     requests.add((url: url, followRedirects: followRedirects));
