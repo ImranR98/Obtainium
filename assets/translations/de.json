@@ -183,7 +183,7 @@
     "deleteCategoryQuestion": "Möchtest du diese Kategorie löschen?",
     "descending": "Absteigend",
     "deselectAll": "Alle abwählen",
-    "deselectX": "{} abgewählt",
+    "deselectX": "{} abwählen",
     "deviceModel": "Gerätemodell",
     "deviceSupportsFollowingArchs": "Ihr Gerät unterstützt die folgenden CPU-Architekturen:",
     "deviceSupportsXArch": "Ihr Gerät unterstützt die CPU-Architektur {}.",
