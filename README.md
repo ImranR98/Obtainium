@@ -77,7 +77,9 @@ Verification info:
   B3:53:60:1F:6A:1D:5F:D6:60:3A:E2:F5:0B:E8:0C:F3:01:36:7B:86:B6:AB:8B:1F:66:24:3D:A9:6C:D5:73:62
   ```
   - Note: The above signature is also valid for the F-Droid flavour of Obtainium, thanks to [reproducible builds](https://f-droid.org/docs/Reproducible_Builds/).
-- [PGP Public Key](https://keyserver.ubuntu.com/pks/lookup?search=contact%40imranr.dev&fingerprint=on&op=index) (to verify APK hashes)
+- PGP Public Key (to verify APK hashes): [pgp-public-key.asc](pgp-public-key.asc)
+  - Fingerprint: `8E27 EC48 A4FE 21C7 1055 E2E3 C4EB 2B69 C138 EBEA`
+  - Also available via [GitHub](https://github.com/ImranR98.gpg) and [keyserver.ubuntu.com](https://keyserver.ubuntu.com/pks/lookup?op=get&search=0x8e27ec48a4fe21c71055e2e3c4eb2b69c138ebea)
 
 ## Contributing / Developing
 
