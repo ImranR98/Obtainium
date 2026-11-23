@@ -478,6 +478,7 @@ URI host as the **action** and dispatches accordingly:
 | --- | --- | --- |
 | `add` | `uri.queryParameters['url']` or `uri.path.substring(1)` | Standardizes the URL, checks for duplicates, navigates to Add App page |
 | `app` / `apps` | URI-decoded query or path | Shows a confirmation dialog with the raw JSON, then imports via `AppsProvider` |
+| `open` | `uri.queryParameters['id']` (package name) | Waits for apps to load, then opens that app's page, or shows "App not found" |
 
 Inbound links arrive via `AppLinks` (Android App Links / intent filters) — the
 `obtainium://` scheme is registered in `AndroidManifest.xml`. Both `getInitialLink()`
@@ -493,6 +494,11 @@ alongside this dispatcher.
 The **share sheet** (`ACTION_SEND` intent) added in the `MainActivity.kt` native layer
 rewrites shared URLs as `obtainium://add/<url>` before they reach `interpretLink`, so
 the same Dart-side dispatch handles both manual deeplinks and share-target intents.
+
+Likewise, **Settings > App info > App details** sends `ACTION_SHOW_APP_INFO` (with
+`EXTRA_PACKAGE_NAME`) to the app's installer. `MainActivity.kt` rewrites it as
+`obtainium://open?id=<package>`, so apps installed by Obtainium get a working
+App details button that opens their page.
 
 ### Reusable components (`lib/components/`)
 
