@@ -724,6 +724,12 @@ class _SettingsPageState extends State<SettingsPage> {
         value: settingsProvider.checkOnStart,
         onChanged: (value) => settingsProvider.checkOnStart = value,
       ),
+      if (!settingsProvider.isTV)
+        ToggleTile(
+          label: tr('useRefreshButton'),
+          value: settingsProvider.useRefreshButton,
+          onChanged: (value) => settingsProvider.useRefreshButton = value,
+        ),
       ToggleTile(
         label: tr('checkUpdateOnDetailPage'),
         value: settingsProvider.checkUpdateOnDetailPage,
@@ -741,6 +747,12 @@ class _SettingsPageState extends State<SettingsPage> {
         value: settingsProvider.onlyCheckInstalledOrTrackOnlyApps,
         onChanged: (value) =>
             settingsProvider.onlyCheckInstalledOrTrackOnlyApps = value,
+      ),
+      ToggleTile(
+        label: tr('checkSystemDisabledApps'),
+        value: settingsProvider.checkSystemDisabledApps,
+        onChanged: (value) => settingsProvider.checkSystemDisabledApps = value,
+        helpWidgets: [Text(tr('checkSystemDisabledAppsHelp'))],
       ),
       SectionHeader(
         tr('filteringAndVersions'),

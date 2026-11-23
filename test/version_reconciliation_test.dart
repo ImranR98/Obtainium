@@ -23,7 +23,11 @@ String trackedAfter({
 }
 
 /// Whether the UI would show an update badge for the given app state.
-bool updateShown(String installed, String latest) {
+bool updateShown(
+  String installed,
+  String latest, {
+  bool versionDetection = true,
+}) {
   final app = App(
     id: 'com.example.app',
     url: 'https://github.com/example/app',
@@ -32,12 +36,22 @@ bool updateShown(String installed, String latest) {
     installedVersion: installed,
     latestVersion: latest,
     preferredApkIndex: 0,
-    additionalSettings: const {'versionDetection': true},
+    additionalSettings: {'versionDetection': versionDetection},
   );
   return isAppUpdateable(app, SettingsProvider());
 }
 
 void main() {
+  group('isAppUpdateable with pseudo-versions (#3523)', () {
+    test('an apparent downgrade is hidden when versions are real', () {
+      expect(updateShown('1.2.4', '1.2.3'), isFalse);
+    });
+
+    test('any change is an update when version detection is off', () {
+      expect(updateShown('1.2.4', '1.2.3', versionDetection: false), isTrue);
+    });
+  });
+
   group('reconcileVersionDifferences', () {
     test('equal versions share a format and match', () {
       final result = reconcileVersionDifferences('1.2.3', '1.2.3');

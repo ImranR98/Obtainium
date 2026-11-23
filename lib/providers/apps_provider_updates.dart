@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:io';
 import 'dart:math';
 
+import 'package:android_package_manager/android_package_manager.dart';
 import 'package:obtainium/core/logging/app_logger.dart';
 import 'package:obtainium/custom_errors.dart';
 import 'package:obtainium/providers/apps_provider.dart';
@@ -127,6 +128,7 @@ extension AppsProviderUpdates on AppsProvider {
   /// When [forceAll] is true, includes all apps regardless of interval.
   List<String> getAppsSortedByUpdateCheckTime({
     bool onlyCheckInstalledOrTrackOnlyApps = false,
+    bool checkSystemDisabledApps = true,
     bool forceAll = false,
   }) {
     final minAge = DateTime.now().subtract(
@@ -135,6 +137,7 @@ extension AppsProviderUpdates on AppsProvider {
     final excludedCategories = settingsProvider.categoriesExcludedFromChecks;
     final List<String> appIds = apps.values
         .where((app) => !app.app.disabled)
+        .where((app) => checkSystemDisabledApps || !app.isSystemDisabled)
         .where((app) => !app.app.categories.any(excludedCategories.contains))
         .where(
           (app) =>
@@ -164,6 +167,27 @@ extension AppsProviderUpdates on AppsProvider {
     return appIds;
   }
 
+  Future<void> refreshInstalledInfoForChecks({
+    Future<List<PackageInfo>> Function()? fetchInstalledInfo,
+  }) async {
+    try {
+      final installedAppsData =
+          await (fetchInstalledInfo ?? getAllInstalledInfo)();
+      final Map<String, PackageInfo> installedAppsMap = {
+        for (final info in installedAppsData)
+          if (info.packageName != null) info.packageName!: info,
+      };
+      for (final entry in apps.entries.toList()) {
+        final freshInfo = installedAppsMap[entry.key];
+        if (freshInfo != null) {
+          apps[entry.key] = entry.value.copyWith(installedInfo: freshInfo);
+        }
+      }
+    } catch (e) {
+      AppLogger.warn('Failed to refresh installed package info: $e');
+    }
+  }
+
   Future<List<App>> checkUpdates({
     bool throwErrorsForRetry = false,
     List<String>? specificIds,
@@ -180,6 +204,7 @@ extension AppsProviderUpdates on AppsProvider {
       await runningCheck.future.catchError((_) => <App>[]);
     }
     final completer = updateCheckCompleter = Completer<List<App>>();
+    final cancellation = updateCheckCancellation = CancellationToken();
     var completed = 0;
     var total = 0;
     refreshProgress.value = 0.0;
@@ -195,9 +220,14 @@ extension AppsProviderUpdates on AppsProvider {
       if (specificIds != null) {
         appIds = List.from(specificIds);
       } else {
+        await waitForAppsToLoad();
+        if (!settingsProvider.checkSystemDisabledApps) {
+          await refreshInstalledInfoForChecks();
+        }
         appIds = getAppsSortedByUpdateCheckTime(
           onlyCheckInstalledOrTrackOnlyApps:
               settingsProvider.onlyCheckInstalledOrTrackOnlyApps,
+          checkSystemDisabledApps: settingsProvider.checkSystemDisabledApps,
           forceAll: forceAll,
         );
       }
@@ -218,6 +248,7 @@ extension AppsProviderUpdates on AppsProvider {
         }
       }
       for (final group in prefetchGroups.entries) {
+        if (cancellation.isCancelled) break;
         try {
           await group.key.prefetchUpdateInfo(group.value);
         } catch (e) {
@@ -276,7 +307,7 @@ extension AppsProviderUpdates on AppsProvider {
       }
 
       Future<void> worker() async {
-        while (true) {
+        while (!cancellation.isCancelled) {
           final int i = nextIndex++;
           if (i >= appIds.length) return;
           final result = await fetchOne(appIds[i]);
@@ -327,6 +358,7 @@ extension AppsProviderUpdates on AppsProvider {
     } finally {
       progressTimer.cancel();
       updateCheckCompleter = null;
+      updateCheckCancellation = null;
       refreshProgress.value = null;
       notify();
     }
