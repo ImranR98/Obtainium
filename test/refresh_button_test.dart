@@ -35,6 +35,9 @@ class _FakeAppsProvider extends ChangeNotifier implements AppsProvider {
   bool loadingApps = false;
 
   @override
+  Future<void> waitForAppsToLoad() async {}
+
+  @override
   Completer<List<App>>? updateCheckCompleter;
 
   @override
