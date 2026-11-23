@@ -120,13 +120,6 @@ ThemeData buildObtainiumTheme(
             ),
           )
         : null,
-    switchTheme: isTV
-        ? SwitchThemeData(
-            overlayColor: focusOverlay(
-              colorScheme.primary.withValues(alpha: 0.5),
-            ),
-          )
-        : null,
     radioTheme: isTV
         ? RadioThemeData(
             overlayColor: focusOverlay(
