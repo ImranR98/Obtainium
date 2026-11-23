@@ -409,6 +409,7 @@
     },
     "updateHealthReasonStaleRelease": "最新リリースから {} 日を超えて経過しています",
     "updateHealthReasonStaleVersion": "最新バージョンが {} 日を超えて変わっていません",
+    "updateHealthStaleNote": "No update detected recently",
     "updateHealthStaleReleaseCheck": "最新リリースから時間が経過したアプリを警告するまでの期間",
     "updateHealthStaleVersionCheck": "最新バージョンに変化がないアプリを警告するまでの期間",
     "updateHealthViewDetails": "このアプリの設定により、アップデートが妨げられている可能性があります",

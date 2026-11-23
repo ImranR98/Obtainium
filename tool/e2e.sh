@@ -93,6 +93,7 @@ PHONE_SUITES=(
   html_links_test.dart
   app_list_density_test.dart
   app_list_semantics_test.dart
+  update_health_label_test.dart
   stale_update_notification_test.dart
   codeberg_auth_test.dart
   screens_navigation_test.dart

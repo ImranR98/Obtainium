@@ -409,6 +409,7 @@
     },
     "updateHealthReasonStaleRelease": "De laatste publicatie is meer dan {} dagen oud",
     "updateHealthReasonStaleVersion": "Not updated in over {} days",
+    "updateHealthStaleNote": "No update detected recently",
     "updateHealthStaleReleaseCheck": "Apps markeren waarvan de laatste publicatie ouder is dan",
     "updateHealthStaleVersionCheck": "Apps markeren die niet zijn bijgewerkt in",
     "updateHealthViewDetails": "Deze app-configuratie kan updates verhinderen",

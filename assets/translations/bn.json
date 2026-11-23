@@ -409,6 +409,7 @@
     },
     "updateHealthReasonStaleRelease": "সর্বশেষ রিলিজটি {} দিনেরও বেশি পুরোনো",
     "updateHealthReasonStaleVersion": "{} দিনেরও বেশি সময় ধরে আপডেট করা হয়নি",
+    "updateHealthStaleNote": "No update detected recently",
     "updateHealthStaleReleaseCheck": "সর্বশেষ রিলিজ এর চেয়ে পুরোনো হলে চিহ্নিত করুন",
     "updateHealthStaleVersionCheck": "এত দিনের মধ্যে আপডেট না হওয়া অ্যাপ চিহ্নিত করুন",
     "updateHealthViewDetails": "এই অ্যাপ কনফিগারেশনের কারণে আপডেট বাধাগ্রস্ত হতে পারে",

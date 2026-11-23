@@ -409,6 +409,7 @@
     },
     "updateHealthReasonStaleRelease": "Den senaste utgåvan är äldre än {} dagar",
     "updateHealthReasonStaleVersion": "Har inte uppdaterats på över {} dagar",
+    "updateHealthStaleNote": "No update detected recently",
     "updateHealthStaleReleaseCheck": "Markera appar vars senaste utgåva är äldre än",
     "updateHealthStaleVersionCheck": "Markera appar som inte har uppdaterats på",
     "updateHealthViewDetails": "Appens inställningar kan förhindra uppdateringar",

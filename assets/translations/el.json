@@ -409,6 +409,7 @@
     },
     "updateHealthReasonStaleRelease": "Η τελευταία έκδοση είναι πάνω από {} ημέρες παλιά",
     "updateHealthReasonStaleVersion": "Χωρίς ενημέρωση για πάνω από {} ημέρες",
+    "updateHealthStaleNote": "No update detected recently",
     "updateHealthStaleReleaseCheck": "Επισήμανση εφαρμογών των οποίων η τελευταία έκδοση είναι παλαιότερη από",
     "updateHealthStaleVersionCheck": "Επισήμανση εφαρμογών που δεν έχουν ενημερωθεί για",
     "updateHealthViewDetails": "Αυτή η ρύθμιση εφαρμογής μπορεί να εμποδίσει ενημερώσεις",

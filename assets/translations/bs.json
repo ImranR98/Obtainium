@@ -409,6 +409,7 @@
     },
     "updateHealthReasonStaleRelease": "Najnovija verzija je starija od {} dana",
     "updateHealthReasonStaleVersion": "Nije ažurirano više od {} dana",
+    "updateHealthStaleNote": "No update detected recently",
     "updateHealthStaleReleaseCheck": "Označite aplikacije čiji je posljednje izdanje starije od",
     "updateHealthStaleVersionCheck": "Označite aplikacije koje nisu ažurirane u",
     "updateHealthViewDetails": "Ova konfiguracija aplikacije može spriječiti ažuriranja",

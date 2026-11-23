@@ -902,9 +902,12 @@ class _AppPageState extends State<AppPage> {
                     const SizedBox(width: 4),
                     Flexible(
                       child: Text(
-                        updateHealthIgnored
-                            ? tr('updateHealthIgnoredNote')
-                            : tr('updateHealthViewDetails'),
+                        tr(
+                          updateHealthLinkLabelKey(
+                            ignored: updateHealthIgnored,
+                            reasons: updateHealthReasons,
+                          ),
+                        ),
                         style: tt.bodyMedium?.copyWith(
                           color: cs.primary,
                           decoration: TextDecoration.underline,
