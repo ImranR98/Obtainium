@@ -429,13 +429,13 @@ class AppIconAction extends StatelessWidget {
       label: semanticLabel,
       excludeSemantics: true,
       onTap: enabled ? onTap : null,
-      onLongPress: onLongPress,
+      onLongPress: enabled ? onLongPress : null,
       child: TvFocusRing(
         borderRadius: borderRadius,
         child: InkWell(
           borderRadius: BorderRadius.circular(borderRadius),
           onTap: enabled ? onTap : null,
-          onLongPress: onLongPress,
+          onLongPress: enabled ? onLongPress : null,
           child: child,
         ),
       ),
@@ -755,21 +755,13 @@ Future<void> showHelpDialog(
       actions: [
         TextButton(
           autofocus: context.read<SettingsProvider>().isTV,
-          onPressed: () => Navigator.of(ctx).pop(),
+          onPressed: () => Navigator.of(context).pop(),
           child: Text(tr('ok')),
         ),
       ],
     ),
   );
 }
-
-ValueChanged<bool> hapticSwitchOnChanged(
-  BuildContext context,
-  ValueChanged<bool> onChanged,
-) => (v) {
-  context.read<SettingsProvider>().selectionClick();
-  onChanged(v);
-};
 
 bool _isTile(Widget w) =>
     w is CardTile || w is ToggleTile || w is ConnectedCard;
@@ -1124,6 +1116,7 @@ class _TvColourPickerDialog extends StatefulWidget {
   final List<Color> extraColors;
 
   const _TvColourPickerDialog({
+    super.key,
     required this.initialColor,
     required this.title,
     this.onColorChanged,
@@ -1154,7 +1147,7 @@ class _TvColourPickerDialogState extends State<_TvColourPickerDialog> {
         if (seen.add(c.toARGB32())) c,
     ];
     return AlertDialog(
-      title: Text(widget.title),
+      title: widget.title,
       content: SingleChildScrollView(
         child: Wrap(
           spacing: AppSpacings.elementGap,
@@ -1201,6 +1194,7 @@ class _TvColourSwatch extends StatelessWidget {
   final Widget? icon;
 
   const _TvColourSwatch({
+    super.key,
     required this.color,
     required this.selected,
     required this.onTap,
