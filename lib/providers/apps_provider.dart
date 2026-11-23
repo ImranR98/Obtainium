@@ -30,6 +30,7 @@ import 'package:obtainium/providers/apps_provider_lifecycle.dart';
 import 'package:obtainium/providers/apps_provider_updates.dart';
 
 import 'package:obtainium/utils/bg_update_guards.dart';
+import 'package:obtainium/utils/cache_dir_utils.dart';
 import 'package:obtainium/utils/signing_cert_utils.dart';
 import 'package:obtainium/utils/translation_loader.dart';
 
@@ -933,20 +934,12 @@ class AppsProvider with ChangeNotifier {
           await getExternalStorageDirectory(),
         );
       } catch (_) {}
-      if (cacheRoot == null) {
-        final internalCache = await getApplicationCacheDirectory();
-        _apkDir = Directory('${internalCache.path}/apks');
-        _iconsCacheDir = Directory('${internalCache.path}/icons');
-      } else {
-        _apkDir = cacheRoot;
-        _iconsCacheDir = Directory('${cacheRoot.path}/icons');
-      }
-      if (!_apkDir!.existsSync()) {
-        _apkDir!.createSync(recursive: true);
-      }
-      if (!_iconsCacheDir!.existsSync()) {
-        _iconsCacheDir!.createSync(recursive: true);
-      }
+      final cacheDirs = resolveCacheDirectories(
+        externalCacheRoot: cacheRoot,
+        internalCacheRoot: await getApplicationCacheDirectory(),
+      );
+      _apkDir = cacheDirs.apkDir;
+      _iconsCacheDir = cacheDirs.iconsDir;
       if (!isBg) {
         loadingApps = true;
         notify();
