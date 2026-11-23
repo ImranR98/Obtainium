@@ -56,6 +56,7 @@ class _TestFDroidRepo extends FDroidRepo {
     String url,
     Map<String, dynamic> additionalSettings, {
     bool followRedirects = true,
+    Map<String, String>? headers,
     Object? postBody,
   }) async {
     if (url != '$_repo/index-v2.json') return http.Response('Not found', 404);

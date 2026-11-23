@@ -33,6 +33,7 @@ class _OdsGalaxyStore extends SamsungGalaxyStore {
     String url,
     Map<String, dynamic> additionalSettings, {
     bool followRedirects = true,
+    Map<String, String>? headers,
     Object? postBody,
   }) async {
     requests.add((
@@ -214,6 +215,7 @@ class _RecordingGalaxyStore extends SamsungGalaxyStore {
     String url,
     Map<String, dynamic> additionalSettings, {
     bool followRedirects = true,
+    Map<String, String>? headers,
     Object? postBody,
   }) async {
     if (Uri.parse(url).queryParameters.containsKey('reqId')) {
