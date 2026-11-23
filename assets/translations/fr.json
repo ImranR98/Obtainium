@@ -100,7 +100,7 @@
         "one": "La vérification des mises à jour en arrière-plan a trouvé {} mise à jour - l'utilisateur sera averti si nécessaire",
         "other": "La vérification des mises à jour en arrière-plan a trouvé {} mises à jour - l'utilisateur sera averti si nécessaire"
     },
-        "bgGuardChecksAndUpdates": "Vérifier et mettre à jour",
+    "bgGuardChecksAndUpdates": "Vérifier et mettre à jour",
     "bgGuardChecksOnly": "Vérifier uniquement",
     "bgGuardNothing": "Rien",
     "bgTaskStarted": "Tâche en arrière-plan démarrée - consultez les journaux.",
@@ -138,6 +138,8 @@
     "changeX": "Modifier {}",
     "changes": "Modifications",
     "checkOnStart": "Rechercher les mises à jour au démarrage",
+    "checkSystemDisabledApps": "Check system-disabled apps for updates",
+    "checkSystemDisabledAppsHelp": "Include apps disabled in Android system settings during full and background update checks. Refreshing a single app individually from its details page is unaffected.",
     "checkUpdateOnDetailPage": "Vérifier les mises à jour lors de l'ouverture d'une page de détails",
     "checkingForUpdates": "Recherche de mises à jour en cours",
     "checkingForUpdatesNotifChannel": "Recherche de mises à jour",
@@ -197,7 +199,7 @@
     "documentationLinksNote": "La page GitHub d'Obtainium liée ci-dessous contient des liens vers des vidéos, des articles, des discussions et d'autres ressources qui vous aideront à comprendre comment utiliser l'application.",
     "dontShowAPKOriginWarnings": "Ne plus afficher les avertissements d'origine des APK",
     "dontShowAgain": "Ne plus afficher",
-    "dontShowTrackOnlyWarnings": "Ne plus afficher les avertissements de mode « suivi uniquement »"
+    "dontShowTrackOnlyWarnings": "Ne plus afficher les avertissements de mode « suivi uniquement »",
     "dontSortReleasesList": "Conserver l'ordre des versions de l'API",
     "dontInstall": "Ne pas installer",
     "downloadNotifDescription": "Informe l'utilisateur de la progression du téléchargement d'une application",
@@ -297,7 +299,7 @@
     "installation": "Installation",
     "intermediateLink": "Lien intermédiaire",
     "intermediateLinkNotFound": "Lien intermédiaire introuvable",
-    "intermediateLinkRegex": "Filtre pour un lien « intermédiaire » à visiter"
+    "intermediateLinkRegex": "Filtre pour un lien « intermédiaire » à visiter",
     "invalidArchive": "L'archive contient un fichier avec un chemin non sécurisé",
     "invalidInput": "Entrée invalide",
     "invalidRegEx": "Expression régulière invalide",
@@ -396,7 +398,7 @@
     "updateHealthOverrideFilteredReleases": "Santé des mises à jour - versions plus récentes masquées",
     "updateHealthOverrideStaleRelease": "Santé des mises à jour - version plus ancienne que",
     "updateHealthOverrideStaleVersion": "Santé des mises à jour - non mis à jour depuis",
-    "updateHealthReasonArchived": "La source est archivée"
+    "updateHealthReasonArchived": "La source est archivée",
     "updateHealthReasonFailedChecks": {
         "one": "{} échec de vérification de mise à jour consécutif",
         "other": "{} échecs de vérification de mise à jour consécutifs"
@@ -405,11 +407,6 @@
         "one": "{} version plus récente est masquée par vos filtres",
         "other": "{} versions plus récentes sont masquées par vos filtres"
     },
-    "updateHealthReasonStaleRelease": "La dernière version date de plus de {} jours",
-    "updateHealthReasonStaleVersion": "Non mis à jour depuis plus de {} jours",
-    "updateHealthStaleReleaseCheck": "Signaler les applications dont la dernière version est plus ancienne que",
-    "updateHealthStaleVersionCheck": "Signaler les applications qui n'ont pas été mises à jour depuis",
-    "updateHealthViewDetails": "La configuration de cette application peut empêcher les mises à jour",
     "updateHealthReasonStaleRelease": "La dernière release date de plus de {} jours",
     "updateHealthReasonStaleVersion": "Aucune nouvelle version trouvée depuis plus de {} jours",
     "updateHealthStaleNote": "No update detected recently",
@@ -662,7 +659,6 @@
     "useFirstApkOfVersion": "Sélectionner automatiquement le premier de plusieurs APK",
     "useLatestAssetDateAsReleaseDate": "Utiliser la date du dernier fichier téléchargé comme date de publication",
     "useMaterialYou": "Utiliser Material You",
-    "useShizuku": "Utiliser Dhizuku, Shizuku ou Sui pour installer",
     "useRefreshButton": "Use a refresh button instead of pull to refresh",
     "useShizuku": "Utiliser Shizuku ou Sui pour installer",
     "useSystemFont": "Utiliser la police du système",
