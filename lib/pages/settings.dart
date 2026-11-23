@@ -525,6 +525,9 @@ class _SettingsPageState extends State<SettingsPage> {
       padding: EdgeInsets.zero,
       child: TvFocusRing(
         borderRadius: AppRadii.small,
+        shape: RoundedSuperellipseBorder(
+          borderRadius: BorderRadius.circular(AppRadii.small),
+        ),
         child: ListTile(
           autofocus: autofocus,
           contentPadding: AppPaddings.rowHorizontal,
@@ -1058,6 +1061,7 @@ class _SettingsPageState extends State<SettingsPage> {
             subtitle: Text(_themeColourLabel(settingsProvider.themeColor)),
             trailing: TvFocusRing(
               borderRadius: 20,
+              shape: const CircleBorder(),
               child: ColorIndicator(
                 width: 40,
                 height: 40,

@@ -150,7 +150,10 @@ class _TvTextFieldFocusState extends State<TvTextFieldFocus> {
                     borderRadius: BorderRadius.circular(widget.borderRadius),
                   )
                 : null,
-            child: ExcludeFocus(excluding: !_activated, child: widget.child),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(widget.borderRadius),
+              child: ExcludeFocus(excluding: !_activated, child: widget.child),
+            ),
           ),
         ),
       ),

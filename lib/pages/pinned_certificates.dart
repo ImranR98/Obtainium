@@ -224,6 +224,9 @@ class _CertificatePinningPageState extends State<CertificatePinningPage> {
           padding: EdgeInsets.zero,
           child: TvFocusRing(
             borderRadius: AppRadii.small,
+            shape: RoundedSuperellipseBorder(
+              borderRadius: BorderRadius.circular(AppRadii.small),
+            ),
             child: ListTile(
               contentPadding: AppPaddings.rowHorizontal,
               leading: Icon(Icons.add, color: colorScheme.primary),
@@ -258,6 +261,9 @@ class _CertificatePinningPageState extends State<CertificatePinningPage> {
       padding: EdgeInsets.zero,
       child: TvFocusRing(
         borderRadius: AppRadii.small,
+        shape: RoundedSuperellipseBorder(
+          borderRadius: BorderRadius.circular(AppRadii.small),
+        ),
         child: ListTile(
           contentPadding: AppPaddings.rowHorizontal,
           leading: Icon(Icons.lock_outline, color: colorScheme.primary),
@@ -285,6 +291,9 @@ class _CertificatePinningPageState extends State<CertificatePinningPage> {
       padding: EdgeInsets.zero,
       child: TvFocusRing(
         borderRadius: AppRadii.small,
+        shape: RoundedSuperellipseBorder(
+          borderRadius: BorderRadius.circular(AppRadii.small),
+        ),
         child: ListTile(
           contentPadding: AppPaddings.rowHorizontal,
           leading: Icon(Icons.restore, color: colorScheme.primary),

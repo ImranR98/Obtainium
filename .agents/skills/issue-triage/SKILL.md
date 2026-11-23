@@ -18,6 +18,7 @@ issues and means "not reviewed yet") **and re-check the open issues labeled
    labels.
 5. Fix the approved autonomous issues in importance order, one verified commit each.
 6. Report what changed and what remains.
+7. Offer an optional `dev` → `main` release PR, only if the user approves it in Phase 8.
 
 The `needs follow up` queue is a re-check, not a fresh triage: include an issue when the
 requester or a community member with relevant information replied after the last maintainer
@@ -216,6 +217,36 @@ Finish with a concise report:
 - Issues moved to human/needs-follow-up, with why.
 - Remaining `to check` and `needs follow up` queue sizes, plus any **suggest close (stale)**
    candidates and suggested next steps.
+
+## Phase 8 — Optional release PR (ask first)
+
+After the report, ask whether the user wants a release PR from `dev` to `main`. Do not push,
+open a PR, or merge anything unless the user explicitly approves that step. This is the only
+case where this skill pushes or opens a PR; the normal "do not push" rule still applies
+otherwise.
+
+If approved:
+
+1. **Version bump, only if the current version is already released.** Read the version from
+   `pubspec.yaml` and its base tag (`1.7.5+2363` → `v1.7.5`). Check whether that version has
+   already shipped with `git fetch --tags --quiet` + `git tag --list "v<base>"` and
+   `gh release view "v<base>"`. If either exists, increment the patch and build number by one
+   (e.g. `1.7.4+2362` → `1.7.5+2363`) and commit it as `Increment version`. If the version is
+   not yet released — for example `dev` already carries an unreleased bump — leave it alone.
+   This approved release step is the exception to the no-version-bump rule in `AGENTS.md`.
+2. **Push and create the PR.** Push `dev`, then create the PR against `main`:
+   `gh pr create --base main --head dev --title "<short title>" --body-file <file>`.
+   - Title: short, in the maintainer's style (e.g. `Various fixes and improvements`).
+   - Body: a bullet list of shortened, user-facing commit summaries, each ending with its
+     issue/PR reference. Build it from `git log --oneline origin/main..dev`.
+   - Omit non-user-facing commits: version bumps, dependency/toolchain updates, test-only
+     changes, dev tooling/skill changes, and merge commits.
+3. **Checks and merge, both gated.** Wait for required checks
+   (`gh pr checks <n> --watch`). Then ask separately whether to merge. If approved, merge with
+   `gh pr merge <n> --merge` (merge commit; do not delete `dev`). Record the PR URL and merge
+   commit in the ledger and final report.
+
+Never merge without a separate explicit approval.
 
 ## Gotchas
 

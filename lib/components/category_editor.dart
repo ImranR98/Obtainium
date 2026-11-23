@@ -208,6 +208,7 @@ class _CategoryEditorSheetState extends State<_CategoryEditorSheet> {
       selected: selected,
       child: TvFocusRing(
         borderRadius: AppRadii.large,
+        shape: const CircleBorder(),
         child: InkWell(
           onTap: onTap,
           customBorder: const CircleBorder(),
