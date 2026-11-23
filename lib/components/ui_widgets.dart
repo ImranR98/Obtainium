@@ -11,6 +11,7 @@ import 'package:obtainium/providers/settings_provider.dart';
 import 'package:obtainium/utils/color_utils.dart';
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher_string.dart';
+import 'package:obtainium/components/m3e_switch.dart';
 
 Future<void> copyToClipboard(BuildContext context, String text) async {
   await Clipboard.setData(ClipboardData(text: text));
@@ -924,11 +925,9 @@ class ToggleTile extends StatelessWidget {
               enabled: onChanged != null,
               excludeSemantics: true,
               onTap: onChanged == null ? null : () => onChanged!(!value),
-              child: Switch(
+              child: M3ESwitch(
                 value: value,
-                onChanged: onChanged == null
-                    ? null
-                    : hapticSwitchOnChanged(context, onChanged!),
+                onChanged: onChanged,
               ),
             ),
           ],
