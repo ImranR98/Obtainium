@@ -639,7 +639,7 @@ class _GeneratedFormState extends State<GeneratedForm> {
         noPadding: widget.noTilePadding,
         onChanged: item.disabled
             ? null
-            : hapticSwitchOnChanged(context, (value) {
+            : (value) {
                 setState(() {
                   values[item.key] = value;
                   if (value) {
@@ -649,7 +649,7 @@ class _GeneratedFormState extends State<GeneratedForm> {
                   }
                   notifyFormChange();
                 });
-              }),
+              },
       );
     }
     if (item is GeneratedFormSubForm) {
