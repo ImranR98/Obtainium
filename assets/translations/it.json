@@ -138,6 +138,8 @@
     "changeX": "Modifica {}",
     "changes": "Novità",
     "checkOnStart": "Controlla una volta all'avvio",
+    "checkSystemDisabledApps": "Check system-disabled apps for updates",
+    "checkSystemDisabledAppsHelp": "Include apps disabled in Android system settings during full and background update checks. Refreshing a single app individually from its details page is unaffected.",
     "checkUpdateOnDetailPage": "Controlla aggiornamenti all'apertura dei dettagli dell'app",
     "checkingForUpdates": "Controllo degli aggiornamenti in corso",
     "checkingForUpdatesNotifChannel": "Controllo degli aggiornamenti in corso",

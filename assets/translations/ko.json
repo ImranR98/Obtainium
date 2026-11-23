@@ -138,6 +138,8 @@
     "changeX": "{} 변경",
     "changes": "변경 사항",
     "checkOnStart": "시작 시 업데이트 확인",
+    "checkSystemDisabledApps": "Check system-disabled apps for updates",
+    "checkSystemDisabledAppsHelp": "Include apps disabled in Android system settings during full and background update checks. Refreshing a single app individually from its details page is unaffected.",
     "checkUpdateOnDetailPage": "앱 세부 정보 페이지 열 때 업데이트 확인",
     "checkingForUpdates": "업데이트 확인 중",
     "checkingForUpdatesNotifChannel": "업데이트 확인 중",

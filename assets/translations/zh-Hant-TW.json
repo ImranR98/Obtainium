@@ -138,6 +138,8 @@
     "changeX": "變更 {}",
     "changes": "變更",
     "checkOnStart": "啟動時檢查更新",
+    "checkSystemDisabledApps": "Check system-disabled apps for updates",
+    "checkSystemDisabledAppsHelp": "Include apps disabled in Android system settings during full and background update checks. Refreshing a single app individually from its details page is unaffected.",
     "checkUpdateOnDetailPage": "開啟應用程式詳細資料頁面時檢查更新",
     "checkingForUpdates": "正在檢查更新",
     "checkingForUpdatesNotifChannel": "正在檢查更新",

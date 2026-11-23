@@ -896,6 +896,15 @@ class SettingsProvider with ChangeNotifier {
     notifyListeners();
   }
 
+  bool get checkSystemDisabledApps {
+    return _getBool('checkSystemDisabledApps') ?? true;
+  }
+
+  set checkSystemDisabledApps(bool val) {
+    prefs?.setBool('checkSystemDisabledApps', val);
+    notifyListeners();
+  }
+
   bool get collapseGroupsOnStartup {
     return _getBool('collapseGroupsOnStartup') ?? false;
   }

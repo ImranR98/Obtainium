@@ -742,6 +742,12 @@ class _SettingsPageState extends State<SettingsPage> {
         onChanged: (value) =>
             settingsProvider.onlyCheckInstalledOrTrackOnlyApps = value,
       ),
+      ToggleTile(
+        label: tr('checkSystemDisabledApps'),
+        value: settingsProvider.checkSystemDisabledApps,
+        onChanged: (value) => settingsProvider.checkSystemDisabledApps = value,
+        helpWidgets: [Text(tr('checkSystemDisabledAppsHelp'))],
+      ),
       SectionHeader(
         tr('filteringAndVersions'),
         padding: _settingsSectionPadding,
