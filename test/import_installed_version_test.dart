@@ -5,6 +5,7 @@ import 'package:obtainium/providers/apps_provider_import_export.dart';
 App _app({
   String? installedVersion,
   Map<String, dynamic> additionalSettings = const {},
+  bool allowIdChange = false,
 }) => App(
   id: 'com.example.app',
   url: 'https://example.com/app',
@@ -14,6 +15,7 @@ App _app({
   latestVersion: '2.0.0',
   preferredApkIndex: 0,
   additionalSettings: additionalSettings,
+  allowIdChange: allowIdChange,
 );
 
 void main() {
@@ -66,5 +68,10 @@ void main() {
         expect(resolveImportedInstalledVersion(app, null), isNull);
       },
     );
+
+    test('never imports allowIdChange', () {
+      final app = _app(installedVersion: '1.0.0', allowIdChange: true);
+      expect(prepareImportedApp(app, null).allowIdChange, isFalse);
+    });
   });
 }

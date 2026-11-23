@@ -12,6 +12,7 @@ import 'package:obtainium/providers/apps_provider.dart';
 import 'package:obtainium/providers/document_tree_bridge.dart';
 import 'package:obtainium/providers/settings_provider.dart';
 import 'package:obtainium/providers/source_provider.dart';
+import 'package:obtainium/utils/app_id_utils.dart';
 import 'package:shared_storage/shared_storage.dart' as saf;
 
 String? resolveImportedInstalledVersion(
@@ -24,6 +25,16 @@ String? resolveImportedInstalledVersion(
     return app.installedVersion;
   }
   return null;
+}
+
+App prepareImportedApp(App app, String? deviceInstalledVersion) {
+  return app.copyWith(
+    installedVersion: resolveImportedInstalledVersion(
+      app,
+      deviceInstalledVersion,
+    ),
+    allowIdChange: false,
+  );
 }
 
 /// Import/export of app configurations for [AppsProvider].
@@ -222,15 +233,19 @@ extension AppsProviderImportExport on AppsProvider {
     } catch (e) {
       throw ObtainiumError('${tr('failedToImport')}: ${e.toString()}');
     }
+    for (final app in importedApps) {
+      if (!isValidAppId(app.id)) {
+        AppLogger.warn('Rejected import with unsafe app ID: ${app.id}');
+        throw ObtainiumError(tr('invalidInput'));
+      }
+    }
     await waitForAppsToLoad();
     for (var i = 0; i < importedApps.length; i++) {
       final a = importedApps[i];
       final installedInfo = await getInstalledInfo(a.id);
-      importedApps[i] = a.copyWith(
-        installedVersion: resolveImportedInstalledVersion(
-          a,
-          realInstalledVersionOf(a, installedInfo),
-        ),
+      importedApps[i] = prepareImportedApp(
+        a,
+        realInstalledVersionOf(a, installedInfo),
       );
     }
     await saveApps(importedApps, onlyIfExists: false);
