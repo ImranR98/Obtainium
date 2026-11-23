@@ -656,6 +656,7 @@
     "useFirstApkOfVersion": "Tự động chọn tệp APK đầu tiên trong danh sách nhiều tệp APK.",
     "useLatestAssetDateAsReleaseDate": "Sử dụng nội dung tải lên mới nhất làm ngày phát hành",
     "useMaterialYou": "Sử dụng Material You",
+    "useRefreshButton": "Use a refresh button instead of pull to refresh",
     "useShizuku": "Sử dụng Shizuku hoặc Sui để cài đặt",
     "useSystemFont": "Sử dụng phông chữ hệ thống",
     "useVersionCodeAsOSVersion": "Sử dụng Mã phiên bản ứng dụng làm phiên bản do hệ điều hành phát hiện",

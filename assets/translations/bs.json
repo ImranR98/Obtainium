@@ -656,6 +656,7 @@
     "useFirstApkOfVersion": "Automatski izaberi prvi ako postoji više APK-ova",
     "useLatestAssetDateAsReleaseDate": "Koristite najnovije otpremanje materijala kao datum izdavanja",
     "useMaterialYou": "Koristi Material You temu",
+    "useRefreshButton": "Use a refresh button instead of pull to refresh",
     "useShizuku": "Koristi Shizuku ili Sui za instaliranje",
     "useSystemFont": "Koristite sistemski font",
     "useVersionCodeAsOSVersion": "Koristite kod verzije aplikacije kao verziju koju je otkrio OS",

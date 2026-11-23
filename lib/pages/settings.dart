@@ -724,6 +724,12 @@ class _SettingsPageState extends State<SettingsPage> {
         value: settingsProvider.checkOnStart,
         onChanged: (value) => settingsProvider.checkOnStart = value,
       ),
+      if (!settingsProvider.isTV)
+        ToggleTile(
+          label: tr('useRefreshButton'),
+          value: settingsProvider.useRefreshButton,
+          onChanged: (value) => settingsProvider.useRefreshButton = value,
+        ),
       ToggleTile(
         label: tr('checkUpdateOnDetailPage'),
         value: settingsProvider.checkUpdateOnDetailPage,

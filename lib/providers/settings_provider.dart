@@ -303,6 +303,15 @@ class SettingsProvider with ChangeNotifier {
     notifyListeners();
   }
 
+  bool get useRefreshButton {
+    return _getBool('useRefreshButton') ?? false;
+  }
+
+  set useRefreshButton(bool useRefreshButton) {
+    prefs?.setBool('useRefreshButton', useRefreshButton);
+    notifyListeners();
+  }
+
   SortColumnSettings get sortColumn {
     final stored = _getInt('sortColumn');
     if (stored != null &&

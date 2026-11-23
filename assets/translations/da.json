@@ -656,6 +656,7 @@
     "useFirstApkOfVersion": "Vælg automatisk den første af flere APK'er",
     "useLatestAssetDateAsReleaseDate": "Brug seneste ressourceupload som udgivelsesdato",
     "useMaterialYou": "Brug Material You",
+    "useRefreshButton": "Use a refresh button instead of pull to refresh",
     "useShizuku": "Brug Shizuku eller Sui til at installere",
     "useSystemFont": "Brug systemskrifttype",
     "useVersionCodeAsOSVersion": "Brug app-versionKode som OS-registreret version",

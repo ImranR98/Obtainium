@@ -779,6 +779,10 @@ class AppsProvider with ChangeNotifier {
   /// mechanism: subsequent callers receive the existing completer's future.
   Completer<List<App>>? updateCheckCompleter;
 
+  CancellationToken? updateCheckCancellation;
+
+  void cancelUpdateCheck() => updateCheckCancellation?.cancel();
+
   /// Update-check progress (0..1), or null when no check is running. Exposed as
   /// a [ValueNotifier] so the progress bar can rebuild on frequent ticks
   /// WITHOUT triggering a full [notify] (which would rerun the expensive app
