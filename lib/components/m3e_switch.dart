@@ -3,7 +3,6 @@ import 'package:provider/provider.dart';
 import 'package:obtainium/theme.dart';
 import 'package:obtainium/providers/settings_provider.dart';
 
-
 /// Material 3 Expressive switch.
 ///
 /// Spec: 52×32 track, handle 16 (off) / 24 (on) / 28 (pressed),
@@ -24,12 +23,6 @@ class M3ESwitch extends StatefulWidget {
 
 class _M3ESwitchState extends State<M3ESwitch>
     with SingleTickerProviderStateMixin {
-  static const double _trackWidth = 52;
-  static const double _trackHeight = 32;
-  static const double _handleOff = 16;
-  static const double _handleOn = 24;
-  static const double _handlePressed = 28;
-  static const double _stateLayerSize = 40;
   static const double _targetSize = 48;
 
   late final AnimationController _controller;
@@ -63,117 +56,179 @@ class _M3ESwitchState extends State<M3ESwitch>
     super.dispose();
   }
 
-  double get _handleSize {
-    final base = widget.value ? _handleOn : _handleOff;
-    return _pressed ? _handlePressed : base;
-  }
-
   @override
   Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
     final isTV = context.read<SettingsProvider>().isTV;
+    final cs = Theme.of(context).colorScheme;
 
     return Semantics(
       container: true,
-      label: '', // caller sets label via wrapping Semantics
+      label: '',
       toggled: widget.value,
       enabled: widget.onChanged != null,
       excludeSemantics: true,
-      onTap: widget.onChanged == null ? null : () => widget.onChanged!(!widget.value),
-      child: GestureDetector(
-        onTap: widget.onChanged == null
-            ? null
-            : () {
-                context.read<SettingsProvider>().selectionClick();
-                widget.onChanged!(!widget.value);
-              },
-        onSecondaryTapDown: (_) => setState(() => _pressed = true),
-        onSecondaryTapUp: (_) => setState(() => _pressed = false),
-        onSecondaryTapCancel: () => setState(() => _pressed = false),
-        child: MouseRegion(
-          onEnter: (_) => setState(() => _hovered = true),
-          onExit: (_) => setState(() => _hovered = false),
-          child: SizedBox(
-            width: _targetSize,
-            height: _targetSize,
-            child: AnimatedBuilder(
-              animation: _controller,
-              builder: (context, _) {
-                final t = _controller.value;
-                final handleSize = _handleSize;
-                // Handle center X: 16 (off) → 36 (on) within 52dp track
-                final handleCenterX = 16 + t * (36 - 16);
-
-                return Stack(
-                  clipBehavior: Clip.none,
-                  alignment: Alignment.center,
-                  children: [
-                    // Track
-                    Positioned.fill(
-                      child: Align(
-                        alignment: Alignment.center,
-                        child: Container(
-                          width: _trackWidth,
-                          height: _trackHeight,
-                          decoration: BoxDecoration(
-                            color: Color.lerp(
-                              cs.surfaceContainerHighest,
-                              cs.primary,
-                              t,
-                            ),
-                            borderRadius: BorderRadius.circular(_trackHeight / 2),
-                            border: t < 0.5
-                                ? Border.all(color: cs.outline, width: 2)
-                                : null,
-                          ),
-                        ),
-                      ),
-                    ),
-                    // State layer (hover/press/focus)
-                    if (_hovered || _pressed || isTV)
-                      Positioned(
-                        left: handleCenterX - _stateLayerSize / 2,
-                        top: _trackHeight / 2 - _stateLayerSize / 2,
-                        child: Container(
-                          width: _stateLayerSize,
-                          height: _stateLayerSize,
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            color: cs.primary.withValues(
-                              alpha: _pressed ? 0.12 : 0.08,
-                            ),
-                          ),
-                        ),
-                      ),
-                    // Handle
-                    Positioned(
-                      left: handleCenterX - handleSize / 2,
-                      top: _trackHeight / 2 - handleSize / 2,
-                      child: AnimatedContainer(
-                        duration: const Duration(milliseconds: 100),
-                        curve: Curves.easeOut,
-                        width: handleSize,
-                        height: handleSize,
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          color: t > 0.5 ? cs.onPrimary : cs.outline,
-                        ),
-                        child: t > 0.5
-                            ? Icon(
-                                Icons.check,
-                                size: 16,
-                                color: cs.primary,
-                              )
-                            : null,
-                      ),
-                    ),
-                  ],
-                );
-              },
+      onTap: widget.onChanged == null
+          ? null
+          : () => widget.onChanged!(!widget.value),
+      child: MouseRegion(
+        onEnter: (_) => setState(() => _hovered = true),
+        onExit: (_) => setState(() => _hovered = false),
+        child: Material(
+          type: MaterialType.transparency,
+          child: InkWell(
+            customBorder: const CircleBorder(),
+            highlightColor: Colors.transparent,
+            splashColor: cs.primary.withValues(alpha: 0.12),
+            onTap: widget.onChanged == null
+                ? null
+                : () {
+                    context.read<SettingsProvider>().selectionClick();
+                    widget.onChanged!(!widget.value);
+                  },
+            onTapDown: (_) => setState(() => _pressed = true),
+            onTapUp: (_) => setState(() => _pressed = false),
+            onTapCancel: () => setState(() => _pressed = false),
+            child: RepaintBoundary(
+              child: CustomPaint(
+                painter: _M3ESwitchPainter(
+                  controller: _controller,
+                  pressed: _pressed,
+                  hovered: _hovered,
+                  isTV: isTV,
+                  colorScheme: cs,
+                ),
+                size: const Size(_targetSize, _targetSize),
+              ),
             ),
           ),
         ),
       ),
-    ),
-  );
+    );
   }
+}
+
+class _M3ESwitchPainter extends CustomPainter {
+  final AnimationController controller;
+  final bool pressed;
+  final bool hovered;
+  final bool isTV;
+  final ColorScheme colorScheme;
+
+  // Cached paint objects — mutated in place, never re-allocated.
+  final _trackPaint = Paint();
+  final _borderPaint = Paint()
+    ..style = PaintingStyle.stroke
+    ..strokeWidth = 2;
+  final _stateLayerPaint = Paint();
+  final _handlePaint = Paint();
+  final _xPaint = Paint()
+    ..style = PaintingStyle.stroke
+    ..strokeWidth = 2
+    ..strokeCap = StrokeCap.round;
+  final _checkPaint = Paint()
+    ..style = PaintingStyle.stroke
+    ..strokeWidth = 2
+    ..strokeCap = StrokeCap.round;
+
+  // Cached paths — mutated in place.
+  final _xPath = Path();
+  final _checkPath = Path();
+
+  _M3ESwitchPainter({
+    required this.controller,
+    required this.pressed,
+    required this.hovered,
+    required this.isTV,
+    required this.colorScheme,
+  }) : super(repaint: controller);
+
+  double get t =>
+      ExpressiveMotion.emphasized.transform(controller.value);
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final t = this.t;
+
+    const trackW = 52.0;
+    const trackH = 32.0;
+    final trackRect = RRect.fromRectAndRadius(
+      Rect.fromLTWH(
+        (size.width - trackW) / 2,
+        (size.height - trackH) / 2,
+        trackW,
+        trackH,
+      ),
+      const Radius.circular(trackH / 2),
+    );
+
+    // Track
+    _trackPaint.color = Color.lerp(
+      colorScheme.surfaceContainerHighest,
+      colorScheme.primary,
+      t,
+    )!;
+    canvas.drawRRect(trackRect, _trackPaint);
+
+    if (t < 0.5) {
+      _borderPaint.color = colorScheme.outline;
+      canvas.drawRRect(trackRect.deflate(2), _borderPaint);
+    }
+
+    // Handle center: x goes from 16 to 36 within the track
+    final handleCenter = Offset(
+      (size.width - trackW) / 2 + 16 + t * 20,
+      size.height / 2,
+    );
+
+    // State layer
+    if (hovered || pressed || isTV) {
+      _stateLayerPaint.color = colorScheme.primary.withValues(
+        alpha: pressed ? 0.12 : 0.08,
+      );
+      canvas.drawCircle(handleCenter, 20, _stateLayerPaint);
+    }
+
+    // Handle
+    final handleR = (pressed ? 28.0 : (t > 0.5 ? 24.0 : 16.0)) / 2;
+    _handlePaint.color =
+        t > 0.5 ? colorScheme.onPrimary : colorScheme.outline;
+    canvas.drawCircle(handleCenter, handleR, _handlePaint);
+
+    // Handle icon: X when off, check when on — crossfades with t
+    if (t < 1.0) {
+      final xOpacity = 1.0 - t;
+      if (xOpacity > 0.01) {
+        _xPath
+          ..reset()
+          ..moveTo(handleCenter.dx - 4, handleCenter.dy - 4)
+          ..lineTo(handleCenter.dx + 4, handleCenter.dy + 4)
+          ..moveTo(handleCenter.dx + 4, handleCenter.dy - 4)
+          ..lineTo(handleCenter.dx - 4, handleCenter.dy + 4);
+        _xPaint.color = colorScheme.onSurfaceVariant
+            .withValues(alpha: xOpacity);
+        canvas.drawPath(_xPath, _xPaint);
+      }
+    }
+
+    if (t > 0.0) {
+      final checkOpacity = t;
+      if (checkOpacity > 0.01) {
+        _checkPath
+          ..reset()
+          ..moveTo(handleCenter.dx - 5, handleCenter.dy)
+          ..lineTo(handleCenter.dx - 1, handleCenter.dy + 4)
+          ..lineTo(handleCenter.dx + 5, handleCenter.dy - 4);
+        _checkPaint.color = colorScheme.primary
+            .withValues(alpha: checkOpacity);
+        canvas.drawPath(_checkPath, _checkPaint);
+      }
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant _M3ESwitchPainter old) =>
+      old.pressed != pressed ||
+      old.hovered != hovered ||
+      old.isTV != isTV ||
+      old.colorScheme != colorScheme;
+}
