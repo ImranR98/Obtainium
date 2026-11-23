@@ -42,6 +42,7 @@ Currently supported App sources:
   - [SourceForge](https://sourceforge.net/)
   - Jenkins Jobs
   - [APKMirror](https://apkmirror.com/) *(Track-Only)*
+  - [APKCube](https://apkcube.com/) *(API key required)*
   - [RockMods](https://rockmods.net/) *(Track-Only)*
 - Other - App-Specific:
   - [Telegram App](https://telegram.org/)

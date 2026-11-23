@@ -35,6 +35,7 @@
 			<li>SourceForge</li>
 			<li>Jenkins Jobs</li>
 			<li>APKMirror (Track-Only)</li>
+			<li>APKCube (API key required)</li>
 			<li>RockMods (Track-Only)</li>
 		</ul>
 	</li>
