@@ -14,6 +14,18 @@ import 'package:obtainium/providers/settings_provider.dart';
 import 'package:obtainium/providers/source_provider.dart';
 import 'package:shared_storage/shared_storage.dart' as saf;
 
+String? resolveImportedInstalledVersion(
+  App app,
+  String? deviceInstalledVersion,
+) {
+  if (deviceInstalledVersion != null) return deviceInstalledVersion;
+  if (app.settings.getBool('trackOnly') ||
+      !app.settings.getBool('versionDetection')) {
+    return app.installedVersion;
+  }
+  return null;
+}
+
 /// Import/export of app configurations for [AppsProvider].
 extension AppsProviderImportExport on AppsProvider {
   /// Builds an exportable JSON map containing app data and optionally settings.
@@ -215,7 +227,10 @@ extension AppsProviderImportExport on AppsProvider {
       final a = importedApps[i];
       final installedInfo = await getInstalledInfo(a.id);
       importedApps[i] = a.copyWith(
-        installedVersion: realInstalledVersionOf(a, installedInfo),
+        installedVersion: resolveImportedInstalledVersion(
+          a,
+          realInstalledVersionOf(a, installedInfo),
+        ),
       );
     }
     await saveApps(importedApps, onlyIfExists: false);
