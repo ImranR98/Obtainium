@@ -130,6 +130,8 @@ class AppInMemory {
     return installedInfo?.signingInfo?.hasMultipleSigners ?? false;
   }
 
+  bool get isSystemDisabled => installedInfo?.applicationInfo?.enabled == false;
+
   List<String> get certificateHashes =>
       certHashesFromSigningInfo(installedInfo?.signingInfo).toList();
 }
@@ -1111,6 +1113,8 @@ Future<void> bgUpdateCheck(
               onlyCheckInstalledOrTrackOnlyApps: appsProvider
                   .settingsProvider
                   .onlyCheckInstalledOrTrackOnlyApps,
+              checkSystemDisabledApps:
+                  appsProvider.settingsProvider.checkSystemDisabledApps,
               forceAll: forceAll,
             )
             .map((e) => MapEntry(e, 0))),
