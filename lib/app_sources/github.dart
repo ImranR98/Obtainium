@@ -11,6 +11,7 @@ import 'package:obtainium/providers/settings_provider.dart';
 import 'package:obtainium/providers/source_provider.dart';
 import 'package:obtainium/utils/update_health.dart';
 import 'package:obtainium/utils/min_update_age.dart';
+import 'package:obtainium/app_sources/github_actions.dart';
 
 DateTime? newestAssetDateFromRelease(dynamic release) {
   if (release is! Map) return null;
@@ -95,6 +96,11 @@ class GitHub extends AppSource {
   @override
   List<List<GeneratedFormItem>>
   get additionalSourceAppSpecificSettingFormItems => [
+    if (!hostChanged) ...[
+      [GeneratedFormHeader(label: tr('githubActionsOptions'))],
+      [GeneratedFormSwitch('githubActionsEnabled',
+          label: tr('githubActionsEnabled'), value: false)],
+    ],
     [GeneratedFormHeader(label: tr('sectionReleaseOptions'))],
     [
       GeneratedFormSwitch(
@@ -293,6 +299,7 @@ class GitHub extends AppSource {
     String url, {
     bool forAPKDownload = false,
   }) async {
+    if (Uri.tryParse(url)?.host.toLowerCase() == 'nightly.link') return null;
     // A request with skipAuth is retried without the configured token (e.g.
     // after the token was rejected for this repository); see #3211.
     final token = additionalSettings['skipAuth'] == true
@@ -303,7 +310,12 @@ class GitHub extends AppSource {
       headers[HttpHeaders.authorizationHeader] = 'Token $token';
     }
     if (forAPKDownload == true) {
-      headers[HttpHeaders.acceptHeader] = 'application/octet-stream';
+      final path = Uri.tryParse(url)?.path ?? '';
+      final isActionsArtifact =
+          RegExp(r'/actions/artifacts/\d+/zip$').hasMatch(path);
+      headers[HttpHeaders.acceptHeader] = isActionsArtifact
+          ? 'application/vnd.github+json'
+          : 'application/octet-stream';
     }
     if (headers.isNotEmpty) {
       return headers;
@@ -349,6 +361,9 @@ class GitHub extends AppSource {
     String reqUrl,
     Map<String, dynamic> additionalSettings,
   ) async {
+    if (Uri.tryParse(reqUrl)?.host.toLowerCase() == 'nightly.link') {
+      return reqUrl;
+    }
     if ((additionalSettings['GHReqPrefix'] as String? ?? '').isNotEmpty) {
       final uri = Uri.parse(reqUrl);
       return 'https://${additionalSettings['GHReqPrefix']}/${uri.toString().substring('https://'.length)}';
@@ -403,6 +418,144 @@ class GitHub extends AppSource {
     Map<String, dynamic> additionalSettings,
   ) async =>
       '${await getAPIHost(additionalSettings)}/repos${standardUrl.substring('https://${hosts[0]}'.length)}';
+
+  Future<GitHubActionsApi> actionsApi(
+    String standardUrl,
+    Map<String, dynamic> additionalSettings,
+  ) async {
+    late final GitHubActionsApi api;
+    bool anonymous = false;
+    api = GitHubActionsApi(
+      await convertStandardUrlToAPIUrl(standardUrl, additionalSettings),
+      (url) async {
+        var res = await sourceRequest(
+          url,
+          anonymous
+              ? (Map<String, dynamic>.from(additionalSettings)
+                  ..['skipAuth'] = true)
+              : additionalSettings,
+        );
+        if (!anonymous && _isAuthRejection(res)) {
+          anonymous = true;
+          api.usedAnonymousFallback = true;
+          res = await sourceRequest(
+            url, Map<String, dynamic>.from(additionalSettings)
+                ..['skipAuth'] = true);
+        }
+        if (res.statusCode != 200) {
+          try {
+            githubErrorCheck(res);
+          } on RateLimitError catch (err) {
+            throw GitHubActionsRateLimitError(err.remainingMinutes);
+          }
+        }
+        return res;
+      },
+    );
+    return api;
+  }
+
+  static String nightlyActionsArtifactUrl(String standardUrl, int id) =>
+      'https://nightly.link${Uri.parse(standardUrl).path}/actions/artifacts/$id.zip';
+
+  Future<String> actionsArtifactUrl(
+    String standardUrl,
+    Map<String, dynamic> settings,
+    GitHubActionsApi api,
+    int id,
+  ) async {
+    final token = await getTokenIfAny(settings);
+    if (token?.isNotEmpty == true && !api.usedAnonymousFallback) {
+      return '${api.repoApiUrl}/actions/artifacts/$id/zip';
+    }
+    return nightlyActionsArtifactUrl(standardUrl, id);
+  }
+
+  static bool actionsEnabledFor(AppSource? source, Map<String, dynamic> settings) =>
+      source is GitHub && !source.hostChanged &&
+      settings['githubActionsEnabled'] == true;
+
+  /// Keep the full form state while hiding release-only sections. Never mutate
+  /// shared source objects or discard the user's release configuration.
+  static List<List<GeneratedFormItem>> visibleActionsFormItems(
+      List<List<GeneratedFormItem>> rows, AppSource? source,
+      Map<String, dynamic> settings) {
+    if (!actionsEnabledFor(source, settings)) return rows;
+    final hidden = {
+      tr('sectionReleaseOptions'), tr('sectionApkSelection'),
+      tr('sectionVersionDetection'),
+    };
+    var skip = false;
+    return rows.where((row) {
+      if (row.isNotEmpty && row.first is GeneratedFormHeader) {
+        skip = hidden.contains(row.first.label);
+      }
+      return !skip;
+    }).toList();
+  }
+
+  static Map<String, dynamic> mergeActionsFormValues(
+      AppSource? source, Map<String, dynamic> previous,
+      Map<String, dynamic> values) {
+    if (source is! GitHub || source.hostChanged) return values;
+    final merged = <String, dynamic>{...previous, ...values};
+    final wasEnabled = actionsEnabledFor(source, previous);
+    final enabled = actionsEnabledFor(source, merged);
+    const defaults = <String, bool>{
+      'versionDetection': true, 'releaseDateAsVersion': false,
+      'useVersionCodeAsOSVersion': false,
+    };
+    for (final entry in defaults.entries) {
+      final key = entry.key;
+      final backup = 'githubActionsRelease_$key';
+      if (enabled) {
+        if (!wasEnabled) merged[backup] = merged[key] ?? entry.value;
+        merged[key] = false;
+      } else if (wasEnabled) {
+        merged[key] = merged[backup] ?? entry.value;
+      }
+    }
+    return merged;
+  }
+
+  static bool hasActionsConfiguration(Map<String, dynamic> settings) {
+    final hasSource = ['githubActionsBranch', 'githubActionsWorkflow']
+        .every((key) => (settings[key] as String? ?? '').trim().isNotEmpty);
+    if (!hasSource) return false;
+    return settings['githubActionsUploadUseText'] == true
+        ? (settings['githubActionsUploadPattern']?.toString() ?? '').trim().isNotEmpty
+        : (settings['githubActionsArtifactName']?.toString() ?? '').trim().isNotEmpty;
+  }
+
+  Future<APKDetails> _fetchActionsDetails(
+    String standardUrl,
+    Map<String, dynamic> additionalSettings,
+  ) async {
+    if (!hasActionsConfiguration(additionalSettings)) {
+      throw ObtainiumError(tr('githubActionsMissingConfiguration'));
+    }
+    final api = await actionsApi(standardUrl, additionalSettings);
+    final build = await api.latestBuild(
+      workflow: additionalSettings['githubActionsWorkflow'],
+      branch: additionalSettings['githubActionsBranch'],
+      artifactName: additionalSettings['githubActionsArtifactName']?.toString() ?? '',
+      uploadUseText: additionalSettings['githubActionsUploadUseText'] == true,
+      uploadPattern: additionalSettings['githubActionsUploadPattern']?.toString() ?? '',
+      allowedEvents: githubActionsSelectedEvents(additionalSettings),
+    );
+    if (build == null) throw ObtainiumError(tr('githubActionsNoArtifacts'));
+    final artifact = build.artifacts.single;
+    final id = (artifact['id'] as num).toInt();
+    final url = await actionsArtifactUrl(
+      standardUrl, additionalSettings, api, id,
+    );
+    final selected = MapEntry('${artifact['name']}.zip', url);
+    return APKDetails(
+      build.version, [selected], getAppNames(standardUrl),
+      releaseDate: build.date, releaseUrl: build.run['html_url'] as String?,
+      allAssetUrls: [selected],
+    );
+  }
 
   /// Checks if the repository has been renamed or transferred.
   ///
@@ -964,6 +1117,9 @@ class GitHub extends AppSource {
     Map<String, dynamic> additionalSettings,
   ) async {
     try {
+      if (!hostChanged && additionalSettings['githubActionsEnabled'] == true) {
+        return await _fetchActionsDetails(standardUrl, additionalSettings);
+      }
       return await fetchReleaseDetailsWithTagFallback(
         standardUrl,
         additionalSettings,

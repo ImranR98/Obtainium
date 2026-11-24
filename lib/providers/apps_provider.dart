@@ -150,7 +150,9 @@ class DownloadedDir {
   File file;
   Directory extracted;
   DownloadedDirType type;
-  DownloadedDir(this.appId, this.file, this.extracted, this.type);
+  final List<File>? actionsSelectedFiles;
+  DownloadedDir(this.appId, this.file, this.extracted, this.type,
+      {this.actionsSelectedFiles});
 }
 
 /// Removes all matching elements and appends the last match to the end.
@@ -548,6 +550,7 @@ Future<File> downloadFile(
                 'errorWithHttpStatusCode',
                 args: [response.statusCode.toString()],
               ),
+        responseHeaders: response.headers,
       )..url = url;
     }
 

@@ -12,6 +12,8 @@ import 'package:flutter_archive/flutter_archive.dart';
 import 'package:flutter_fgbg/flutter_fgbg.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:obtainium/components/app_detail_widgets.dart';
+import 'package:obtainium/app_sources/github.dart';
+import 'package:obtainium/services/github_actions_archive_service.dart';
 import 'package:obtainium/custom_errors.dart';
 import 'package:obtainium/installers/external_installer.dart';
 import 'package:obtainium/installers/installer.dart';
@@ -231,7 +233,9 @@ extension AppsProviderInstall on AppsProvider {
       unawaited(notificationsProvider?.cancel(notifId));
       int? prevProg;
       var fileNameNoExt = '${app.id}-${downloadUrl.hashCode}';
-      if (source.urlsAlwaysHaveExtension) {
+      final fileNameHasExtension = source.urlsAlwaysHaveExtension ||
+          GitHub.actionsEnabledFor(source, app.additionalSettings);
+      if (fileNameHasExtension) {
         fileNameNoExt =
             '$fileNameNoExt.${app.apkUrls[app.preferredApkIndex].key.split('.').last}';
       }
@@ -283,17 +287,34 @@ extension AppsProviderInstall on AppsProvider {
         forAPKDownload: true,
       );
       additionalSettingsPlusSourceConfig['url'] = downloadUrl;
-      var downloadedFile = await downloadFileWithRetry(
-        fileNameNoExt,
-        source.urlsAlwaysHaveExtension,
-        headers: headers,
-        reportProgress,
-        this.apkDir.path,
-        additionalSettingsPlusSourceConfig,
-        useExisting: useExisting,
-        cancellationToken: cancellationToken,
-        holdRetry: () => _holdRetryUntilForeground(cancellationToken),
-      );
+      Future<File> fetchFile(Map<String, String>? requestHeaders) =>
+          downloadFileWithRetry(
+            fileNameNoExt, fileNameHasExtension,
+            headers: requestHeaders, reportProgress,
+            this.apkDir.path, additionalSettingsPlusSourceConfig,
+            useExisting: useExisting,
+            cancellationToken: cancellationToken,
+            holdRetry: () => _holdRetryUntilForeground(cancellationToken),
+          );
+      late File downloadedFile;
+      try {
+        downloadedFile = await fetchFile(headers);
+      } on HTTPStatusError catch (err) {
+        final path = Uri.tryParse(downloadUrl)?.path ?? '';
+        final match = GitHub.actionsEnabledFor(source, app.additionalSettings)
+            ? RegExp(r'/actions/artifacts/(\d+)/zip$').firstMatch(path)
+            : null;
+        final id = match == null ? null : int.tryParse(match.group(1)!);
+        if (id == null ||
+            (err.statusCode != 401 && err.statusCode != 403) ||
+            err.responseHeaders['x-ratelimit-remaining'] == '0' ||
+            err.responseHeaders.containsKey('retry-after')) {
+          rethrow;
+        }
+        additionalSettingsPlusSourceConfig['url'] =
+            GitHub.nightlyActionsArtifactUrl(app.url, id);
+        downloadedFile = await fetchFile(null);
+      }
       completedDownloads = 1;
       if (apps[app.id] != null) {
         apps[app.id]!.downloadProgress = _remainingStepsProgress.toDouble();
@@ -305,6 +326,7 @@ extension AppsProviderInstall on AppsProvider {
         );
         unawaited(notificationsProvider?.notify(notif));
       }
+      List<File>? actionsSelectedFiles;
       PackageInfo? newInfo;
       final originalAssetName = app.apkUrls[app.preferredApkIndex].key
           .toLowerCase();
@@ -346,6 +368,38 @@ extension AppsProviderInstall on AppsProvider {
             destinationPath: apkDirPath,
             sourceFile: downloadedFile,
           );
+          if (GitHub.actionsEnabledFor(source, app.additionalSettings)) {
+            await _extractArchive(
+              app,
+              () async {
+                final contents = Directory(apkDirPath);
+                // First select files from the GitHub transport ZIP (and any
+                // user-selected nested ZIPs). This is the only Actions-specific
+                // selection step; no replacement installer is introduced.
+                await prepareActionsArchive(contents,
+                    selection: ActionsFileSelection.fromSettings(
+                        app.additionalSettings));
+                // Snapshot original selected packages BEFORE unpacking their
+                // contents so the external installer receives exactly the
+                // selected APK/XAPK/APKM/APKS, not extracted split APKs.
+                actionsSelectedFiles = contents
+                    .listSync(recursive: true, followLinks: false)
+                    .whereType<File>()
+                    .where((file) => actionsIsInstallableFile(file.path))
+                    .toList();
+                for (final file in actionsSelectedFiles!) {
+                  if (file.path.toLowerCase().endsWith('.apk')) continue;
+                  // These are ZIP-format Android application bundles. Reuse
+                  // Obtainium's ZIP extraction so its existing metadata,
+                  // certificate checks, and APK installer handle their files.
+                  final unpacked = await file.parent.createTemp('actions-package-');
+                  await unzipFile(file.path, unpacked.path);
+                }
+              },
+              destinationPath: apkDirPath,
+              sourceFile: downloadedFile,
+            );
+          }
         }
         if (multipleApks) {
           // Download the remaining split URLs into the same directory.
@@ -392,7 +446,9 @@ extension AppsProviderInstall on AppsProvider {
             .toList();
 
         apks = _preferMatchingApk(apks, app.id);
-        if (multipleApks) {
+        final hasActionsBundle = actionsSelectedFiles?.any((file) =>
+            !file.path.toLowerCase().endsWith('.apk')) ?? false;
+        if (multipleApks || hasActionsBundle) {
           apks = _moveSplitBaseFirst(apks);
         }
 
@@ -408,7 +464,8 @@ extension AppsProviderInstall on AppsProvider {
                 true) {
           filterRegEx = app.settings.getStringOrNull('zippedApkFilterRegEx');
         }
-        if (filterRegEx != null) {
+        if (filterRegEx != null &&
+            !GitHub.actionsEnabledFor(source, app.additionalSettings)) {
           final reg = RegExp(filterRegEx);
           apks.removeWhere((apk) {
             final relativePath = apk.path.substring(apkDir!.path.length + 1);
@@ -477,7 +534,8 @@ extension AppsProviderInstall on AppsProvider {
         } else {
           dirType = DownloadedDirType.zip;
         }
-        return DownloadedDir(resolvedAppId, downloadedFile, apkDir!, dirType);
+        return DownloadedDir(resolvedAppId, downloadedFile, apkDir!, dirType,
+            actionsSelectedFiles: actionsSelectedFiles);
       }
     } finally {
       clearDownloadCancellation(app.id);
@@ -700,11 +758,23 @@ extension AppsProviderInstall on AppsProvider {
           // an install session for base + split APKs from separate downloads.
           throw ObtainiumError(tr('splitApksUnsupportedByExternalInstaller'));
         }
-        // Hand off the original bundle file (XAPK/ZIP/tarball) to the
-        // third-party installer rather than the extracted split APKs.
+        // Release bundles keep the upstream handoff. Actions uploads are
+        // transport ZIPs, so hand off the one filtered installable file instead.
+        var handoffPath = dir.file.path;
+        final app = apps[dir.appId]?.app;
+        if (app != null && app.additionalSettings['githubActionsEnabled'] == true &&
+            GitHub.actionsEnabledFor(SourceProvider().getSource(app.url,
+                overrideSource: app.overrideSource), app.additionalSettings)) {
+          final selected = dir.actionsSelectedFiles ?? <File>[];
+          if (selected.isEmpty) throw NoAPKError();
+          if (selected.length != 1) {
+            throw ObtainiumError(tr('githubActionsExternalMultiple'));
+          }
+          handoffPath = selected.single.path;
+        }
         try {
           final result = await installer.installApk(
-            [dir.file.path],
+            [handoffPath],
             appId: dir.appId,
             installOptions: installOptions,
           );
@@ -732,7 +802,9 @@ extension AppsProviderInstall on AppsProvider {
       }
 
       apkFiles = _preferMatchingApk(apkFiles, dir.appId).cast<File>().toList();
-      if (dir.type == DownloadedDirType.splitApks) {
+      final hasActionsBundle = dir.actionsSelectedFiles?.any((file) =>
+          !file.path.toLowerCase().endsWith('.apk')) ?? false;
+      if (dir.type == DownloadedDirType.splitApks || hasActionsBundle) {
         apkFiles = _moveSplitBaseFirst(apkFiles);
       }
 

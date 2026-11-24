@@ -253,6 +253,12 @@ class SourceProvider {
       additionalSettings['trackOnly'] = true;
     }
     final trackOnly = additionalSettings['trackOnly'] == true;
+    final actionsMode = GitHub.actionsEnabledFor(source, additionalSettings);
+    if (actionsMode) {
+      additionalSettings['versionDetection'] = false;
+      additionalSettings['releaseDateAsVersion'] = false;
+      additionalSettings['useVersionCodeAsOSVersion'] = false;
+    }
     final String standardUrl;
     try {
       standardUrl = source.standardizeUrl(url);
@@ -283,7 +289,7 @@ class SourceProvider {
 
     final settingsProvider = SettingsProvider();
     await settingsProvider.initializeSettings();
-    if (!source.suppressStandardVersionExtraction) {
+    if (!actionsMode && !source.suppressStandardVersionExtraction) {
       final String? extractedVersion = extractVersionWithGlobalDefault(
         additionalSettings,
         settingsProvider,
@@ -297,24 +303,26 @@ class SourceProvider {
       }
     }
 
-    if (additionalSettings['releaseDateAsVersion'] == true &&
+    if (!actionsMode && additionalSettings['releaseDateAsVersion'] == true &&
         apk.releaseDate != null) {
       apk = apk.copyWith(
         version: apk.releaseDate!.microsecondsSinceEpoch.toString(),
       );
     }
-    apk = apk.copyWith(
-      apkUrls: filterApks(
-        apk.apkUrls,
-        TypedSettings(additionalSettings).getStringOrNull('apkFilterRegEx') ??
-            settingsProvider.globalApkFilterRegEx,
-        additionalSettings['invertAPKFilter'],
-      ),
-    );
+    if (!actionsMode) {
+      apk = apk.copyWith(
+        apkUrls: filterApks(
+          apk.apkUrls,
+          TypedSettings(additionalSettings).getStringOrNull('apkFilterRegEx') ??
+              settingsProvider.globalApkFilterRegEx,
+          additionalSettings['invertAPKFilter'],
+        ),
+      );
+    }
     if (apk.apkUrls.isEmpty && !trackOnly) {
       throw NoAPKError()..url = standardUrl;
     }
-    if (additionalSettings['autoApkFilterByArch'] == true) {
+    if (!actionsMode && additionalSettings['autoApkFilterByArch'] == true) {
       apk = apk.copyWith(apkUrls: await filterApksByArch(apk.apkUrls));
       if (apk.apkUrls.isEmpty && !trackOnly) {
         throw NoAPKError()..url = standardUrl;
@@ -323,7 +331,7 @@ class SourceProvider {
     var preferredApkIndex =
         currentApp?.preferredApkIndex ??
         (apk.apkUrls.isNotEmpty ? apk.apkUrls.length - 1 : 0);
-    if (additionalSettings['autoApkFilterByArch'] == true) {
+    if (!actionsMode && additionalSettings['autoApkFilterByArch'] == true) {
       preferredApkIndex = await resolvePreferredApkIndexForArchFilter(
         apk.apkUrls,
         preferredApkIndex,
