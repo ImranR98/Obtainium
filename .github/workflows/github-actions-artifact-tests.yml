@@ -1,0 +1,43 @@
+name: GitHub Actions artifact tests
+
+on:
+  push:
+    branches:
+      - feature/github-actions-artifacts-v11
+  pull_request:
+    paths:
+      - 'lib/app_sources/github_actions.dart'
+      - 'lib/components/github_actions_picker.dart'
+      - 'lib/services/github_actions_archive_service.dart'
+      - 'test/github_actions_test.dart'
+      - 'test/github_actions_archive_service_test.dart'
+      - '.github/workflows/github-actions-artifact-tests.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v4
+      - name: Install Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.50.0'
+          channel: stable
+          cache: true
+      - name: Install Dart dependencies
+        run: flutter pub get
+      - name: Run GitHub Actions feature tests
+        run: flutter test test/github_actions_test.dart test/github_actions_archive_service_test.dart
+      - name: Analyze changed Dart files
+        run: >-
+          flutter analyze
+          lib/app_sources/github_actions.dart
+          lib/components/github_actions_picker.dart
+          lib/services/github_actions_archive_service.dart
+          test/github_actions_test.dart
+          test/github_actions_archive_service_test.dart

@@ -1,5 +1,7 @@
 import 'package:easy_localization/easy_localization.dart';
 import 'package:material_ui/material_ui.dart';
+import 'package:obtainium/app_sources/github.dart';
+import 'package:obtainium/components/github_actions_picker.dart';
 import 'package:obtainium/components/generated_form_renderer.dart';
 import 'package:obtainium/components/ui_widgets.dart';
 import 'package:obtainium/custom_errors.dart';
@@ -75,6 +77,9 @@ Future<Map<String, dynamic>?> showAdditionalOptionsPage(
         },
         child: _AdditionalOptionsPage(
           title: tr('additionalOptions'),
+          source: source,
+          url: app?.app.url,
+          initialSettings: app?.app.additionalSettings ?? const {},
           items: items,
           scrollToSection: scrollToSection,
           onValuesChanged: (v) => values = v,
@@ -195,11 +200,17 @@ class _AdditionalOptionsPage extends StatefulWidget {
   const _AdditionalOptionsPage({
     required this.title,
     required this.items,
+    required this.source,
+    required this.url,
+    required this.initialSettings,
     required this.onValuesChanged,
     this.scrollToSection,
   });
 
   final String title;
+  final AppSource? source;
+  final String? url;
+  final Map<String, dynamic> initialSettings;
   final List<List<GeneratedFormItem>> items;
   final ValueChanged<Map<String, dynamic>> onValuesChanged;
   final String? scrollToSection;
@@ -209,9 +220,15 @@ class _AdditionalOptionsPage extends StatefulWidget {
 }
 
 class _AdditionalOptionsPageState extends State<_AdditionalOptionsPage> {
+  Map<String, dynamic> _currentValues = {};
+  int _formGeneration = 0;
   @override
   void initState() {
     super.initState();
+    _currentValues = {
+      ...getDefaultValuesFromFormItems(widget.items),
+      ...widget.initialSettings,
+    };
     final target = widget.scrollToSection;
     if (target != null) {
       WidgetsBinding.instance.addPostFrameCallback((_) => _scrollTo(target));
@@ -250,12 +267,53 @@ class _AdditionalOptionsPageState extends State<_AdditionalOptionsPage> {
                 MediaQuery.of(context).padding.bottom,
               ),
               child: TvInitialFocus(
-                child: GeneratedForm(
-                  tileMode: true,
-                  items: widget.items,
-                  onValueChanges: (v, valid, isBuilding) {
-                    widget.onValuesChanged(v);
-                  },
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    if (widget.source is GitHub &&
+                        !(widget.source! as GitHub).hostChanged &&
+                        widget.url != null &&
+                        _currentValues['githubActionsEnabled'] == true) ...[
+                      const SizedBox(height: 12),
+                      GitHubActionsPickerButton(
+                        source: widget.source! as GitHub,
+                        url: widget.url!,
+                        settings: _currentValues,
+                        onSelected: (selection) {
+                          setState(() {
+                            _currentValues.addAll(selection);
+                            _formGeneration++;
+                          });
+                          widget.onValuesChanged(_currentValues);
+                        },
+                      ),
+                    ],
+                    GeneratedForm(
+                      key: ValueKey(_formGeneration),
+                      tileMode: true,
+                      items: GitHub.visibleActionsFormItems(
+                          widget.items, widget.source, _currentValues)
+                          .map((row) => row.map((item) {
+                        final cloned = item.clone();
+                        if (_currentValues.containsKey(cloned.key)) {
+                          cloned.value = _currentValues[cloned.key];
+                        }
+                        return cloned;
+                      }).toList()).toList(),
+                      onValueChanges: (v, valid, isBuilding) {
+                        final wasEnabled = GitHub.actionsEnabledFor(
+                            widget.source, _currentValues);
+                        final merged = GitHub.mergeActionsFormValues(
+                            widget.source, _currentValues, v);
+                        _currentValues = merged;
+                        widget.onValuesChanged(_currentValues);
+                        if (wasEnabled != GitHub.actionsEnabledFor(
+                            widget.source, _currentValues)) {
+                          setState(() => _formGeneration++);
+                        }
+                      },
+                    ),
+                  ],
                 ),
               ),
             ),

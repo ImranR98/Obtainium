@@ -101,8 +101,10 @@ Never rethrowOrWrapError(
 /// callers can decide whether the failure is retryable (e.g. 429/5xx).
 class HTTPStatusError extends ObtainiumError {
   final int statusCode;
-  HTTPStatusError(this.statusCode, String message)
-    : super(message, code: 'HTTP_ERROR');
+  final Map<String, String> responseHeaders;
+  HTTPStatusError(this.statusCode, String message, {
+    this.responseHeaders = const {},
+  }) : super(message, code: 'HTTP_ERROR');
 }
 
 class RateLimitError extends ObtainiumError {
