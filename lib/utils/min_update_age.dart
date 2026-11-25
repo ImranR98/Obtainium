@@ -32,6 +32,12 @@ bool isReleaseTooYoung(DateTime? releaseDate, int minAgeDays, {DateTime? now}) {
       Duration(days: minAgeDays);
 }
 
+bool hasPlaceholderApkUrls(App app) =>
+    app.apkUrls.isNotEmpty && app.apkUrls.first.value == 'placeholder';
+
+bool rejectsTooYoungRelease(App? currentApp, {required bool trackOnly}) =>
+    !trackOnly && (currentApp == null || hasPlaceholderApkUrls(currentApp));
+
 /// Replaces the release-specific fields of [fetchedApp] with [currentApp]'s, so
 /// the update stays suppressed until the fetched release is old enough. The
 /// APK URLs must move with the version, otherwise an update made during the

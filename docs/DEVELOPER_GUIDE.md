@@ -452,6 +452,10 @@ APKMirror is track-only and keeps regular-page traffic to a minimum:
   author, temp ID, `placeholder` APK URLs). Used by the add flow when the setting
   `allowAddingAppsWithoutCheck` is on and the check fails unexpectedly; the next
   successful check fills it in and the real package ID is adopted on first install.
+  Until then (this also covers apps imported without APK URLs, e.g. from an
+  `obtainium://app/` link), checks apply the minimum update age as the add flow does:
+  a release that is too young fails with `MinUpdateAgeError` instead of being
+  suppressed, since there is no earlier release to keep.
 
 ---
 
