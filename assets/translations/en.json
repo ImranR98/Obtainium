@@ -367,6 +367,7 @@
     "ok": "Okay",
     "onlyCheckInstalledOrTrackOnlyApps": "Only check installed and track-only apps for updates",
     "onlyWorksWithNonVersionDetectApps": "Only works for apps with version detection disabled.",
+    "open": "Open",
     "openApp": "Open {}",
     "openAppSettings": "Open app settings",
     "openReleasePage": "Open release page",

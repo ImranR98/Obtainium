@@ -367,6 +367,7 @@
     "ok": "OK",
     "onlyCheckInstalledOrTrackOnlyApps": "インストール済みのアプリと「追跡のみ」のアプリのアップデートのみを確認する",
     "onlyWorksWithNonVersionDetectApps": "バージョン検出を無効にしているアプリにのみ適用されます。",
+    "open": "Open",
     "openApp": "{}を開く",
     "openAppSettings": "Open app settings",
     "openReleasePage": "リリースページを開く",

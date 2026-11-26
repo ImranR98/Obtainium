@@ -762,52 +762,24 @@ class _AppPageState extends State<AppPage> {
     ];
   }
 
-  Widget _buildAppIcon(AppInMemory? app) {
-    final icon = AppIcon(bytes: app?.icon, size: 56, radius: 14);
-    if (app == null || app.installedInfo == null) return icon;
-    void openApp() {
-      settingsProvider.lightImpact();
-      packageManager.openApp(app.app.id);
-    }
-
-    return AppIconAction(
-      semanticLabel: tr('openApp', args: [app.name]),
-      onTap: openApp,
-      borderRadius: 14,
-      child: icon,
-    );
-  }
-
   Widget _buildHeaderSection(AppInMemory? app) {
+    final installed = app?.installedInfo != null;
     return _buildSection(
       true,
       true,
+      padding: EdgeInsets.zero,
       children: [
-        Row(
-          children: [
-            _buildAppIcon(app),
-            const SizedBox(width: 16),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    app?.name ?? tr('app'),
-                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  const SizedBox(height: 2),
-                  Text(
-                    tr('byX', args: [app?.author ?? tr('unknown')]),
-                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: Theme.of(context).colorScheme.onSurfaceVariant,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
+        AppHeaderCard(
+          icon: AppIcon(bytes: app?.icon, size: 56, radius: 14),
+          name: app?.name ?? tr('app'),
+          author: app?.author ?? tr('unknown'),
+          isTV: settingsProvider.isTV,
+          onOpen: installed
+              ? () {
+                  settingsProvider.lightImpact();
+                  packageManager.openApp(app!.app.id);
+                }
+              : null,
         ),
       ],
     );

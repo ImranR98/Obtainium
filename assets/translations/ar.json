@@ -367,6 +367,7 @@
     "ok": "حسنًا",
     "onlyCheckInstalledOrTrackOnlyApps": "التحقق فقط من التطبيقات المثبتة أو للتعقب فقط",
     "onlyWorksWithNonVersionDetectApps": "يعمل فقط مع التطبيقات التي عُطّل اكتشاف الإصدار لها.",
+    "open": "Open",
     "openApp": "Open {}",
     "openAppSettings": "Open app settings",
     "openReleasePage": "Open release page",

@@ -367,6 +367,7 @@
     "ok": "Ok",
     "onlyCheckInstalledOrTrackOnlyApps": "Buscar atualizações somente para apps instalados e de somente rastreamento",
     "onlyWorksWithNonVersionDetectApps": "Funciona somente em apps com a detecção de versão desativada.",
+    "open": "Open",
     "openApp": "Open {}",
     "openAppSettings": "Open app settings",
     "openReleasePage": "Open release page",

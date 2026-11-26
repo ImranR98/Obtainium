@@ -367,6 +367,7 @@
     "ok": "Okay",
     "onlyCheckInstalledOrTrackOnlyApps": "Tjek kun installerede og 'Følg Kun'-apps for opdateringer",
     "onlyWorksWithNonVersionDetectApps": "Virker kun for apps med versionsregistrering deaktiveret.",
+    "open": "Open",
     "openApp": "Open {}",
     "openAppSettings": "Open app settings",
     "openReleasePage": "Open release page",

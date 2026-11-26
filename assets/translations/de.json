@@ -367,6 +367,7 @@
     "ok": "OK",
     "onlyCheckInstalledOrTrackOnlyApps": "Nur mit „Nur nachverfolgen“ markierte und installierte Apps auf Aktualisierungen prüfen",
     "onlyWorksWithNonVersionDetectApps": "Funktioniert nur bei Apps mit deaktivierter Versionserkennung.",
+    "open": "Open",
     "openApp": "{} öffnen",
     "openAppSettings": "Open app settings",
     "openReleasePage": "Release-Seite öffnen",

@@ -374,6 +374,7 @@
     "ok": "OK",
     "onlyCheckInstalledOrTrackOnlyApps": "Aktualizace kontrolovat pouze u nainstalovaných a sledovaných aplikací",
     "onlyWorksWithNonVersionDetectApps": "Funguje pouze pro aplikace s vypnutou detekcí verze.",
+    "open": "Open",
     "openApp": "Open {}",
     "openAppSettings": "Open app settings",
     "openReleasePage": "Open release page",
