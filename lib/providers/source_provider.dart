@@ -273,7 +273,7 @@ class SourceProvider {
     // Adding an app must honor the minimum update age too. Sources that can
     // look back already return an older eligible release, so this only blocks
     // sources whose latest release is too young and has no older alternative.
-    if (currentApp == null && !trackOnly) {
+    if (rejectsTooYoungRelease(currentApp, trackOnly: trackOnly)) {
       final minAgeDays = await effectiveMinUpdateAgeDays(additionalSettings);
       if (isReleaseTooYoung(apk.releaseDate, minAgeDays)) {
         throw MinUpdateAgeError(apk.releaseDate!, minAgeDays)

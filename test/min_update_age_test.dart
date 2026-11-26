@@ -49,6 +49,33 @@ void main() {
     });
   });
 
+  group('rejectsTooYoungRelease', () {
+    const placeholder = [MapEntry('placeholder', 'placeholder')];
+    const realApk = [MapEntry('app.apk', 'https://example.com/1.0/app.apk')];
+
+    test('true when adding an app', () {
+      expect(rejectsTooYoungRelease(null, trackOnly: false), isTrue);
+    });
+
+    test('true for an app that only has the placeholder APK URL', () {
+      final imported = _app(latestVersion: 'unknown', apkUrls: placeholder);
+      expect(hasPlaceholderApkUrls(imported), isTrue);
+      expect(rejectsTooYoungRelease(imported, trackOnly: false), isTrue);
+    });
+
+    test('false for an app that has a release', () {
+      final current = _app(latestVersion: '1.0', apkUrls: realApk);
+      expect(hasPlaceholderApkUrls(current), isFalse);
+      expect(rejectsTooYoungRelease(current, trackOnly: false), isFalse);
+    });
+
+    test('false for track-only apps', () {
+      final imported = _app(latestVersion: 'unknown', apkUrls: placeholder);
+      expect(rejectsTooYoungRelease(null, trackOnly: true), isFalse);
+      expect(rejectsTooYoungRelease(imported, trackOnly: true), isFalse);
+    });
+  });
+
   group('applyMinAgeSuppression', () {
     test('keeps the current version, date, changelog and APK URLs', () {
       final current = _app(

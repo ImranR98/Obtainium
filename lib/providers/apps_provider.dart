@@ -31,6 +31,7 @@ import 'package:obtainium/providers/apps_provider_updates.dart';
 
 import 'package:obtainium/utils/bg_update_guards.dart';
 import 'package:obtainium/utils/cache_dir_utils.dart';
+import 'package:obtainium/utils/min_update_age.dart';
 import 'package:obtainium/utils/signing_cert_utils.dart';
 import 'package:obtainium/utils/translation_loader.dart';
 
@@ -125,7 +126,7 @@ class AppInMemory {
 
   bool get needsRefreshBeforeDownload =>
       app.settings.getBool('refreshBeforeDownload') ||
-      (app.apkUrls.isNotEmpty && app.apkUrls.first.value == 'placeholder');
+      hasPlaceholderApkUrls(app);
 
   bool get hasMultipleSigners {
     return installedInfo?.signingInfo?.hasMultipleSigners ?? false;
