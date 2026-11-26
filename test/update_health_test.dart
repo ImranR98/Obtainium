@@ -341,6 +341,13 @@ void main() {
       );
     });
 
+    test('excludes a release that is younger than the minimum age', () {
+      expect(
+        shouldCountFailedCheck(MinUpdateAgeError(DateTime.now(), 3)),
+        isFalse,
+      );
+    });
+
     test('counts source-level failures', () {
       expect(shouldCountFailedCheck(NoReleasesError()), isTrue);
       expect(shouldCountFailedCheck(NoAPKError()), isTrue);

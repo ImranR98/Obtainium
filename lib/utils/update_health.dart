@@ -199,7 +199,8 @@ String updateHealthReasonLabel(
 bool shouldCountFailedCheck(Object error) =>
     error is! RateLimitError &&
     error is! SocketException &&
-    error is! HandshakeException;
+    error is! HandshakeException &&
+    error is! MinUpdateAgeError;
 
 String updateHealthDaysLabel(int days) =>
     days < 1 ? tr('disabled') : plural('day', days);
