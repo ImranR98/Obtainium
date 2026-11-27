@@ -86,4 +86,39 @@ void main() {
       0,
     );
   });
+
+  test('ignores "universal" in the app name of ABI-specific APKs', () async {
+    final filtered = await service.filterApksByArch(
+      [
+        apk('universal-patch-manager-v2.0.0-arm64-v8a.apk'),
+        apk('universal-patch-manager-v2.0.0-armeabi-v7a.apk'),
+        apk('universal-patch-manager-v2.0.0-x86.apk'),
+        apk('universal-patch-manager-v2.0.0-x86_64.apk'),
+      ],
+      ['arm64-v8a'],
+    );
+
+    expect(filtered.map((e) => e.key), [
+      'universal-patch-manager-v2.0.0-arm64-v8a.apk',
+    ]);
+  });
+
+  test(
+    'keeps the real universal APK when the app name has "universal"',
+    () async {
+      final filtered = await service.filterApksByArch(
+        [
+          apk('universal-patch-manager-v2.0.0-arm64-v8a.apk'),
+          apk('universal-patch-manager-v2.0.0-armeabi-v7a.apk'),
+          apk('universal-patch-manager-v2.0.0-universal.apk'),
+        ],
+        ['arm64-v8a'],
+      );
+
+      expect(filtered.map((e) => e.key), [
+        'universal-patch-manager-v2.0.0-universal.apk',
+        'universal-patch-manager-v2.0.0-arm64-v8a.apk',
+      ]);
+    },
+  );
 }
