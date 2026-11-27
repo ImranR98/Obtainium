@@ -376,6 +376,7 @@
     "ok": "OK",
     "onlyCheckInstalledOrTrackOnlyApps": "Проверять обновления только у установленных или отслеживаемых приложений",
     "onlyWorksWithNonVersionDetectApps": "Работает только для приложений с отключённым определением версии",
+    "open": "Open",
     "openApp": "Открыть {}",
     "openAppSettings": "Открыть настройки приложения",
     "openReleasePage": "Открыть страницу выпуска",

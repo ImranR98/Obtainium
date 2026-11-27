@@ -16,6 +16,98 @@ String appInstalledVersionText(App? app) {
   return '$installed ${tr('installed')}${upToDate ? ' / ${tr('latest')}' : ''}';
 }
 
+class AppHeaderCard extends StatelessWidget {
+  final Widget icon;
+  final String name;
+  final String author;
+  final VoidCallback? onOpen;
+  final bool isTV;
+
+  const AppHeaderCard({
+    super.key,
+    required this.icon,
+    required this.name,
+    required this.author,
+    this.onOpen,
+    this.isTV = false,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    final tt = Theme.of(context).textTheme;
+    final content = Padding(
+      padding: AppPaddings.cardInner,
+      child: Row(
+        children: [
+          icon,
+          const SizedBox(width: AppSpacings.lg),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  name,
+                  style: tt.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  tr('byX', args: [author]),
+                  style: tt.bodySmall?.copyWith(color: cs.onSurfaceVariant),
+                ),
+              ],
+            ),
+          ),
+          if (onOpen != null) ...[
+            const SizedBox(width: AppSpacings.md),
+            ExcludeSemantics(
+              child: Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: AppSpacings.md,
+                  vertical: 6,
+                ),
+                decoration: BoxDecoration(
+                  color: cs.secondaryContainer,
+                  borderRadius: BorderRadius.circular(AppRadii.small),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      Icons.play_arrow,
+                      size: 18,
+                      color: cs.onSecondaryContainer,
+                    ),
+                    const SizedBox(width: 4),
+                    Text(
+                      tr('open'),
+                      style: tt.labelLarge?.copyWith(
+                        color: cs.onSecondaryContainer,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+    if (onOpen == null) return content;
+    final button = Semantics(
+      button: true,
+      label: tr('openApp', args: [name]),
+      onTap: onOpen,
+      excludeSemantics: true,
+      child: InkWell(onTap: onOpen, child: content),
+    );
+    return isTV
+        ? TvFocusRing(borderRadius: connectedTileBigRadius, child: button)
+        : button;
+  }
+}
+
 class AppInfoDialog extends StatelessWidget {
   final AppInMemory app;
   final AppsProvider appsProvider;

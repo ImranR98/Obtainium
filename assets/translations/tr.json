@@ -367,6 +367,7 @@
     "ok": "Tamam",
     "onlyCheckInstalledOrTrackOnlyApps": "Yalnızca yüklü ve 'sadece takip edilen' uygulamaların güncellemesini denetle",
     "onlyWorksWithNonVersionDetectApps": "Yalnızca sürüm algılamasının devre dışı olduğu uygulamalarda çalışır.",
+    "open": "Open",
     "openApp": "Open {}",
     "openAppSettings": "Open app settings",
     "openReleasePage": "Open release page",

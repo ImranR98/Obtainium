@@ -367,6 +367,7 @@
     "ok": "OK",
     "onlyCheckInstalledOrTrackOnlyApps": "Vérifier uniquement les mises à jour des applications installées et en mode « suivi uniquement »",
     "onlyWorksWithNonVersionDetectApps": "Fonctionne uniquement pour les applications dont la détection de version est désactivée.",
+    "open": "Open",
     "openApp": "Ouvrir {}",
     "openAppSettings": "Ouvrir les paramètres de l'application",
     "openReleasePage": "Ouvrir la page de la version",

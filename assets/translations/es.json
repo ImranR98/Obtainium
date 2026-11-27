@@ -367,6 +367,7 @@
     "ok": "Aceptar",
     "onlyCheckInstalledOrTrackOnlyApps": "Comprobar actualizaciones solo para apps instaladas o en seguimiento",
     "onlyWorksWithNonVersionDetectApps": "Solo funciona para aplicaciones con la detección de versiones desactivada.",
+    "open": "Open",
     "openApp": "Abrir {}",
     "openAppSettings": "Abrir ajustes de la aplicación",
     "openReleasePage": "Abrir página de la versión",

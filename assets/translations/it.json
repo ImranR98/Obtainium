@@ -367,6 +367,7 @@
     "ok": "Va bene",
     "onlyCheckInstalledOrTrackOnlyApps": "Cerca aggiornamenti solo per app installate e app in Solo-Monitoraggio",
     "onlyWorksWithNonVersionDetectApps": "Funziona solo per le app con il rilevamento della versione disattivato.",
+    "open": "Open",
     "openApp": "Open {}",
     "openAppSettings": "Apri le impostazioni dell'app",
     "openReleasePage": "Apri la pagina della release",
